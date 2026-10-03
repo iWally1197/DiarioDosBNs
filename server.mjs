@@ -7,7 +7,13 @@ const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const config = { ...readEnv('.env'), ...readEnv('.env.local'), ...process.env };
 const port = Number(config.PORT || 4173);
 const host = config.HOST || '127.0.0.1';
-const routes = new Set(['/login','/cadastro','/recuperar-senha','/auth/callback','/aluno','/professor','/admin','/perfil']);
+const routes = new Map([
+  ['/login','login.html'],['/login/','login.html'],['/cadastro','cadastro.html'],['/cadastro/','cadastro.html'],
+  ['/recuperar-senha','recuperar-senha.html'],['/recuperar-senha/','recuperar-senha.html'],
+  ['/auth/callback','auth-callback.html'],['/auth/callback/','auth-callback.html'],
+  ['/aluno','aluno.html'],['/aluno/','aluno.html'],['/professor','professor.html'],['/professor/','professor.html'],
+  ['/admin','admin.html'],['/admin/','admin.html'],['/perfil','perfil.html'],['/perfil/','perfil.html']
+]);
 const mime = {
   '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8',
   '.json':'application/json; charset=utf-8','.jpeg':'image/jpeg','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml',
@@ -56,7 +62,7 @@ const server = createServer((req, res) => {
   if (pathname.split('/').some((part) => part.startsWith('.') && part !== '.well-known')) return send(res, 404, 'text/plain; charset=utf-8', 'Não encontrado.');
   if (pathname === '/server.mjs' || pathname === '/package.json') return send(res, 404, 'text/plain; charset=utf-8', 'Não encontrado.');
 
-  let relative = pathname === '/' || routes.has(pathname) ? 'index.html' : normalize(pathname.replace(/^[/\\]+/, ''));
+  let relative = pathname === '/' ? 'index.html' : (routes.get(pathname) || normalize(pathname.replace(/^[/\\]+/, '')));
   let file = resolve(root, relative);
   if (file !== root && !file.startsWith(root + sep)) return send(res, 403, 'text/plain; charset=utf-8', 'Acesso negado.');
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');

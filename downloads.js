@@ -13,7 +13,7 @@
     const query = search.value.trim().toLocaleLowerCase('pt-BR');
     const selected = topicFilter.value;
     const filtered = animations.filter(({topic, title, description}) => (!selected || topic.id === selected) && (!query || `${title} ${description} ${topic.name} ${topic.area}`.toLocaleLowerCase('pt-BR').includes(query)));
-    results.innerHTML = filtered.map(({topic, title, description, file}) => `<article class="download-result"><div class="download-result-topic">${topic.name}</div><div><h2>${title}</h2><p>${description}</p></div><a class="download-button" href="downloads/${encodeURIComponent(topic.id)}-${encodeURIComponent(file)}.blend" download aria-label="Baixar projeto ${title}, tópico ${topic.name}, arquivo Blender">Baixar <span>.blend</span> <b aria-hidden="true">↓</b></a></article>`).join('');
+    results.innerHTML = filtered.map(({topic, title, description, file}) => `<article class="download-result"><div class="download-result-topic">${topic.name}</div><div><h2>${title}</h2><p>${description}</p></div><a class="download-button" href="downloads-${encodeURIComponent(topic.id)}-${encodeURIComponent(file)}.blend" download aria-label="Baixar projeto ${title}, tópico ${topic.name}, arquivo Blender">Baixar <span>.blend</span> <b aria-hidden="true">↓</b></a></article>`).join('');
     empty.hidden = filtered.length > 0;
     summary.setAttribute('aria-label', `${filtered.length} projetos Blender encontrados`);
   };
