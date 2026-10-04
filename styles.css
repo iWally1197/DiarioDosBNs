@@ -2721,6 +2721,11 @@ button:disabled { opacity: .6; cursor: wait; }
 .profile-avatar-editor .button { justify-self:start; }
 .nav-signout { color:inherit; font:inherit; cursor:pointer; border:1px solid var(--line); border-radius:999px; padding:.6rem .9rem; background:transparent; }
 .nav-signout:hover { border-color:var(--accent); }
+.nav-profile { color:var(--text); font:inherit; text-decoration:none; border:1px solid var(--line); border-radius:999px; padding:.6rem .9rem; background:var(--surface); }
+.nav-profile:hover { border-color:var(--accent); color:var(--accent); }
+html:not(.auth-nav-ready) .site-header .nav-account { visibility:hidden; }
+.dashboard-actions { display:flex; align-items:center; flex-wrap:wrap; gap:.65rem; }
+.nav-profile:focus-visible,.dashboard-actions a:focus-visible,.dashboard-actions button:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
 @media(max-width:520px) { .profile-avatar-editor { align-items:flex-start; flex-direction:column; } }
 .signup-fieldset { display:grid; gap:10px; min-width:0; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
 .signup-fieldset[hidden] { display:none; }
