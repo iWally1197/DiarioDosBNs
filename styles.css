@@ -2722,3 +2722,10 @@ button:disabled { opacity: .6; cursor: wait; }
 .nav-signout { color:inherit; font:inherit; cursor:pointer; border:1px solid var(--line); border-radius:999px; padding:.6rem .9rem; background:transparent; }
 .nav-signout:hover { border-color:var(--accent); }
 @media(max-width:520px) { .profile-avatar-editor { align-items:flex-start; flex-direction:column; } }
+.signup-fieldset { display:grid; gap:10px; min-width:0; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+.signup-fieldset[hidden] { display:none; }
+.signup-fieldset legend { padding:0 8px; color:var(--gold); font-weight:600; }
+.signup-fieldset label span { color:var(--muted); font-weight:400; }
+.admin-user-detail { display:block; margin-top:4px; color:var(--muted); line-height:1.5; }
+.admin-table button:focus-visible,.nav-signout:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+@media(max-width:700px) { .admin-form { grid-template-columns:1fr; } .admin-form .wide-field { grid-column:auto; } .admin-table { min-width:680px; } }
