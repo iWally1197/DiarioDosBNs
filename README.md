@@ -2,6 +2,16 @@
 
 Site responsivo para estudar Física com animações e cenas Blender, laboratório 3D e materiais de apoio. Inclui contas de aluno, professor e administrador com Supabase.
 
+## Comece por aqui
+
+Siga o [Tutorial do Supabase](TUTORIAL-SUPABASE.md) passo a passo. Ele explica como executar o SQL, configurar os redirecionamentos, publicar no GitHub Pages e resolver o erro da tabela `user_roles`.
+
+Para ativar e testar o envio de e-mails de confirmação e recuperação de senha, siga também o [Guia simples de SMTP](GUIA-SMTP.md).
+
+Se escolheu Resend, use o passo a passo específico [Resend + Supabase](GUIA-RESEND-SUPABASE.md).
+
+Para começar do zero com um domínio `.com.br`, GitHub Pages, Resend e Supabase, siga [este tutorial completo](GUIA-DOMINIO-RESEND-SUPABASE.md).
+
 ## Arquivos em uma única pasta
 
 Esta cópia não tem subpastas. Para evitar nomes repetidos, os arquivos foram renomeados com prefixos: `assets-` para imagens, `downloads-` para cenas Blender, `src-` para módulos do site e `supabase-` para SQL. As páginas de conta são arquivos como `login.html`, `cadastro.html`, `recuperar-senha.html`, `aluno.html`, `professor.html`, `admin.html`, `perfil.html` e `auth-callback.html`.

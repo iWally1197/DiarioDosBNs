@@ -2714,3 +2714,11 @@ button:disabled { opacity: .6; cursor: wait; }
 .animation-video { display:block; width:min(100%, 70rem); aspect-ratio:16/9; background:#02050c; border:1px solid var(--line, rgba(255,255,255,.16)); border-radius:1rem; }
 .animation-detail-hero { padding-block:2rem; }
 .animation-video-panel { display:grid; gap:1rem; padding-block:2rem; }
+.profile-avatar-editor { display:flex; align-items:center; gap:1.2rem; padding:1rem 0 1.5rem; border-bottom:1px solid var(--line); }
+.profile-avatar-editor>div { display:grid; gap:.55rem; }
+.profile-avatar { width:112px; height:112px; flex:none; border-radius:50%; object-fit:cover; background:var(--surface); border:2px solid var(--accent); }
+.profile-avatar-editor small,.form-help { color:var(--muted); font-size:.88rem; line-height:1.5; }
+.profile-avatar-editor .button { justify-self:start; }
+.nav-signout { color:inherit; font:inherit; cursor:pointer; border:1px solid var(--line); border-radius:999px; padding:.6rem .9rem; background:transparent; }
+.nav-signout:hover { border-color:var(--accent); }
+@media(max-width:520px) { .profile-avatar-editor { align-items:flex-start; flex-direction:column; } }

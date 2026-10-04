@@ -199,12 +199,12 @@ returns boolean language sql stable security definer set search_path = '' as $$
 $$;
 
 create or replace function public.student_has_activity(p_activity uuid,p_classroom uuid)
-returns boolean language sql stable security definer set search_path = '' as $
+returns boolean language sql stable security definer set search_path = '' as $$
   select auth.uid() is not null and exists (
     select 1 from public.classroom_activities ca join public.student_classrooms sc using(classroom_id)
     where ca.activity_id=p_activity and ca.classroom_id=p_classroom and sc.user_id=(select auth.uid())
   );
-$;
+$$;
 
 create or replace function public.can_access_download(p_path text)
 returns boolean language sql stable security definer set search_path = '' as $$
@@ -261,6 +261,25 @@ $$;
 
 create trigger on_auth_user_created after insert on auth.users
   for each row execute procedure public.handle_auth_user_created();
+
+-- Usuários que já existiam antes da instalação recebem perfil somente se o
+-- cadastro registrou as versões de termos e privacidade exigidas pelo site.
+insert into public.profiles(id,display_name,terms_version,privacy_version)
+select u.id,left(coalesce(u.raw_user_meta_data->>'display_name',''),100),
+  u.raw_user_meta_data->>'terms_version',u.raw_user_meta_data->>'privacy_version'
+from auth.users u
+where u.raw_user_meta_data->>'terms_version'='1.0'
+  and u.raw_user_meta_data->>'privacy_version'='1.0'
+on conflict(id) do nothing;
+
+insert into public.user_roles(user_id,role,status)
+select u.id,
+  case when u.raw_user_meta_data->>'requested_role'='professor' then 'professor'::public.account_role else 'aluno'::public.account_role end,
+  case when u.raw_user_meta_data->>'requested_role'='professor' then 'pending'::public.account_status else 'active'::public.account_status end
+from auth.users u join public.profiles p on p.id=u.id
+where u.raw_user_meta_data->>'terms_version'='1.0'
+  and u.raw_user_meta_data->>'privacy_version'='1.0'
+on conflict(user_id) do nothing;
 
 create or replace function public.touch_updated_at()
 returns trigger language plpgsql set search_path = '' as $$ begin new.updated_at=now(); return new; end; $$;
