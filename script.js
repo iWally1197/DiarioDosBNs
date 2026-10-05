@@ -1,4 +1,10 @@
 (() => {
+  if (!document.querySelector('script[data-diario-accessibility]')) {
+    const accessibilityScript = document.createElement('script');
+    accessibilityScript.src = new URL('./accessibility.js', document.baseURI).href;
+    accessibilityScript.dataset.diarioAccessibility = 'true';
+    document.head.append(accessibilityScript);
+  }
   const root = document.documentElement;
   const themeButton = document.querySelector('.theme-toggle');
   const themeLabel = document.querySelector('.theme-label');
