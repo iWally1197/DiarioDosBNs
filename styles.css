@@ -3082,3 +3082,10 @@ html[data-theme="light"] button[data-animation-cancel],html[data-theme="light"] 
   .classroom-detail *, .donation-panel * { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
   .penrose-film video { scroll-behavior: auto; }
 }
+
+/* Texto de botões: use a cor de texto do tema em controles neutros para manter contraste. */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] { color: var(--text); }
+a.button:not(.button-primary):not(.button-danger) { color: var(--text); }
