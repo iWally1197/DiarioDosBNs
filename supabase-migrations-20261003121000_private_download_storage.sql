@@ -1,5 +1,5 @@
 -- Antes desta migração, crie no Dashboard um bucket chamado “downloads”
--- com Public bucket desativado. Arquivos públicos do site continuam em /downloads;
+-- com Public bucket desativado. Arquivos públicos do site continuam na raiz;
 -- materiais exclusivos devem existir somente neste bucket privado.
 begin;
 

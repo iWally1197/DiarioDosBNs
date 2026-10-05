@@ -12,13 +12,13 @@ Se escolheu Resend, use o passo a passo específico [Resend + Supabase](GUIA-RES
 
 Para começar do zero com um domínio `.com.br`, GitHub Pages, Resend e Supabase, siga [este tutorial completo](GUIA-DOMINIO-RESEND-SUPABASE.md).
 
-## Arquivos em uma única pasta
+## Organização dos arquivos
 
-Esta cópia não tem subpastas. Para evitar nomes repetidos, os arquivos foram renomeados com prefixos: `assets-` para imagens, `downloads-` para cenas Blender, `src-` para módulos do site e `supabase-` para SQL. As páginas de conta são arquivos como `login.html`, `cadastro.html`, `recuperar-senha.html`, `aluno.html`, `professor.html`, `admin.html`, `perfil.html` e `auth-callback.html`.
+Todos os arquivos ficam juntos na raiz, inclusive as cenas `.blend`, o vídeo do processo de Penrose e sua imagem de capa. Este pacote não precisa de subpastas.
 
 ## Publicar no GitHub Pages
 
-Envie todos os arquivos diretamente para a raiz do repositório, sem criar subpastas. Em **Settings → Pages**, escolha a branch principal e a pasta raiz. O arquivo `.nojekyll` também está incluído. Não envie `.env.local`.
+Extraia o ZIP e envie todos os arquivos diretamente para a raiz do repositório GitHub, sem criar uma pasta externa. Em **Settings → Pages**, escolha a branch principal e a pasta raiz. O arquivo `.nojekyll` também está incluído. Não envie `.env.local`.
 
 Depois configure o Supabase em **Authentication → URL Configuration**:
 
@@ -26,28 +26,34 @@ Depois configure o Supabase em **Authentication → URL Configuration**:
 - URL permitida: `https://iwally1197.github.io/DiarioDosBNs/auth-callback.html`
 - URL permitida: `https://iwally1197.github.io/DiarioDosBNs/recuperar-senha.html?mode=update`
 
-O GitHub Pages publica arquivos estáticos e não executa `server.mjs`. Para executar localmente, instale Node.js 20 ou superior e rode `npm start` nesta pasta; o servidor mapeia as rotas legadas para os arquivos HTML correspondentes.
+O GitHub Pages publica arquivos estáticos e não executa `server.mjs`. Para executar localmente, instale Node.js 20 ou superior e rode `npm start` nesta pasta; o servidor usa `supabase-config.js` automaticamente e mapeia as rotas para os arquivos HTML correspondentes. Se preferir configurar o servidor por variáveis de ambiente, copie `.env.example` para `.env.local`.
 
 ## Configuração do Supabase
 
-O navegador lê `supabase-config.js`. Preencha com a URL do projeto e a chave publicável:
+O navegador lê `supabase-config.js`, que já está preenchido com a URL do projeto e a chave publicável:
 
 ```js
 export const supabaseConfig = Object.freeze({
-  url: 'https://SEU-PROJETO.supabase.co',
-  publishableKey: 'sb_publishable_SUA_CHAVE_PUBLICAVEL',
+  url: 'https://glzerebxnlkdtsbrwbhh.supabase.co',
+  publishableKey: 'sb_publishable_YaVYI-Ox_3-7mt_hfRlh_Q_PHoSdyRG',
   configured: true
 });
 ```
 
 A chave `sb_publishable_...` pode estar no navegador. **Nunca** coloque `sb_secret`, `service_role` ou senha do banco neste arquivo ou em repositório público.
 
-No SQL Editor do Supabase, execute nesta ordem:
+No SQL Editor do Supabase, execute nesta ordem. A migração principal só deve ser executada uma vez; não repita se já terminou com sucesso:
 
 1. `supabase-migrations-20261003120000_diario_bns_core.sql`
-2. `supabase-seed.sql`
-3. Crie no Storage o bucket privado `downloads`.
-4. `supabase-migrations-20261003121000_private_download_storage.sql`
+2. `supabase-migrations-20261004100000_profiles_education_class_stage.sql` (novas colunas de perfil e etapa escolar das turmas; esta atualização pode ser reaplicada)
+3. `supabase-seed.sql`
+4. Crie no Storage o bucket privado `downloads`.
+5. `supabase-migrations-20261003121000_private_download_storage.sql`
+6. `supabase-migrations-20261005120000_classrooms_pix_approvals.sql` (turmas, aprovações, atividades, notificações e PIX; pode ser reaplicada)
+
+Se essa migração já foi executada e o painel mostrar `infinite recursion detected in policy for relation "activities"`, execute `supabase-migrations-20261005130000_fix_activity_policy_recursion.sql` para corrigir as políticas RLS.
+
+Se a migração principal já foi executada no seu projeto, **não a execute novamente**: rode somente a migração incremental do item 2 e siga a partir daí. O formulário guarda faixa etária, sem pedir data de nascimento. A lista docente oferece formações comuns e permite digitar cursos que não aparecem nela.
 
 Para o primeiro administrador, use `supabase-bootstrap-admin.sql.example` no SQL Editor após criar e confirmar sua conta. Cadastros de professor começam aguardando aprovação.
 
@@ -57,7 +63,7 @@ Ative a confirmação de e-mail e ajuste as URLs de redirecionamento para o dom�
 
 - `index.html`: início e biblioteca de tópicos.
 - `topico.html` e `animacao.html`: detalhes dos conceitos e cenas para abrir no Blender.
-- `downloads.html`: catálogo de projetos Blender. Cada arquivo `.blend` correspondente tem prefixo `downloads-`.
+- `downloads.html`: catálogo de projetos Blender. As cenas com prefixo `downloads-` ficam diretamente na raiz.
 - `blender.html`: tutorial de navegação, seleção, transformação, `Shift+S`, modelagem, materiais, luz, animação e renderização.
 - `laboratorio.html`, `professores.html` e `pesquisa.html`: laboratório, recursos pedagógicos e informações sobre o projeto.
 - `cadastro.html`, `login.html`, `recuperar-senha.html`, `auth-callback.html`, `perfil.html`, `aluno.html`, `professor.html` e `admin.html`: autenticação e áreas por tipo de conta.
