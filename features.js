@@ -6,18 +6,15 @@ const COOLDOWN = 60;
 const cooldownKey = (kind) => 'diario-bns:email-cooldown:' + kind;
 const cooldownEnd = (kind) => { try { return Number(localStorage.getItem(cooldownKey(kind)) || 0); } catch { return 0; } };
 const beginCooldown = (kind) => { const until = Date.now() + COOLDOWN * 1000; try { localStorage.setItem(cooldownKey(kind), String(until)); } catch {} return until; };
+const clearCooldown = (kind) => { try { localStorage.removeItem(cooldownKey(kind)); } catch {} };
 
 function attachCountdown(button, kind, label) {
-  if (!button || button.dataset.countdownBound) return;
+  if (!button) return;
   button.dataset.countdownBound = 'true';
-  const update = () => {
-    const remaining = Math.max(0, Math.ceil((cooldownEnd(kind) - Date.now()) / 1000));
-    if (remaining) { button.disabled = true; button.textContent = label + ' disponível em ' + remaining + 's'; }
-    else { button.disabled = false; button.textContent = label; }
-    if (!remaining && button.dataset.countdownTimer) { clearInterval(Number(button.dataset.countdownTimer)); delete button.dataset.countdownTimer; }
-  };
-  update();
-  if (cooldownEnd(kind) > Date.now()) button.dataset.countdownTimer = String(setInterval(update, 1000));
+  attachCountdownUpdate(button, kind, label);
+  if (cooldownEnd(kind) > Date.now() && !button.dataset.countdownTimer) {
+    button.dataset.countdownTimer = String(setInterval(() => attachCountdownUpdate(button, kind, label), 1000));
+  }
 }
 
 function setupTeacherSignup() {
@@ -80,23 +77,71 @@ async function sendConfirmation(button) {
   const email = form && form.querySelector('input[type="email"]') && form.querySelector('input[type="email"]').value.trim();
   const note = button.parentElement.querySelector('[role="status"]');
   if (!email) { statusText(note, 'Informe o e-mail usado no cadastro.', true); return; }
-  beginCooldown('signup');
+  if (!supabase) { statusText(note, 'O Supabase não está configurado neste site.', true); return; }
+  if (button.dataset.sending === 'true') return;
+  const label = 'Reenviar confirmação de e-mail';
+  if (cooldownEnd('signup') > Date.now()) {
+    attachCountdown(button, 'signup', label);
+    statusText(note, 'Aguarde o contador terminar antes de solicitar outro envio.', true);
+    return;
+  }
   button.disabled = true;
-  attachCountdown(button, 'signup', 'Reenviar confirmação de e-mail');
-  button.dataset.countdownTimer = String(setInterval(() => attachCountdownUpdate(button, 'signup', 'Reenviar confirmação de e-mail'), 1000));
-  attachCountdownUpdate(button, 'signup', 'Reenviar confirmação de e-mail');
-  let error = null;
+  button.dataset.sending = 'true';
+  button.textContent = 'Enviando…';
   try {
     const redirect = new URL('auth-callback.html', document.baseURI).href;
-    ({ error } = await supabase.auth.resend({ type: 'signup', email: email, options: { emailRedirectTo: redirect } }));
-  } catch (err) { error = err; }
-  statusText(note, error ? 'Não foi possível reenviar agora. Confira o endereço e aguarde o contador antes de tentar novamente.' : 'Solicitação enviada. Confira a caixa de entrada e o spam.', Boolean(error));
+    const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: redirect } });
+    if (error) throw error;
+    startButtonCooldown(button, 'signup', label);
+    statusText(note, 'Solicitação enviada. Confira a caixa de entrada e o spam.', false);
+  } catch (error) {
+    const detail = String(error?.message || '');
+    if (/rate.?limit|too many requests|429/i.test(detail)) {
+      startButtonCooldown(button, 'signup', label);
+      statusText(note, 'O Supabase ainda está limitando os envios. Aguarde o contador e tente novamente.', true);
+    } else {
+      stopButtonCooldown(button, 'signup', label);
+      statusText(note, confirmationErrorMessage(detail), true);
+    }
+  } finally {
+    delete button.dataset.sending;
+  }
 }
 
 function attachCountdownUpdate(button, kind, label) {
   const remaining = Math.max(0, Math.ceil((cooldownEnd(kind) - Date.now()) / 1000));
   if (remaining) { button.disabled = true; button.textContent = label + ' disponível em ' + remaining + 's'; }
   else { button.disabled = false; button.textContent = label; clearInterval(Number(button.dataset.countdownTimer)); delete button.dataset.countdownTimer; }
+}
+
+function startButtonCooldown(button, kind, label) {
+  const previousTimer = Number(button.dataset.countdownTimer);
+  if (previousTimer) clearInterval(previousTimer);
+  beginCooldown(kind);
+  attachCountdownUpdate(button, kind, label);
+  button.dataset.countdownTimer = String(setInterval(() => attachCountdownUpdate(button, kind, label), 1000));
+}
+
+function stopButtonCooldown(button, kind, label) {
+  const timer = Number(button.dataset.countdownTimer);
+  if (timer) clearInterval(timer);
+  delete button.dataset.countdownTimer;
+  clearCooldown(kind);
+  button.disabled = false;
+  button.textContent = label;
+}
+
+function confirmationErrorMessage(detail) {
+  if (/email address not authorized|not authorized/i.test(detail)) {
+    return 'O SMTP padrão do Supabase só envia para endereços autorizados. Configure um SMTP próprio em Authentication → Emails → SMTP Settings.';
+  }
+  if (/already confirmed|already verified|email confirmed/i.test(detail)) {
+    return 'Este e-mail já foi confirmado. Faça login na sua conta.';
+  }
+  if (/smtp|email.*send|mail/i.test(detail)) {
+    return 'O Supabase não conseguiu enviar a mensagem. Confira o SMTP e os modelos de e-mail em Authentication → Emails.';
+  }
+  return detail ? 'O Supabase recusou o reenvio: ' + detail : 'Não foi possível reenviar. Confira o e-mail e as configurações do Supabase.';
 }
 
 document.addEventListener('click', async (event) => {
