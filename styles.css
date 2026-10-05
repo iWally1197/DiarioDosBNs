@@ -2896,3 +2896,68 @@ body.a11y-high-contrast .a11y-guide, body.a11y-high-contrast .a11y-prepare { bac
   .a11y-prepare-grid { grid-template-columns: 1fr; }
   .a11y-dialog-footer .a11y-reset { width: 100%; }
 }
+
+/* Novas áreas de apoio, turmas e permissões. */
+.donation-panel { max-width: 980px; min-height: 62vh; padding: clamp(26px, 6vw, 70px); margin: 48px auto; border: 1px solid var(--line); background: var(--surface); }
+.donation-panel h1 { max-width: 760px; margin: 10px 0 14px; font: 700 clamp(34px, 6vw, 58px)/1.08 var(--display); }
+.donation-panel>p { max-width: 650px; color: var(--muted); line-height: 1.75; }
+.pix-layout { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: clamp(24px, 5vw, 56px); align-items: center; margin: 36px 0; }
+.pix-qr { display: grid; gap: 10px; justify-items: center; margin: 0; padding: 18px; border: 1px solid var(--line); background: #fff; color: #202938; }
+.pix-qr img { display: block; width: min(100%, 280px); aspect-ratio: 1; object-fit: contain; }
+.pix-qr figcaption { font-size: 13px; text-align: center; }
+.pix-qr-empty { min-height: 220px; place-content: center; color: #465066; text-align: center; }
+.pix-key-block { display: grid; gap: 12px; align-content: start; }
+.pix-key-block>p:first-child { color: var(--muted); line-height: 1.7; }
+.pix-key-label { margin: 6px 0 0; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+.pix-key-value { display: block; overflow-wrap: anywhere; padding: 15px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 16px; }
+.pix-key-block .button { justify-self: start; min-height: 48px; }
+.teacher-verification-message { padding: 14px 16px; margin-top: 18px; border-left: 3px solid #e2bd69; background: color-mix(in srgb,#d2a94e 10%,var(--surface)); }
+.teacher-verification-message p { margin: 8px 0 0; line-height: 1.65; color: var(--muted); }
+.teacher-ack { margin-top: 12px; }
+.permission-checks { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px 18px; padding: 14px; border: 1px solid var(--line); }
+.permission-checks label { display: flex; align-items: flex-start; gap: 9px; font-size: 14px; }
+.permission-checks input { flex: 0 0 auto; width: 19px; height: 19px; }
+.classroom-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0; margin: 24px 0; border-bottom: 1px solid var(--line); }
+.classroom-tabs [role="tab"] { flex: 0 0 auto; min-height: 46px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer; }
+.classroom-tabs [role="tab"][aria-selected="true"] { border-color: var(--gold); color: var(--gold); background: var(--surface); }
+.classroom-detail [role="tabpanel"] { min-height: 280px; padding: clamp(16px,3vw,30px); border: 1px solid var(--line); background: var(--surface); }
+.classroom-detail [role="tabpanel"][hidden] { display: none; }
+.classroom-detail [role="tabpanel"] h2 { margin-top: 0; }
+.class-answer-form { display: grid; gap: 10px; margin-top: 18px; }
+.class-answer-form textarea { width: 100%; padding: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+.is-unread { border-left: 3px solid #78aee8; padding-left: 12px; }
+.private-list li>span { display: block; }
+#admin-tools button[type="submit"],#admin-tools form button:not([type]),#teacher-tools button[type="submit"],#teacher-tools form button:not([type]),[data-admin-extra] button[type="submit"],[data-admin-extra] form button:not([type]),.classroom-detail form button[type="submit"],.classroom-detail form button:not([type]) { border-color: #347b50; background: #17452e; color: #e3ffeb; }
+#admin-tools button[type="submit"]:hover,#teacher-tools button[type="submit"]:hover,[data-admin-extra] button[type="submit"]:hover,.classroom-detail form button[type="submit"]:hover { background: #205c3c; }
+button[data-delete-animation],button[data-delete-download],button[data-delete-course],button[data-delete-lesson],button[data-delete-class],button[data-delete-activity],button[data-review-status="rejected"],button[data-review-teacher][data-status="blocked"] { border-color: #a34e57; background: #481e29; color: #ffe6e8; }
+.button-danger { min-height: 42px; padding: 9px 14px; border: 1px solid #a34e57; border-radius: 4px; background: #481e29; color: #ffe6e8; font: inherit; font-weight: 650; cursor: pointer; }
+.button-danger:hover { background: #642833; }
+.button-danger:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+button[data-review-status="verified"],button[data-review-status="approved"],button[data-review-teacher][data-status="active"] { border-color: #347b50; background: #17452e; color: #e3ffeb; }
+button[data-submit-existing-activity] { border-color: #347b50; background: #17452e; color: #e3ffeb; }
+button[data-toggle-activity][data-published="false"],#teacher-tools button[data-teacher-publish][data-published="false"] { border-color: #347b50; background: #17452e; color: #e3ffeb; }
+button[data-toggle-activity][data-published="true"],#teacher-tools button[data-teacher-publish][data-published="true"] { border-color: #69717c; background: #333943; color: #f3f4f6; }
+button[data-review-status="changes_requested"] { border-color: #a88132; background: #4a3916; color: #fff0c2; }
+button[data-toggle-class],button[data-toggle-code],button[data-copy-code] { border-color: #426b91; background: #152d45; color: #d9ebff; }
+button[data-animation-cancel],button[data-course-cancel],button[data-lesson-cancel] { border-color: #69717c; background: #333943; color: #f3f4f6; }
+html[data-theme="light"] #admin-tools button[type="submit"],html[data-theme="light"] #admin-tools form button:not([type]),html[data-theme="light"] #teacher-tools button[type="submit"],html[data-theme="light"] #teacher-tools form button:not([type]),html[data-theme="light"] [data-admin-extra] button[type="submit"],html[data-theme="light"] [data-admin-extra] form button:not([type]),html[data-theme="light"] .classroom-detail form button[type="submit"],html[data-theme="light"] .classroom-detail form button:not([type]),html[data-theme="light"] button[data-submit-existing-activity] { background: #dff5e6; border-color: #33734b; color: #123a22; }
+html[data-theme="light"] button[data-delete-animation],html[data-theme="light"] button[data-delete-download],html[data-theme="light"] button[data-delete-course],html[data-theme="light"] button[data-delete-lesson],html[data-theme="light"] button[data-delete-class],html[data-theme="light"] button[data-delete-activity],html[data-theme="light"] button[data-review-status="rejected"],html[data-theme="light"] button[data-review-teacher][data-status="blocked"] { background: #ffe7e7; color: #7a1f29; }
+html[data-theme="light"] .button-danger { background: #ffe7e7; border-color: #a3404a; color: #7a1f29; }
+html[data-theme="light"] .button-danger:hover { background: #ffd5d8; }
+html[data-theme="light"] button[data-review-status="verified"],html[data-theme="light"] button[data-review-status="approved"],html[data-theme="light"] button[data-review-teacher][data-status="active"] { background: #dff5e6; color: #123a22; }
+html[data-theme="light"] button[data-review-status="changes_requested"] { background: #fff3cf; color: #654a10; }
+html[data-theme="light"] button[data-toggle-activity][data-published="false"],html[data-theme="light"] #teacher-tools button[data-teacher-publish][data-published="false"] { background: #dff5e6; border-color: #33734b; color: #123a22; }
+html[data-theme="light"] button[data-toggle-activity][data-published="true"],html[data-theme="light"] #teacher-tools button[data-teacher-publish][data-published="true"] { background: #eceff3; border-color: #69717c; color: #303846; }
+html[data-theme="light"] button[data-toggle-class],html[data-theme="light"] button[data-toggle-code],html[data-theme="light"] button[data-copy-code] { background: #e6f1ff; color: #193f67; }
+html[data-theme="light"] button[data-animation-cancel],html[data-theme="light"] button[data-course-cancel],html[data-theme="light"] button[data-lesson-cancel] { background: #eceff3; color: #303846; }
+@media (max-width: 700px) {
+  .pix-layout { grid-template-columns: 1fr; }
+  .pix-qr { width: min(100%,330px); justify-self: center; }
+  .permission-checks { grid-template-columns: 1fr; }
+  .classroom-tabs { margin-inline: -5px; padding-inline: 5px; }
+  .classroom-tabs [role="tab"] { min-height: 48px; padding-inline: 13px; }
+  .donation-panel { margin: 18px auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .classroom-detail *, .donation-panel * { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
