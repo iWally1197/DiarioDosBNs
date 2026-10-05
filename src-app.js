@@ -46,6 +46,14 @@ const main = document.querySelector('main#conteudo');
 const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeText = (value) => escapeHtml(value).replace(/`/g,'&#96;');
 const setStatus = (node, text, error=false) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
+const authErrorMessage = (error, fallback) => {
+  const message = String(error?.message || '');
+  if (/failed to fetch|networkerror|fetch failed|load failed/i.test(message)) return 'Não foi possível conectar ao Supabase. Confira a conexão com a internet e a URL do projeto em supabase-config.js.';
+  if (/email not confirmed/i.test(message)) return 'Confirme seu e-mail pelo link enviado antes de entrar.';
+  if (/redirect.*(url|allow|valid)|requested path is invalid/i.test(message)) return 'O Supabase bloqueou o endereço de retorno. Adicione a URL do site em Authentication → URL Configuration.';
+  if (/database error|trigger|user_roles|profiles/i.test(message)) return `O banco do Supabase não concluiu esta ação. Confira se as migrações foram executadas. Detalhe: ${message}`;
+  return message ? `${fallback} Detalhe: ${message}` : fallback;
+};
 const flash = (text) => { try { sessionStorage.setItem('diario-bns-flash', text); } catch {} };
 const takeFlash = () => { try { const text=sessionStorage.getItem('diario-bns-flash');sessionStorage.removeItem('diario-bns-flash');return text||''; } catch { return ''; } };
 const configureNotice = `<aside class="auth-notice" role="status"><strong>Supabase ainda não configurado</strong><p>Confira a configuração pública do Supabase em <code>supabase-config.js</code> e siga as instruções de instalação do projeto.</p><a href="/README.md">Abrir instruções</a></aside>`;
@@ -94,9 +102,15 @@ function renderLogin() {
     event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
     if(!supabase){setStatus(status,'Configure o Supabase para ativar o login.',true);return;}
     button.disabled=true;setStatus(status,'Verificando seus dados…');
-    const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
-    if(error){button.disabled=false;setStatus(status,error.message==='Email not confirmed'?'Confirme seu e-mail pelo link enviado antes de entrar.':'Não foi possível entrar. Confira o e-mail e a senha.',true);return;}
-    try{const role=await getRole(data.user);if(!role||role.status==='blocked'){await supabase.auth.signOut();setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);button.disabled=false;return;}navigate(destination(role));}catch(err){setStatus(status,`Conta autenticada, mas não foi possível consultar o perfil: ${err.message}`,true);button.disabled=false;}
+    try {
+      const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
+      if(error){setStatus(status,authErrorMessage(error,'Não foi possível entrar. Confira o e-mail e a senha.'),true);return;}
+      const role=await getRole(data.user);
+      if(!role||role.status==='blocked'){await supabase.auth.signOut();setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);return;}
+      navigate(destination(role));
+    } catch(err) {
+      setStatus(status,authErrorMessage(err,`Conta autenticada, mas não foi possível consultar o perfil: ${err?.message||''}`),true);
+    } finally { button.disabled=false; }
   });
 }
 
@@ -124,9 +138,14 @@ function renderSignup() {
     button.disabled=true;setStatus(status,'Criando sua conta…');
     const role=values.get('role')==='professor'?'professor':'aluno';
     const teacher=role==='professor';
-    const {data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}});
+    let data,error;
+    try {
+      ({data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}));
+    } catch(err) {
+      setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);button.disabled=false;return;
+    }
     button.disabled=false;
-    if(error){setStatus(status,'Não foi possível criar a conta. Verifique os dados, as configurações de e-mail e tente novamente.',true);return;}
+    if(error){setStatus(status,authErrorMessage(error,'Não foi possível criar a conta. Verifique os dados e as configurações de e-mail.'),true);return;}
     if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
     if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
     else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
@@ -138,20 +157,22 @@ function renderRecovery() {
   if(updating){authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
     const code=new URLSearchParams(location.search).get('code');const status=document.querySelector('#form-status');const form=document.querySelector('#password-update-form');const submit=form?.querySelector('button[type="submit"]');
     if(code&&supabase){if(submit)submit.disabled=true;supabase.auth.exchangeCodeForSession(code).then(({error})=>{if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um novo link e abra-o no mesmo navegador.',true);return;}if(submit)submit.disabled=false;setStatus(status,'Link validado. Agora escolha sua nova senha.');}).catch(()=>setStatus(status,'Não foi possível validar o link. Solicite um novo e abra-o no mesmo navegador.',true));}
-    document.querySelector('#password-update-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;if(!supabase){setStatus(document.querySelector('#form-status'),'Configure o Supabase para alterar sua senha.',true);return;}const first=form.querySelector('#new-password').value;const second=form.querySelector('#new-password-confirm').value;if(first!==second){setStatus(document.querySelector('#form-status'),'As senhas digitadas não coincidem.',true);return;}const {error}=await supabase.auth.updateUser({password:first});if(error){setStatus(document.querySelector('#form-status'),'Não foi possível atualizar a senha. Solicite um link novo.',true);return;}await supabase.auth.signOut();flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');});
+    document.querySelector('#password-update-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');if(!supabase){setStatus(status,'Configure o Supabase para alterar sua senha.',true);return;}const first=form.querySelector('#new-password').value;const second=form.querySelector('#new-password-confirm').value;if(first!==second){setStatus(status,'As senhas digitadas não coincidem.',true);return;}button.disabled=true;setStatus(status,'Salvando sua nova senha…');try{const {error}=await supabase.auth.updateUser({password:first});if(error){setStatus(status,authErrorMessage(error,'Não foi possível atualizar a senha. Solicite um link novo.'),true);return;}await supabase.auth.signOut();flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');}catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão ao salvar a senha. Tente novamente.'),true);}finally{button.disabled=false;}});
     return;
   }
   authShell('Recuperar senha','Informe o e-mail usado no cadastro. Se a conta existir, enviaremos um link.',`<form id="recovery-form" class="auth-form"><label for="recovery-email">E-mail</label><input id="recovery-email" type="email" autocomplete="email" required><button class="button button-primary" type="submit">Enviar link de recuperação</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p><p class="form-help">Se o e-mail não chegar, confira o spam e as configurações SMTP do projeto Supabase. O endereço cadastrado precisa estar confirmado.</p></form><div class="auth-links"><a href="/login">Voltar ao login</a></div>`);
-  document.querySelector('#recovery-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const email=form.querySelector('#recovery-email').value.trim();const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');if(!supabase){setStatus(status,'Configure o Supabase para ativar a recuperação.',true);return;}button.disabled=true;setStatus(status,'Solicitando link…');try{const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});if(error){const message=error.message||'';const hint=/rate limit|email rate|too many/i.test(message)?' O limite de envio de e-mails foi atingido; aguarde antes de tentar novamente.':/smtp|sending email|email provider/i.test(message)?' Confira Authentication → SMTP Settings e o provedor de e-mail.':'';setStatus(status,`O Supabase não conseguiu enviar o link: ${message}.${hint}`,true);}else setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings e confirme que este endereço está cadastrado.');}catch(error){setStatus(status,`Falha de conexão com o Supabase: ${error?.message||'verifique sua conexão e tente novamente.'}`,true);}finally{button.disabled=false;}});
+  document.querySelector('#recovery-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const email=form.querySelector('#recovery-email').value.trim();const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');if(!supabase){setStatus(status,'Configure o Supabase para ativar a recuperação.',true);return;}button.disabled=true;setStatus(status,'Solicitando link…');try{const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});if(error){setStatus(status,authErrorMessage(error,'O Supabase não conseguiu enviar o link. Confira o SMTP e tente novamente.'),true);}else setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings.');}catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão com o Supabase. Confira sua internet e tente novamente.'),true);}finally{button.disabled=false;}});
 }
 
 async function renderCallback() {
   replaceMain('Confirmando e-mail','<section class="auth-card"><h1>Confirmando seu e-mail…</h1><p id="callback-status" role="status">Aguarde enquanto validamos o link.</p></section>');
   const status=document.querySelector('#callback-status');if(!supabase){if(status)status.textContent='Configure o Supabase e reinicie o servidor.';return;}
-  const code=new URLSearchParams(location.search).get('code');
-  if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um link novo.',true);return;}}
-  const user=await getSignedUser();if(!user){setStatus(status,'Não encontramos uma sessão. Faça login ou solicite outro link.',true);return;}
-  const role=await getRole(user);flash('E-mail confirmado. Boas-vindas ao Diário dos BNs.');navigate(destination(role), true);
+  try {
+    const code=new URLSearchParams(location.search).get('code');
+    if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um link novo.',true);return;}}
+    const user=await getSignedUser();if(!user){setStatus(status,'Não encontramos uma sessão. Faça login ou solicite outro link.',true);return;}
+    const role=await getRole(user);flash('E-mail confirmado. Boas-vindas ao Diário dos BNs.');navigate(destination(role), true);
+  } catch(error) { setStatus(status,authErrorMessage(error,'Não foi possível confirmar o e-mail. Tente abrir o link novamente.'),true); }
 }
 
 function routeMessage(title,message,links='') { replaceMain(title,`<section class="auth-card"><div class="section-kicker">DIÁRIO DOS BNs</div><h1>${title}</h1><p>${message}</p>${links}</section>`); }

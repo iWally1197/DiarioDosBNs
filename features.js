@@ -39,7 +39,6 @@ function setupTeacherSignup() {
 function setupAuthMessages() {
   const signup = document.querySelector('#signup-form');
   const login = document.querySelector('#login-form');
-  const recovery = document.querySelector('#recovery-form');
   if (signup) {
     const status = signup.querySelector('#form-status');
     let actions = signup.querySelector('[data-signup-resend-wrap]');
@@ -69,7 +68,6 @@ function setupAuthMessages() {
       attachCountdown(actions.querySelector('[data-email-action]'), 'signup', 'Reenviar confirmação de e-mail');
     }
   }
-  if (recovery) attachCountdown(recovery.querySelector('button[type="submit"]'), 'recovery', 'Enviar link de recuperação');
 }
 
 async function sendConfirmation(button) {
@@ -177,25 +175,6 @@ document.addEventListener('click', async (event) => {
 
 document.addEventListener('submit', async (event) => {
   const form = event.target;
-  if (form && form.id === 'recovery-form') {
-    event.preventDefault(); event.stopImmediatePropagation();
-    if (!form.reportValidity()) return;
-    const submit = form.querySelector('button[type="submit"]');
-    const email = form.querySelector('input[type="email"]').value.trim();
-    const status = form.querySelector('#form-status');
-    if (!supabase) { statusText(status, 'Configure o Supabase para ativar a recuperação.', true); return; }
-    beginCooldown('recovery');
-    submit.disabled = true;
-    attachCountdown(submit, 'recovery', 'Enviar link de recuperação');
-    submit.dataset.countdownTimer = String(setInterval(() => attachCountdownUpdate(submit, 'recovery', 'Enviar link de recuperação'), 1000));
-    attachCountdownUpdate(submit, 'recovery', 'Enviar link de recuperação');
-    statusText(status, 'Solicitando link…');
-    const redirectTo = new URL('recuperar-senha.html?mode=update', document.baseURI).href;
-    let error = null;
-    try { ({ error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectTo })); }
-    catch (err) { error = err; }
-    statusText(status, error ? 'Não foi possível enviar agora. Confira o endereço, o SMTP do Supabase e aguarde 60 segundos antes de tentar novamente.' : 'Solicitação enviada. Confira a caixa de entrada e o spam. Se não chegar, confira o SMTP em Authentication → SMTP Settings.', Boolean(error));
-  }
   if (form && form.id === 'create-activity-form' && document.querySelector('#teacher-tools')) {
     event.preventDefault(); event.stopImmediatePropagation();
     const f = form, v = new FormData(f), note = f.querySelector('[role="status"]');
