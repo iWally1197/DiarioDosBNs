@@ -47,7 +47,7 @@ function send(res, status, contentType, body, extra = {}) {
 
 const server = createServer((req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  if (url.pathname === '/supabase-config.js') {
+  if (url.pathname === '/supabase-config.js' && config.SUPABASE_URL && config.SUPABASE_PUBLISHABLE_KEY) {
     const values = {
       url:config.SUPABASE_URL || '',
       publishableKey:config.SUPABASE_PUBLISHABLE_KEY || '',
@@ -75,5 +75,5 @@ const server = createServer((req, res) => {
 
 server.listen(port, host, () => {
   console.log(`Diário dos BNs disponível em http://${host}:${port}`);
-  if (!config.SUPABASE_URL || !config.SUPABASE_PUBLISHABLE_KEY) console.log('Supabase não configurado. Copie .env.example para .env.local e preencha os valores públicos do projeto.');
+  if (!config.SUPABASE_URL || !config.SUPABASE_PUBLISHABLE_KEY) console.log('Supabase lendo a configuração pública de supabase-config.js. Para substituir localmente, copie .env.example para .env.local.');
 });
