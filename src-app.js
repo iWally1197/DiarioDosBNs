@@ -26,13 +26,20 @@ const navigate = (path, replace=false) => {
 };
 document.addEventListener('click', (event) => {
   const link = event.target.closest('a[href^="/"]');
-  if (link) link.href = siteHref(link.getAttribute('href'));
+  if (link) {
+    const raw=link.getAttribute('href');
+    const resolvedPath=new URL(raw,document.baseURI).pathname;
+    if(siteRoot!=='/'&&resolvedPath.startsWith(siteRoot)&&/\.html$/i.test(resolvedPath))return;
+    link.href=siteHref(raw);
+  }
 }, true);
 const protectedRoutes = ['/aluno','/professor','/admin','/perfil'];
 const accountLabels = {aluno:'Aluno',professor:'Professor',admin:'Administrador'};
 const educationStages = ['Ensino Fundamental I','Ensino Fundamental II','Ensino Médio','Ensino Técnico','Ensino Superior','Pós-graduação','Outro'];
 const degreeLevels = ['Bacharelado','Licenciatura','Tecnólogo','Especialização','Mestrado acadêmico','Mestrado profissional','Doutorado acadêmico','Doutorado profissional','Ainda cursando graduação','Outro'];
 const higherEducationCourses = ['Administração','Agronomia','Análise e Desenvolvimento de Sistemas','Arquitetura e Urbanismo','Artes Visuais','Astronomia','Biblioteconomia','Biomedicina','Ciência da Computação','Ciência de Dados','Ciências Biológicas','Ciências Contábeis','Ciências Econômicas','Ciências Sociais','Cinema e Audiovisual','Design','Direito','Educação Física','Enfermagem','Engenharia Ambiental','Engenharia Biomédica','Engenharia Civil','Engenharia da Computação','Engenharia de Alimentos','Engenharia de Produção','Engenharia Elétrica','Engenharia Mecânica','Engenharia Química','Estatística','Farmácia','Filosofia','Física','Fisioterapia','Fonoaudiologia','Geografia','Geologia','História','Jornalismo','Letras','Matemática','Medicina','Medicina Veterinária','Meteorologia','Música','Nutrição','Odontologia','Pedagogia','Psicologia','Química','Relações Internacionais','Serviço Social','Sistemas de Informação','Sociologia','Teatro','Terapia Ocupacional','Turismo','Zootecnia','Outro curso (escrever abaixo)'];
+// Para fixar a transmissão para todos, cole aqui o link público da live no YouTube.
+const YOUTUBE_LIVE_URL = '';
 const stageOptions = (selected='') => educationStages.map((stage)=>`<option value="${safeText(stage)}" ${stage===selected?'selected':''}>${safeText(stage)}</option>`).join('');
 const degreeOptions = (selected='') => degreeLevels.map((degree)=>`<option value="${safeText(degree)}" ${degree===selected?'selected':''}>${safeText(degree)}</option>`).join('');
 const main = document.querySelector('main#conteudo');
@@ -391,18 +398,86 @@ async function hydrateAnimationDetails() {
 
 async function attachAuthNavigation() {
   const nav=document.querySelector('.site-header .nav');if(!nav)return;
-  document.querySelectorAll('.nav-account').forEach((link)=>{link.href=siteHref('/login');link.textContent='Entrar';});
+  let menu=nav.querySelector('[data-area-menu]');
+  if(!menu){
+    const old=nav.querySelector('.nav-account');
+    menu=document.createElement('details');menu.className='nav-area-menu nav-account';menu.dataset.areaMenu='true';
+    menu.innerHTML='<summary class="nav-area-toggle">Minha área</summary><div class="nav-area-panel"><a data-area-profile>Acessar perfil</a><a data-area-dashboard hidden></a><a data-area-login>Entrar na conta</a><a data-area-signup>Criar conta</a><button class="nav-signout" type="button" data-logout hidden>Sair da conta</button></div>';
+    if(old)old.replaceWith(menu);else nav.append(menu);
+  }
+  menu.querySelector('[data-area-profile]').href='/perfil/';
+  menu.querySelector('[data-area-login]').href='/login/';
+  menu.querySelector('[data-area-signup]').href='/cadastro/';
+  const setAccountMenu=(user,role)=>{
+    const dashboard=menu.querySelector('[data-area-dashboard]');
+    menu.querySelector('[data-area-login]').hidden=Boolean(user);
+    menu.querySelector('[data-area-signup]').hidden=Boolean(user);
+    menu.querySelector('[data-logout]').hidden=!user;
+    dashboard.hidden=!user||!role;
+    if(user&&role){dashboard.href=destination(role)+'/';dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');}
+  };
+  setAccountMenu(null,null);
   if(!supabase){document.documentElement.classList.add('auth-nav-ready');return;}
   try {
     const {data,error}=await supabase.auth.getSession();if(error)throw error;
     if(data.session){
-      if(protectedRoutes.includes(route))nav.replaceChildren();
-      else nav.innerHTML=`<a class="nav-profile" href="${siteHref('/perfil/')}">Acessar perfil</a><button class="nav-signout" type="button" data-logout>Sair da conta</button>`;
+      const role=await getRole(data.session.user).catch(()=>null);
+      setAccountMenu(data.session.user,role);
       wireLogout();
     }
-  } catch {
-    nav.querySelectorAll('.nav-account').forEach((link)=>{link.href=siteHref('/login');link.textContent='Entrar';});
-  } finally { document.documentElement.classList.add('auth-nav-ready'); }
+  } catch {} finally { document.documentElement.classList.add('auth-nav-ready'); }
+}
+
+function youtubeLiveMarkup(raw,title='Transmissão ao vivo do Diário dos BNs') {
+  if(!raw)return '';
+  try {
+    const url=new URL(raw);
+    if(url.protocol!=='https:'||!(url.hostname==='youtu.be'||url.hostname==='youtube.com'||url.hostname.endsWith('.youtube.com')||url.hostname==='youtube-nocookie.com'||url.hostname.endsWith('.youtube-nocookie.com')))return '';
+    const parts=url.pathname.split('/').filter(Boolean);
+    const id=url.hostname==='youtu.be'?parts[0]:url.searchParams.get('v')||parts.at(-1);
+    if(!/^[A-Za-z0-9_-]{6,20}$/.test(id||''))return '';
+    return `<iframe class="youtube-embed" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" title="${safeText(title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+  } catch { return ''; }
+}
+
+async function renderClassroomHub() {
+  document.title='Turmas e atividades — Diário dos BNs';
+  replaceMain('Turmas e atividades',`<section class="classroom-hub-hero section-wrap"><div class="section-kicker">APRENDER EM GRUPO</div><h1>Turmas, atividades <span>e encontros.</span></h1><p>Veja suas turmas, acompanhe as atividades compartilhadas e assista às transmissões do projeto em um só lugar.</p><a class="button button-primary" href="#minhas-turmas">Ver minhas turmas <span aria-hidden="true">↓</span></a></section><section class="classroom-hub-section section-wrap" id="minhas-turmas"><div class="section-heading"><div><div class="section-kicker">ESPAÇO DE APRENDIZAGEM</div><h2>Minhas <span>turmas</span></h2></div><p>Os dados da turma aparecem apenas para quem tem acesso àquela turma.</p></div><div id="classroom-hub-list" class="db-grid" aria-live="polite"><p role="status">Carregando suas turmas…</p></div></section><section class="classroom-hub-section section-wrap"><div class="section-heading"><div><div class="section-kicker">ACOMPANHAMENTO</div><h2>Atividades <span>compartilhadas</span></h2></div><p>As atividades são exibidas conforme as permissões e sua participação nas turmas.</p></div><div id="classroom-hub-activities" class="db-grid" aria-live="polite"><p role="status">Carregando atividades…</p></div></section><section class="live-class-section section-wrap" aria-labelledby="live-class-title"><div class="section-heading"><div><div class="section-kicker">ENCONTROS AO VIVO</div><h2 id="live-class-title">Aula ao <span>vivo</span></h2></div><p>Quando houver transmissão, você poderá assistir sem sair do Diário dos BNs.</p></div><div id="live-class-player" class="live-class-player"></div></section>`);
+  const classesRoot=document.querySelector('#classroom-hub-list');
+  const activitiesRoot=document.querySelector('#classroom-hub-activities');
+  const player=document.querySelector('#live-class-player');
+  const liveMarkup=youtubeLiveMarkup(YOUTUBE_LIVE_URL);
+  player.innerHTML=liveMarkup||`<div class="live-class-empty"><span aria-hidden="true">◉</span><h3>Espaço reservado para a transmissão</h3><p>Para exibir uma live para todos, cole o link público do YouTube na constante <code>YOUTUBE_LIVE_URL</code> no arquivo <code>src-app.js</code>. Use um endereço como <code>https://www.youtube.com/watch?v=ID_DO_VIDEO</code>.</p><form id="live-class-preview-form" class="live-class-preview-form"><label for="live-class-preview-url">Pré-visualizar um link do YouTube</label><div><input id="live-class-preview-url" name="url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" required><button class="button button-outline" type="submit">Carregar vídeo</button></div><p class="form-help" role="status" aria-live="polite">A pré-visualização vale para esta visita. Para publicar a transmissão no site, configure o link no arquivo indicado acima.</p></form></div>`;
+  document.querySelector('#live-class-preview-form')?.addEventListener('submit',(event)=>{event.preventDefault();const form=event.currentTarget;const note=form.querySelector('[role="status"]');const markup=youtubeLiveMarkup(form.elements.url.value.trim());if(!markup){setStatus(note,'Cole um link público válido de vídeo ou transmissão do YouTube.',true);return;}player.innerHTML=markup;player.scrollIntoView({behavior:'smooth',block:'center'});});
+  if(!supabaseReady){classesRoot.innerHTML=configureNotice;activitiesRoot.innerHTML='<p>As atividades aparecem depois que o Supabase estiver configurado.</p>';return;}
+  try {
+    const user=await getSignedUser();
+    if(!user){classesRoot.innerHTML='<aside class="auth-notice"><strong>Entre na sua conta para ver suas turmas</strong><p>Os nomes das turmas e suas atividades são privados. Faça login para consultar o conteúdo ao qual você tem acesso.</p><a class="button button-primary" href="/login/">Entrar na conta</a> <a class="text-link" href="/cadastro/">Criar conta</a></aside>';activitiesRoot.innerHTML='<p>Depois de entrar, as atividades das suas turmas aparecem aqui.</p>';return;}
+    const role=await getRole(user);
+    if(!role||role.status==='blocked'){classesRoot.innerHTML='<p role="alert">Não foi possível validar o perfil desta conta. Atualize a página ou procure o responsável pelo site.</p>';activitiesRoot.replaceChildren();return;}
+    if(role.role==='professor'&&role.status!=='active'){classesRoot.innerHTML='<aside class="auth-notice"><strong>Cadastro de professor em análise</strong><p>As turmas e ferramentas docentes ficam disponíveis após a aprovação da conta.</p></aside>';activitiesRoot.replaceChildren();return;}
+    let classQuery;
+    if(role.role==='aluno') classQuery=supabase.from('student_classrooms').select('classroom_id,joined_at,classrooms(id,name,description,discipline,grade_level,status)').eq('user_id',user.id).order('joined_at',{ascending:false});
+    else if(role.role==='professor') classQuery=supabase.from('teacher_classrooms').select('classroom_id,classrooms(id,name,description,discipline,grade_level,status)').eq('user_id',user.id);
+    else classQuery=supabase.from('classrooms').select('id,name,description,discipline,grade_level,status,created_at').order('created_at',{ascending:false});
+    const [classResult,activityResult]=await Promise.all([classQuery,supabase.from('classroom_activities').select('classroom_id,activity_id,due_at,activities(id,title,subject,description,is_published,approval_status),classrooms(name)').order('created_at',{ascending:false})]);
+    if(classResult.error){classesRoot.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível carregar as turmas</strong><p>${safeText(classResult.error.message)}. Confira as migrações e as permissões do Supabase.</p></aside>`;}
+    else {
+      const rows=classResult.data||[];
+      const cards=rows.map((row)=>{const classroom=row.classrooms||row;const id=classroom.id||row.classroom_id;return `<article class="db-card classroom-hub-card"><span class="lesson-tag">${safeText(classroom.discipline||classroom.grade_level||'Turma')}</span><h3>${safeText(classroom.name||'Turma')}</h3><p>${safeText(classroom.description||'Acesse os conteúdos, comunicados e atividades desta turma.')}</p><a class="button button-outline" href="turma.html?id=${encodeURIComponent(id)}">Acessar turma <span aria-hidden="true">→</span></a></article>`;}).join('');
+      const empty=role.role==='aluno'?'<p>Você ainda não entrou em uma turma. Abra sua área do aluno e use o código recebido do professor.</p><a class="text-link" href="/aluno/">Ir para minha área de estudos →</a>':role.role==='professor'?'<p>Nenhuma turma está vinculada ao seu perfil. Peça ao administrador para criar ou vincular uma turma.</p>':'<p>Não há turmas cadastradas. Você pode criar e organizar turmas no painel administrativo.</p><a class="text-link" href="/admin/">Abrir painel administrativo →</a>';
+      classesRoot.innerHTML=cards||empty;
+    }
+    if(activityResult.error) activitiesRoot.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível carregar as atividades</strong><p>${safeText(activityResult.error.message)}</p></aside>`;
+    else {
+      const assignments=(activityResult.data||[]).filter((item)=>item.activities);
+      const cards=assignments.map((item)=>{const activity=item.activities;const deadline=item.due_at?new Date(item.due_at).toLocaleString('pt-BR',{dateStyle:'medium',timeStyle:'short'}):'Sem prazo informado';return `<article class="db-card"><span class="lesson-tag">${safeText(item.classrooms?.name||'Turma')} · ${safeText(activity.subject||'Atividade')}</span><h3>${safeText(activity.title||'Atividade')}</h3><p>${safeText(activity.description||'Acesse a página da turma para ver as instruções e responder.')}</p><p class="form-help">Prazo: ${safeText(deadline)}</p><a class="text-link" href="turma.html?id=${encodeURIComponent(item.classroom_id)}">Abrir turma e atividade →</a></article>`;}).join('');
+      activitiesRoot.innerHTML=cards||'<p>Nenhuma atividade foi compartilhada com as turmas vinculadas a esta conta.</p>';
+    }
+  } catch(error) {
+    classesRoot.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível consultar as turmas</strong><p>${safeText(error?.message||'Confira sua conexão e tente novamente.')}</p></aside>`;
+    activitiesRoot.replaceChildren();
+  }
 }
 
 async function syncLegacyFavorite(event) {
@@ -435,5 +510,6 @@ if (main) {
   else if (isAuthEntry) renderAuthEntry();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
+  else if (route==='/turmas') renderClassroomHub();
   else if (protectedRoutes.includes(route)) protectRoute();
 }

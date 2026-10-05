@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base href="./">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Acesse suas turmas, atividades e encontros de Física do Diário dos BNs.">
+  <title>Turmas e atividades — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="index.html">Início</a><a href="index.html#animacoes">Física</a><a href="turmas.html" aria-current="page">Turmas</a><a href="downloads.html">Downloads</a><a href="blender.html">Aprenda Blender</a><a class="nav-account" href="login.html">Minha área</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+  <main id="conteudo" class="classroom-hub-main">
+    <section class="classroom-hub-hero section-wrap"><div class="section-kicker">APRENDER EM GRUPO</div><h1>Turmas, atividades <span>e encontros.</span></h1><p>Veja suas turmas, acompanhe as atividades compartilhadas e assista às transmissões do projeto em um só lugar.</p><a class="button button-primary" href="#minhas-turmas">Ver minhas turmas <span aria-hidden="true">↓</span></a></section>
+    <section class="classroom-hub-section section-wrap" id="minhas-turmas"><div class="section-heading"><div><div class="section-kicker">ESPAÇO DE APRENDIZAGEM</div><h2>Minhas <span>turmas</span></h2></div><p>Os dados da turma aparecem apenas para quem tem acesso àquela turma.</p></div><div id="classroom-hub-list" class="db-grid" aria-live="polite"><p role="status">Carregando suas turmas…</p></div></section>
+    <section class="classroom-hub-section section-wrap"><div class="section-heading"><div><div class="section-kicker">ACOMPANHAMENTO</div><h2>Atividades <span>compartilhadas</span></h2></div><p>As atividades são exibidas conforme as permissões e sua participação nas turmas.</p></div><div id="classroom-hub-activities" class="db-grid" aria-live="polite"><p role="status">Carregando atividades…</p></div></section>
+    <section class="live-class-section section-wrap" aria-labelledby="live-class-title"><div class="section-heading"><div><div class="section-kicker">ENCONTROS AO VIVO</div><h2 id="live-class-title">Aula ao <span>vivo</span></h2></div><p>Quando houver transmissão, você poderá assistir sem sair do Diário dos BNs.</p></div><div id="live-class-player" class="live-class-player"></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Turmas, atividades e Física em 3D.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><a href="termos.html">Termos de uso</a><a href="privacidade.html">Privacidade</a></div></footer>
+  <script src="script.js" defer></script>
+  <script type="module" src="src-app.js"></script>
+</body>
+</html>
