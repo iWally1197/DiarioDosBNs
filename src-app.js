@@ -1,4 +1,4 @@
-import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js';
+import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js?v=conta-solta-20261005-3';
 
 // Load the shared accessibility controls on every page that uses the app module.
 if (!document.querySelector('script[data-diario-accessibility]')) {
@@ -69,7 +69,7 @@ function replaceMain(title, content) {
   if (!main) return;
   document.title = `${title} — Diário dos BNs`;
   main.innerHTML = `<div class="auth-page section-wrap">${content}</div>`;
-  document.querySelectorAll('.nav-account').forEach((link) => { link.href='/perfil'; link.textContent='Minha área'; });
+  main.dataset.diarioAuthReady = 'true';
 }
 
 async function getSignedUser() {
@@ -508,26 +508,36 @@ async function hydrateAnimationDetails() {
 
 async function attachAuthNavigation() {
   const nav=document.querySelector('.site-header .nav');if(!nav)return;
-  let menu=nav.querySelector('[data-area-menu]');
-  if(!menu){
-    const old=nav.querySelector('.nav-account');
-    menu=document.createElement('details');menu.className='nav-area-menu nav-account';menu.dataset.areaMenu='true';
-    menu.innerHTML='<summary class="nav-area-toggle">Minha área</summary><div class="nav-area-panel"><a data-area-profile>Acessar perfil</a><a data-area-dashboard hidden></a><a data-area-login>Entrar na conta</a><a data-area-signup>Criar conta</a><button class="nav-signout" type="button" data-logout hidden>Sair da conta</button></div>';
-    if(old)old.replaceWith(menu);else nav.append(menu);
+  let links=nav.querySelector('[data-account-links]');
+  if(!links){
+    const oldItems=[...nav.querySelectorAll('.nav-account,[data-area-menu]')];
+    links=document.createElement('div');links.className='nav-account nav-account-links';links.dataset.accountLinks='true';
+    links.innerHTML='<a data-account-link data-area-profile href="/perfil/">Perfil</a><a data-account-link data-area-dashboard hidden></a><a data-account-link data-area-login href="/login/">Entrar</a><a data-account-link data-area-signup href="/cadastro/">Criar conta</a><button class="nav-signout" type="button" data-logout hidden>Sair</button>';
+    if(oldItems.length){oldItems[0].replaceWith(links);oldItems.slice(1).forEach((item)=>item.remove());}
+    else nav.append(links);
   }
-  menu.querySelector('[data-area-profile]').href='/perfil/';
-  menu.querySelector('[data-area-login]').href='/login/';
-  menu.querySelector('[data-area-signup]').href='/cadastro/';
+  const profile=links.querySelector('[data-area-profile]');
+  const dashboard=links.querySelector('[data-area-dashboard]');
+  const login=links.querySelector('[data-area-login]');
+  const signup=links.querySelector('[data-area-signup]');
+  const logout=links.querySelector('[data-logout]');
+  profile.href='/perfil/';login.href='/login/';signup.href='/cadastro/';
   const setAccountMenu=(user,role)=>{
-    const dashboard=menu.querySelector('[data-area-dashboard]');
-    menu.querySelector('[data-area-login]').hidden=Boolean(user);
-    menu.querySelector('[data-area-signup]').hidden=Boolean(user);
-    menu.querySelector('[data-logout]').hidden=!user;
-    dashboard.hidden=!user||!role;
+    login.hidden=Boolean(user);
+    signup.hidden=Boolean(user);
+    logout.hidden=!user;
+    dashboard.hidden=!user||!role||role.status==='blocked';
     if(user&&role){dashboard.href=destination(role)+'/';dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');}
   };
   setAccountMenu(null,null);
   document.documentElement.classList.add('auth-nav-ready');
+  if(!nav.dataset.accountLinksBound){
+    nav.dataset.accountLinksBound='true';
+    nav.addEventListener('click',(event)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('[data-account-link],[data-logout]'))return;
+      nav.classList.remove('is-open');document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');
+    });
+  }
   await supabasePromise;
   if(!supabase)return;
   try {
@@ -612,7 +622,7 @@ async function syncLegacyFavorite(event) {
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
-import('./features.js').catch(()=>{});
+import('./features.js?v=conta-solta-20261005-3').catch(()=>{});
 
 if (main) {
   attachAuthNavigation();

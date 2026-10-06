@@ -1,4 +1,4 @@
-import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js';
+import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js?v=conta-solta-20261005-3';
 
 const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statusText = (node, text, error) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
@@ -784,7 +784,7 @@ async function loadClassroom(root) {
     return '<article class="db-card"><h3>' + esc(lesson.title) + '</h3><p>' + esc(lesson.body) + '</p>' + editor + '</article>';
   }).join('');
   const tabs = [['lessons','Aulas'],['activities','Atividades'],['resources','Materiais'],['announcements','Avisos'],['participants','Participantes'],['progress','Progresso']];
-  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? 'professor.html' : isAdmin ? 'admin.html' : 'aluno.html') + '">Minha área</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
+  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? 'professor.html' : isAdmin ? 'admin.html' : 'aluno.html') + '">Voltar ao painel</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
     (isAdmin || isTeacher ? '<p class="auth-notice">Código da turma: <strong>' + esc(c.join_code) + '</strong> · ' + (c.join_code_enabled ? 'ativo' : 'desativado') + '</p>' : '') +
     '<div class="classroom-tabs" role="tablist" aria-label="Conteúdo da turma">' + tabs.map((t, i) => '<button type="button" role="tab" id="tab-' + t[0] + '" aria-controls="panel-' + t[0] + '" aria-selected="' + (i === 0) + '" tabindex="' + (i === 0 ? '0' : '-1') + '" data-class-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' +
     '<div id="panel-lessons" role="tabpanel" aria-labelledby="tab-lessons"><h2>Aulas</h2><div class="db-grid">' + (lessonCards || '<p>As aulas desta turma serão publicadas aqui.</p>') + '</div>' +
