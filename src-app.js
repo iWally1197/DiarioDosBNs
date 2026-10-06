@@ -1,5 +1,4 @@
 import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js';
-import './features.js';
 
 // Load the shared accessibility controls on every page that uses the app module.
 if (!document.querySelector('script[data-diario-accessibility]')) {
@@ -248,8 +247,8 @@ async function loadLearningWorkspace(root,user,role) {
   const [favorites,animations,downloads,progress,activities,courses]=await Promise.all([favoritesPromise,animationsPromise,downloadsPromise,progressPromise,activitiesPromise,coursesPromise]);
   const dataErrors=[favorites,animations,downloads,progress,activities,courses].filter((result)=>result.error).map((result)=>result.error.message);
   const anims=animations.data||[], favIds=new Set((favorites.data||[]).map((item)=>item.animation_id));
-  const animationCards=anims.map((item)=>`<article class="db-card"><span class="lesson-tag">${safeText(item.topic)}</span><h3>${safeText(item.title)}</h3><p>${safeText(item.summary||'Animação de apoio para estudar Física.')}</p><div class="db-card-actions"><a href="/animacao.html?topico=${encodeURIComponent(item.slug.split('--')[0]||'')}&amp;animacao=${encodeURIComponent(item.slug.split('--')[1]||'')}">Detalhes</a><button type="button" data-db-favorite="${item.id}" aria-pressed="${favIds.has(item.id)}">${favIds.has(item.id)?'★ Salva':'☆ Favoritar'}</button></div></article>`).join('')||'<p>Nenhuma animação publicada ainda. A biblioteca está disponível na página inicial.</p>';
-  const favoriteCards=(favorites.data||[]).map((item)=>`<li><a href="/animacao.html?topico=${encodeURIComponent(item.animations?.slug?.split('--')[0]||'')}&amp;animacao=${encodeURIComponent(item.animations?.slug?.split('--')[1]||'')}">${safeText(item.animations?.title||'Animação')}</a><button type="button" data-db-favorite="${item.animation_id}" aria-pressed="true">Remover</button></li>`).join('')||'<li>Ainda não há favoritas.</li>';
+  const animationCards=anims.map((item)=>`<article class="db-card"><span class="lesson-tag">${safeText(item.topic)}</span><h3>${safeText(item.title)}</h3><p>${safeText(item.summary||'Conteúdo de apoio para estudar Física.')}</p><div class="db-card-actions"><a href="/topico.html?topico=${encodeURIComponent(item.slug.split('--')[0]||'')}">Ver conceitos</a><button type="button" data-db-favorite="${item.id}" aria-pressed="${favIds.has(item.id)}">${favIds.has(item.id)?'★ Salva':'☆ Favoritar'}</button></div></article>`).join('')||'<p>A biblioteca de conceitos está disponível na página inicial.</p>';
+  const favoriteCards=(favorites.data||[]).map((item)=>`<li><a href="/topico.html?topico=${encodeURIComponent(item.animations?.slug?.split('--')[0]||'')}">${safeText(item.animations?.topic||'Ver assunto de Física')}</a><button type="button" data-db-favorite="${item.animation_id}" aria-pressed="true">Remover</button></li>`).join('')||'<li>Ainda não há favoritas.</li>';
   const progressRows=(progress.data||[]).map((item)=>`<li>${safeText(item.lessons?.courses?.title||'Curso')}: ${safeText(item.lessons?.title||'Aula')} ${item.completed_at?'· concluída':'· em andamento'}</li>`).join('')||'<li>Seu progresso de cursos aparecerá aqui.</li>';
   const progressByLesson=new Map((progress.data||[]).map((item)=>[item.lesson_id,item]));
   const courseCards=(courses.data||[]).map((course)=>`<article class="db-card"><h3>${safeText(course.title)}</h3><p>${safeText(course.description||'')}</p><ol>${(course.lessons||[]).sort((a,b)=>a.position-b.position).map((lesson)=>{const done=Boolean(progressByLesson.get(lesson.id)?.completed_at);return `<li><b>${safeText(lesson.title)}</b><p>${safeText(lesson.body||'')}</p>${videoMarkup(lesson.video_url,lesson.title)}<button type="button" data-mark-lesson="${lesson.id}" data-completed="${done}">${done?'Concluída — desfazer':'Marcar como concluída'}</button></li>`;}).join('')||'<li>Aulas em preparação.</li>'}</ol></article>`).join('')||'<p>Nenhum curso Blender publicado ainda.</p>';
@@ -427,7 +426,6 @@ async function hydrateAnimationDetails() {
 
 async function attachAuthNavigation() {
   await supabasePromise;
-  await supabasePromise;
   const nav=document.querySelector('.site-header .nav');if(!nav)return;
   let menu=nav.querySelector('[data-area-menu]');
   if(!menu){
@@ -545,3 +543,9 @@ if (main) {
   else if (route==='/turmas') renderClassroomHub();
   else if (protectedRoutes.includes(route)) protectRoute();
 }
+
+// Optional page enhancements must not prevent login and signup from appearing.
+// Load them only after the main page router has rendered its initial content.
+import('./features.js').catch((error) => {
+  console.error('Os recursos adicionais não foram carregados:', error);
+});
