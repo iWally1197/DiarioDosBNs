@@ -24,7 +24,8 @@
   const themeButton = document.querySelector('.theme-toggle');
   const themeLabel = document.querySelector('.theme-label');
   const themeIcon = document.querySelector('.theme-icon');
-  const stored = localStorage.getItem('diario-bns-theme');
+  let stored = null;
+  try { stored = localStorage.getItem('diario-bns-theme'); } catch {}
   const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   const setTheme = (theme) => {
     root.dataset.theme = theme;
@@ -38,7 +39,7 @@
   themeButton?.addEventListener('click', () => {
     const next = root.dataset.theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    localStorage.setItem('diario-bns-theme', next);
+    try { localStorage.setItem('diario-bns-theme', next); } catch {}
   });
 
   const toggle = document.querySelector('.menu-toggle');
@@ -101,8 +102,8 @@
         return `
         <article class="topic-animation-card" id="animacao-${filename}">
           <div class="topic-animation-index">${String(i + 1).padStart(2, '0')}</div>
-          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO BLENDER</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="animacao.html?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: animacoes-3d/downloads-${topic.id}-${filename}.blend</span></div>
-          <div class="animation-actions"><button class="favorite-toggle" type="button" data-favorite-topic="${topic.id}" data-favorite-file="${filename}" aria-pressed="${saved}" aria-label="${saved ? 'Remover dos favoritos' : 'Salvar como favorita'}: ${title}">${saved ? '★ Favorita' : '☆ Salvar favorita'}</button><a class="blend-download" href="animacoes-3d/downloads-${topic.id}-${filename}.blend" download aria-label="Baixar projeto Blender: ${title}">Baixar projeto <span>.blend</span><b aria-hidden="true">↓</b></a></div>
+          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO BLENDER</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="animacao.html?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: downloads-${topic.id}-${filename}.blend</span></div>
+          <div class="animation-actions"><button class="favorite-toggle" type="button" data-favorite-topic="${topic.id}" data-favorite-file="${filename}" aria-pressed="${saved}" aria-label="${saved ? 'Remover dos favoritos' : 'Salvar como favorita'}: ${title}">${saved ? '★ Favorita' : '☆ Salvar favorita'}</button><a class="blend-download" href="downloads-${topic.id}-${filename}.blend" download aria-label="Baixar projeto Blender: ${title}">Baixar projeto <span>.blend</span><b aria-hidden="true">↓</b></a></div>
         </article>`;
       }).join('');
       topicPage.innerHTML = `

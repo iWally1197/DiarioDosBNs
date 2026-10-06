@@ -1,6 +1,5 @@
--- Antes desta migração, crie no Dashboard um bucket chamado “downloads”
--- com Public bucket desativado. Arquivos públicos do site continuam na raiz;
--- materiais exclusivos devem existir somente neste bucket privado.
+-- Repara e reaplica as regras do bucket privado de downloads sem apagar arquivos.
+-- Execute como uma migration nova; não reexecute a migration core já aplicada.
 begin;
 
 insert into storage.buckets(id,name,public)
@@ -34,4 +33,5 @@ create policy "Administrators can delete private download files"
 on storage.objects for delete to authenticated
 using (bucket_id='downloads' and public.is_admin());
 
+notify pgrst, 'reload schema';
 commit;

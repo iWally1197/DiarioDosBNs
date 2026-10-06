@@ -1,5 +1,4 @@
-import { supabase, supabaseReady } from './src-supabase.js';
-import './features.js';
+import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js';
 
 // Load the shared accessibility controls on every page that uses the app module.
 if (!document.querySelector('script[data-diario-accessibility]')) {
@@ -46,6 +45,22 @@ const main = document.querySelector('main#conteudo');
 const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeText = (value) => escapeHtml(value).replace(/`/g,'&#96;');
 const setStatus = (node, text, error=false) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
+function validateAuthForm(form, status) {
+  if (form.checkValidity()) return true;
+  const field = form.querySelector(':invalid');
+  const label = field?.labels?.[0]?.textContent?.replace(/\* obrigatório/g, '').trim();
+  setStatus(status, label ? `Confira este campo: ${label}` : 'Confira os campos obrigatórios destacados antes de enviar.', true);
+  field?.focus();
+  return false;
+}
+const authErrorMessage = (error, fallback) => {
+  const message = String(error?.message || '');
+  if (/failed to fetch|networkerror|fetch failed|load failed/i.test(message)) return 'Não foi possível conectar ao Supabase. Confira a conexão com a internet e a URL do projeto em supabase-config.js.';
+  if (/email not confirmed/i.test(message)) return 'Confirme seu e-mail pelo link enviado antes de entrar.';
+  if (/redirect.*(url|allow|valid)|requested path is invalid/i.test(message)) return 'O Supabase bloqueou o endereço de retorno. Adicione a URL do site em Authentication → URL Configuration.';
+  if (/database error|trigger|user_roles|profiles/i.test(message)) return `O banco do Supabase não concluiu esta ação. Confira se as migrações foram executadas. Detalhe: ${message}`;
+  return message ? `${fallback} Detalhe: ${message}` : fallback;
+};
 const flash = (text) => { try { sessionStorage.setItem('diario-bns-flash', text); } catch {} };
 const takeFlash = () => { try { const text=sessionStorage.getItem('diario-bns-flash');sessionStorage.removeItem('diario-bns-flash');return text||''; } catch { return ''; } };
 const configureNotice = `<aside class="auth-notice" role="status"><strong>Supabase ainda não configurado</strong><p>Confira a configuração pública do Supabase em <code>supabase-config.js</code> e siga as instruções de instalação do projeto.</p><a href="/README.md">Abrir instruções</a></aside>`;
@@ -58,7 +73,11 @@ function replaceMain(title, content) {
 }
 
 async function getSignedUser() {
-  if (!supabase) return null;
+  await supabasePromise;
+  if (!supabase) {
+    if (supabaseReady) throw new Error(supabaseLoadError || 'Não foi possível carregar o serviço de login.');
+    return null;
+  }
   const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   if (!sessionData.session) return null;
@@ -90,28 +109,30 @@ function authShell(title, description, inner) {
 
 function renderLogin() {
   authShell('Fazer login','Entre com o e-mail e a senha da sua conta.',`<form id="login-form" class="auth-form"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required><label for="login-password">Senha</label><input id="login-password" name="password" type="password" autocomplete="current-password" required><button class="button button-primary" type="submit">Entrar</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a><a class="button button-primary signup-cta" href="/cadastro">Criar conta</a></div>`);
-  document.querySelector('#login-form')?.addEventListener('submit',async(event)=>{
+  const loginForm=document.querySelector('#login-form');
+  if(loginForm) loginForm.noValidate=true;
+  loginForm?.addEventListener('submit',async(event)=>{
     event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
-    if(!supabase){setStatus(status,'Configure o Supabase para ativar o login.',true);return;}
+    if(!validateAuthForm(form,status))return;
     button.disabled=true;setStatus(status,'Verificando seus dados…');
     try {
+      await supabasePromise;
+      if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o login.',true);return;}
       const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
-      if(error){setStatus(status,error.message==='Email not confirmed'?'Confirme seu e-mail pelo link enviado antes de entrar.':'Não foi possível entrar. Confira o e-mail e a senha.',true);return;}
+      if(error){setStatus(status,authErrorMessage(error,'Não foi possível entrar. Confira o e-mail e a senha.'),true);return;}
       const role=await getRole(data.user);
-      if(!role||role.status==='blocked'){await supabase.auth.signOut().catch(()=>{});setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);return;}
+      if(!role||role.status==='blocked'){await supabase.auth.signOut();setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);return;}
       navigate(destination(role));
     } catch(err) {
-      setStatus(status,`Não foi possível concluir o login. ${err?.message||'Confira sua conexão e tente novamente.'}`,true);
-    } finally {
-      button.disabled=false;
-      button.removeAttribute('aria-busy');
-    }
+      setStatus(status,authErrorMessage(err,`Conta autenticada, mas não foi possível consultar o perfil: ${err?.message||''}`),true);
+    } finally { button.disabled=false; }
   });
 }
 
 function renderSignup() {
   authShell('Criar conta','Escolha o tipo de conta e informe sua etapa de ensino ou formação. Contas de administrador são configuradas pelo proprietário, fora do cadastro público.',`<form id="signup-form" class="auth-form"><label for="signup-name">Nome</label><input id="signup-name" name="name" autocomplete="name" maxlength="100" required><label for="signup-email">E-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required><label for="signup-age-range">Faixa etária</label><select id="signup-age-range" name="age_range" required><option value="">Selecione sua faixa etária</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option></select><small>Informamos apenas uma faixa etária, não a data de nascimento. Estudantes menores de idade devem realizar o cadastro com apoio de um responsável.</small><label for="signup-password">Senha</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres. O Supabase Auth armazena a credencial com hash.</small><label for="signup-confirm">Confirmação de senha</label><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><label for="signup-role">Tipo de conta</label><select id="signup-role" name="role"><option value="aluno">Aluno</option><option value="professor">Professor · aprovação pendente</option></select><fieldset id="student-education-fields" class="signup-fieldset"><legend>Etapa de ensino do aluno</legend><label for="signup-education-level">Etapa de ensino</label><select id="signup-education-level" name="education_level" required><option value="">Selecione sua etapa</option>${stageOptions()}</select><label for="signup-education-detail">Ano, série ou período <span>(opcional)</span></label><input id="signup-education-detail" name="education_detail" maxlength="100" placeholder="Ex.: 8º ano, 2º ano, 3º semestre"></fieldset><fieldset id="teacher-education-fields" class="signup-fieldset" hidden><legend>Formação do professor</legend><label for="signup-degree-level">Titulação ou etapa da formação</label><select id="signup-degree-level" name="teacher_degree_level">${degreeOptions()}</select><label for="signup-degree-program">Curso / área de formação</label><input id="signup-degree-program" name="teacher_degree_program" list="teacher-course-options" maxlength="160" placeholder="Escolha ou digite seu curso"><datalist id="teacher-course-options">${higherEducationCourses.map((course)=>`<option value="${safeText(course)}">`).join('')}</datalist><label for="signup-institution">Faculdade ou instituição <span>(opcional)</span></label><input id="signup-institution" name="teacher_institution" maxlength="160" placeholder="Nome da instituição"></fieldset><details class="accessibility-signup" id="signup-accessibility"><summary>Personalize sua experiência <span>(opcional)</span></summary><p>Estas informações são opcionais. Elas ficam apenas neste navegador, não são enviadas ao Supabase e não aparecem para professores ou outros estudantes. Em aparelhos compartilhados, prefira não informar condições pessoais.</p><fieldset><legend>Como você prefere personalizar sua experiência?</legend><label><input type="radio" name="a11y-profile" value="neurotypical"> Neurotípico</label><label><input type="radio" name="a11y-profile" value="neurodivergent"> Neurodivergente</label><label><input type="radio" name="a11y-profile" value="prefer-not"> Prefiro não informar</label></fieldset><fieldset id="signup-accessibility-conditions" hidden><legend>Quais características ou condições você gostaria de usar para personalizar a experiência? (opcional, múltipla escolha)</legend><p>Esta lista não é uma classificação médica universal. Não fazemos diagnósticos nem inferimos condições.</p><strong>Neurodesenvolvimento e aprendizagem</strong><label><input type="checkbox" name="a11y-conditions" value="TEA"> Transtorno do Espectro Autista (TEA)</label><label><input type="checkbox" name="a11y-conditions" value="TDAH"> TDAH</label><label><input type="checkbox" name="a11y-conditions" value="Dislexia"> Dislexia</label><label><input type="checkbox" name="a11y-conditions" value="Discalculia"> Discalculia</label><label><input type="checkbox" name="a11y-conditions" value="Disgrafia"> Disgrafia</label><label><input type="checkbox" name="a11y-conditions" value="Dispraxia / coordenação"> Dispraxia / Transtorno do Desenvolvimento da Coordenação</label><label><input type="checkbox" name="a11y-conditions" value="Desenvolvimento da linguagem"> Transtorno do Desenvolvimento da Linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outro perfil de aprendizagem"> Outros perfis relacionados à aprendizagem</label><strong>Comunicação e linguagem</strong><label><input type="checkbox" name="a11y-conditions" value="Dificuldades específicas de linguagem"> Dificuldades específicas de linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Processamento da linguagem"> Dificuldades de processamento da linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição de linguagem"> Outras</label><strong>Outras características</strong><label><input type="checkbox" name="a11y-conditions" value="Tourette"> Síndrome de Tourette</label><label><input type="checkbox" name="a11y-conditions" value="Transtornos específicos de aprendizagem"> Transtornos específicos de aprendizagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição ou característica"> Outras condições ou características</label><label for="signup-a11y-other">Outra — especificar (opcional)</label><input id="signup-a11y-other" name="a11y-other" maxlength="120"><label><input type="checkbox" name="a11y-conditions" value="prefer-not"> Prefiro não informar</label></fieldset><small>Você pode alterar ou apagar essa escolha na Central de Acessibilidade. Os controles visuais e de leitura podem ser usados independentemente dessas respostas.</small></details><label class="consent-check"><input type="checkbox" name="consent" required><span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label><button class="button button-primary" type="submit">Criar conta</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/login">Já tenho uma conta</a></div><aside class="auth-note"><strong>Cadastro de professor</strong><p>A formação informada ajuda na identificação, mas não substitui a aprovação do responsável pelo site. O acesso docente só é liberado após aprovação.</p></aside>`);
   const form=document.querySelector('#signup-form');const roleSelect=form?.elements.namedItem('role');const studentFields=document.querySelector('#student-education-fields');const teacherFields=document.querySelector('#teacher-education-fields');
+  form.noValidate=true;
   form.querySelector('button[type="submit"]')?.classList.add('signup-submit');
   roleSelect.required=true;roleSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione o tipo de conta</option>');
   const degreeSelect=teacherFields.querySelector('#signup-degree-level');degreeSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione sua formação</option>');
@@ -126,56 +147,104 @@ function renderSignup() {
   conditionChoices.forEach((choice)=>choice.addEventListener('change',()=>{const preferNot=conditionChoices.find((item)=>item.value==='prefer-not');if(choice===preferNot&&choice.checked)conditionChoices.filter((item)=>item!==preferNot).forEach((item)=>{item.checked=false;});else if(choice.checked&&preferNot)preferNot.checked=false;}));
   form?.addEventListener('submit',async(event)=>{
     event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
-    if(!supabase){setStatus(status,'Configure o Supabase para ativar o cadastro.',true);return;}
+    if(!validateAuthForm(form,status))return;
     const values=new FormData(form);const password=String(values.get('password'));const confirmation=String(values.get('confirm'));
     if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
-    if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);return;}
-    button.disabled=true;setStatus(status,'Criando sua conta…');
+    if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);form.elements.namedItem('password').focus();return;}
+    button.disabled=true;setStatus(status,'Conectando ao serviço de cadastro…');
+    await supabasePromise;
+    if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o cadastro.',true);button.disabled=false;return;}
+    setStatus(status,'Criando sua conta…');
     const role=values.get('role')==='professor'?'professor':'aluno';
     const teacher=role==='professor';
+    let data,error;
     try {
-      const {data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}});
-      if(error){setStatus(status,'Não foi possível criar a conta. Verifique os dados, as configurações de e-mail e tente novamente.',true);return;}
-    if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
-      if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
-      else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
-    } catch(error) {
-      setStatus(status,`Não foi possível criar a conta. ${error?.message||'Confira sua conexão e as configurações do Supabase.'}`,true);
-    } finally {
-      button.disabled=false;
-      button.removeAttribute('aria-busy');
+      ({data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}));
+    } catch(err) {
+      setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);button.disabled=false;return;
     }
+    button.disabled=false;
+    if(error){setStatus(status,authErrorMessage(error,'Não foi possível criar a conta. Verifique os dados e as configurações de e-mail.'),true);return;}
+    if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
+    if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
+    else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
   });
 }
 
 function renderRecovery() {
   const updating=new URLSearchParams(location.search).get('mode')==='update';
-  if(updating){authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
-    const code=new URLSearchParams(location.search).get('code');const status=document.querySelector('#form-status');const form=document.querySelector('#password-update-form');const submit=form?.querySelector('button[type="submit"]');
-    if(code&&supabase){if(submit)submit.disabled=true;supabase.auth.exchangeCodeForSession(code).then(({error})=>{if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um novo link e abra-o no mesmo navegador.',true);return;}setStatus(status,'Link validado. Agora escolha sua nova senha.');}).catch((error)=>setStatus(status,`Não foi possível validar o link. ${error?.message||'Solicite um novo e abra-o no mesmo navegador.'}`,true)).finally(()=>{if(submit){submit.disabled=false;submit.removeAttribute('aria-busy');}});}
-    document.querySelector('#password-update-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');if(!supabase){setStatus(status,'Configure o Supabase para alterar sua senha.',true);return;}const first=form.querySelector('#new-password').value;const second=form.querySelector('#new-password-confirm').value;if(first!==second){setStatus(status,'As senhas digitadas não coincidem.',true);return;}button.disabled=true;setStatus(status,'Atualizando sua senha…');try{const {error}=await supabase.auth.updateUser({password:first});if(error){setStatus(status,'Não foi possível atualizar a senha. Solicite um link novo.',true);return;}await supabase.auth.signOut().catch(()=>{});flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');}catch(error){setStatus(status,`Não foi possível atualizar a senha. ${error?.message||'Solicite um link novo e tente novamente.'}`,true);}finally{button.disabled=false;button.removeAttribute('aria-busy');}});
+  if(updating){
+    authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
+    const code=new URLSearchParams(location.search).get('code');
+    const status=document.querySelector('#form-status');
+    const form=document.querySelector('#password-update-form');
+    const submit=form?.querySelector('button[type="submit"]');
+    if(form)form.noValidate=true;
+    if(code){
+      if(submit)submit.disabled=true;
+      setStatus(status,'Validando o link de recuperação…');
+      (async()=>{
+        await supabasePromise;
+        if(!supabase)throw new Error(supabaseLoadError||'O Supabase não está disponível.');
+        const {error}=await supabase.auth.exchangeCodeForSession(code);
+        if(error)throw error;
+        setStatus(status,'Link validado. Agora escolha sua nova senha.');
+      })().catch(()=>setStatus(status,'O link expirou ou não pôde ser validado. Solicite outro e abra-o no mesmo navegador.',true)).finally(()=>{if(submit)submit.disabled=false;});
+    }
+    form?.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const status=form.querySelector('#form-status');
+      const button=form.querySelector('button[type="submit"]');
+      if(!validateAuthForm(form,status))return;
+      const first=form.querySelector('#new-password').value;
+      const second=form.querySelector('#new-password-confirm').value;
+      if(first!==second){setStatus(status,'As senhas digitadas não coincidem.',true);form.querySelector('#new-password-confirm').focus();return;}
+      button.disabled=true;setStatus(status,'Conectando ao serviço de login…');
+      try{
+        await supabasePromise;
+        if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase para alterar sua senha.');
+        setStatus(status,'Salvando sua nova senha…');
+        const {error}=await supabase.auth.updateUser({password:first});
+        if(error)throw error;
+        await supabase.auth.signOut();flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');
+      }catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão ao salvar a senha. Tente novamente.'),true);}
+      finally{button.disabled=false;}
+    });
     return;
   }
   authShell('Recuperar senha','Informe o e-mail usado no cadastro. Se a conta existir, enviaremos um link.',`<form id="recovery-form" class="auth-form"><label for="recovery-email">E-mail</label><input id="recovery-email" type="email" autocomplete="email" required><button class="button button-primary" type="submit">Enviar link de recuperação</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p><p class="form-help">Se o e-mail não chegar, confira o spam e as configurações SMTP do projeto Supabase. O endereço cadastrado precisa estar confirmado.</p></form><div class="auth-links"><a href="/login">Voltar ao login</a></div>`);
-  document.querySelector('#recovery-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const email=form.querySelector('#recovery-email').value.trim();const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');if(!supabase){setStatus(status,'Configure o Supabase para ativar a recuperação.',true);return;}button.disabled=true;setStatus(status,'Solicitando link…');try{const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});if(error){const message=error.message||'';const hint=/rate limit|email rate|too many/i.test(message)?' O limite de envio de e-mails foi atingido; aguarde antes de tentar novamente.':/smtp|sending email|email provider/i.test(message)?' Confira Authentication → SMTP Settings e o provedor de e-mail.':'';setStatus(status,`O Supabase não conseguiu enviar o link: ${message}.${hint}`,true);}else setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings e confirme que este endereço está cadastrado.');}catch(error){setStatus(status,`Falha de conexão com o Supabase: ${error?.message||'verifique sua conexão e tente novamente.'}`,true);}finally{button.disabled=false;}});
+  const recoveryForm=document.querySelector('#recovery-form');
+  if(recoveryForm)recoveryForm.noValidate=true;
+  recoveryForm?.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    const email=recoveryForm.querySelector('#recovery-email').value.trim();
+    const status=recoveryForm.querySelector('#form-status');
+    const button=recoveryForm.querySelector('button[type="submit"]');
+    if(!validateAuthForm(recoveryForm,status))return;
+    button.disabled=true;setStatus(status,'Conectando ao serviço de recuperação…');
+    try{
+      await supabasePromise;
+      if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase para ativar a recuperação.');
+      const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;
+      const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});
+      if(error)throw error;
+      setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings.');
+    }catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão com o Supabase. Confira sua internet e tente novamente.'),true);}
+    finally{button.disabled=false;}
+  });
 }
 
 async function renderCallback() {
   replaceMain('Confirmando e-mail','<section class="auth-card"><h1>Confirmando seu e-mail…</h1><p id="callback-status" role="status">Aguarde enquanto validamos o link.</p></section>');
   const status=document.querySelector('#callback-status');
-  if(!supabase){if(status)status.textContent='Configure o Supabase e reinicie o servidor.';return;}
   try {
+    await supabasePromise;
+    if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase e reinicie o servidor.');
     const code=new URLSearchParams(location.search).get('code');
     if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um link novo.',true);return;}}
-    const user=await getSignedUser();
-    if(!user){setStatus(status,'Não encontramos uma sessão. Faça login ou solicite outro link.',true);return;}
-    const role=await getRole(user);
-    if(!role){setStatus(status,'Sua conta foi confirmada, mas o perfil ainda não está disponível. Tente entrar novamente.',true);return;}
-    flash('E-mail confirmado. Boas-vindas ao Diário dos BNs.');
-    navigate(destination(role), true);
-  } catch(error) {
-    setStatus(status,`Não foi possível confirmar o e-mail. ${error?.message||'Confira sua conexão e solicite um link novo.'}`,true);
-  }
+    const user=await getSignedUser();if(!user){setStatus(status,'Não encontramos uma sessão. Faça login ou solicite outro link.',true);return;}
+    const role=await getRole(user);flash('E-mail confirmado. Boas-vindas ao Diário dos BNs.');navigate(destination(role), true);
+  } catch(error) { setStatus(status,authErrorMessage(error,'Não foi possível confirmar o e-mail. Tente abrir o link novamente.'),true); }
 }
 
 function routeMessage(title,message,links='') { replaceMain(title,`<section class="auth-card"><div class="section-kicker">DIÁRIO DOS BNs</div><h1>${title}</h1><p>${message}</p>${links}</section>`); }
@@ -202,7 +271,24 @@ function profileHeader(user,role,title,lead) {
   return `<section class="dashboard-heading"><div><div class="lesson-tag">${accountLabels[role.role]||'Conta'}${role.status==='pending'?' · APROVAÇÃO PENDENTE':''}</div><h1>${title}</h1><p>${lead}</p></div><div class="dashboard-actions">${profileButton}<button type="button" class="button button-outline" data-logout>Sair da conta</button></div></section>`;
 }
 
-function wireLogout() { document.querySelectorAll('[data-logout]').forEach((button)=>{if(button.dataset.logoutBound)return;button.dataset.logoutBound='true';button.addEventListener('click',async()=>{button.disabled=true;try{await supabase.auth.signOut();}catch(error){button.title=error?.message||'Não foi possível sair agora.';}finally{button.disabled=false;button.removeAttribute('aria-busy');}navigate('/login/');});}); }
+function wireLogout() {
+  document.querySelectorAll('[data-logout]').forEach((button)=>{
+    if(button.dataset.logoutBound)return;
+    button.dataset.logoutBound='true';
+    button.addEventListener('click',async()=>{
+      button.disabled=true;
+      try{
+        const {error}=await supabase.auth.signOut();
+        if(error)throw error;
+        navigate('/login/');
+      }catch(error){
+        button.disabled=false;
+        button.title=error?.message||'Não foi possível sair. Confira sua conexão e tente novamente.';
+        button.textContent='Tente sair novamente';
+      }
+    });
+  });
+}
 
 async function renderProfile(user,role) {
   const {data:profile,error}=await supabase.from('profiles').select('display_name,bio,avatar_path,age_range,education_level,education_detail,teacher_degree_level,teacher_degree_program,teacher_institution,created_at').eq('id',user.id).single();
@@ -217,7 +303,7 @@ async function renderProfile(user,role) {
   const form=document.querySelector('#profile-form');const fileInput=document.querySelector('#profile-avatar-file');const preview=document.querySelector('#profile-avatar-preview');let nextAvatar=avatar,removeAvatar=false;
   document.querySelector('#remove-profile-avatar').addEventListener('click',()=>{nextAvatar='';removeAvatar=true;preview.src=fallbackAvatar;preview.alt='Sem foto de perfil';});
   fileInput.addEventListener('change',async()=>{const file=fileInput.files?.[0];if(!file)return;if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>8*1024*1024){setStatus(document.querySelector('#form-status'),'Escolha uma imagem JPG, PNG ou WebP com até 8 MB.',true);fileInput.value='';return;}try{nextAvatar=await compressAvatar(file);if(nextAvatar.length>450000)throw new Error('Imagem ainda muito grande');removeAvatar=false;preview.src=nextAvatar;preview.alt='Prévia da foto de perfil';setStatus(document.querySelector('#form-status'),'Prévia pronta. Clique em Salvar perfil para guardar a foto.');}catch{setStatus(document.querySelector('#form-status'),'Não foi possível reduzir essa foto para o tamanho permitido. Escolha outra imagem menor.',true);fileInput.value='';}});
-  form.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const status=document.querySelector('#form-status');const submit=f.querySelector('button[type="submit"]');const updates={display_name:f.querySelector('#profile-name').value.trim(),bio:f.querySelector('#profile-bio').value.trim(),age_range:f.querySelector('#profile-age-range').value};if(role.role==='aluno'){updates.education_level=f.querySelector('#profile-education-level').value;updates.education_detail=f.querySelector('#profile-education-detail').value.trim();}if(role.role==='professor'){updates.teacher_degree_level=f.querySelector('#profile-degree-level').value;updates.teacher_degree_program=f.querySelector('#profile-degree-program').value.trim();updates.teacher_institution=f.querySelector('#profile-institution').value.trim();}if(removeAvatar||nextAvatar)updates.avatar_path=nextAvatar||null;if(submit)submit.disabled=true;try{const {error}=await supabase.from('profiles').update(updates).eq('id',user.id);setStatus(status,error?`Não foi possível salvar o perfil: ${error.message}`:'Perfil atualizado.',Boolean(error));}catch(error){setStatus(status,`Não foi possível salvar o perfil: ${error?.message||'Confira sua conexão e tente novamente.'}`,true);}finally{if(submit)submit.disabled=false;}});wireLogout();
+  form.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const status=document.querySelector('#form-status');const updates={display_name:f.querySelector('#profile-name').value.trim(),bio:f.querySelector('#profile-bio').value.trim(),age_range:f.querySelector('#profile-age-range').value};if(role.role==='aluno'){updates.education_level=f.querySelector('#profile-education-level').value;updates.education_detail=f.querySelector('#profile-education-detail').value.trim();}if(role.role==='professor'){updates.teacher_degree_level=f.querySelector('#profile-degree-level').value;updates.teacher_degree_program=f.querySelector('#profile-degree-program').value.trim();updates.teacher_institution=f.querySelector('#profile-institution').value.trim();}if(removeAvatar||nextAvatar)updates.avatar_path=nextAvatar||null;const {error}=await supabase.from('profiles').update(updates).eq('id',user.id);setStatus(status,error?`Não foi possível salvar o perfil: ${error.message}`:'Perfil atualizado.',Boolean(error));});wireLogout();
 }
 
 function validAvatarData(value='') { return typeof value==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value); }
@@ -253,7 +339,7 @@ async function loadLearningWorkspace(root,user,role) {
   const teacherJoin=role==='aluno'?`<section class="auth-card"><h2>Entrar em uma turma</h2><form id="join-class-form" class="inline-form"><label for="join-code">Código fornecido pelo professor</label><input id="join-code" name="code" autocomplete="off" required maxlength="12"><button class="button button-outline" type="submit">Entrar na turma</button></form><p class="auth-message" id="join-status" role="status" aria-live="polite"></p></section>`:'';
   const protectedDownloads=(downloads.data||[]).map((item)=>`<li><span>${safeText(item.title)} <small>· ${safeText(item.file_name)}</small></span><button class="button button-outline" type="button" data-private-download="${item.id}">Baixar</button></li>`).join('')||'<li>Não há downloads privados publicados para seu perfil.</li>';
   root.innerHTML=`${dataErrors.length?`<aside class="auth-notice" role="alert"><strong>O banco ainda precisa ser configurado</strong><p>${safeText(dataErrors[0])} — aplique as migrações indicadas no README.</p></aside>`:''}<section class="dashboard-cards"><article><b>${favIds.size}</b><span>animações favoritas</span></article><article><b>${(progress.data||[]).length}</b><span>aulas registradas</span></article><article><b>${(activities.data||[]).length}</b><span>atividades compartilhadas</span></article></section><section class="account-section"><div class="section-kicker">BIBLIOTECA</div><h2>Animações publicadas</h2><div class="db-grid">${animationCards}</div></section><section class="account-section"><div class="section-kicker">MINHA LISTA</div><h2>Favoritas</h2><ul class="private-list">${favoriteCards}</ul></section><section class="account-section"><div class="section-kicker">APRENDER BLENDER</div><h2>Cursos e aulas</h2><div class="db-grid">${courseCards}</div><h3>Meu progresso</h3><ul class="private-list">${progressRows}</ul></section><section class="account-section"><div class="section-kicker">MINHA TURMA</div><h2>Atividades</h2><div class="db-grid">${activityCards}</div>${teacherJoin}</section><section class="account-section"><div class="section-kicker">MATERIAIS</div><h2>Downloads do meu perfil</h2><ul class="private-list">${protectedDownloads}</ul></section>`;
-  root.querySelectorAll('[data-mark-lesson]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;try{const done=button.dataset.completed==='true';const {error}=await supabase.from('lesson_progress').upsert({user_id:user.id,lesson_id:button.dataset.markLesson,progress_percent:done?0:100,completed_at:done?null:new Date().toISOString(),updated_at:new Date().toISOString()},{onConflict:'user_id,lesson_id'});if(error){button.title='Não foi possível salvar o progresso: '+error.message;return;}await loadLearningWorkspace(root,user,role);}catch(error){button.title=error?.message||'Não foi possível salvar o progresso.';}finally{button.disabled=false;button.removeAttribute('aria-busy');}}));
+  root.querySelectorAll('[data-mark-lesson]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;const done=button.dataset.completed==='true';const {error}=await supabase.from('lesson_progress').upsert({user_id:user.id,lesson_id:button.dataset.markLesson,progress_percent:done?0:100,completed_at:done?null:new Date().toISOString(),updated_at:new Date().toISOString()},{onConflict:'user_id,lesson_id'});if(error){button.disabled=false;button.title='Não foi possível salvar o progresso.';return;}await loadLearningWorkspace(root,user,role);}));
   root.querySelectorAll('[data-db-favorite]').forEach((button)=>button.addEventListener('click',()=>toggleFavorite(button,user,root,role)));
   root.querySelectorAll('[data-private-download]').forEach((button)=>button.addEventListener('click',()=>downloadPrivate(button)));
   root.querySelectorAll('.submission-form').forEach((form)=>form.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const values=new FormData(f);const status=f.querySelector('[role=status]');const {error}=await supabase.from('activity_submissions').upsert({activity_id:f.dataset.activity,classroom_id:f.dataset.class,student_id:user.id,response:String(values.get('response')).trim()},{onConflict:'activity_id,classroom_id,student_id'});setStatus(status,error?'Não foi possível enviar. Confira se a atividade ainda está aberta.':'Resposta enviada ao professor responsável.',Boolean(error));}));
@@ -261,32 +347,19 @@ async function loadLearningWorkspace(root,user,role) {
 }
 
 async function toggleFavorite(button,user,workspace,role) {
-  const id=button.dataset.dbFavorite;const pressed=button.getAttribute('aria-pressed')==='true';button.disabled=true;
-  try {
-    const result=pressed?await supabase.from('favorites').delete().eq('user_id',user.id).eq('animation_id',id):await supabase.from('favorites').insert({user_id:user.id,animation_id:id});
-    if(result.error){button.title='Não foi possível salvar esta favorita: '+result.error.message;return;}
-    button.setAttribute('aria-pressed',String(!pressed));button.textContent=pressed?'☆ Favoritar':'★ Salva';
-    await loadLearningWorkspace(workspace,user,role);
-  } catch(error) {
-    button.title='Não foi possível atualizar a favorita: '+(error?.message||'verifique sua conexão.');
-  } finally {
-    button.disabled=false;button.removeAttribute('aria-busy');
-  }
+  const id=button.dataset.dbFavorite;const pressed=button.getAttribute('aria-pressed')==='true';
+  const result=pressed?await supabase.from('favorites').delete().eq('user_id',user.id).eq('animation_id',id):await supabase.from('favorites').insert({user_id:user.id,animation_id:id});
+  if(result.error){button.title='Não foi possível salvar esta favorita.';return;}
+  button.setAttribute('aria-pressed',String(!pressed));button.textContent=pressed?'☆ Favoritar':'★ Salva';
+  await loadLearningWorkspace(workspace,user,role);
 }
 
 async function downloadPrivate(button) {
-  button.disabled=true;
-  try {
-    const {data,error}=await supabase.from('downloads').select('storage_bucket,storage_path,file_name').eq('id',button.dataset.privateDownload).single();
-    if(error){button.title='Seu perfil não tem permissão para baixar este material: '+error.message;return;}
-    const signed=await supabase.storage.from(data.storage_bucket).createSignedUrl(data.storage_path,60);
-    if(signed.error){button.title='Não foi possível criar o link: '+signed.error.message;return;}
-    const link=document.createElement('a');link.href=signed.data.signedUrl;link.download=data.file_name||'';link.rel='noopener';document.body.append(link);link.click();link.remove();
-  } catch(error) {
-    button.title='Falha ao preparar o download: '+(error?.message||'verifique sua conexão.');
-  } finally {
-    button.disabled=false;button.removeAttribute('aria-busy');
-  }
+  const {data,error}=await supabase.from('downloads').select('storage_bucket,storage_path,file_name').eq('id',button.dataset.privateDownload).single();
+  if(error){button.title='Seu perfil não tem permissão para baixar este material.';return;}
+  const signed=await supabase.storage.from(data.storage_bucket).createSignedUrl(data.storage_path,60);
+  if(signed.error){button.title='Não foi possível criar o link. Confira as políticas do bucket privado.';return;}
+  const link=document.createElement('a');link.href=signed.data.signedUrl;link.download=data.file_name||'';link.rel='noopener';document.body.append(link);link.click();link.remove();
 }
 
 async function renderTeacher(user) {
@@ -317,8 +390,8 @@ async function loadTeacherTools(root,user) {
   root.querySelector('#create-activity-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const values=new FormData(f);const status=f.querySelector('[role=status]');const {error}=await supabase.from('activities').insert({title:String(values.get('title')).trim(),subject:String(values.get('subject')).trim(),description:String(values.get('description')).trim(),created_by:user.id,is_published:true});setStatus(status,error?'Não foi possível salvar a atividade.':'Atividade criada.',Boolean(error));if(!error)await loadTeacherTools(root,user);});
   root.querySelector('#assign-activity-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const status=f.querySelector('[role=status]');const {error}=await supabase.from('classroom_activities').insert({activity_id:f.activity.value,classroom_id:f.classroom.value,assigned_by:user.id});setStatus(status,error?'Não foi possível compartilhar. Confira se a turma pertence a você.':'Atividade compartilhada com a turma.',Boolean(error));});
   root.querySelectorAll('[data-feedback-form]').forEach((form)=>form.addEventListener('submit',async(event)=>{event.preventDefault();const f=event.currentTarget;const values=new FormData(f);const status=f.querySelector('[role=status]');const {error}=await supabase.from('submission_feedback').upsert({submission_id:f.dataset.feedbackForm,teacher_id:user.id,feedback:String(values.get('feedback')).trim()});setStatus(status,error?'Não foi possível salvar a devolutiva.':'Devolutiva salva.',Boolean(error));}));
-  root.querySelectorAll('[data-submit-existing-activity]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;try{const {data,error}=await supabase.rpc('teacher_submit_existing_activity',{p_activity:button.dataset.submitExistingActivity});if(error){button.title=error.message;alert('Não foi possível enviar a atividade: '+error.message);}else{button.textContent=data==='pending'?'Aguardando análise':'Atividade atualizada';setTimeout(()=>loadTeacherTools(root,user),600);}}catch(error){button.title=error?.message||'Erro de conexão com o Supabase.';alert('Não foi possível enviar a atividade. Confira sua conexão e tente novamente.');}finally{button.disabled=false;button.removeAttribute('aria-busy');}}));
-  root.querySelectorAll('[data-teacher-publish]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;try{const {error}=await supabase.rpc('teacher_set_activity_published',{p_activity:button.dataset.teacherPublish,p_is_published:button.dataset.published!=='true'});if(error){button.title=error.message;alert('Não foi possível alterar a publicação: '+error.message);}else setTimeout(()=>loadTeacherTools(root,user),600);}catch(error){button.title=error?.message||'Erro de conexão com o Supabase.';alert('Não foi possível alterar a publicação. Confira sua conexão e tente novamente.');}finally{button.disabled=false;button.removeAttribute('aria-busy');}}));
+  root.querySelectorAll('[data-submit-existing-activity]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;const {data,error}=await supabase.rpc('teacher_submit_existing_activity',{p_activity:button.dataset.submitExistingActivity});if(error){button.disabled=false;button.title=error.message;alert('Não foi possível enviar a atividade: '+error.message);}else{button.textContent=data==='pending'?'Aguardando análise':'Atividade atualizada';setTimeout(()=>loadTeacherTools(root,user),600);}}));
+  root.querySelectorAll('[data-teacher-publish]').forEach((button)=>button.addEventListener('click',async()=>{button.disabled=true;const {error}=await supabase.rpc('teacher_set_activity_published',{p_activity:button.dataset.teacherPublish,p_is_published:button.dataset.published!=='true'});if(error){button.disabled=false;button.title=error.message;alert('Não foi possível alterar a publicação: '+error.message);}else setTimeout(()=>loadTeacherTools(root,user),600);}));
 }
 
 async function renderAdmin(user) {
@@ -368,7 +441,7 @@ async function loadAdminTools(root,user) {
   const classOptions=(classes.data||[]).map((item)=>`<option value="${item.id}">${safeText(item.name)}</option>`).join('');
   const activeTeacherOptions=(users.data||[]).filter((item)=>{const role=userRoleFor(item);return role?.role==='professor'&&role.status==='active';}).map((item)=>`<option value="${item.id}">${safeText(item.display_name||'Professor')} · ${safeText(item.teacher_degree_program||'Formação não informada')}</option>`).join('');
   root.innerHTML=`<div class="dashboard-cards"><article><b>${users.data.length}</b><span>perfis cadastrados</span></article><article><b>${animations.data.length}</b><span>animações no banco</span></article><article><b>${classes.data.length}</b><span>turmas</span></article><article><b>${downloads.data.length}</b><span>downloads</span></article></div><section class="account-section"><div class="section-kicker">USUÁRIOS</div><h2>Gerenciar contas e aprovação docente</h2><div class="table-scroll"><table class="admin-table"><thead><tr><th>Perfil e identificação</th><th>Tipo</th><th>Status</th><th>Cadastro</th></tr></thead><tbody>${userRows}</tbody></table></div><p class="privacy-note">O painel não lê nem altera senhas ou e-mails de autenticação. Novos administradores são configurados no Supabase SQL Editor pelo proprietário.</p></section><section class="account-section"><div class="section-kicker">ANIMAÇÕES</div><h2>Adicionar conteúdo científico</h2><form id="admin-animation-form" class="admin-form"><label>Título<input name="title" required maxlength="160"></label><label>Assunto<input name="topic" required maxlength="100"></label><label>Slug único<input name="slug" required maxlength="180"></label><label>Nível<input name="level" maxlength="60" value="Ensino médio"></label><label>Duração em segundos<input name="duration" type="number" min="0" max="86400"></label><label>Vídeo MP4 ou YouTube URL<input name="video" type="url" placeholder="https://…"></label><label class="wide-field">Descrição<textarea name="summary" rows="3" maxlength="3000" required></textarea></label><label class="consent-check wide-field"><input name="published" type="checkbox"><span>Publicar agora</span></label><button class="button button-primary" type="submit">Salvar animação</button><button class="button button-outline" type="button" data-animation-cancel hidden>Cancelar edição</button><p class="auth-message wide-field" role="status"></p></form><div class="table-scroll"><table class="admin-table"><thead><tr><th>Animação</th><th>Tópico</th><th>Estado</th><th>Ações</th></tr></thead><tbody>${animationRows||'<tr><td colspan="4">Nenhuma animação cadastrada.</td></tr>'}</tbody></table></div></section><section class="account-section"><div class="section-kicker">DOWNLOADS PRIVADOS</div><h2>Enviar material para o Storage privado</h2><form id="admin-download-form" class="admin-form"><label>Nome do material<input name="title" required maxlength="160"></label><label>Vincular a animação<select name="animation"><option value="">Material geral</option>${animationOptions}</select></label><label>Arquivo<input name="file" type="file" required></label><label>Visibilidade<select name="visibility"><option value="students">Alunos e professores</option><option value="teachers">Somente professores aprovados</option></select></label><label>Descrição<input name="description" maxlength="500"></label><button class="button button-primary" type="submit">Enviar para downloads privados</button><p class="auth-message wide-field" role="status"></p></form><div class="table-scroll"><table class="admin-table"><thead><tr><th>Material</th><th>Arquivo</th><th>Acesso</th><th>Estado</th></tr></thead><tbody>${downloadRows||'<tr><td colspan="4">Nenhum arquivo privado cadastrado.</td></tr>'}</tbody></table></div></section><section class="account-section"><div class="section-kicker">CURSOS BLENDER</div><h2>Publicar um curso</h2><form id="admin-course-form" class="admin-form"><label>Título<input name="title" required maxlength="160"></label><label>Descrição<textarea name="description" rows="2" maxlength="1500"></textarea></label><label class="consent-check"><input name="published" type="checkbox"><span>Publicar</span></label><button class="button button-outline" type="submit">Criar curso</button><button class="button button-outline" type="button" data-course-cancel hidden>Cancelar edição</button><p class="auth-message wide-field" role="status"></p></form><div class="table-scroll"><table class="admin-table"><thead><tr><th>Curso</th><th>Estado</th><th>Ações</th></tr></thead><tbody>${courseRows||'<tr><td colspan="3">Nenhum curso publicado.</td></tr>'}</tbody></table></div></section><section class="account-section"><div class="section-kicker">AULAS BLENDER</div><h2>Organizar as aulas dos cursos</h2><form id="admin-lesson-form" class="admin-form"><label>Curso<select name="course_id" required>${lessonOptions}</select></label><label>Título<input name="title" required maxlength="160"></label><label>Posição<input name="position" type="number" min="0" value="0"></label><label>URL do vídeo<input name="video_url" type="url" placeholder="https://"/></label><label class="wide-field">Conteúdo da aula<textarea name="body" rows="5"></textarea></label><button class="button button-outline" type="submit">Salvar aula</button><button class="button button-outline" type="button" data-lesson-cancel hidden>Cancelar edição</button><p role="status"></p></form><ul class="private-list">${lessonRows}</ul></section><section class="account-section"><div class="section-kicker">TURMAS E ATIVIDADES</div><h2>Visão administrativa</h2><p>Turmas: ${classes.data.length} · Atividades: ${activities.data.length}.</p><div class="staff-grid"><section class="auth-card"><h3>Turmas</h3><form id="admin-class-form" class="auth-form"><label>Nome da turma<input name="name" required maxlength="100"></label><label>Etapa de ensino<select name="education_level" required>${stageOptions()}</select></label><label>Descrição<input name="description" maxlength="1000"></label><button class="button button-outline" type="submit">Criar turma</button><p role="status"></p></form><ul class="private-list">${classRows}</ul></section><section class="auth-card"><h3>Vincular professor à turma</h3><form id="admin-teacher-class-form" class="auth-form"><label>Professor aprovado<select name="teacher" required><option value="">Selecione</option>${activeTeacherOptions}</select></label><label>Turma<select name="classroom" required><option value="">Selecione</option>${classOptions}</select></label><button class="button button-outline" type="submit">Vincular</button><p role="status"></p></form><small>Somente professores aprovados aparecem nesta lista.</small></section><section class="auth-card"><h3>Atividades</h3><form id="admin-activity-form" class="auth-form"><label>Título<input name="title" required maxlength="160"></label><label>Assunto<input name="subject" maxlength="100"></label><label>Instruções<textarea name="description" rows="3" maxlength="5000"></textarea></label><button class="button button-outline" type="submit">Criar atividade</button><p role="status"></p></form><ul class="private-list">${activityRows}</ul></section><section class="auth-card"><h3>Compartilhar atividade</h3><form id="admin-assign-form" class="auth-form"><label>Atividade<select name="activity" required>${activityOptions}</select></label><label>Turma<select name="classroom" required>${classOptions}</select></label><button class="button button-outline" type="submit">Compartilhar</button><p role="status"></p></form></section></div><a href="/professores.html">Abrir materiais pedagógicos →</a></section>`;
-  root.querySelectorAll('[data-user-status]').forEach((button)=>button.addEventListener('click',async()=>{const status=button.dataset.status;const rejecting=button.hasAttribute('data-reject-teacher');const removingTeacher=button.hasAttribute('data-remove-teacher');const reviewing=button.hasAttribute('data-review-teacher');const prompt=rejecting?'Recusar a inscrição deste professor? A conta ficará sem acesso às áreas protegidas.':removingTeacher?'Retirar o acesso docente? A conta será bloqueada, mas o perfil e os dados serão mantidos.':'Bloquear esta conta? O usuário perderá o acesso às áreas protegidas.';if(status==='blocked'&&!confirm(prompt))return;button.disabled=true;try{let update=supabase.from('user_roles').update({status}).eq('user_id',button.dataset.userStatus);if(reviewing)update=update.eq('role','professor').eq('status','pending');else if(removingTeacher)update=update.eq('role','professor').eq('status','active');else update=update.neq('role','admin');const {data,error}=await update.select('user_id,status').maybeSingle();if(error||!data){button.textContent='Falha';button.title=error?.message||'A conta não está mais no status esperado. Atualize o painel.';alert(error?`Não foi possível atualizar a conta: ${error.message}`:'A conta não está mais no status esperado. Atualize o painel.');return;}await loadAdminTools(root,user);}catch(error){button.title=error?.message||'Erro de conexão com o Supabase.';alert('Não foi possível atualizar a conta. Confira sua conexão e tente novamente.');}finally{button.disabled=false;button.removeAttribute('aria-busy');}}));
+  root.querySelectorAll('[data-user-status]').forEach((button)=>button.addEventListener('click',async()=>{const status=button.dataset.status;const rejecting=button.hasAttribute('data-reject-teacher');const removingTeacher=button.hasAttribute('data-remove-teacher');const reviewing=button.hasAttribute('data-review-teacher');const prompt=rejecting?'Recusar a inscrição deste professor? A conta ficará sem acesso às áreas protegidas.':removingTeacher?'Retirar o acesso docente? A conta será bloqueada, mas o perfil e os dados serão mantidos.':'Bloquear esta conta? O usuário perderá o acesso às áreas protegidas.';if(status==='blocked'&&!confirm(prompt))return;button.disabled=true;let update=supabase.from('user_roles').update({status}).eq('user_id',button.dataset.userStatus);if(reviewing)update=update.eq('role','professor').eq('status','pending');else if(removingTeacher)update=update.eq('role','professor').eq('status','active');else update=update.neq('role','admin');const {data,error}=await update.select('user_id,status').maybeSingle();if(error||!data){button.disabled=false;button.textContent='Falha';button.title=error?.message||'A conta não está mais no status esperado. Atualize o painel.';alert(error?`Não foi possível atualizar a conta: ${error.message}`:'A conta não está mais no status esperado. Atualize o painel.');return;}await loadAdminTools(root,user);}));
   root.querySelectorAll('[data-publish-animation]').forEach((button)=>button.addEventListener('click',async()=>{const {error}=await supabase.from('animations').update({is_published:button.dataset.published!=='true'}).eq('id',button.dataset.publishAnimation);if(error)button.textContent='Falha';else await loadAdminTools(root,user);}));
   root.querySelectorAll('[data-edit-animation]').forEach((button)=>button.addEventListener('click',()=>{const item=animations.data.find((entry)=>entry.id===button.dataset.editAnimation);const form=root.querySelector('#admin-animation-form');if(!item||!form)return;form.dataset.animationId=item.id;for(const key of ['title','topic','slug','level','summary'])form.elements.namedItem(key).value=item[key]||'';form.elements.namedItem('duration').value=item.duration_seconds||'';form.elements.namedItem('video').value=item.video_url||'';form.elements.namedItem('published').checked=item.is_published;form.querySelector('[type="submit"]').textContent='Salvar alterações';form.querySelector('[data-animation-cancel]').hidden=false;form.scrollIntoView({behavior:'smooth',block:'center'});}));
   root.querySelector('[data-animation-cancel]')?.addEventListener('click',()=>loadAdminTools(root,user));
@@ -425,7 +498,7 @@ async function hydrateAnimationDetails() {
   const {data,error}=await supabase.from('animations').select('id,title,topic,slug,summary,level,duration_seconds,video_url,downloads(id,title,file_name,storage_bucket,storage_path)').eq('slug',`${topic}--${animation}`).maybeSingle();
   if(error||!data)return;
   let downloads=(data.downloads||[]).map((file)=>`<li><span>${safeText(file.title)} · ${safeText(file.file_name)}</span><button class="button button-outline" type="button" data-private-download="${file.id}">Baixar arquivo</button></li>`).join('');
-  if(!downloads){const path=siteHref(`animacoes-3d/downloads-${data.slug.replace('--','-')}.blend`);try{const exists=await fetch(path,{method:'HEAD'});if(exists.ok)downloads=`<li><span>Projeto Blender · animacoes-3d/${safeText(data.slug.replace('--','-'))}.blend</span><a class="button button-outline" href="${path}" download>Baixar arquivo</a></li>`;}catch{}}
+  if(!downloads){const path=siteHref(`downloads-${data.slug.replace('--','-')}.blend`);try{const exists=await fetch(path,{method:'HEAD'});if(exists.ok)downloads=`<li><span>Projeto Blender · ${safeText(data.slug.replace('--','-'))}.blend</span><a class="button button-outline" href="${path}" download>Baixar arquivo</a></li>`;}catch{}}
   const duration=data.duration_seconds?' · '+Math.floor(data.duration_seconds/60)+' min':'';
   detail.innerHTML=`<nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/topico.html?topico=${encodeURIComponent(topic)}">${safeText(data.topic)}</a><span aria-hidden="true">/</span><span>${safeText(data.title)}</span></nav><section class="animation-detail-hero"><div class="section-kicker">ANIMAÇÃO BLENDER · ${safeText(data.level||'Física')}</div><h1>${safeText(data.title)}</h1><p>${safeText(data.summary)}</p><p class="lesson-tag">${safeText(data.topic)}${duration}</p></section><section class="animation-video-panel"><h2>Vídeo e cena</h2>${videoMarkup(data.video_url,data.title)||'<p>Não há vídeo publicado. Baixe a cena e explore a animação diretamente no Blender.</p>'}</section><section class="account-section"><div class="section-kicker">ARQUIVOS</div><h2>Downloads desta animação</h2><ul class="private-list">${downloads||'<li>O arquivo Blender desta animação ainda não foi publicado.</li>'}</ul></section><aside class="blender-open-note"><p><strong>Abra no Blender:</strong> use <b>Arquivo → Abrir</b>, pressione <kbd>0</kbd> no teclado numérico para ver a câmera e <kbd>Espaço</kbd> para reproduzir ou pausar. A cena é uma representação didática e pode ser explorada no seu ritmo.</p></aside>`;
   const textAlternative=document.createElement('details');textAlternative.className='animation-text-alternative';const alternativeTitle=document.createElement('summary');alternativeTitle.textContent='Descrição textual da animação';const alternativeText=document.createElement('p');alternativeText.textContent=`A animação ${data.title} aborda ${data.topic}. ${data.summary} Esta descrição acompanha a representação esquemática e deve ser lida junto com a explicação científica.`;textAlternative.append(alternativeTitle,alternativeText);const filesSection=detail.querySelector('.account-section');if(filesSection)detail.insertBefore(textAlternative,filesSection);
@@ -454,7 +527,9 @@ async function attachAuthNavigation() {
     if(user&&role){dashboard.href=destination(role)+'/';dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');}
   };
   setAccountMenu(null,null);
-  if(!supabase){document.documentElement.classList.add('auth-nav-ready');return;}
+  document.documentElement.classList.add('auth-nav-ready');
+  await supabasePromise;
+  if(!supabase)return;
   try {
     const {data,error}=await supabase.auth.getSession();if(error)throw error;
     if(data.session){
@@ -519,20 +594,25 @@ async function renderClassroomHub() {
 
 async function syncLegacyFavorite(event) {
   const button=event.target.closest('[data-favorite-topic]');
-  if(!button||!supabase)return;
-  const {data}=await supabase.auth.getSession();if(!data.session)return;
-  const role=await getRole(data.session.user).catch(()=>null);if(!role||role.status!=='active')return;
-  const slug=`${button.dataset.favoriteTopic}--${button.dataset.favoriteFile}`;
-  const {data:animation}=await supabase.from('animations').select('id').eq('slug',slug).maybeSingle();if(!animation)return;
-  const {error}=button.getAttribute('aria-pressed')==='true'
-    ? await supabase.from('favorites').insert({user_id:data.session.user.id,animation_id:animation.id})
-    : await supabase.from('favorites').delete().eq('user_id',data.session.user.id).eq('animation_id',animation.id);
-  if(error)button.title='Não foi possível atualizar a lista na conta.';
+  if(!button)return;
+  try{
+    await supabasePromise;
+    if(!supabase)return;
+    const {data}=await supabase.auth.getSession();if(!data.session)return;
+    const role=await getRole(data.session.user).catch(()=>null);if(!role||role.status!=='active')return;
+    const slug=`${button.dataset.favoriteTopic}--${button.dataset.favoriteFile}`;
+    const {data:animation}=await supabase.from('animations').select('id').eq('slug',slug).maybeSingle();if(!animation)return;
+    const {error}=button.getAttribute('aria-pressed')==='true'
+      ? await supabase.from('favorites').insert({user_id:data.session.user.id,animation_id:animation.id})
+      : await supabase.from('favorites').delete().eq('user_id',data.session.user.id).eq('animation_id',animation.id);
+    if(error)button.title='Não foi possível atualizar a lista na conta.';
+  }catch{button.title='Não foi possível sincronizar a favorita com sua conta agora.';}
 }
 
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
-if (document.querySelector('#animation-detail')) hydrateAnimationDetails();
+supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
+import('./features.js').catch(()=>{});
 
 if (main) {
   attachAuthNavigation();
@@ -540,11 +620,7 @@ if (main) {
   const recoveryIsUpdating=route==='/recuperar-senha'&&new URLSearchParams(location.search).get('mode')==='update';
   const isAuthEntry=['/login','/cadastro'].includes(route)||(route==='/recuperar-senha'&&!recoveryIsUpdating);
   const renderAuthEntry=()=>{if(route==='/login')renderLogin();else if(route==='/cadastro')renderSignup();else renderRecovery();};
-  if(isAuthEntry&&supabaseReady){
-    replaceMain('Verificando sessão','<section class="auth-card"><p role="status">Verificando se você já está conectado…</p></section>');
-    getSignedUser().then(async(user)=>{if(!user){renderAuthEntry();return;}const role=await getRole(user);if(!role){routeMessage('Perfil ainda não disponível','Sua sessão está ativa, mas o perfil ainda não foi encontrado. Atualize a página ou procure o responsável pelo site.');return;}navigate(destination(role),true);}).catch((error)=>{replaceMain('Não foi possível confirmar a sessão',`<section class="auth-card"><p role="alert">${safeText(error.message||'Verifique sua conexão e tente novamente.')}</p><button class="button button-outline" type="button" id="retry-session-check">Tentar novamente</button></section>`);document.querySelector('#retry-session-check')?.addEventListener('click',()=>location.reload());});
-  }
-  else if (isAuthEntry) renderAuthEntry();
+  if (isAuthEntry) renderAuthEntry();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
   else if (route==='/turmas') renderClassroomHub();
