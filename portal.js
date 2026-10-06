@@ -1,16 +1,7 @@
 (() => {
   const $ = (selector, root = document) => root.querySelector(selector);
-  const temporaryStorage = new Map();
-  const read = (key, fallback) => {
-    try { const stored = localStorage.getItem(key); if (stored !== null) return JSON.parse(stored) ?? fallback; } catch {}
-    try { return JSON.parse(temporaryStorage.get(key)) ?? fallback; } catch { return fallback; }
-  };
-  const write = (key, value) => {
-    const stored = JSON.stringify(value);
-    temporaryStorage.set(key, stored);
-    try { localStorage.setItem(key, stored); } catch {}
-  };
-  const remove = (key) => { temporaryStorage.delete(key); try { localStorage.removeItem(key); } catch {} };
+  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const roles = {aluno:'Aluno', professor:'Professor', admin:'Administrador / dono do site'};
   const form = $('#demo-form');
@@ -57,7 +48,7 @@
       paint(profile);
       dashboard.querySelector('[data-course-step]')?.focus();
     }));
-    $('#demo-logout')?.addEventListener('click', () => { remove('diario-bns-demo-profile'); dashboard.hidden = true; dashboard.innerHTML = ''; $('#demo-feedback').textContent = 'Você saiu da demonstração. Favoritas, histórico e progresso continuam salvos neste navegador.'; });
+    $('#demo-logout')?.addEventListener('click', () => { localStorage.removeItem('diario-bns-demo-profile'); dashboard.hidden = true; dashboard.innerHTML = ''; $('#demo-feedback').textContent = 'Você saiu da demonstração. Favoritas, histórico e progresso continuam salvos neste navegador.'; });
     $('#quick-activity')?.addEventListener('submit', (event) => {
       event.preventDefault();
       const answer = new FormData(event.currentTarget).get('answer');

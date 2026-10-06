@@ -14,11 +14,11 @@ Para começar do zero com um domínio `.com.br`, GitHub Pages, Resend e Supabase
 
 ## Organização dos arquivos
 
-Todos os arquivos ficam juntos na raiz, inclusive as cenas `.blend`, o vídeo do processo de Penrose e sua imagem de capa. Este pacote não precisa de subpastas.
+Os arquivos HTML, JavaScript, CSS, SQL e guias ficam na raiz. A única subpasta é `animacoes-3d`, que reúne as cenas `.blend`, o vídeo do processo de Penrose e sua imagem de capa. Mantenha esse nome ao publicar: os links de reprodução e download já apontam para ela.
 
 ## Publicar no GitHub Pages
 
-Extraia o ZIP e envie todos os arquivos diretamente para a raiz do repositório GitHub, sem criar uma pasta externa. Em **Settings → Pages**, escolha a branch principal e a pasta raiz. O arquivo `.nojekyll` também está incluído. Não envie `.env.local`.
+Envie os arquivos que estão na raiz desta pasta para a raiz do repositório e envie também a subpasta `animacoes-3d` inteira, preservando o nome. Em **Settings → Pages**, escolha a branch principal e a pasta raiz. O arquivo `.nojekyll` também está incluído. Não envie `.env.local`.
 
 Depois configure o Supabase em **Authentication → URL Configuration**:
 
@@ -63,7 +63,7 @@ Ative a confirmação de e-mail e ajuste as URLs de redirecionamento para o dom�
 
 - `index.html`: início e biblioteca de tópicos.
 - `topico.html` e `animacao.html`: detalhes dos conceitos e cenas para abrir no Blender.
-- `downloads.html`: catálogo de projetos Blender. As cenas com prefixo `downloads-` ficam diretamente na raiz.
+- `downloads.html`: catálogo de projetos Blender. As cenas com prefixo `downloads-` ficam em `animacoes-3d/`.
 - `blender.html`: tutorial de navegação, seleção, transformação, `Shift+S`, modelagem, materiais, luz, animação e renderização.
 - `laboratorio.html`, `professores.html` e `pesquisa.html`: laboratório, recursos pedagógicos e informações sobre o projeto.
 - `cadastro.html`, `login.html`, `recuperar-senha.html`, `auth-callback.html`, `perfil.html`, `aluno.html`, `professor.html` e `admin.html`: autenticação e áreas por tipo de conta.

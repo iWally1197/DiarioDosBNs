@@ -1,17 +1,7 @@
 -- Antes desta migração, crie no Dashboard um bucket chamado “downloads”
--- com Public bucket desativado. Arquivos públicos do site continuam na raiz;
+-- com Public bucket desativado. Arquivos públicos do site continuam em /animacoes-3d;
 -- materiais exclusivos devem existir somente neste bucket privado.
 begin;
-
-insert into storage.buckets(id,name,public)
-values('downloads','downloads',false)
-on conflict(id) do update set public=false;
-
-drop policy if exists "Download access follows database visibility" on storage.objects;
-drop policy if exists "Administrators can inspect private download files" on storage.objects;
-drop policy if exists "Administrators can add private download files" on storage.objects;
-drop policy if exists "Administrators can update private download files" on storage.objects;
-drop policy if exists "Administrators can delete private download files" on storage.objects;
 
 create policy "Download access follows database visibility"
 on storage.objects for select to anon,authenticated

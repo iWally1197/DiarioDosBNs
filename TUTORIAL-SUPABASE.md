@@ -1,6 +1,6 @@
 # Tutorial: ligar o Diário dos BNs ao Supabase
 
-Este guia é para a cópia com todos os arquivos do site, incluindo as cenas Blender e os materiais de reprodução do processo de Penrose, diretamente na raiz e sem subpastas. Siga a ordem. Você não precisa criar tabelas manualmente: os arquivos SQL do projeto fazem isso.
+Este guia é para a cópia com os arquivos do site na raiz e uma única subpasta, `animacoes-3d`, para as cenas Blender e os materiais de reprodução do processo de Penrose. Ao publicar no GitHub Pages, envie também essa subpasta inteira e preserve o nome. Siga a ordem. Você não precisa criar tabelas manualmente: os arquivos SQL do projeto fazem isso.
 
 ## 1. Confira a configuração pública
 
@@ -63,7 +63,7 @@ Para instruções simples, passo a passo, sobre onde obter os dados e como testa
 
 ## 5. Publique os arquivos
 
-Extraia o ZIP e envie todos os arquivos diretamente para a raiz do repositório `DiarioDosBNs`, sem criar uma pasta externa. Confirme que `index.html`, `supabase-config.js`, `.nojekyll`, `auth-callback.html` e os arquivos `.blend` aparecem na raiz do GitHub. Em **Settings → Pages**, publique a branch principal usando a pasta `/(root)`.
+Envie os arquivos que estão na raiz desta pasta e a subpasta `animacoes-3d` para a raiz do repositório `DiarioDosBNs`, sem criar uma pasta externa. Preserve o nome `animacoes-3d`. Confirme que `index.html`, `supabase-config.js`, `.nojekyll`, `auth-callback.html` e `animacoes-3d` aparecem na raiz do GitHub. Em **Settings → Pages**, publique a branch principal usando a pasta `/(root)`.
 
 Não envie `.env.local` nem arquivos que contenham `sb_secret`/`service_role`. Não abra o site por `file://`; use a URL do GitHub Pages. Após publicar, atualize a página e tente criar uma conta de teste como Aluno.
 

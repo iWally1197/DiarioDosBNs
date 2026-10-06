@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=conta-solta-20261005-3">
+  <link rel="stylesheet" href="styles.css">
   <script src="topicos.js" defer></script><script src="script.js" defer></script>
 </head>
 <body>
@@ -20,7 +20,7 @@
     <a class="brand" href="index.html" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
     <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
       <nav class="nav" id="primary-nav" aria-label="Navegação principal">
-      <a href="#animacoes">Física</a><a href="turmas.html">Turmas</a><a href="downloads.html">Downloads</a><a href="blender.html">Aprenda Blender</a><a href="laboratorio.html">Laboratório</a><a href="apoie.html">Apoie o projeto</a><a class="nav-account" href="login.html">Entrar</a><a class="nav-account" href="cadastro.html">Criar conta</a>
+      <a href="#animacoes">Física</a><a href="turmas.html">Turmas</a><a href="downloads.html">Downloads</a><a href="blender.html">Aprenda Blender</a><a href="laboratorio.html">Laboratório</a><a href="apoie.html">Apoie o projeto</a><a class="nav-account" href="./login.html">Minha área</a>
     </nav>
     <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
   </header>
@@ -50,11 +50,11 @@
           <li><b>3 · A rotação fornece energia</b><span>O fragmento que cai pode ter energia negativa quando medida por um observador distante. O que escapa leva mais energia do que o objeto inicial.</span></li>
         </ol>
         <p class="penrose-caveat"><strong>Modelo didático:</strong> a cena é esquemática, está fora de escala e não representa uma observação direta. No processo clássico, o ganho de energia em uma divisão é limitado.</p>
-        <div class="penrose-actions"><a class="button button-primary" href="penrose-processo.blend" download>Baixar a cena no Blender <span aria-hidden="true">↓</span></a><a class="text-link" href="#animacoes">Explorar os outros tópicos <span aria-hidden="true">→</span></a></div>
+        <div class="penrose-actions"><a class="button button-primary" href="animacoes-3d/penrose-processo.blend" download>Baixar a cena no Blender <span aria-hidden="true">↓</span></a><a class="text-link" href="#animacoes">Explorar os outros tópicos <span aria-hidden="true">→</span></a></div>
         <details class="penrose-sources"><summary>Fontes e leitura complementar</summary><ul><li><a href="https://www.nasa.gov/universe/nasa-simulation-suggests-black-holes-may-make-ideal-dark-matter-labs/" target="_blank" rel="noopener">NASA — a ergosfera e o processo de Penrose</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6894168/" target="_blank" rel="noopener">Schnittman (2018), revisão sobre o processo de Penrose</a></li><li><a href="https://doi.org/10.1023/A:1016578408204" target="_blank" rel="noopener">Roger Penrose (1969), Gravitational Collapse: The Role of General Relativity</a></li></ul></details>
       </div>
       <figure class="penrose-film">
-        <div class="penrose-film-frame"><video id="penrose-feature-video" data-stop-for-reduced-motion autoplay muted loop playsinline controls preload="metadata" poster="assets-penrose-processo-poster.png" aria-label="Animação esquemática do processo de Penrose em torno de um buraco negro giratório"><source src="penrose-processo.mp4" type="video/mp4"><p>Seu navegador não reproduz este vídeo. <a href="penrose-processo.mp4">Abrir o vídeo do processo de Penrose</a>.</p></video><span class="penrose-film-index">EPISÓDIO 01 · FÍSICA MODERNA</span></div>
+        <div class="penrose-film-frame"><video id="penrose-feature-video" data-stop-for-reduced-motion autoplay muted loop playsinline controls preload="metadata" poster="animacoes-3d/assets-penrose-processo-poster.png" aria-label="Animação esquemática do processo de Penrose em torno de um buraco negro giratório"><source src="animacoes-3d/penrose-processo.mp4" type="video/mp4"><p>Seu navegador não reproduz este vídeo. <a href="animacoes-3d/penrose-processo.mp4">Abrir o vídeo do processo de Penrose</a>.</p></video><span class="penrose-film-index">EPISÓDIO 01 · FÍSICA MODERNA</span></div>
         <figcaption><b>A primeira animação da série.</b> Um modelo 3D criado no Blender para explorar a ergosfera, a separação dos fragmentos e a extração de energia rotacional.</figcaption>
       </figure>
     </section>
@@ -76,9 +76,9 @@
     </div></section>
 
     <section class="downloads-section section-wrap" id="downloads" aria-labelledby="downloads-title"><div class="section-heading"><div><div class="section-kicker">DOWNLOADS</div><h2 id="downloads-title">Projetos para abrir <span>no Blender</span></h2></div><p>Baixe uma cena e explore os objetos,<br>materiais e quadros da animação.</p></div><div class="download-list">
-      <article class="download-item"><div class="download-symbol" aria-hidden="true">◉</div><div class="download-info"><h3>Movimento circular</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="downloads-cinematica-movimento-circular.blend" download aria-label="Baixar projeto Blender Movimento circular">Baixar <span aria-hidden="true">↓</span></a></article>
-      <article class="download-item"><div class="download-symbol" aria-hidden="true">≈</div><div class="download-info"><h3>Interferência de ondas</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="downloads-ondulatoria-interferencia.blend" download aria-label="Baixar projeto Blender Interferência de ondas">Baixar <span aria-hidden="true">↓</span></a></article>
-      <article class="download-item"><div class="download-symbol" aria-hidden="true">✧</div><div class="download-info"><h3>Modelos do átomo</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="downloads-fisica-moderna-modelos-atomo.blend" download aria-label="Baixar projeto Blender Modelos do átomo">Baixar <span aria-hidden="true">↓</span></a></article>
+      <article class="download-item"><div class="download-symbol" aria-hidden="true">◉</div><div class="download-info"><h3>Movimento circular</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="animacoes-3d/downloads-cinematica-movimento-circular.blend" download aria-label="Baixar projeto Blender Movimento circular">Baixar <span aria-hidden="true">↓</span></a></article>
+      <article class="download-item"><div class="download-symbol" aria-hidden="true">≈</div><div class="download-info"><h3>Interferência de ondas</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="animacoes-3d/downloads-ondulatoria-interferencia.blend" download aria-label="Baixar projeto Blender Interferência de ondas">Baixar <span aria-hidden="true">↓</span></a></article>
+      <article class="download-item"><div class="download-symbol" aria-hidden="true">✧</div><div class="download-info"><h3>Modelos do átomo</h3><p>Projeto 3D editável · Blender (.blend)</p></div><span class="file-size">ARQUIVO .BLEND</span><a class="download-button" href="animacoes-3d/downloads-fisica-moderna-modelos-atomo.blend" download aria-label="Baixar projeto Blender Modelos do átomo">Baixar <span aria-hidden="true">↓</span></a></article>
     </div><p class="placeholder-note"><span aria-hidden="true">ⓘ</span> Cada arquivo pode ser aberto no Blender para reproduzir e editar a cena.</p><a class="text-link" href="downloads.html">Ver os 82 projetos na central de downloads <span aria-hidden="true">→</span></a></section>
 
     <section class="closing section-wrap"><div class="closing-star" aria-hidden="true">✳</div><div><div class="section-kicker">COMO COMEÇAR</div><h2>Escolha um tópico<br>e abra o projeto no Blender.</h2><p>Use o tutorial se for sua primeira vez no programa.</p></div><div class="closing-actions"><a class="button button-primary" href="#animacoes">Ver tópicos <span aria-hidden="true">↗</span></a><a class="button button-outline" href="blender.html">Abrir tutorial <span aria-hidden="true">→</span></a></div></section>

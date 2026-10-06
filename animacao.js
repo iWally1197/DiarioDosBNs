@@ -9,7 +9,7 @@
     return;
   }
   const [title, description, file] = animation;
-  const blendPath = `downloads-${topic.id}-${file}.blend`;
+  const blendPath = `animacoes-3d/downloads-${topic.id}-${file}.blend`;
   const related = topic.ideas.map((idea) => `<li>${idea}</li>`).join('');
   root.innerHTML = `<nav class="breadcrumbs" aria-label="Você está em"><a href="index.html">Início</a><span aria-hidden="true">/</span><a href="index.html#animacoes">Tópicos de Física</a><span aria-hidden="true">/</span><a href="topico.html?topico=${encodeURIComponent(topic.id)}">${topic.name}</a><span aria-hidden="true">/</span><span>${title}</span></nav>
     <section class="animation-detail-hero"><div class="section-kicker">${topic.area.toUpperCase()} · PROJETO BLENDER</div><h1>${title}</h1><p>${description}</p><div class="animation-meta"><span>Tópico: ${topic.name}</span><span>Nível: material de apoio</span><span>Duração: controlada pelo estudante no Blender</span></div><button class="favorite-toggle" type="button" id="detail-favorite" aria-pressed="false">☆ Salvar favorita</button></section>

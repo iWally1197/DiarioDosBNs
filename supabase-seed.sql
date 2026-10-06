@@ -1,5 +1,5 @@
 -- Catálogo inicial: 17 tópicos e 82 animações; execute após a migração principal.
--- Os arquivos .blend existentes continuam públicos na raiz do site.
+-- Os arquivos .blend existentes continuam na pasta pública /animacoes-3d do site.
 begin;
 insert into public.animations(title,topic,slug,summary,level,is_published)
 values

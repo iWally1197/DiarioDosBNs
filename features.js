@@ -1,4 +1,4 @@
-import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js?v=conta-solta-20261005-3';
+import { supabase } from './src-supabase.js';
 
 const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statusText = (node, text, error) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
@@ -39,6 +39,7 @@ function setupTeacherSignup() {
 function setupAuthMessages() {
   const signup = document.querySelector('#signup-form');
   const login = document.querySelector('#login-form');
+  const recovery = document.querySelector('#recovery-form');
   if (signup) {
     const status = signup.querySelector('#form-status');
     let actions = signup.querySelector('[data-signup-resend-wrap]');
@@ -68,6 +69,7 @@ function setupAuthMessages() {
       attachCountdown(actions.querySelector('[data-email-action]'), 'signup', 'Reenviar confirmação de e-mail');
     }
   }
+  if (recovery) attachCountdown(recovery.querySelector('button[type="submit"]'), 'recovery', 'Enviar link de recuperação');
 }
 
 async function sendConfirmation(button) {
@@ -75,8 +77,7 @@ async function sendConfirmation(button) {
   const email = form && form.querySelector('input[type="email"]') && form.querySelector('input[type="email"]').value.trim();
   const note = button.parentElement.querySelector('[role="status"]');
   if (!email) { statusText(note, 'Informe o e-mail usado no cadastro.', true); return; }
-  await supabasePromise;
-  if (!supabase) { statusText(note, supabaseLoadError || 'O serviço de login não está disponível. Atualize a página e tente novamente.', true); return; }
+  if (!supabase) { statusText(note, 'O Supabase não está configurado neste site.', true); return; }
   if (button.dataset.sending === 'true') return;
   const label = 'Reenviar confirmação de e-mail';
   if (cooldownEnd('signup') > Date.now()) {
@@ -163,9 +164,14 @@ document.addEventListener('click', async (event) => {
     if (!isApproval && !removing && !confirm('Recusar esta solicitação docente?')) return;
     const note = removing || (!isApproval && !unblocking) ? (prompt(removing ? 'Motivo da suspensão (opcional):' : 'Motivo da recusa (opcional):') || '') : '';
     legacyReview.disabled = true;
-    const { error } = await supabase.rpc('admin_review_teacher', { p_user_id: legacyReview.dataset.userStatus, p_status: state, p_note: note });
-    if (error) { legacyReview.disabled = false; legacyReview.title = error.message; alert('Não foi possível atualizar a verificação. Aplique a migração de turmas/PIX.'); }
-    else location.reload();
+    try {
+      const { error } = await supabase.rpc('admin_review_teacher', { p_user_id: legacyReview.dataset.userStatus, p_status: state, p_note: note });
+      if (error) { legacyReview.title = error.message; alert('Não foi possível atualizar a verificação. Aplique a migração de turmas/PIX.'); }
+      else location.reload();
+    } catch (error) {
+      legacyReview.title = error?.message || 'Erro de conexão com o Supabase.';
+      alert('Não foi possível atualizar a verificação. Confira sua conexão e tente novamente.');
+    } finally { legacyReview.disabled = false; legacyReview.removeAttribute('aria-busy'); }
     return;
   }
   const button = event.target.closest('[data-email-action]');
@@ -176,6 +182,25 @@ document.addEventListener('click', async (event) => {
 
 document.addEventListener('submit', async (event) => {
   const form = event.target;
+  if (form && form.id === 'recovery-form') {
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (!form.reportValidity()) return;
+    const submit = form.querySelector('button[type="submit"]');
+    const email = form.querySelector('input[type="email"]').value.trim();
+    const status = form.querySelector('#form-status');
+    if (!supabase) { statusText(status, 'Configure o Supabase para ativar a recuperação.', true); return; }
+    beginCooldown('recovery');
+    submit.disabled = true;
+    attachCountdown(submit, 'recovery', 'Enviar link de recuperação');
+    submit.dataset.countdownTimer = String(setInterval(() => attachCountdownUpdate(submit, 'recovery', 'Enviar link de recuperação'), 1000));
+    attachCountdownUpdate(submit, 'recovery', 'Enviar link de recuperação');
+    statusText(status, 'Solicitando link…');
+    const redirectTo = new URL('recuperar-senha.html?mode=update', document.baseURI).href;
+    let error = null;
+    try { ({ error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectTo })); }
+    catch (err) { error = err; }
+    statusText(status, error ? 'Não foi possível enviar agora. Confira o endereço, o SMTP do Supabase e aguarde 60 segundos antes de tentar novamente.' : 'Solicitação enviada. Confira a caixa de entrada e o spam. Se não chegar, confira o SMTP em Authentication → SMTP Settings.', Boolean(error));
+  }
   if (form && form.id === 'create-activity-form' && document.querySelector('#teacher-tools')) {
     event.preventDefault(); event.stopImmediatePropagation();
     const f = form, v = new FormData(f), note = f.querySelector('[role="status"]');
@@ -234,11 +259,10 @@ document.addEventListener('submit', async (event) => {
 }, true);
 
 function notificationPanel(root) {
-  if (!root || root.querySelector('[data-notification-panel]') || root.dataset.notificationsLoading) return;
+  if (!root || root.querySelector('[data-notification-panel]') || root.dataset.notificationsLoading) return Promise.resolve();
   root.dataset.notificationsLoading = 'true';
-  Promise.resolve(supabase.rpc('notify_student_upcoming_deadlines')).catch(() => null).then(() => supabase.from('notifications').select('id,kind,title,body,href,created_at,read_at').order('created_at', { ascending: false }).limit(8))
+  return Promise.resolve(supabase.rpc('notify_student_upcoming_deadlines')).catch(() => null).then(() => supabase.from('notifications').select('id,kind,title,body,href,created_at,read_at').order('created_at', { ascending: false }).limit(8))
     .then(({ data, error }) => {
-      delete root.dataset.notificationsLoading;
       if (error || !root.isConnected || root.querySelector('[data-notification-panel]')) return;
       const rows = (data || []).map((item) => {
         const candidate = String(item.href || '');
@@ -251,14 +275,22 @@ function notificationPanel(root) {
       section.dataset.notificationPanel = 'true';
       section.innerHTML = '<div class="section-kicker">AVISOS</div><h2>Notificações</h2><ul class="private-list">' + (rows || '<li>Nenhuma notificação por enquanto.</li>') + '</ul>';
       root.prepend(section);
-    });
+    })
+    .finally(() => { delete root.dataset.notificationsLoading; });
 }
 
 document.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-notification-read]');
   if (!button) return;
-  const { error } = await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', button.dataset.notificationRead);
-  if (!error) button.closest('li').classList.remove('is-unread'), button.remove();
+  button.disabled = true;
+  try {
+    const { error } = await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', button.dataset.notificationRead);
+    if (!error) button.closest('li').classList.remove('is-unread'), button.remove();
+    else { button.title = error.message; button.disabled = false; }
+  } catch (error) {
+    button.title = error?.message || 'Não foi possível marcar a notificação como lida.';
+    button.disabled = false;
+  }
 });
 
 async function studentClasses(root) {
@@ -299,10 +331,16 @@ async function teacherVerification(root) {
   box.querySelector('[data-request-teacher-reanalysis]')?.addEventListener('click', async (event) => {
     const button = event.currentTarget, status = box.querySelector('[role="status"]');
     button.disabled = true;
-    const { error } = await supabase.rpc('request_teacher_reanalysis');
-    statusText(status, error ? 'Não foi possível enviar o pedido: ' + error.message : 'Pedido de reanálise enviado ao administrador.', Boolean(error));
-    if (error) button.disabled = false;
-    else button.textContent = 'Pedido enviado';
+    try {
+      const { error } = await supabase.rpc('request_teacher_reanalysis');
+      statusText(status, error ? 'Não foi possível enviar o pedido: ' + error.message : 'Pedido de reanálise enviado ao administrador.', Boolean(error));
+      if (!error) button.textContent = 'Pedido enviado';
+    } catch (error) {
+      statusText(status, 'Não foi possível enviar o pedido: ' + (error?.message || 'erro de conexão com o Supabase.'), true);
+    } finally {
+      if (!button.textContent.includes('Pedido enviado')) button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
   });
 }
 
@@ -634,18 +672,28 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities) {
   section.querySelectorAll('[data-delete-activity]').forEach((button) => button.addEventListener('click', async () => {
     if (!confirm('Excluir esta atividade e suas respostas associadas? Essa ação não pode ser desfeita.')) return;
     button.disabled = true;
-    const { error } = await supabase.from('activities').delete().eq('id', button.dataset.deleteActivity);
-    if (error) { button.disabled = false; button.title = error.message; alert('Não foi possível excluir a atividade: ' + error.message); }
-    else location.reload();
+    try {
+      const { error } = await supabase.from('activities').delete().eq('id', button.dataset.deleteActivity);
+      if (error) { button.title = error.message; alert('Não foi possível excluir a atividade: ' + error.message); }
+      else location.reload();
+    } catch (error) {
+      button.title = error?.message || 'Erro de conexão com o Supabase.';
+      alert('Não foi possível excluir a atividade. Confira sua conexão e tente novamente.');
+    } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
   }));
   section.querySelectorAll('[data-review-teacher]').forEach((button) => button.addEventListener('click', async () => {
     const state = button.dataset.reviewStatus;
     const note = state === 'review' || state === 'rejected' ? (prompt(state === 'review' ? 'Quais informações devem ser enviadas?' : 'Motivo da recusa (opcional):') || '') : '';
     if (state === 'rejected' && !confirm('Recusar esta solicitação? O acesso docente continuará bloqueado.')) return;
     button.disabled = true;
-    const { error } = await supabase.rpc('admin_review_teacher', { p_user_id: button.dataset.reviewTeacher, p_status: state, p_note: note });
-    if (error) { button.disabled = false; button.title = error.message; alert('Não foi possível atualizar a solicitação. Confira a migração e as permissões.'); }
-    else location.reload();
+    try {
+      const { error } = await supabase.rpc('admin_review_teacher', { p_user_id: button.dataset.reviewTeacher, p_status: state, p_note: note });
+      if (error) { button.title = error.message; alert('Não foi possível atualizar a solicitação. Confira a migração e as permissões.'); }
+      else location.reload();
+    } catch (error) {
+      button.title = error?.message || 'Erro de conexão com o Supabase.';
+      alert('Não foi possível atualizar a solicitação. Confira sua conexão e tente novamente.');
+    } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
   }));
   section.querySelectorAll('[data-review-activity]').forEach((button) => button.addEventListener('click', async () => {
     const state = button.dataset.reviewStatus;
@@ -653,9 +701,14 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities) {
     if (state !== 'approved' && !note && state === 'changes_requested') return;
     if (state === 'rejected' && !confirm('Recusar esta atividade?')) return;
     button.disabled = true;
-    const { error } = await supabase.rpc('admin_review_activity', { p_activity: button.dataset.reviewActivity, p_status: state, p_note: note });
-    if (error) { button.disabled = false; button.title = error.message; alert('Não foi possível revisar a atividade: ' + error.message); }
-    else location.reload();
+    try {
+      const { error } = await supabase.rpc('admin_review_activity', { p_activity: button.dataset.reviewActivity, p_status: state, p_note: note });
+      if (error) { button.title = error.message; alert('Não foi possível revisar a atividade: ' + error.message); }
+      else location.reload();
+    } catch (error) {
+      button.title = error?.message || 'Erro de conexão com o Supabase.';
+      alert('Não foi possível revisar a atividade. Confira sua conexão e tente novamente.');
+    } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
   }));
   section.querySelectorAll('[data-copy-code]').forEach((button) => button.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(button.dataset.copyCode); button.textContent = 'Código copiado'; }
@@ -678,22 +731,40 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities) {
   }));
 }
 
+const showEnhancementError = (root, error, fallback='Não foi possível carregar esta parte agora. Confira sua conexão e tente novamente.') => {
+  if (!root?.isConnected) return;
+  root.dataset.enhancementFailed = 'true';
+  const message = String(error?.message || '').trim() || fallback;
+  root.querySelectorAll('[data-loading-error]').forEach((node) => node.remove());
+  const notice = document.createElement('aside');
+  notice.className = 'auth-notice';
+  notice.dataset.loadingError = 'true';
+  notice.setAttribute('role', 'alert');
+  notice.innerHTML = '<strong>Não foi possível carregar esta função</strong><p>' + esc(message) + '</p><button class="button button-outline" type="button" data-enhancement-retry>Tentar novamente</button>';
+  notice.querySelector('[data-enhancement-retry]').addEventListener('click', () => location.reload());
+  root.append(notice);
+};
+
 function enhance() {
   setupTeacherSignup();
   setupAuthMessages();
   const student = document.querySelector('#student-workspace');
-  if (student && document.querySelector('#aluno-area')) studentClasses(student);
-  if (student && document.querySelector('[data-logout]') && location.pathname.includes('aluno')) studentClasses(student);
+  if (student && !student.dataset.enhancementFailed && document.querySelector('#aluno-area')) studentClasses(student).catch((error) => { delete student.dataset.classesLoading; showEnhancementError(student, error); });
+  if (student && !student.dataset.enhancementFailed && document.querySelector('[data-logout]') && location.pathname.includes('aluno')) studentClasses(student).catch((error) => { delete student.dataset.classesLoading; showEnhancementError(student, error); });
   const teacher = document.querySelector('#teacher-tools');
-  if (teacher) { teacherActivityForm(teacher); teacherVerification(teacher); notificationPanel(teacher); }
-  if (!teacher && location.pathname.includes('professor') && document.querySelector('[data-logout]')) teacherVerification(document.querySelector('main#conteudo'));
+  if (teacher && !teacher.dataset.enhancementFailed) {
+    teacherActivityForm(teacher).catch((error) => { const select = teacher.querySelector('[name="classroom"]'); if (select) select.innerHTML = '<option value="">Não foi possível carregar as turmas</option>'; showEnhancementError(teacher, error); });
+    teacherVerification(teacher).catch((error) => { delete teacher.dataset.verificationLoading; showEnhancementError(teacher, error); });
+    notificationPanel(teacher).catch(() => { delete teacher.dataset.notificationsLoading; });
+  }
+  if (!teacher && location.pathname.includes('professor') && document.querySelector('[data-logout]')) { const pageRoot=document.querySelector('main#conteudo'); if(!pageRoot.dataset.enhancementFailed) teacherVerification(pageRoot).catch((error) => { showEnhancementError(pageRoot, error); }); }
   const admin = document.querySelector('#admin-tools');
-  if (admin) { adminWorkspace(admin); notificationPanel(admin); }
-  if (student) notificationPanel(student);
+  if (admin && !admin.dataset.enhancementFailed) { adminWorkspace(admin).catch((error) => { delete admin.dataset.adminExtraLoading; showEnhancementError(admin, error); }); notificationPanel(admin).catch(() => { delete admin.dataset.notificationsLoading; }); }
+  if (student && !student.dataset.enhancementFailed) notificationPanel(student).catch(() => { delete student.dataset.notificationsLoading; });
   const page = document.querySelector('#classroom-root');
-  if (page && !page.dataset.loaded) { page.dataset.loaded = 'true'; loadClassroom(page); }
+  if (page && !page.dataset.loaded && !page.dataset.enhancementFailed) { page.dataset.loaded = 'true'; loadClassroom(page).catch((error) => { showEnhancementError(page, error); }); }
   const pix = document.querySelector('#pix-content');
-  if (pix && !pix.dataset.loaded) { pix.dataset.loaded = 'true'; loadPix(pix); }
+  if (pix && !pix.dataset.loaded && !pix.dataset.enhancementFailed) { pix.dataset.loaded = 'true'; loadPix(pix).catch((error) => { showEnhancementError(pix, error); }); }
 }
 
 async function loadPix(root) {
@@ -784,7 +855,7 @@ async function loadClassroom(root) {
     return '<article class="db-card"><h3>' + esc(lesson.title) + '</h3><p>' + esc(lesson.body) + '</p>' + editor + '</article>';
   }).join('');
   const tabs = [['lessons','Aulas'],['activities','Atividades'],['resources','Materiais'],['announcements','Avisos'],['participants','Participantes'],['progress','Progresso']];
-  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? 'professor.html' : isAdmin ? 'admin.html' : 'aluno.html') + '">Voltar ao painel</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
+  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? 'professor.html' : isAdmin ? 'admin.html' : 'aluno.html') + '">Minha área</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
     (isAdmin || isTeacher ? '<p class="auth-notice">Código da turma: <strong>' + esc(c.join_code) + '</strong> · ' + (c.join_code_enabled ? 'ativo' : 'desativado') + '</p>' : '') +
     '<div class="classroom-tabs" role="tablist" aria-label="Conteúdo da turma">' + tabs.map((t, i) => '<button type="button" role="tab" id="tab-' + t[0] + '" aria-controls="panel-' + t[0] + '" aria-selected="' + (i === 0) + '" tabindex="' + (i === 0 ? '0' : '-1') + '" data-class-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' +
     '<div id="panel-lessons" role="tabpanel" aria-labelledby="tab-lessons"><h2>Aulas</h2><div class="db-grid">' + (lessonCards || '<p>As aulas desta turma serão publicadas aqui.</p>') + '</div>' +
@@ -839,10 +910,14 @@ async function loadClassroom(root) {
   }));
   root.querySelectorAll('[data-download-activity-resource]').forEach((button) => button.addEventListener('click', async () => {
     button.disabled = true;
-    const { data, error } = await supabase.storage.from(button.dataset.bucket).createSignedUrl(button.dataset.downloadActivityResource, 60, { download: true });
-    if (error) { button.disabled = false; button.title = error.message; alert('Não foi possível preparar o download. Confira sua inscrição e as permissões do arquivo.'); return; }
-    const link = document.createElement('a'); link.href = data.signedUrl; link.download = ''; link.rel = 'noopener'; document.body.append(link); link.click(); link.remove();
-    button.disabled = false;
+    try {
+      const { data, error } = await supabase.storage.from(button.dataset.bucket).createSignedUrl(button.dataset.downloadActivityResource, 60, { download: true });
+      if (error) { button.title = error.message; alert('Não foi possível preparar o download. Confira sua inscrição e as permissões do arquivo.'); return; }
+      const link = document.createElement('a'); link.href = data.signedUrl; link.download = ''; link.rel = 'noopener'; document.body.append(link); link.click(); link.remove();
+    } catch (error) {
+      button.title = error?.message || 'Erro de conexão com o Supabase.';
+      alert('Não foi possível preparar o download. Confira sua conexão e tente novamente.');
+    } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
   }));
   root.querySelectorAll('[data-edit-class-activity]').forEach((form) => form.addEventListener('submit', async (event) => {
     event.preventDefault(); const f = event.currentTarget, v = new FormData(f), current = visibleActivities.find((row) => row.activity_id === f.dataset.editClassActivity), activity = current && current.activities;

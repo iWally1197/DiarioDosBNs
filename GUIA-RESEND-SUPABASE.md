@@ -62,7 +62,7 @@ No Supabase, abra **Authentication → URL Configuration** e confira:
   https://iwally1197.github.io/DiarioDosBNs/recuperar-senha.html?mode=update
   ```
 
-Esses endereços correspondem ao site publicado na raiz do repositório; os materiais 3D ficam junto aos outros arquivos, sem subpastas. Se publicar em outro domínio ou repositório, troque-os pelos endereços reais do site.
+Esses endereços correspondem ao site publicado na raiz do repositório; os materiais 3D ficam na subpasta `animacoes-3d`. Se publicar em outro domínio ou repositório, troque-os pelos endereços reais do site.
 
 ## Parte 5 — Testar
 
