@@ -21,6 +21,6 @@
   document.querySelector('#export-csv')?.addEventListener('click', () => {
     const rows = [['Tópico','Área','Animação','Descrição','Arquivo Blender'], ...animations.map(({topic,title,description,file}) => [topic.name,topic.area,title,description,`downloads-${topic.id}-${file}.blend`])];
     const csv = '\uFEFF' + rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g,'""')}"`).join(';')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); const link = document.createElement('a'); link.href = url; link.download = 'diario-dos-bns-catalogo-fisica.csv'; link.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); const link = document.createElement('a'); link.href = url; link.download = 'diario-dos-bns-catalogo-fisica.csv'; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 })();

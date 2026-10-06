@@ -74,7 +74,10 @@ function replaceMain(title, content) {
 
 async function getSignedUser() {
   await supabasePromise;
-  if (!supabase) return null;
+  if (!supabase) {
+    if (supabaseReady) throw new Error(supabaseLoadError || 'Não foi possível carregar o serviço de login.');
+    return null;
+  }
   const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   if (!sessionData.session) return null;
@@ -101,8 +104,7 @@ function configRequired(title) {
 
 function authShell(title, description, inner) {
   const message=takeFlash();
-  const serviceNotice=supabaseLoadError?`<aside class="auth-notice" role="alert"><strong>O serviço de login não carregou</strong><p>${safeText(supabaseLoadError)} Confira sua conexão e atualize a página.</p></aside>`:'';
-  replaceMain(title, `<section class="auth-card"><a class="auth-back" href="/">← Diário dos BNs</a><div class="section-kicker">ÁREA SEGURA · SUPABASE AUTH</div><h1>${title}</h1><p class="auth-lede">${description}</p>${message?`<p class="auth-message" role="status">${safeText(message)}</p>`:''}${!supabaseReady?configureNotice:serviceNotice}${inner}</section>`);
+  replaceMain(title, `<section class="auth-card"><a class="auth-back" href="/">← Diário dos BNs</a><div class="section-kicker">ÁREA SEGURA · SUPABASE AUTH</div><h1>${title}</h1><p class="auth-lede">${description}</p>${message?`<p class="auth-message" role="status">${safeText(message)}</p>`:''}${!supabaseReady?configureNotice:''}${inner}</section>`);
 }
 
 function renderLogin() {
@@ -112,11 +114,10 @@ function renderLogin() {
   loginForm?.addEventListener('submit',async(event)=>{
     event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
     if(!validateAuthForm(form,status))return;
-    button.disabled=true;setStatus(status,'Conectando ao serviço de login…');
+    button.disabled=true;setStatus(status,'Verificando seus dados…');
     try {
       await supabasePromise;
       if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o login.',true);return;}
-      setStatus(status,'Verificando seus dados…');
       const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
       if(error){setStatus(status,authErrorMessage(error,'Não foi possível entrar. Confira o e-mail e a senha.'),true);return;}
       const role=await getRole(data.user);
@@ -172,21 +173,73 @@ function renderSignup() {
 
 function renderRecovery() {
   const updating=new URLSearchParams(location.search).get('mode')==='update';
-  if(updating){authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
-    const code=new URLSearchParams(location.search).get('code');const status=document.querySelector('#form-status');const form=document.querySelector('#password-update-form');const submit=form?.querySelector('button[type="submit"]');
-    if(code){if(submit)submit.disabled=true;supabasePromise.then(async()=>{if(!supabase){setStatus(status,supabaseLoadError||'Não foi possível carregar o serviço de login.',true);return;}const {error}=await supabase.auth.exchangeCodeForSession(code);if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um novo link e abra-o no mesmo navegador.',true);return;}if(submit)submit.disabled=false;setStatus(status,'Link validado. Agora escolha sua nova senha.');}).catch(()=>setStatus(status,'Não foi possível validar o link. Solicite um novo e abra-o no mesmo navegador.',true));}
-    document.querySelector('#password-update-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');button.disabled=true;setStatus(status,'Conectando ao serviço de login…');await supabasePromise;if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para alterar sua senha.',true);button.disabled=false;return;}const first=form.querySelector('#new-password').value;const second=form.querySelector('#new-password-confirm').value;if(first!==second){setStatus(status,'As senhas digitadas não coincidem.',true);button.disabled=false;return;}setStatus(status,'Salvando sua nova senha…');try{const {error}=await supabase.auth.updateUser({password:first});if(error){setStatus(status,authErrorMessage(error,'Não foi possível atualizar a senha. Solicite um link novo.'),true);return;}await supabase.auth.signOut();flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');}catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão ao salvar a senha. Tente novamente.'),true);}finally{button.disabled=false;}});
+  if(updating){
+    authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
+    const code=new URLSearchParams(location.search).get('code');
+    const status=document.querySelector('#form-status');
+    const form=document.querySelector('#password-update-form');
+    const submit=form?.querySelector('button[type="submit"]');
+    if(form)form.noValidate=true;
+    if(code){
+      if(submit)submit.disabled=true;
+      setStatus(status,'Validando o link de recuperação…');
+      (async()=>{
+        await supabasePromise;
+        if(!supabase)throw new Error(supabaseLoadError||'O Supabase não está disponível.');
+        const {error}=await supabase.auth.exchangeCodeForSession(code);
+        if(error)throw error;
+        setStatus(status,'Link validado. Agora escolha sua nova senha.');
+      })().catch(()=>setStatus(status,'O link expirou ou não pôde ser validado. Solicite outro e abra-o no mesmo navegador.',true)).finally(()=>{if(submit)submit.disabled=false;});
+    }
+    form?.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const status=form.querySelector('#form-status');
+      const button=form.querySelector('button[type="submit"]');
+      if(!validateAuthForm(form,status))return;
+      const first=form.querySelector('#new-password').value;
+      const second=form.querySelector('#new-password-confirm').value;
+      if(first!==second){setStatus(status,'As senhas digitadas não coincidem.',true);form.querySelector('#new-password-confirm').focus();return;}
+      button.disabled=true;setStatus(status,'Conectando ao serviço de login…');
+      try{
+        await supabasePromise;
+        if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase para alterar sua senha.');
+        setStatus(status,'Salvando sua nova senha…');
+        const {error}=await supabase.auth.updateUser({password:first});
+        if(error)throw error;
+        await supabase.auth.signOut();flash('Senha atualizada. Faça login com a nova senha.');navigate('/login/');
+      }catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão ao salvar a senha. Tente novamente.'),true);}
+      finally{button.disabled=false;}
+    });
     return;
   }
   authShell('Recuperar senha','Informe o e-mail usado no cadastro. Se a conta existir, enviaremos um link.',`<form id="recovery-form" class="auth-form"><label for="recovery-email">E-mail</label><input id="recovery-email" type="email" autocomplete="email" required><button class="button button-primary" type="submit">Enviar link de recuperação</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p><p class="form-help">Se o e-mail não chegar, confira o spam e as configurações SMTP do projeto Supabase. O endereço cadastrado precisa estar confirmado.</p></form><div class="auth-links"><a href="/login">Voltar ao login</a></div>`);
-  document.querySelector('#recovery-form')?.addEventListener('submit',async(event)=>{event.preventDefault();const form=event.currentTarget;const email=form.querySelector('#recovery-email').value.trim();const status=document.querySelector('#form-status');const button=form.querySelector('button[type="submit"]');button.disabled=true;setStatus(status,'Conectando ao serviço de recuperação…');await supabasePromise;if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar a recuperação.',true);button.disabled=false;return;}setStatus(status,'Solicitando link…');try{const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});if(error){setStatus(status,authErrorMessage(error,'O Supabase não conseguiu enviar o link. Confira o SMTP e tente novamente.'),true);}else setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings.');}catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão com o Supabase. Confira sua internet e tente novamente.'),true);}finally{button.disabled=false;}});
+  const recoveryForm=document.querySelector('#recovery-form');
+  if(recoveryForm)recoveryForm.noValidate=true;
+  recoveryForm?.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    const email=recoveryForm.querySelector('#recovery-email').value.trim();
+    const status=recoveryForm.querySelector('#form-status');
+    const button=recoveryForm.querySelector('button[type="submit"]');
+    if(!validateAuthForm(recoveryForm,status))return;
+    button.disabled=true;setStatus(status,'Conectando ao serviço de recuperação…');
+    try{
+      await supabasePromise;
+      if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase para ativar a recuperação.');
+      const redirectTo=`${location.origin}${siteHref('recuperar-senha/?mode=update')}`;
+      const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});
+      if(error)throw error;
+      setStatus(status,'Solicitação enviada. Confira a caixa de entrada e o spam. Se nada chegar, verifique o SMTP em Authentication → SMTP Settings.');
+    }catch(error){setStatus(status,authErrorMessage(error,'Falha de conexão com o Supabase. Confira sua internet e tente novamente.'),true);}
+    finally{button.disabled=false;}
+  });
 }
 
 async function renderCallback() {
-  await supabasePromise;
   replaceMain('Confirmando e-mail','<section class="auth-card"><h1>Confirmando seu e-mail…</h1><p id="callback-status" role="status">Aguarde enquanto validamos o link.</p></section>');
-  const status=document.querySelector('#callback-status');if(!supabase){if(status)status.textContent='Configure o Supabase e reinicie o servidor.';return;}
+  const status=document.querySelector('#callback-status');
   try {
+    await supabasePromise;
+    if(!supabase)throw new Error(supabaseLoadError||'Configure o Supabase e reinicie o servidor.');
     const code=new URLSearchParams(location.search).get('code');
     if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error){setStatus(status,'O link expirou ou já foi utilizado. Solicite um link novo.',true);return;}}
     const user=await getSignedUser();if(!user){setStatus(status,'Não encontramos uma sessão. Faça login ou solicite outro link.',true);return;}
@@ -197,7 +250,6 @@ async function renderCallback() {
 function routeMessage(title,message,links='') { replaceMain(title,`<section class="auth-card"><div class="section-kicker">DIÁRIO DOS BNs</div><h1>${title}</h1><p>${message}</p>${links}</section>`); }
 
 async function protectRoute() {
-  await supabasePromise;
   if(!supabaseReady){configRequired('Acessar minha área');return;}
   try {
     const user=await getSignedUser();
@@ -219,7 +271,24 @@ function profileHeader(user,role,title,lead) {
   return `<section class="dashboard-heading"><div><div class="lesson-tag">${accountLabels[role.role]||'Conta'}${role.status==='pending'?' · APROVAÇÃO PENDENTE':''}</div><h1>${title}</h1><p>${lead}</p></div><div class="dashboard-actions">${profileButton}<button type="button" class="button button-outline" data-logout>Sair da conta</button></div></section>`;
 }
 
-function wireLogout() { document.querySelectorAll('[data-logout]').forEach((button)=>{if(button.dataset.logoutBound)return;button.dataset.logoutBound='true';button.addEventListener('click',async()=>{button.disabled=true;await supabase.auth.signOut();navigate('/login/');});}); }
+function wireLogout() {
+  document.querySelectorAll('[data-logout]').forEach((button)=>{
+    if(button.dataset.logoutBound)return;
+    button.dataset.logoutBound='true';
+    button.addEventListener('click',async()=>{
+      button.disabled=true;
+      try{
+        const {error}=await supabase.auth.signOut();
+        if(error)throw error;
+        navigate('/login/');
+      }catch(error){
+        button.disabled=false;
+        button.title=error?.message||'Não foi possível sair. Confira sua conexão e tente novamente.';
+        button.textContent='Tente sair novamente';
+      }
+    });
+  });
+}
 
 async function renderProfile(user,role) {
   const {data:profile,error}=await supabase.from('profiles').select('display_name,bio,avatar_path,age_range,education_level,education_detail,teacher_degree_level,teacher_degree_program,teacher_institution,created_at').eq('id',user.id).single();
@@ -261,8 +330,8 @@ async function loadLearningWorkspace(root,user,role) {
   const [favorites,animations,downloads,progress,activities,courses]=await Promise.all([favoritesPromise,animationsPromise,downloadsPromise,progressPromise,activitiesPromise,coursesPromise]);
   const dataErrors=[favorites,animations,downloads,progress,activities,courses].filter((result)=>result.error).map((result)=>result.error.message);
   const anims=animations.data||[], favIds=new Set((favorites.data||[]).map((item)=>item.animation_id));
-  const animationCards=anims.map((item)=>`<article class="db-card"><span class="lesson-tag">${safeText(item.topic)}</span><h3>${safeText(item.title)}</h3><p>${safeText(item.summary||'Conteúdo de apoio para estudar Física.')}</p><div class="db-card-actions"><a href="/topico.html?topico=${encodeURIComponent(item.slug.split('--')[0]||'')}">Ver conceitos</a><button type="button" data-db-favorite="${item.id}" aria-pressed="${favIds.has(item.id)}">${favIds.has(item.id)?'★ Salva':'☆ Favoritar'}</button></div></article>`).join('')||'<p>A biblioteca de conceitos está disponível na página inicial.</p>';
-  const favoriteCards=(favorites.data||[]).map((item)=>`<li><a href="/topico.html?topico=${encodeURIComponent(item.animations?.slug?.split('--')[0]||'')}">${safeText(item.animations?.topic||'Ver assunto de Física')}</a><button type="button" data-db-favorite="${item.animation_id}" aria-pressed="true">Remover</button></li>`).join('')||'<li>Ainda não há favoritas.</li>';
+  const animationCards=anims.map((item)=>`<article class="db-card"><span class="lesson-tag">${safeText(item.topic)}</span><h3>${safeText(item.title)}</h3><p>${safeText(item.summary||'Animação de apoio para estudar Física.')}</p><div class="db-card-actions"><a href="/animacao.html?topico=${encodeURIComponent(item.slug.split('--')[0]||'')}&amp;animacao=${encodeURIComponent(item.slug.split('--')[1]||'')}">Detalhes</a><button type="button" data-db-favorite="${item.id}" aria-pressed="${favIds.has(item.id)}">${favIds.has(item.id)?'★ Salva':'☆ Favoritar'}</button></div></article>`).join('')||'<p>Nenhuma animação publicada ainda. A biblioteca está disponível na página inicial.</p>';
+  const favoriteCards=(favorites.data||[]).map((item)=>`<li><a href="/animacao.html?topico=${encodeURIComponent(item.animations?.slug?.split('--')[0]||'')}&amp;animacao=${encodeURIComponent(item.animations?.slug?.split('--')[1]||'')}">${safeText(item.animations?.title||'Animação')}</a><button type="button" data-db-favorite="${item.animation_id}" aria-pressed="true">Remover</button></li>`).join('')||'<li>Ainda não há favoritas.</li>';
   const progressRows=(progress.data||[]).map((item)=>`<li>${safeText(item.lessons?.courses?.title||'Curso')}: ${safeText(item.lessons?.title||'Aula')} ${item.completed_at?'· concluída':'· em andamento'}</li>`).join('')||'<li>Seu progresso de cursos aparecerá aqui.</li>';
   const progressByLesson=new Map((progress.data||[]).map((item)=>[item.lesson_id,item]));
   const courseCards=(courses.data||[]).map((course)=>`<article class="db-card"><h3>${safeText(course.title)}</h3><p>${safeText(course.description||'')}</p><ol>${(course.lessons||[]).sort((a,b)=>a.position-b.position).map((lesson)=>{const done=Boolean(progressByLesson.get(lesson.id)?.completed_at);return `<li><b>${safeText(lesson.title)}</b><p>${safeText(lesson.body||'')}</p>${videoMarkup(lesson.video_url,lesson.title)}<button type="button" data-mark-lesson="${lesson.id}" data-completed="${done}">${done?'Concluída — desfazer':'Marcar como concluída'}</button></li>`;}).join('')||'<li>Aulas em preparação.</li>'}</ol></article>`).join('')||'<p>Nenhum curso Blender publicado ainda.</p>';
@@ -421,7 +490,6 @@ function videoMarkup(raw,title) {
 }
 
 async function hydrateAnimationDetails() {
-  await supabasePromise;
   const detail=document.querySelector('#animation-detail');
   if(!detail||!supabase)return;
   const params=new URLSearchParams(location.search);
@@ -439,7 +507,6 @@ async function hydrateAnimationDetails() {
 }
 
 async function attachAuthNavigation() {
-  await supabasePromise;
   const nav=document.querySelector('.site-header .nav');if(!nav)return;
   let menu=nav.querySelector('[data-area-menu]');
   if(!menu){
@@ -460,7 +527,9 @@ async function attachAuthNavigation() {
     if(user&&role){dashboard.href=destination(role)+'/';dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');}
   };
   setAccountMenu(null,null);
-  if(!supabase){document.documentElement.classList.add('auth-nav-ready');return;}
+  document.documentElement.classList.add('auth-nav-ready');
+  await supabasePromise;
+  if(!supabase)return;
   try {
     const {data,error}=await supabase.auth.getSession();if(error)throw error;
     if(data.session){
@@ -524,22 +593,26 @@ async function renderClassroomHub() {
 }
 
 async function syncLegacyFavorite(event) {
-  await supabasePromise;
   const button=event.target.closest('[data-favorite-topic]');
-  if(!button||!supabase)return;
-  const {data}=await supabase.auth.getSession();if(!data.session)return;
-  const role=await getRole(data.session.user).catch(()=>null);if(!role||role.status!=='active')return;
-  const slug=`${button.dataset.favoriteTopic}--${button.dataset.favoriteFile}`;
-  const {data:animation}=await supabase.from('animations').select('id').eq('slug',slug).maybeSingle();if(!animation)return;
-  const {error}=button.getAttribute('aria-pressed')==='true'
-    ? await supabase.from('favorites').insert({user_id:data.session.user.id,animation_id:animation.id})
-    : await supabase.from('favorites').delete().eq('user_id',data.session.user.id).eq('animation_id',animation.id);
-  if(error)button.title='Não foi possível atualizar a lista na conta.';
+  if(!button)return;
+  try{
+    await supabasePromise;
+    if(!supabase)return;
+    const {data}=await supabase.auth.getSession();if(!data.session)return;
+    const role=await getRole(data.session.user).catch(()=>null);if(!role||role.status!=='active')return;
+    const slug=`${button.dataset.favoriteTopic}--${button.dataset.favoriteFile}`;
+    const {data:animation}=await supabase.from('animations').select('id').eq('slug',slug).maybeSingle();if(!animation)return;
+    const {error}=button.getAttribute('aria-pressed')==='true'
+      ? await supabase.from('favorites').insert({user_id:data.session.user.id,animation_id:animation.id})
+      : await supabase.from('favorites').delete().eq('user_id',data.session.user.id).eq('animation_id',animation.id);
+    if(error)button.title='Não foi possível atualizar a lista na conta.';
+  }catch{button.title='Não foi possível sincronizar a favorita com sua conta agora.';}
 }
 
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
-if (document.querySelector('#animation-detail')) hydrateAnimationDetails();
+supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
+import('./features.js').catch(()=>{});
 
 if (main) {
   attachAuthNavigation();
@@ -547,19 +620,9 @@ if (main) {
   const recoveryIsUpdating=route==='/recuperar-senha'&&new URLSearchParams(location.search).get('mode')==='update';
   const isAuthEntry=['/login','/cadastro'].includes(route)||(route==='/recuperar-senha'&&!recoveryIsUpdating);
   const renderAuthEntry=()=>{if(route==='/login')renderLogin();else if(route==='/cadastro')renderSignup();else renderRecovery();};
-  if (isAuthEntry) {
-    // Mostra os formulários imediatamente; a checagem da sessão acontece ao fundo.
-    renderAuthEntry();
-    if(supabaseReady)getSignedUser().then(async(user)=>{if(!user)return;const role=await getRole(user);if(!role)return;navigate(destination(role),true);}).catch((error)=>{const status=document.querySelector('#form-status');if(status)setStatus(status,`Não foi possível conferir uma sessão já aberta. Você ainda pode entrar ou criar conta. ${safeText(error.message||'')}`,true);});
-  }
+  if (isAuthEntry) renderAuthEntry();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
   else if (route==='/turmas') renderClassroomHub();
   else if (protectedRoutes.includes(route)) protectRoute();
 }
-
-// Optional page enhancements must not prevent login and signup from appearing.
-// Load them only after the main page router has rendered its initial content.
-import('./features.js').catch((error) => {
-  console.error('Os recursos adicionais não foram carregados:', error);
-});

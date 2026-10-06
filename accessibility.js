@@ -16,6 +16,7 @@
   let guide = null;
   let speechActive = false;
   const safeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
+  const safeRemove = (key) => { try { localStorage.removeItem(key); } catch {} };
   function readSettings() {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch {}
@@ -132,11 +133,11 @@
       const report = { identity: identityValue, conditions: identityValue === 'neurodivergent' && !preferNot.checked ? checkboxes.filter((input) => input.checked).map((input) => input.value) : [], preferNotConditions: identityValue === 'neurodivergent' && preferNot.checked, other: identityValue === 'neurodivergent' && !preferNot.checked ? profileEditor.querySelector('#a11y-edit-other').value.trim() : '', updatedAt: new Date().toISOString() };
       const key = currentProfileKey();
       if (!key) return;
-      if (!identityValue) { localStorage.removeItem(key); profileEditor.querySelector('[data-profile-status]').textContent = 'Nenhuma informação pessoal foi selecionada ou guardada.'; return; }
+      if (!identityValue) { safeRemove(key); profileEditor.querySelector('[data-profile-status]').textContent = 'Nenhuma informação pessoal foi selecionada ou guardada.'; return; }
       safeStore(key, report); profileEditor.querySelector('[data-profile-status]').textContent = 'Salvo neste navegador. Essa informação não foi enviada ao site.';
     });
     profileEditor.querySelector('[data-profile-delete]').addEventListener('click', () => {
-      const key = currentProfileKey(); if (key) localStorage.removeItem(key);
+      const key = currentProfileKey(); if (key) safeRemove(key);
       buildProfileEditor({});
       const message = profileEditor.querySelector('[data-profile-status]'); if (message) message.textContent = 'Informação opcional apagada deste navegador.';
     });

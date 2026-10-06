@@ -1,9 +1,12 @@
 -- Antes desta migração, crie no Dashboard um bucket chamado “downloads”
--- com Public bucket desativado. Arquivos públicos do site continuam em /downloads;
+-- com Public bucket desativado. Arquivos públicos do site continuam na raiz;
 -- materiais exclusivos devem existir somente neste bucket privado.
 begin;
 
--- Permite reaplicar esta migração sem falhar se as políticas já existirem.
+insert into storage.buckets(id,name,public)
+values('downloads','downloads',false)
+on conflict(id) do update set public=false;
+
 drop policy if exists "Download access follows database visibility" on storage.objects;
 drop policy if exists "Administrators can inspect private download files" on storage.objects;
 drop policy if exists "Administrators can add private download files" on storage.objects;

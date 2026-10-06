@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const config = { ...readEnv('.env'), ...readEnv('.env.local'), ...process.env };
-const port = Number(config.PORT || 4173);
+const configuredPort = Number(config.PORT || 4173);
+const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : 4173;
 const host = config.HOST || '127.0.0.1';
 const routes = new Map([
   ['/login','login.html'],['/cadastro','cadastro.html'],['/recuperar-senha','recuperar-senha.html'],
@@ -45,6 +46,9 @@ function send(res, status, contentType, body, extra = {}) {
 
 const server = createServer((req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return send(res, 405, 'text/plain; charset=utf-8', 'Método não permitido.', { Allow: 'GET, HEAD' });
+  }
   const aliasPath = url.pathname.length > 1 ? url.pathname.replace(/\/$/, '') : url.pathname;
   const canonicalPage = routes.get(aliasPath);
   if (canonicalPage) {
@@ -61,7 +65,7 @@ const server = createServer((req, res) => {
     const source = `export const supabaseConfig = Object.freeze(${JSON.stringify(values)});\n`;
     return send(res, 200, 'text/javascript; charset=utf-8', req.method === 'HEAD' ? '' : source, {'Cache-Control':'no-store'});
   }
-  if (url.pathname === '/healthz') return send(res, 200, 'application/json; charset=utf-8', '{"ok":true}');
+  if (url.pathname === '/healthz') return send(res, 200, 'application/json; charset=utf-8', req.method === 'HEAD' ? '' : '{"ok":true}');
   let pathname;
   try { pathname = decodeURIComponent(url.pathname); } catch { return send(res, 400, 'text/plain; charset=utf-8', 'Endereço inválido.'); }
   if (pathname.split('/').some((part) => part.startsWith('.') && part !== '.well-known')) return send(res, 404, 'text/plain; charset=utf-8', 'Não encontrado.');

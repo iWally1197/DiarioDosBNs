@@ -24,7 +24,8 @@
   const themeButton = document.querySelector('.theme-toggle');
   const themeLabel = document.querySelector('.theme-label');
   const themeIcon = document.querySelector('.theme-icon');
-  const stored = localStorage.getItem('diario-bns-theme');
+  let stored = null;
+  try { stored = localStorage.getItem('diario-bns-theme'); } catch {}
   const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   const setTheme = (theme) => {
     root.dataset.theme = theme;
@@ -38,7 +39,7 @@
   themeButton?.addEventListener('click', () => {
     const next = root.dataset.theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    localStorage.setItem('diario-bns-theme', next);
+    try { localStorage.setItem('diario-bns-theme', next); } catch {}
   });
 
   const toggle = document.querySelector('.menu-toggle');

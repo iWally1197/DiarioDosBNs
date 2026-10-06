@@ -1,4 +1,4 @@
-import { supabase } from './src-supabase.js';
+import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js';
 
 const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statusText = (node, text, error) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
@@ -75,7 +75,8 @@ async function sendConfirmation(button) {
   const email = form && form.querySelector('input[type="email"]') && form.querySelector('input[type="email"]').value.trim();
   const note = button.parentElement.querySelector('[role="status"]');
   if (!email) { statusText(note, 'Informe o e-mail usado no cadastro.', true); return; }
-  if (!supabase) { statusText(note, 'O Supabase não está configurado neste site.', true); return; }
+  await supabasePromise;
+  if (!supabase) { statusText(note, supabaseLoadError || 'O serviço de login não está disponível. Atualize a página e tente novamente.', true); return; }
   if (button.dataset.sending === 'true') return;
   const label = 'Reenviar confirmação de e-mail';
   if (cooldownEnd('signup') > Date.now()) {
