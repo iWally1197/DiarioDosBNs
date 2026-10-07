@@ -3092,3 +3092,20 @@ html[data-theme="light"] button[data-animation-cancel],html[data-theme="light"] 
   body.account-nav-static .nav-account-links{width:100%;margin:0;padding:0;border:0;gap:7px;}
   body.account-nav-static .nav-account-links [data-account-link],body.account-nav-static .nav-account-links .nav-signout{min-height:38px;padding:8px 11px;}
 }
+
+/* Botão de entrada na página de turmas: texto com contraste alto */
+main.classroom-hub-main .auth-notice a.button-primary[href="/login/"] {
+  color: #fff;
+  background: #19324f;
+  border: 1px solid #19324f;
+}
+main.classroom-hub-main .auth-notice a.button-primary[href="/login/"]:hover,
+main.classroom-hub-main .auth-notice a.button-primary[href="/login/"]:focus-visible {
+  color: #fff;
+  background: #25486f;
+  border-color: #25486f;
+}
+main.classroom-hub-main .auth-notice a.button-primary[href="/login/"]:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 3px;
+}
