@@ -62,7 +62,7 @@ function authShell(title, description, inner) {
 }
 
 function renderLogin() {
-  authShell('Fazer login','Entre com o e-mail e a senha da sua conta.',`<form id="login-form" class="auth-form"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required><label for="login-password">Senha</label><input id="login-password" name="password" type="password" autocomplete="current-password" required><button class="button button-primary" type="submit">Entrar</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a><a href="/cadastro">Criar uma conta</a></div>`);
+  authShell('Fazer login','Entre com o e-mail e a senha da sua conta.',`<form id="login-form" class="auth-form"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required><label for="login-password">Senha</label><input id="login-password" name="password" type="password" autocomplete="current-password" required><button class="button button-primary" type="submit">Entrar</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a></div>`);
   document.querySelector('#login-form')?.addEventListener('submit',async(event)=>{
     event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
     if(!supabase){setStatus(status,'Configure o Supabase para ativar o login.',true);return;}
@@ -76,26 +76,9 @@ function renderLogin() {
   });
 }
 
-function renderSignup() {
-  authShell('Criar conta','Escolha Aluno ou Professor. Contas de administrador são configuradas pelo proprietário, fora do cadastro público.',`<form id="signup-form" class="auth-form"><label for="signup-name">Nome</label><input id="signup-name" name="name" autocomplete="name" maxlength="100" required><label for="signup-email">E-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required><label for="signup-password">Senha</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres. O Supabase Auth armazena a credencial com hash.</small><label for="signup-confirm">Confirmação de senha</label><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><label for="signup-role">Tipo de conta</label><select id="signup-role" name="role"><option value="aluno">Aluno</option><option value="professor">Professor · aprovação pendente</option></select><label class="consent-check"><input type="checkbox" name="consent" required><span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label><button class="button button-primary" type="submit">Criar conta</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/login">Já tenho uma conta</a></div><aside class="auth-note"><strong>Contas de professor</strong><p>O cadastro pode ser submetido, mas os downloads e ferramentas docentes só são liberados após aprovação por um administrador.</p></aside>`);
-  document.querySelector('#signup-form')?.addEventListener('submit',async(event)=>{
-    event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
-    if(!supabase){setStatus(status,'Configure o Supabase para ativar o cadastro.',true);return;}
-    const values=new FormData(form);const password=String(values.get('password'));const confirmation=String(values.get('confirm'));
-    if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
-    if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);return;}
-    button.disabled=true;setStatus(status,'Criando sua conta…');
-    const role=values.get('role')==='professor'?'professor':'aluno';
-    try {
-      const {data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,terms_version:'1.0',privacy_version:'1.0'}}});
-      if(error){setStatus(status,'Não foi possível criar a conta. Verifique os dados, as configurações de e-mail e tente novamente.',true);return;}
-      if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
-      else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
-    } catch(error) { setStatus(status,`O cadastro não respondeu. Confira sua conexão e tente novamente. ${error?.message||''}`,true); }
-    finally { button.disabled=false; }
-  });
+function renderSignupDisabled() {
+  authShell('Cadastro desativado','A criação de novas contas foi removida deste site. Se você já tem uma conta, use o login.', '<div class="auth-links"><a class="button button-primary" href="/login/">Entrar na conta</a></div>');
 }
-
 function renderRecovery() {
   const updating=new URLSearchParams(location.search).get('mode')==='update';
   if(updating){authShell('Definir nova senha','Escolha uma senha nova para sua conta.',`<form id="password-update-form" class="auth-form"><label for="new-password">Nova senha</label><input id="new-password" type="password" minlength="10" autocomplete="new-password" required><label for="new-password-confirm">Confirme a nova senha</label><input id="new-password-confirm" type="password" minlength="10" autocomplete="new-password" required><button class="button button-primary" type="submit">Salvar senha</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form>`);
@@ -360,7 +343,7 @@ if (main) {
   document.addEventListener('click',syncLegacyFavorite);
   if (route==='/login'&&supabaseReady) getSignedUser().then(async(user)=>{if(user){const role=await getRole(user);navigate(destination(role), true);}}).catch(()=>{});
   if (route==='/login') renderLogin();
-  else if (route==='/cadastro') renderSignup();
+  else if (route==='/cadastro') renderSignupDisabled();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
   else if (protectedRoutes.includes(route)) protectRoute();
