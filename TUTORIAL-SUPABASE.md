@@ -43,14 +43,14 @@ Os arquivos `.blend` públicos que acompanham o site continuam sendo publicados 
 
 ## 4. Autorize os endereços do site
 
-No Supabase, abra **Authentication → URL Configuration**. Para o site publicado em `https://iwally1197.github.io/DiarioDosBNs/`, configure:
+No Supabase, abra **Authentication → URL Configuration**. Para o site publicado em `https://diariodosbns.com.br/`, configure:
 
-- **Site URL:** `https://iwally1197.github.io/DiarioDosBNs/`
+- **Site URL:** `https://diariodosbns.com.br/`
 - Em **Redirect URLs**, inclua estas duas linhas:
 
   ```text
-  https://iwally1197.github.io/DiarioDosBNs/auth-callback.html
-  https://iwally1197.github.io/DiarioDosBNs/recuperar-senha.html?mode=update
+  https://diariodosbns.com.br/auth-callback.html
+  https://diariodosbns.com.br/recuperar-senha.html?mode=update
   ```
 
 Salve as alterações. O nome e o caminho precisam corresponder exatamente ao endereço publicado, incluindo maiúsculas/minúsculas e o nome do repositório. Se mudar de domínio ou repositório, atualize os endereços.

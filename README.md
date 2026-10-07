@@ -22,9 +22,9 @@ Envie os arquivos que estão na raiz desta pasta para a raiz do repositório e e
 
 Depois configure o Supabase em **Authentication → URL Configuration**:
 
-- **Site URL:** `https://iwally1197.github.io/DiarioDosBNs/`
-- URL permitida: `https://iwally1197.github.io/DiarioDosBNs/auth-callback.html`
-- URL permitida: `https://iwally1197.github.io/DiarioDosBNs/recuperar-senha.html?mode=update`
+- **Site URL:** `https://diariodosbns.com.br/`
+- URL permitida: `https://diariodosbns.com.br/auth-callback.html`
+- URL permitida: `https://diariodosbns.com.br/recuperar-senha.html?mode=update`
 
 O GitHub Pages publica arquivos estáticos e não executa `server.mjs`. Para executar localmente, instale Node.js 20 ou superior e rode `npm start` nesta pasta; o servidor usa `supabase-config.js` automaticamente e mapeia as rotas para os arquivos HTML correspondentes. Se preferir configurar o servidor por variáveis de ambiente, copie `.env.example` para `.env.local`.
 
