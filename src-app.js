@@ -1,4 +1,4 @@
-import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js';
+import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js?v=auth-fix-20261006-1';
 
 // Load the shared accessibility controls on every page that uses the app module.
 if (!document.querySelector('script[data-diario-accessibility]')) {
@@ -69,6 +69,7 @@ function replaceMain(title, content) {
   if (!main) return;
   document.title = `${title} — Diário dos BNs`;
   main.innerHTML = `<div class="auth-page section-wrap">${content}</div>`;
+  main.dataset.diarioAuthReady = 'true';
   document.querySelectorAll('.nav-account').forEach((link) => { link.href='/perfil'; link.textContent='Minha área'; });
 }
 
@@ -612,10 +613,9 @@ async function syncLegacyFavorite(event) {
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
-import('./features.js').catch(()=>{});
+import('./features.js?v=auth-fix-20261006-1').catch(()=>{});
 
 if (main) {
-  attachAuthNavigation();
   document.addEventListener('click',syncLegacyFavorite);
   const recoveryIsUpdating=route==='/recuperar-senha'&&new URLSearchParams(location.search).get('mode')==='update';
   const isAuthEntry=['/login','/cadastro'].includes(route)||(route==='/recuperar-senha'&&!recoveryIsUpdating);
@@ -625,4 +625,5 @@ if (main) {
   else if (route==='/auth/callback') renderCallback();
   else if (route==='/turmas') renderClassroomHub();
   else if (protectedRoutes.includes(route)) protectRoute();
+  attachAuthNavigation().catch((error)=>console.error('Não foi possível preparar a navegação da conta:',error));
 }
