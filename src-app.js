@@ -78,7 +78,6 @@ function replaceMain(title, content) {
   document.title = `${title} — Diário dos BNs`;
   main.innerHTML = `<div class="auth-page section-wrap">${content}</div>`;
   main.dataset.diarioAuthReady = 'true';
-  document.querySelectorAll('.nav-account').forEach((link) => { link.href='/perfil'; link.textContent='Minha área'; });
 }
 
 let signedUserRequest = null;
@@ -164,27 +163,16 @@ function renderLogin() {
 
 function renderSignup() {
   authShell('Criar conta','Escolha o tipo de conta e informe sua etapa de ensino ou formação. Contas de administrador são configuradas pelo proprietário, fora do cadastro público.',`<form id="signup-form" class="auth-form"><label for="signup-name">Nome</label><input id="signup-name" name="name" autocomplete="name" maxlength="100" required><label for="signup-email">E-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required><label for="signup-age-range">Faixa etária</label><select id="signup-age-range" name="age_range" required><option value="">Selecione sua faixa etária</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option></select><small>Informamos apenas uma faixa etária, não a data de nascimento. Estudantes menores de idade devem realizar o cadastro com apoio de um responsável.</small><label for="signup-password">Senha</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres. O Supabase Auth armazena a credencial com hash.</small><label for="signup-confirm">Confirmação de senha</label><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><label for="signup-role">Tipo de conta</label><select id="signup-role" name="role"><option value="aluno">Aluno</option><option value="professor">Professor · aprovação pendente</option></select><fieldset id="student-education-fields" class="signup-fieldset"><legend>Etapa de ensino do aluno</legend><label for="signup-education-level">Etapa de ensino</label><select id="signup-education-level" name="education_level" required><option value="">Selecione sua etapa</option>${stageOptions()}</select><label for="signup-education-detail">Ano, série ou período <span>(opcional)</span></label><input id="signup-education-detail" name="education_detail" maxlength="100" placeholder="Ex.: 8º ano, 2º ano, 3º semestre"></fieldset><fieldset id="teacher-education-fields" class="signup-fieldset" hidden><legend>Formação do professor</legend><label for="signup-degree-level">Titulação ou etapa da formação</label><select id="signup-degree-level" name="teacher_degree_level">${degreeOptions()}</select><label for="signup-degree-program">Curso / área de formação</label><input id="signup-degree-program" name="teacher_degree_program" list="teacher-course-options" maxlength="160" placeholder="Escolha ou digite seu curso"><datalist id="teacher-course-options">${higherEducationCourses.map((course)=>`<option value="${safeText(course)}">`).join('')}</datalist><label for="signup-institution">Faculdade ou instituição <span>(opcional)</span></label><input id="signup-institution" name="teacher_institution" maxlength="160" placeholder="Nome da instituição"></fieldset><details class="accessibility-signup" id="signup-accessibility"><summary>Personalize sua experiência <span>(opcional)</span></summary><p>Estas informações são opcionais. Elas ficam apenas neste navegador, não são enviadas ao Supabase e não aparecem para professores ou outros estudantes. Em aparelhos compartilhados, prefira não informar condições pessoais.</p><fieldset><legend>Como você prefere personalizar sua experiência?</legend><label><input type="radio" name="a11y-profile" value="neurotypical"> Neurotípico</label><label><input type="radio" name="a11y-profile" value="neurodivergent"> Neurodivergente</label><label><input type="radio" name="a11y-profile" value="prefer-not"> Prefiro não informar</label></fieldset><fieldset id="signup-accessibility-conditions" hidden><legend>Quais características ou condições você gostaria de usar para personalizar a experiência? (opcional, múltipla escolha)</legend><p>Esta lista não é uma classificação médica universal. Não fazemos diagnósticos nem inferimos condições.</p><strong>Neurodesenvolvimento e aprendizagem</strong><label><input type="checkbox" name="a11y-conditions" value="TEA"> Transtorno do Espectro Autista (TEA)</label><label><input type="checkbox" name="a11y-conditions" value="TDAH"> TDAH</label><label><input type="checkbox" name="a11y-conditions" value="Dislexia"> Dislexia</label><label><input type="checkbox" name="a11y-conditions" value="Discalculia"> Discalculia</label><label><input type="checkbox" name="a11y-conditions" value="Disgrafia"> Disgrafia</label><label><input type="checkbox" name="a11y-conditions" value="Dispraxia / coordenação"> Dispraxia / Transtorno do Desenvolvimento da Coordenação</label><label><input type="checkbox" name="a11y-conditions" value="Desenvolvimento da linguagem"> Transtorno do Desenvolvimento da Linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outro perfil de aprendizagem"> Outros perfis relacionados à aprendizagem</label><strong>Comunicação e linguagem</strong><label><input type="checkbox" name="a11y-conditions" value="Dificuldades específicas de linguagem"> Dificuldades específicas de linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Processamento da linguagem"> Dificuldades de processamento da linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição de linguagem"> Outras</label><strong>Outras características</strong><label><input type="checkbox" name="a11y-conditions" value="Tourette"> Síndrome de Tourette</label><label><input type="checkbox" name="a11y-conditions" value="Transtornos específicos de aprendizagem"> Transtornos específicos de aprendizagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição ou característica"> Outras condições ou características</label><label for="signup-a11y-other">Outra — especificar (opcional)</label><input id="signup-a11y-other" name="a11y-other" maxlength="120"><label><input type="checkbox" name="a11y-conditions" value="prefer-not"> Prefiro não informar</label></fieldset><small>Você pode alterar ou apagar essa escolha na Central de Acessibilidade. Os controles visuais e de leitura podem ser usados independentemente dessas respostas.</small></details><label class="consent-check"><input type="checkbox" name="consent" required><span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label><button class="button button-primary" type="submit">Criar conta</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/login">Já tenho uma conta</a></div><aside class="auth-note"><strong>Cadastro de professor</strong><p>A formação informada ajuda na identificação, mas não substitui a aprovação do responsável pelo site. O acesso docente só é liberado após aprovação.</p></aside>`);
-  const form=document.querySelector('#signup-form');const roleSelect=form?.elements.namedItem('role');const studentFields=document.querySelector('#student-education-fields');const teacherFields=document.querySelector('#teacher-education-fields');
+  const form=document.querySelector('#signup-form');
+  if(!form)return;
   form.noValidate=true;
-  form.querySelector('button[type="submit"]')?.classList.add('signup-submit');
-  roleSelect.required=true;roleSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione o tipo de conta</option>');
-  const degreeSelect=teacherFields.querySelector('#signup-degree-level');degreeSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione sua formação</option>');
-  const requiredNote=document.createElement('p');requiredNote.className='required-note';requiredNote.innerHTML='<span aria-hidden="true">*</span> Campos marcados com asterisco são obrigatórios.';form.prepend(requiredNote);
-  const markRequiredFields=()=>{form.querySelectorAll('.required-marker').forEach((marker)=>marker.remove());form.querySelectorAll('[required]').forEach((field)=>{if(field.closest('[hidden]'))return;const label=field.closest('label')||[...form.querySelectorAll('label[for]')].find((item)=>item.htmlFor===field.id);if(!label)return;const marker=document.createElement('span');marker.className='required-marker';marker.setAttribute('aria-hidden','true');marker.textContent='* obrigatório';label.append(marker);});};
-  const syncSignupFields=()=>{const teacher=roleSelect?.value==='professor';studentFields.hidden=teacher;teacherFields.hidden=!teacher;studentFields.querySelectorAll('select,input').forEach((field)=>field.required=!teacher&&field.id==='signup-education-level');degreeSelect.required=teacher;teacherFields.querySelector('#signup-degree-program').required=teacher;markRequiredFields();};
-  roleSelect?.addEventListener('change',syncSignupFields);syncSignupFields();
-  const accessibilityChoices=form?.querySelectorAll('input[name="a11y-profile"]');
-  const syncAccessibilityChoices=()=>{const selected=form?.querySelector('input[name="a11y-profile"]:checked')?.value;const conditions=form?.querySelector('#signup-accessibility-conditions');if(conditions)conditions.hidden=selected!=='neurodivergent';};
-  accessibilityChoices?.forEach((choice)=>choice.addEventListener('change',syncAccessibilityChoices));syncAccessibilityChoices();
-  const conditionChoices=[...(form?.querySelectorAll('input[name="a11y-conditions"]')||[])];
-  conditionChoices.forEach((choice)=>choice.addEventListener('change',()=>{const preferNot=conditionChoices.find((item)=>item.value==='prefer-not');if(choice===preferNot&&choice.checked)conditionChoices.filter((item)=>item!==preferNot).forEach((item)=>{item.checked=false;});else if(choice.checked&&preferNot)preferNot.checked=false;}));
   form?.addEventListener('submit',async(event)=>{
-    event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=form.querySelector('button');
+    event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=event.submitter instanceof HTMLButtonElement?event.submitter:form.querySelector('button[type="submit"]');if(!button){setStatus(status,'Não foi possível preparar o botão de cadastro. Atualize a página e tente novamente.',true);return;}
     if(!validateAuthForm(form,status))return;
     const values=new FormData(form);const password=String(values.get('password'));const confirmation=String(values.get('confirm'));
     if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
     if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);form.elements.namedItem('password').focus();return;}
-    button.disabled=true;setStatus(status,'Conectando ao serviço de cadastro…');
+    button.disabled=true;form.setAttribute('aria-busy','true');setStatus(status,'Conectando ao serviço de cadastro…');
     const role=values.get('role')==='professor'?'professor':'aluno';
     const teacher=role==='professor';
     let data,error;
@@ -200,13 +188,27 @@ function renderSignup() {
     } catch(err) {
       setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);return;
     } finally {
-      button.disabled=false;
+      button.disabled=false;form.removeAttribute('aria-busy');
     }
     if(error){setStatus(status,authErrorMessage(error,'Não foi possível criar a conta. Verifique os dados e as configurações de e-mail.'),true);return;}
     if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
     if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
     else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
   });
+  const roleSelect=form.elements.namedItem('role');const studentFields=document.querySelector('#student-education-fields');const teacherFields=document.querySelector('#teacher-education-fields');
+  form.querySelector('button[type="submit"]')?.classList.add('signup-submit');
+  roleSelect.required=true;roleSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione o tipo de conta</option>');
+  const degreeSelect=teacherFields.querySelector('#signup-degree-level');degreeSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione sua formação</option>');
+  const requiredNote=document.createElement('p');requiredNote.className='required-note';requiredNote.innerHTML='<span aria-hidden="true">*</span> Campos marcados com asterisco são obrigatórios.';form.prepend(requiredNote);
+  const markRequiredFields=()=>{form.querySelectorAll('.required-marker').forEach((marker)=>marker.remove());form.querySelectorAll('[required]').forEach((field)=>{if(field.closest('[hidden]'))return;const label=field.closest('label')||[...form.querySelectorAll('label[for]')].find((item)=>item.htmlFor===field.id);if(!label)return;const marker=document.createElement('span');marker.className='required-marker';marker.setAttribute('aria-hidden','true');marker.textContent='* obrigatório';label.append(marker);});};
+  const syncSignupFields=()=>{const teacher=roleSelect?.value==='professor';studentFields.hidden=teacher;teacherFields.hidden=!teacher;studentFields.querySelectorAll('select,input').forEach((field)=>field.required=!teacher&&field.id==='signup-education-level');degreeSelect.required=teacher;teacherFields.querySelector('#signup-degree-program').required=teacher;markRequiredFields();};
+  roleSelect?.addEventListener('change',syncSignupFields);syncSignupFields();
+  const accessibilityChoices=form?.querySelectorAll('input[name="a11y-profile"]');
+  const syncAccessibilityChoices=()=>{const selected=form?.querySelector('input[name="a11y-profile"]:checked')?.value;const conditions=form?.querySelector('#signup-accessibility-conditions');if(conditions)conditions.hidden=selected!=='neurodivergent';};
+  accessibilityChoices?.forEach((choice)=>choice.addEventListener('change',syncAccessibilityChoices));syncAccessibilityChoices();
+  const conditionChoices=[...(form?.querySelectorAll('input[name="a11y-conditions"]')||[])];
+  conditionChoices.forEach((choice)=>choice.addEventListener('change',()=>{const preferNot=conditionChoices.find((item)=>item.value==='prefer-not');if(choice===preferNot&&choice.checked)conditionChoices.filter((item)=>item!==preferNot).forEach((item)=>{item.checked=false;});else if(choice.checked&&preferNot)preferNot.checked=false;}));
+
 }
 
 function renderRecovery() {
@@ -545,36 +547,63 @@ async function hydrateAnimationDetails() {
 }
 
 async function attachAuthNavigation() {
-  const nav=document.querySelector('.site-header .nav');if(!nav)return;
-  let menu=nav.querySelector('[data-area-menu]');
-  if(!menu){
-    const old=nav.querySelector('.nav-account');
-    menu=document.createElement('details');menu.className='nav-area-menu nav-account';menu.dataset.areaMenu='true';
-    menu.innerHTML='<summary class="nav-area-toggle">Minha área</summary><div class="nav-area-panel"><a data-area-profile>Acessar perfil</a><a data-area-dashboard hidden></a><a data-area-login>Entrar na conta</a><a data-area-signup>Criar conta</a><button class="nav-signout" type="button" data-logout hidden>Sair da conta</button></div>';
-    if(old)old.replaceWith(menu);else nav.append(menu);
+  const nav=document.querySelector('.site-header .nav');
+  if(!nav)return;
+  let links=nav.querySelector('[data-account-links]');
+  if(!links){
+    const oldItems=[...nav.querySelectorAll('.nav-account,[data-area-menu]')];
+    links=document.createElement('div');
+    links.className='nav-account nav-account-links';
+    links.dataset.accountLinks='true';
+    links.innerHTML='<a class="nav-profile" data-account-link data-area-profile href="perfil.html">Perfil</a><a class="nav-profile" data-account-link data-area-dashboard hidden></a><a data-account-link data-area-login href="login.html">Entrar</a><a class="button button-primary" data-account-link data-area-signup href="cadastro.html">Criar conta</a><button class="nav-signout" type="button" data-logout hidden>Sair</button>';
+    if(oldItems.length){
+      oldItems[0].replaceWith(links);
+      oldItems.slice(1).forEach((item)=>item.remove());
+    }else nav.append(links);
   }
-  menu.querySelector('[data-area-profile]').href='/perfil/';
-  menu.querySelector('[data-area-login]').href='/login/';
-  menu.querySelector('[data-area-signup]').href='/cadastro/';
-  const setAccountMenu=(user,role)=>{
-    const dashboard=menu.querySelector('[data-area-dashboard]');
-    menu.querySelector('[data-area-login]').hidden=Boolean(user);
-    menu.querySelector('[data-area-signup]').hidden=Boolean(user);
-    menu.querySelector('[data-logout]').hidden=!user;
-    dashboard.hidden=!user||!role;
-    if(user&&role){dashboard.href=destination(role)+'/';dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');}
+  const profile=links.querySelector('[data-area-profile]');
+  const dashboard=links.querySelector('[data-area-dashboard]');
+  const login=links.querySelector('[data-area-login]');
+  const signup=links.querySelector('[data-area-signup]');
+  const logout=links.querySelector('[data-logout]');
+  if(!profile||!dashboard||!login||!signup||!logout)return;
+  profile.href='/perfil/';
+  login.href='/login/';
+  signup.href='/cadastro/';
+  const setAccountLinks=(user,role)=>{
+    profile.hidden=false;
+    login.hidden=Boolean(user);
+    signup.hidden=Boolean(user);
+    logout.hidden=!user;
+    dashboard.hidden=!user||!role||role.status==='blocked';
+    if(user&&role){
+      dashboard.href=destination(role)+'/';
+      dashboard.textContent='Painel de '+(accountLabels[role.role]||'conta').toLocaleLowerCase('pt-BR');
+    }
   };
-  setAccountMenu(null,null);
+  setAccountLinks(null,null);
   document.documentElement.classList.add('auth-nav-ready');
+  if(!nav.dataset.accountLinksBound){
+    nav.dataset.accountLinksBound='true';
+    nav.addEventListener('click',(event)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('[data-account-link],[data-logout]'))return;
+      nav.classList.remove('is-open');
+      document.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');
+    });
+  }
   if(['/login','/cadastro','/recuperar-senha','/auth/callback'].includes(route))return;
-  await supabasePromise;
-  if(!supabase)return;
-  try {
+  try{
+    await withAuthTimeout(supabasePromise,15000,'A verificação da conta demorou mais de 15 segundos.');
+    if(!supabase)return;
     const user=await getSignedUser();
     const role=user?await getRole(user).catch(()=>null):null;
-    setAccountMenu(user,role);
+    setAccountLinks(user,role);
     if(user)wireLogout();
-  } catch {} finally { document.documentElement.classList.add('auth-nav-ready'); }
+  }catch(error){
+    console.warn('Não foi possível atualizar os links da conta:',error);
+  }finally{
+    document.documentElement.classList.add('auth-nav-ready');
+  }
 }
 
 function youtubeLiveMarkup(raw,title='Transmissão ao vivo do Diário dos BNs') {
