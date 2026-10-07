@@ -9,7 +9,7 @@ const configuredPort = Number(config.PORT || 4173);
 const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : 4173;
 const host = config.HOST || '127.0.0.1';
 const routes = new Map([
-  ['/login','login.html'],['/cadastro','cadastro.html'],['/recuperar-senha','recuperar-senha.html'],
+  ['/login','acessar-conta.html'],['/cadastro','criar-perfil.html'],['/acessar-conta','acessar-conta.html'],['/criar-perfil','criar-perfil.html'],['/recuperar-senha','recuperar-senha.html'],
   ['/auth/callback','auth-callback.html'],['/aluno','aluno.html'],['/professor','professor.html'],
   ['/admin','admin.html'],['/perfil','perfil.html']
 ]);

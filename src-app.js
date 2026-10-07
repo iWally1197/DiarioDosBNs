@@ -10,9 +10,9 @@ if (!document.querySelector('script[data-diario-accessibility]')) {
 
 const siteRoot = new URL('./', document.baseURI).pathname;
 const routePart = location.pathname.slice(siteRoot.length).replace(/^\/+|\/+$|\.html$/g, '');
-const routeAliases = {'login':'/login','cadastro':'/cadastro','conta':'/perfil','recuperar-senha':'/recuperar-senha','auth-callback':'/auth/callback','auth/callback':'/auth/callback','aluno':'/aluno','professor':'/professor','admin':'/admin','perfil':'/perfil'};
+const routeAliases = {'login':'/login','acessar-conta':'/login','cadastro':'/cadastro','criar-perfil':'/cadastro','conta':'/perfil','recuperar-senha':'/recuperar-senha','auth-callback':'/auth/callback','auth/callback':'/auth/callback','aluno':'/aluno','professor':'/professor','admin':'/admin','perfil':'/perfil'};
 const route = routeAliases[routePart] || (routePart ? '/' + routePart : '/');
-const flatPages = {'/login':'login.html','/cadastro':'cadastro.html','/recuperar-senha':'recuperar-senha.html','/auth/callback':'auth-callback.html','/aluno':'aluno.html','/professor':'professor.html','/admin':'admin.html','/perfil':'perfil.html'};
+const flatPages = {'/login':'acessar-conta.html','/cadastro':'criar-perfil.html','/recuperar-senha':'recuperar-senha.html','/auth/callback':'auth-callback.html','/aluno':'aluno.html','/professor':'professor.html','/admin':'admin.html','/perfil':'perfil.html'};
 const siteHref = (path='') => {
   const raw=String(path); const split=raw.search(/[?#]/); const routePart=split<0?raw:raw.slice(0,split); const suffix=split<0?'':raw.slice(split);
   const clean=routePart.replace(/^\/+|\/+$/g,''); const page=flatPages['/'+clean];
@@ -42,6 +42,13 @@ const YOUTUBE_LIVE_URL = '';
 const stageOptions = (selected='') => educationStages.map((stage)=>`<option value="${safeText(stage)}" ${stage===selected?'selected':''}>${safeText(stage)}</option>`).join('');
 const degreeOptions = (selected='') => degreeLevels.map((degree)=>`<option value="${safeText(degree)}" ${degree===selected?'selected':''}>${safeText(degree)}</option>`).join('');
 const main = document.querySelector('main#conteudo');
+if (!document.querySelector('link[data-account-redesign]')) {
+  const accountStyles = document.createElement('link');
+  accountStyles.rel = 'stylesheet';
+  accountStyles.href = new URL('./account-redesign.css?v=account-v2-20261007-1', document.baseURI).href;
+  accountStyles.dataset.accountRedesign = 'true';
+  document.head.append(accountStyles);
+}
 const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeText = (value) => escapeHtml(value).replace(/`/g,'&#96;');
 const setStatus = (node, text, error=false) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
@@ -76,7 +83,8 @@ const configureNotice = `<aside class="auth-notice" role="status"><strong>Supaba
 function replaceMain(title, content) {
   if (!main) return;
   document.title = `${title} — Diário dos BNs`;
-  main.innerHTML = `<div class="auth-page section-wrap">${content}</div>`;
+  const authClass = document.body.classList.contains("auth-entry-v2") ? " auth-page-v2" : "";
+  main.innerHTML = `<div class="auth-page section-wrap${authClass}">${content}</div>`;
   main.dataset.diarioAuthReady = 'true';
 }
 
@@ -132,11 +140,15 @@ function configRequired(title) {
 
 function authShell(title, description, inner) {
   const message=takeFlash();
-  replaceMain(title, `<section class="auth-card"><a class="auth-back" href="/">← Diário dos BNs</a><div class="section-kicker">ÁREA SEGURA · SUPABASE AUTH</div><h1>${title}</h1><p class="auth-lede">${description}</p>${message?`<p class="auth-message" role="status">${safeText(message)}</p>`:''}${!supabaseReady?configureNotice:''}${inner}</section>`);
+  const isSignup=route==='/cadastro';
+  const switchLink=isSignup
+    ? '<p class="auth-switch-v2">Já tem um perfil? <a href="/login/">Entrar</a></p>'
+    : '<p class="auth-switch-v2">Ainda não tem perfil? <a href="/cadastro/">Criar perfil</a></p>';
+  replaceMain(title, `<div class="auth-layout-v2"><aside class="auth-showcase-v2"><span class="auth-showcase-mark" aria-hidden="true">DB</span><div class="section-kicker">DIÁRIO DOS BNs</div><h2>Seu espaço para aprender Física.</h2><p>Entre para acompanhar seus estudos ou crie um perfil para usar os recursos de aprendizagem do site.</p><ul><li>Materiais e atividades no seu ritmo</li><li>Uma área própria para cada perfil</li><li>Acesso protegido pelo Supabase</li></ul><div class="auth-showcase-foot">Física que ganha forma.</div></aside><section class="auth-card auth-card-v2"><a class="auth-back" href="/">← Voltar ao site</a><div class="section-kicker">ACESSO SEGURO</div><h1>${title}</h1><p class="auth-lede">${description}</p>${message?`<p class="auth-message" role="status">${safeText(message)}</p>`:''}${!supabaseReady?configureNotice:''}${inner}${switchLink}</section></div>`);
 }
 
 function renderLogin() {
-  authShell('Fazer login','Entre com o e-mail e a senha da sua conta.',`<form id="login-form" class="auth-form"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required><label for="login-password">Senha</label><input id="login-password" name="password" type="password" autocomplete="current-password" required><button class="button button-primary" type="submit">Entrar</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a></div>`);
+  authShell('Entrar na sua conta','Use o e-mail e a senha cadastrados.',`<form id="login-form" class="auth-form"><label for="login-email">E-mail</label><input id="login-email" name="email" type="email" autocomplete="email" required><label for="login-password">Senha</label><input id="login-password" name="password" type="password" autocomplete="current-password" required><button class="button button-primary auth-submit-v2" type="submit">Entrar na conta</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a><a class="button button-primary signup-cta" href="/cadastro/">Criar perfil</a></div>`);
   const loginForm=document.querySelector('#login-form');
   if(loginForm) loginForm.noValidate=true;
   loginForm?.addEventListener('submit',async(event)=>{
@@ -161,9 +173,57 @@ function renderLogin() {
   });
 }
 
-function renderSignupDisabled() {
-  authShell('Cadastro desativado','A criação de novas contas foi removida deste site. Se você já tem uma conta, use o login.', '<div class="auth-links"><a class="button button-primary" href="/login/">Entrar na conta</a></div>');
+function renderSignup() {
+  authShell('Criar seu perfil','Escolha o tipo de conta e informe sua etapa de ensino ou formação. Contas de administrador são configuradas pelo proprietário, fora do cadastro público.',`<form id="signup-form" class="auth-form"><label for="signup-name">Nome</label><input id="signup-name" name="name" autocomplete="name" maxlength="100" required><label for="signup-email">E-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required><label for="signup-age-range">Faixa etária</label><select id="signup-age-range" name="age_range" required><option value="">Selecione sua faixa etária</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option></select><small>Informamos apenas uma faixa etária, não a data de nascimento. Estudantes menores de idade devem realizar o cadastro com apoio de um responsável.</small><label for="signup-password">Senha</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres. O Supabase Auth armazena a credencial com hash.</small><label for="signup-confirm">Confirmação de senha</label><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><label for="signup-role">Tipo de conta</label><select id="signup-role" name="role"><option value="aluno">Aluno</option><option value="professor">Professor · aprovação pendente</option></select><fieldset id="student-education-fields" class="signup-fieldset"><legend>Etapa de ensino do aluno</legend><label for="signup-education-level">Etapa de ensino</label><select id="signup-education-level" name="education_level" required><option value="">Selecione sua etapa</option>${stageOptions()}</select><label for="signup-education-detail">Ano, série ou período <span>(opcional)</span></label><input id="signup-education-detail" name="education_detail" maxlength="100" placeholder="Ex.: 8º ano, 2º ano, 3º semestre"></fieldset><fieldset id="teacher-education-fields" class="signup-fieldset" hidden><legend>Formação do professor</legend><label for="signup-degree-level">Titulação ou etapa da formação</label><select id="signup-degree-level" name="teacher_degree_level">${degreeOptions()}</select><label for="signup-degree-program">Curso / área de formação</label><input id="signup-degree-program" name="teacher_degree_program" list="teacher-course-options" maxlength="160" placeholder="Escolha ou digite seu curso"><datalist id="teacher-course-options">${higherEducationCourses.map((course)=>`<option value="${safeText(course)}">`).join('')}</datalist><label for="signup-institution">Faculdade ou instituição <span>(opcional)</span></label><input id="signup-institution" name="teacher_institution" maxlength="160" placeholder="Nome da instituição"></fieldset><details class="accessibility-signup" id="signup-accessibility"><summary>Personalize sua experiência <span>(opcional)</span></summary><p>Estas informações são opcionais. Elas ficam apenas neste navegador, não são enviadas ao Supabase e não aparecem para professores ou outros estudantes. Em aparelhos compartilhados, prefira não informar condições pessoais.</p><fieldset><legend>Como você prefere personalizar sua experiência?</legend><label><input type="radio" name="a11y-profile" value="neurotypical"> Neurotípico</label><label><input type="radio" name="a11y-profile" value="neurodivergent"> Neurodivergente</label><label><input type="radio" name="a11y-profile" value="prefer-not"> Prefiro não informar</label></fieldset><fieldset id="signup-accessibility-conditions" hidden><legend>Quais características ou condições você gostaria de usar para personalizar a experiência? (opcional, múltipla escolha)</legend><p>Esta lista não é uma classificação médica universal. Não fazemos diagnósticos nem inferimos condições.</p><strong>Neurodesenvolvimento e aprendizagem</strong><label><input type="checkbox" name="a11y-conditions" value="TEA"> Transtorno do Espectro Autista (TEA)</label><label><input type="checkbox" name="a11y-conditions" value="TDAH"> TDAH</label><label><input type="checkbox" name="a11y-conditions" value="Dislexia"> Dislexia</label><label><input type="checkbox" name="a11y-conditions" value="Discalculia"> Discalculia</label><label><input type="checkbox" name="a11y-conditions" value="Disgrafia"> Disgrafia</label><label><input type="checkbox" name="a11y-conditions" value="Dispraxia / coordenação"> Dispraxia / Transtorno do Desenvolvimento da Coordenação</label><label><input type="checkbox" name="a11y-conditions" value="Desenvolvimento da linguagem"> Transtorno do Desenvolvimento da Linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outro perfil de aprendizagem"> Outros perfis relacionados à aprendizagem</label><strong>Comunicação e linguagem</strong><label><input type="checkbox" name="a11y-conditions" value="Dificuldades específicas de linguagem"> Dificuldades específicas de linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Processamento da linguagem"> Dificuldades de processamento da linguagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição de linguagem"> Outras</label><strong>Outras características</strong><label><input type="checkbox" name="a11y-conditions" value="Tourette"> Síndrome de Tourette</label><label><input type="checkbox" name="a11y-conditions" value="Transtornos específicos de aprendizagem"> Transtornos específicos de aprendizagem</label><label><input type="checkbox" name="a11y-conditions" value="Outra condição ou característica"> Outras condições ou características</label><label for="signup-a11y-other">Outra — especificar (opcional)</label><input id="signup-a11y-other" name="a11y-other" maxlength="120"><label><input type="checkbox" name="a11y-conditions" value="prefer-not"> Prefiro não informar</label></fieldset><small>Você pode alterar ou apagar essa escolha na Central de Acessibilidade. Os controles visuais e de leitura podem ser usados independentemente dessas respostas.</small></details><label class="consent-check"><input type="checkbox" name="consent" required><span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label><button class="button button-primary auth-submit-v2" type="submit">Criar meu perfil</button><p id="form-status" class="auth-message" role="status" aria-live="polite"></p></form><div class="auth-links"><a href="/login">Já tenho uma conta</a></div><aside class="auth-note"><strong>Cadastro de professor</strong><p>A formação informada ajuda na identificação, mas não substitui a aprovação do responsável pelo site. O acesso docente só é liberado após aprovação.</p></aside>`);
+  const form=document.querySelector('#signup-form');
+  if(!form)return;
+  form.noValidate=true;
+  form?.addEventListener('submit',async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const status=document.querySelector('#form-status');const button=event.submitter instanceof HTMLButtonElement?event.submitter:form.querySelector('button[type="submit"]');if(!button){setStatus(status,'Não foi possível preparar o botão de cadastro. Atualize a página e tente novamente.',true);return;}
+    if(!validateAuthForm(form,status))return;
+    const values=new FormData(form);const password=String(values.get('password'));const confirmation=String(values.get('confirm'));
+    if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
+    if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);form.elements.namedItem('password').focus();return;}
+    button.disabled=true;form.setAttribute('aria-busy','true');setStatus(status,'Conectando ao serviço de cadastro…');
+    const role=values.get('role')==='professor'?'professor':'aluno';
+    const teacher=role==='professor';
+    let data,error;
+    try {
+      await withAuthTimeout(supabasePromise, 15000, 'O serviço de cadastro demorou mais de 15 segundos. Atualize a página e tente novamente.');
+      if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o cadastro.',true);return;}
+      setStatus(status,'Criando sua conta…');
+      ({data,error}=await withAuthTimeout(
+        supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}),
+        25000,
+        'Não recebi resposta do cadastro após 25 segundos. Confira seu e-mail antes de tentar novamente, pois a conta pode ter sido criada.'
+      ));
+    } catch(err) {
+      setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);return;
+    } finally {
+      button.disabled=false;form.removeAttribute('aria-busy');
+    }
+    if(error){setStatus(status,authErrorMessage(error,'Não foi possível criar a conta. Verifique os dados e as configurações de e-mail.'),true);return;}
+    if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
+    if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
+    else setStatus(status,role==='professor'?'Conta criada. Confirme o endereço de e-mail; depois, o proprietário do site precisará aprovar o perfil de professor.':'Conta criada. Enviamos um link de confirmação para seu e-mail. Confirme-o antes de fazer login.');
+  });
+  const roleSelect=form.elements.namedItem('role');const studentFields=document.querySelector('#student-education-fields');const teacherFields=document.querySelector('#teacher-education-fields');
+  form.querySelector('button[type="submit"]')?.classList.add('signup-submit');
+  roleSelect.required=true;roleSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione o tipo de conta</option>');
+  const degreeSelect=teacherFields.querySelector('#signup-degree-level');degreeSelect.insertAdjacentHTML('afterbegin','<option value="" selected>Selecione sua formação</option>');
+  const requiredNote=document.createElement('p');requiredNote.className='required-note';requiredNote.innerHTML='<span aria-hidden="true">*</span> Campos marcados com asterisco são obrigatórios.';form.prepend(requiredNote);
+  const markRequiredFields=()=>{form.querySelectorAll('.required-marker').forEach((marker)=>marker.remove());form.querySelectorAll('[required]').forEach((field)=>{if(field.closest('[hidden]'))return;const label=field.closest('label')||[...form.querySelectorAll('label[for]')].find((item)=>item.htmlFor===field.id);if(!label)return;const marker=document.createElement('span');marker.className='required-marker';marker.setAttribute('aria-hidden','true');marker.textContent='* obrigatório';label.append(marker);});};
+  const syncSignupFields=()=>{const teacher=roleSelect?.value==='professor';studentFields.hidden=teacher;teacherFields.hidden=!teacher;studentFields.querySelectorAll('select,input').forEach((field)=>field.required=!teacher&&field.id==='signup-education-level');degreeSelect.required=teacher;teacherFields.querySelector('#signup-degree-program').required=teacher;markRequiredFields();};
+  roleSelect?.addEventListener('change',syncSignupFields);syncSignupFields();
+  const accessibilityChoices=form?.querySelectorAll('input[name="a11y-profile"]');
+  const syncAccessibilityChoices=()=>{const selected=form?.querySelector('input[name="a11y-profile"]:checked')?.value;const conditions=form?.querySelector('#signup-accessibility-conditions');if(conditions)conditions.hidden=selected!=='neurodivergent';};
+  accessibilityChoices?.forEach((choice)=>choice.addEventListener('change',syncAccessibilityChoices));syncAccessibilityChoices();
+  const conditionChoices=[...(form?.querySelectorAll('input[name="a11y-conditions"]')||[])];
+  conditionChoices.forEach((choice)=>choice.addEventListener('change',()=>{const preferNot=conditionChoices.find((item)=>item.value==='prefer-not');if(choice===preferNot&&choice.checked)conditionChoices.filter((item)=>item!==preferNot).forEach((item)=>{item.checked=false;});else if(choice.checked&&preferNot)preferNot.checked=false;}));
+
 }
+
+
 function renderRecovery() {
   const updating=new URLSearchParams(location.search).get('mode')==='update';
   if(updating){
@@ -508,7 +568,7 @@ async function attachAuthNavigation() {
     links=document.createElement('div');
     links.className='nav-account nav-account-links';
     links.dataset.accountLinks='true';
-    links.innerHTML='<a class="nav-profile" data-account-link data-area-profile href="perfil.html">Perfil</a><a class="nav-profile" data-account-link data-area-dashboard hidden></a><a data-account-link data-area-login href="login.html">Entrar</a><button class="nav-signout" type="button" data-logout hidden>Sair</button>';
+    links.innerHTML='<a class="nav-profile" data-account-link data-area-profile href="perfil.html">Perfil</a><a class="nav-profile" data-account-link data-area-dashboard hidden></a><a data-account-link data-area-login href="acessar-conta.html">Entrar</a><a class="nav-create" data-account-link data-area-signup href="criar-perfil.html">Criar perfil</a><button class="nav-signout" type="button" data-logout hidden>Sair</button>';
     if(oldItems.length){
       oldItems[0].replaceWith(links);
       oldItems.slice(1).forEach((item)=>item.remove());
@@ -517,6 +577,18 @@ async function attachAuthNavigation() {
   const profile=links.querySelector('[data-area-profile]');
   const dashboard=links.querySelector('[data-area-dashboard]');
   const login=links.querySelector('[data-area-login]');
+  let signup=links.querySelector('[data-area-signup]');
+  if(!signup){
+    signup=document.createElement('a');
+    signup.className='nav-create';
+    signup.dataset.accountLink='true';
+    signup.dataset.areaSignup='true';
+    signup.textContent='Criar perfil';
+    login?.after(signup);
+  }
+  signup.classList.add('nav-create');
+  signup.href='/cadastro/';
+  signup.textContent='Criar perfil';
   const logout=links.querySelector('[data-logout]');
   if(!profile||!dashboard||!login||!logout)return;
   profile.href='/perfil/';
@@ -524,6 +596,7 @@ async function attachAuthNavigation() {
   const setAccountLinks=(user,role)=>{
     profile.hidden=false;
     login.hidden=Boolean(user);
+    signup.hidden=Boolean(user);
     logout.hidden=!user;
     dashboard.hidden=!user||!role||role.status==='blocked';
     if(user&&role){
@@ -634,7 +707,7 @@ if (main) {
   document.addEventListener('click',syncLegacyFavorite);
   const recoveryIsUpdating=route==='/recuperar-senha'&&new URLSearchParams(location.search).get('mode')==='update';
   const isAuthEntry=['/login','/cadastro'].includes(route)||(route==='/recuperar-senha'&&!recoveryIsUpdating);
-  const renderAuthEntry=()=>{if(route==='/login')renderLogin();else if(route==='/cadastro')renderSignupDisabled();else renderRecovery();};
+  const renderAuthEntry=()=>{if(route==='/login')renderLogin();else if(route==='/cadastro')renderSignup();else renderRecovery();};
   if (isAuthEntry) renderAuthEntry();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
