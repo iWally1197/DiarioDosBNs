@@ -45,6 +45,13 @@ const main = document.querySelector('main#conteudo');
 const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeText = (value) => escapeHtml(value).replace(/`/g,'&#96;');
 const setStatus = (node, text, error=false) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
+const withAuthTimeout = (request, milliseconds, message) => {
+  let timer;
+  return Promise.race([
+    Promise.resolve(request),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), milliseconds); })
+  ]).finally(() => clearTimeout(timer));
+};
 function validateAuthForm(form, status) {
   if (form.checkValidity()) return true;
   const field = form.querySelector(':invalid');
@@ -55,6 +62,7 @@ function validateAuthForm(form, status) {
 }
 const authErrorMessage = (error, fallback) => {
   const message = String(error?.message || '');
+  if (/demorou|tempo limite|não recebi resposta/i.test(message)) return message;
   if (/failed to fetch|networkerror|fetch failed|load failed/i.test(message)) return 'Não foi possível conectar ao Supabase. Confira a conexão com a internet e a URL do projeto em supabase-config.js.';
   if (/email not confirmed/i.test(message)) return 'Confirme seu e-mail pelo link enviado antes de entrar.';
   if (/redirect.*(url|allow|valid)|requested path is invalid/i.test(message)) return 'O Supabase bloqueou o endereço de retorno. Adicione a URL do site em Authentication → URL Configuration.';
@@ -73,23 +81,43 @@ function replaceMain(title, content) {
   document.querySelectorAll('.nav-account').forEach((link) => { link.href='/perfil'; link.textContent='Minha área'; });
 }
 
-async function getSignedUser() {
-  await supabasePromise;
-  if (!supabase) {
-    if (supabaseReady) throw new Error(supabaseLoadError || 'Não foi possível carregar o serviço de login.');
-    return null;
-  }
-  const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-  if (!sessionData.session) return null;
-  const {data,error}=await supabase.auth.getUser();
-  if (error) throw error;
-  return data.user;
+let signedUserRequest = null;
+function getSignedUser() {
+  if (signedUserRequest) return signedUserRequest;
+  const request = withAuthTimeout((async () => {
+    await supabasePromise;
+    if (!supabase) {
+      if (supabaseReady) throw new Error(supabaseLoadError || 'Não foi possível carregar o serviço de login.');
+      return null;
+    }
+    const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+    if (sessionError) {
+      if (/invalid refresh token|refresh token not found/i.test(sessionError.message || '')) {
+        await withAuthTimeout(supabase.auth.signOut({scope:'local'}), 2500, 'Não foi possível limpar a sessão expirada.').catch(()=>{});
+        return null;
+      }
+      throw sessionError;
+    }
+    if (!sessionData.session) return null;
+    const {data,error}=await withAuthTimeout(supabase.auth.getUser(), 10000, 'A confirmação da conta demorou mais de 10 segundos.');
+    if (error) throw error;
+    return data.user;
+  })(), 15000, 'A verificação da sessão demorou mais de 15 segundos. Atualize a página e tente entrar novamente.');
+  signedUserRequest = request;
+  request.then(
+    () => { if (signedUserRequest === request) signedUserRequest = null; },
+    () => { if (signedUserRequest === request) signedUserRequest = null; }
+  );
+  return request;
 }
 
 async function getRole(user) {
   if (!supabase || !user) return null;
-  const {data,error}=await supabase.from('user_roles').select('role,status').eq('user_id',user.id).maybeSingle();
+  const {data,error}=await withAuthTimeout(
+    supabase.from('user_roles').select('role,status').eq('user_id',user.id).maybeSingle(),
+    10000,
+    'A consulta ao perfil demorou mais de 10 segundos. Tente novamente.'
+  );
   if (error) throw error;
   return data;
 }
@@ -119,7 +147,11 @@ function renderLogin() {
     try {
       await supabasePromise;
       if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o login.',true);return;}
-      const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
+      const {data,error}=await withAuthTimeout(
+        supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value}),
+        20000,
+        'O login demorou mais de 20 segundos. Confira a conexão e tente novamente.'
+      );
       if(error){setStatus(status,authErrorMessage(error,'Não foi possível entrar. Confira o e-mail e a senha.'),true);return;}
       const role=await getRole(data.user);
       if(!role||role.status==='blocked'){await supabase.auth.signOut();setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);return;}
@@ -153,18 +185,23 @@ function renderSignup() {
     if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
     if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);form.elements.namedItem('password').focus();return;}
     button.disabled=true;setStatus(status,'Conectando ao serviço de cadastro…');
-    await supabasePromise;
-    if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o cadastro.',true);button.disabled=false;return;}
-    setStatus(status,'Criando sua conta…');
     const role=values.get('role')==='professor'?'professor':'aluno';
     const teacher=role==='professor';
     let data,error;
     try {
-      ({data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}));
+      await withAuthTimeout(supabasePromise, 15000, 'O serviço de cadastro demorou mais de 15 segundos. Atualize a página e tente novamente.');
+      if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o cadastro.',true);return;}
+      setStatus(status,'Criando sua conta…');
+      ({data,error}=await withAuthTimeout(
+        supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}),
+        25000,
+        'Não recebi resposta do cadastro após 25 segundos. Confira seu e-mail antes de tentar novamente, pois a conta pode ter sido criada.'
+      ));
     } catch(err) {
-      setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);button.disabled=false;return;
+      setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);return;
+    } finally {
+      button.disabled=false;
     }
-    button.disabled=false;
     if(error){setStatus(status,authErrorMessage(error,'Não foi possível criar a conta. Verifique os dados e as configurações de e-mail.'),true);return;}
     if(data.user?.id){try{const identity=String(values.get('a11y-profile')||'');if(identity){const selectedConditions=values.getAll('a11y-conditions');const preferNotConditions=selectedConditions.includes('prefer-not');const selfReport={identity,conditions:identity==='neurodivergent'&&!preferNotConditions?selectedConditions:[],preferNotConditions:identity==='neurodivergent'&&preferNotConditions,other:identity==='neurodivergent'&&!preferNotConditions?String(values.get('a11y-other')||'').trim():'',updatedAt:new Date().toISOString()};localStorage.setItem(`diario-bns:accessibility-profile:${data.user.id}`,JSON.stringify(selfReport));}}catch{}}
     if(data.session){flash(role==='professor'?'Conta criada. O acesso de professor aguarda aprovação.':'Conta criada.');navigate(role==='professor'?'/professor/':'/aluno/');}
@@ -529,15 +566,14 @@ async function attachAuthNavigation() {
   };
   setAccountMenu(null,null);
   document.documentElement.classList.add('auth-nav-ready');
+  if(['/login','/cadastro','/recuperar-senha','/auth/callback'].includes(route))return;
   await supabasePromise;
   if(!supabase)return;
   try {
-    const {data,error}=await supabase.auth.getSession();if(error)throw error;
-    if(data.session){
-      const role=await getRole(data.session.user).catch(()=>null);
-      setAccountMenu(data.session.user,role);
-      wireLogout();
-    }
+    const user=await getSignedUser();
+    const role=user?await getRole(user).catch(()=>null):null;
+    setAccountMenu(user,role);
+    if(user)wireLogout();
   } catch {} finally { document.documentElement.classList.add('auth-nav-ready'); }
 }
 
