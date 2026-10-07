@@ -10,9 +10,9 @@
     message.setAttribute('role', 'alert');
 
     const title = document.createElement('h1');
-    title.textContent = 'Não foi possível abrir o cadastro';
+    title.textContent = 'Não foi possível abrir esta página';
     const description = document.createElement('p');
-    description.textContent = 'A página não conseguiu iniciar. Atualize uma vez. Se continuar, confira se os arquivos cadastro.html, src-app.js, src-supabase.js, supabase-config.js e auth-fallback.js estão na raiz do GitHub e se a publicação terminou.';
+    description.textContent = 'O formulário não iniciou. Atualize a página uma vez. Se continuar, envie ao suporte as mensagens vermelhas da aba Console do navegador.';
     message.append(title, description);
 
     if (detail) {
@@ -25,7 +25,7 @@
     const reload = document.createElement('button');
     reload.className = 'button button-primary';
     reload.type = 'button';
-    reload.textContent = 'Atualizar página';
+    reload.textContent = 'Tentar novamente';
     reload.addEventListener('click', () => location.reload());
     message.append(reload);
     main.replaceChildren(message);
