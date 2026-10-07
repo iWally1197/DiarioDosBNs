@@ -1,0 +1,12 @@
+-- SOMENTE o proprietário deve executar este passo no SQL Editor do Supabase.
+-- Primeiro crie uma conta comum com seu próprio e-mail e confirme o endereço.
+-- Depois troque SEU_UUID_CONFIRMADO pelo UUID exibido em Authentication > Users.
+-- Esta promoção não existe no formulário público nem em endpoint do site.
+
+update public.user_roles
+set role = 'admin', status = 'active', updated_at = now()
+where user_id = 'SEU_UUID_CONFIRMADO'::uuid;
+
+-- Confira que uma única linha foi atualizada:
+select user_id, role, status from public.user_roles
+where user_id = 'SEU_UUID_CONFIRMADO'::uuid;
