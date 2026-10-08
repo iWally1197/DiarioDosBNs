@@ -12,7 +12,6 @@
     learningMode: 'conceptual'
   };
   let settings = readSettings();
-  let profileUserId = null;
   let guide = null;
   let speechActive = false;
   const safeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
@@ -77,7 +76,7 @@
         <div class="a11y-mode-options"><button type="button" data-speech>Ouvir conteúdo principal</button><button type="button" data-speech-stop disabled>Parar narração</button></div>
         <p class="a11y-help">Controles de velocidade e legenda valem para vídeos do site com esses recursos. Em vídeos incorporados, use também os controles do próprio player. A narração usa a voz disponível no seu aparelho.</p>
       </section>
-      <section class="a11y-group a11y-self-report" aria-labelledby="a11y-profile-title"><h3 id="a11y-profile-title">Minha forma de aprender</h3><p>As respostas são opcionais e ficam somente neste navegador, separadas por conta. Não são enviadas ao Supabase nem ficam visíveis para professores ou estudantes. Em dispositivo compartilhado, evite registrar informações sensíveis.</p><div data-self-report-editor><p role="status">Entre na sua conta para editar suas informações opcionais de personalização neste navegador.</p></div></section>
+      <section class="a11y-group a11y-self-report" aria-labelledby="a11y-profile-title"><h3 id="a11y-profile-title">Minha forma de aprender</h3><p>As respostas são opcionais e ficam somente neste navegador. Não são enviadas ao site. Em dispositivo compartilhado, evite registrar informações sensíveis.</p><div data-self-report-editor><p role="status">Estas informações são opcionais e ficam somente neste navegador.</p></div></section>
     </div>
     <footer class="a11y-dialog-footer"><button type="button" class="a11y-action a11y-reset" data-reset>Restaurar configurações de acessibilidade</button><button type="button" class="a11y-close-action" data-a11y-close>Fechar</button><p role="status" aria-live="polite" data-a11y-status></p></footer>`;
 
@@ -89,16 +88,7 @@
   guideRegion.innerHTML = '<div><p class="a11y-guide-progress" data-guide-progress></p><h2 data-guide-title></h2><p data-guide-text></p><p data-guide-question hidden>O que você observou nesta etapa? Pense ou explique com suas palavras antes de avançar.</p></div><div class="a11y-guide-actions"><button type="button" data-guide-previous>Voltar</button><button type="button" data-guide-pause>Pausar</button><button type="button" data-guide-next>Avançar</button><button type="button" data-guide-restart>Recomeçar</button><button type="button" data-guide-exit>Encerrar</button></div>';
   document.body.append(guideRegion);
 
-  function currentProfileKey() { return profileUserId ? `diario-bns:accessibility-profile:${profileUserId}` : null; }
-  async function signedUserId() {
-    try {
-      const client = window.diarioSupabase;
-      if (!client?.auth) return null;
-      const { data, error } = await client.auth.getUser();
-      if (error) return null;
-      return data.user?.id || null;
-    } catch { return null; }
-  }
+  function currentProfileKey() { return 'diario-bns:accessibility-profile:v1'; }
   function buildProfileEditor(profile = {}) {
     profileEditor.innerHTML = `<fieldset><legend>Como você prefere personalizar sua experiência?</legend>
       <label><input type="radio" name="a11y-edit-identity" value="neurotypical"> Neurotípico</label>
@@ -142,12 +132,7 @@
       const message = profileEditor.querySelector('[data-profile-status]'); if (message) message.textContent = 'Informação opcional apagada deste navegador.';
     });
   }
-  async function refreshProfileEditor() {
-    profileUserId = await signedUserId();
-    if (!profileUserId) {
-      profileEditor.innerHTML = '<p role="status">Entre na sua conta para editar suas informações opcionais de personalização neste navegador.</p>';
-      return;
-    }
+  function refreshProfileEditor() {
     let profile = {};
     try { profile = JSON.parse(localStorage.getItem(currentProfileKey()) || '{}'); } catch {}
     buildProfileEditor(profile);
@@ -304,15 +289,5 @@
   guideRegion.querySelector('[data-guide-restart]').addEventListener('click', () => startGuide(true));
   guideRegion.querySelector('[data-guide-exit]').addEventListener('click', () => { guideRegion.hidden = true; guide = null; });
 
-  // Make the optional self-description exclusive in both signup and the settings editor.
-  document.querySelectorAll('#signup-accessibility-conditions input[type="checkbox"]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const group = input.closest('fieldset'); const notInformed = group?.querySelector('input[value="prefer-not"]');
-      const others = [...(group?.querySelectorAll('input[type="checkbox"]') || [])].filter((item) => item !== notInformed);
-      if (input === notInformed && input.checked) others.forEach((item) => { item.checked = false; });
-      if (input !== notInformed && input.checked && notInformed) notInformed.checked = false;
-    });
-  });
-  window.addEventListener('diario:auth-changed', refreshProfileEditor);
   window.addEventListener('storage', (event) => { if (event.key === SETTINGS_KEY) { settings = readSettings(); syncControls(); applySettings(); } });
 })();

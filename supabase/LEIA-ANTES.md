@@ -1,7 +1,7 @@
-# Pasta Supabase
+# Histórico do Supabase
 
-Esta pasta tem o arquivo de configuração do Supabase, a cópia organizada das migrations já existentes e uma migration nova para reparar as permissões dos downloads privados.
+Esta pasta contém a configuração local e as migrations do banco que já existia antes da retirada das páginas de conta. Os arquivos foram preservados para manter o histórico e não apagar dados.
 
-Mantenha a pasta `supabase` na raiz do repositório. O Supabase CLI procura as migrations em `supabase/migrations`.
+O site público atual não usa login, cadastro, recuperação de senha ou perfis pessoais. A página de apoio faz apenas uma consulta pública às informações da chave PIX.
 
-Não execute novamente a migration principal de 2026-10-03 no SQL Editor: ela cria tipos e tabelas que já podem existir. Antes de publicar uma migration nova no banco existente, confira a lista de migrations locais e remotas; as versões antigas devem estar marcadas como aplicadas. O site no GitHub Pages não executa o servidor Node; login e dados dependem do projeto Supabase configurado.
+Não execute migrations antigas para publicar as páginas. Publicar o site no GitHub Pages não modifica o banco remoto.

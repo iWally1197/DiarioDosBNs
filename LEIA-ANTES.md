@@ -1,7 +1,7 @@
-# Pasta Supabase
+# Antes de publicar
 
-Esta pasta tem o arquivo de configuração do Supabase, a cópia organizada das migrations já existentes e uma migration nova para reparar as permissões dos downloads privados.
+O site atual é estático e aberto ao público. Ele não oferece cadastro, login, recuperação de senha, perfil de aluno/professor ou áreas de turma.
 
-Mantenha a pasta `supabase` na raiz do repositório. O Supabase CLI procura as migrations em `supabase/migrations`.
+Publique a branch `main` no GitHub Pages usando a pasta raiz. Mantenha junto as páginas HTML, os arquivos CSS/JavaScript, a pasta `assets` e a pasta `animacoes-3d`.
 
-Não execute novamente a migration principal de 2026-10-03 no SQL Editor: ela cria tipos e tabelas que já podem existir. Antes de publicar uma migration nova no banco existente, confira a lista de migrations locais e remotas; as versões antigas devem estar marcadas como aplicadas. O site no GitHub Pages não executa o servidor Node; login e dados dependem do projeto Supabase configurado.
+As migrations e demais arquivos SQL foram mantidos para guardar o histórico do banco já existente. A publicação do site não executa SQL, não altera o projeto Supabase e não apaga contas nem dados já salvos.
