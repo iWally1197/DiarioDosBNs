@@ -1,4 +1,4 @@
-import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js?v=conta-solta-20261005-3';
+import { supabase, supabaseReady, supabasePromise, supabaseLoadError } from './src-supabase.js?v=auth-fix-20261008';
 
 // Load the shared accessibility controls on every page that uses the app module.
 if (!document.querySelector('script[data-diario-accessibility]')) {
@@ -135,9 +135,13 @@ function renderLogin() {
     if(!validateAuthForm(form,status))return;
     button.disabled=true;setStatus(status,'Verificando seus dados…');
     try {
-      await supabasePromise;
+      await withDeadline(supabasePromise, 'O serviço de login demorou para responder. Atualize a página e tente novamente.');
       if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o login.',true);return;}
-      const {data,error}=await supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value});
+      const {data,error}=await withDeadline(
+        supabase.auth.signInWithPassword({email:form.elements.namedItem('email').value.trim(),password:form.elements.namedItem('password').value}),
+        'O Supabase demorou para responder ao login. Confira sua conexão e tente novamente.',
+        22000
+      );
       if(error){setStatus(status,authErrorMessage(error,'Não foi possível entrar. Confira o e-mail e a senha.'),true);return;}
       const role=await getRole(data.user);
       if(!role||role.status==='blocked'){await supabase.auth.signOut();setStatus(status,'A conta está indisponível. Procure o responsável pelo site.',true);return;}
@@ -171,14 +175,18 @@ function renderSignup() {
     if(password!==confirmation){setStatus(status,'As senhas digitadas não coincidem.',true);form.elements.namedItem('confirm').focus();return;}
     if(password.length<10){setStatus(status,'A senha deve ter pelo menos 10 caracteres.',true);form.elements.namedItem('password').focus();return;}
     button.disabled=true;setStatus(status,'Conectando ao serviço de cadastro…');
-    await supabasePromise;
+    try {
+      await withDeadline(supabasePromise, 'O serviço de cadastro demorou para responder. Atualize a página e tente novamente.');
+    } catch(err) {
+      setStatus(status,authErrorMessage(err,'Não foi possível abrir o serviço de cadastro.'),true);button.disabled=false;return;
+    }
     if(!supabase){setStatus(status,supabaseLoadError||'Configure o Supabase para ativar o cadastro.',true);button.disabled=false;return;}
     setStatus(status,'Criando sua conta…');
     const role=values.get('role')==='professor'?'professor':'aluno';
     const teacher=role==='professor';
     let data,error;
     try {
-      ({data,error}=await supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}));
+      ({data,error}=await withDeadline(supabase.auth.signUp({email:String(values.get('email')).trim(),password,options:{emailRedirectTo:`${location.origin}${siteHref('auth/callback/')}`,data:{display_name:String(values.get('name')).trim(),requested_role:role,age_range:String(values.get('age_range')),education_level:teacher?'':String(values.get('education_level')||''),education_detail:teacher?'':String(values.get('education_detail')||''),teacher_degree_level:teacher?String(values.get('teacher_degree_level')||''):'',teacher_degree_program:teacher?String(values.get('teacher_degree_program')||'').trim():'',teacher_institution:teacher?String(values.get('teacher_institution')||'').trim():'',teacher_verification_ack:teacher&&values.get('teacher_verification_ack')==='true'?'true':'false',terms_version:'1.0',privacy_version:'1.0'}}}), 'O Supabase demorou para responder ao cadastro. Confira sua conexão e tente novamente.', 22000));
     } catch(err) {
       setStatus(status,authErrorMessage(err,'Não foi possível criar a conta. Confira os dados e tente novamente.'),true);button.disabled=false;return;
     }
