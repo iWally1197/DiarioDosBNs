@@ -1,17 +1,27 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Entrar — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais criação de contas, login ou recuperação de senha.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="login">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="turmas.html">Turmas</a><a class="nav-account" href="cadastro.html">Criar conta</a></nav>
+  </header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Área segura · Diário dos BNs</p><h1>Entrar</h1><p>Use o e-mail e a senha da sua conta.</p>
+    <form id="login-form" class="account-form" method="post">
+      <label for="login-email">E-mail<input id="login-email" name="email" type="email" autocomplete="email" required></label>
+      <label for="login-password">Senha<input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+      <button class="account-button account-button-primary" type="submit">Entrar na conta</button>
+      <p class="account-message" data-status aria-live="polite"></p>
+    </form>
+    <div class="account-actions"><a href="recuperar-senha.html">Esqueci minha senha</a><a href="cadastro.html">Criar conta</a></div>
+  </section></main>
 </body>
 </html>

@@ -1,17 +1,54 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Criar conta — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais criação de contas, login ou recuperação de senha.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="signup">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="turmas.html">Turmas</a><a class="nav-account" href="login.html">Entrar</a></nav>
+  </header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Cadastro seguro</p><h1>Criar conta</h1><p>O cadastro é feito pelo Supabase. Senhas não são guardadas neste site.</p>
+    <form id="signup-form" class="account-form" method="post">
+      <label for="signup-name">Nome<input id="signup-name" name="name" autocomplete="name" maxlength="100" required></label>
+      <label for="signup-email">E-mail<input id="signup-email" name="email" type="email" autocomplete="email" required></label>
+      <label for="signup-age">Faixa etária
+        <select id="signup-age" name="age_range" required>
+          <option value="">Selecione uma faixa</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option>
+        </select>
+      </label>
+      <label for="signup-role">Tipo de conta
+        <select id="signup-role" name="role" required><option value="">Selecione</option><option value="aluno">Aluno</option><option value="professor">Professor</option></select>
+      </label>
+      <fieldset id="student-fields" class="account-form">
+        <legend>Dados do aluno</legend>
+        <label for="signup-education">Etapa de ensino
+          <select id="signup-education" name="education_level"><option value="">Selecione</option><option>Ensino Fundamental I</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico</option><option>Ensino Superior</option><option>Pós-graduação</option><option>Outro</option></select>
+        </label>
+        <label for="signup-education-detail">Ano, série ou período (opcional)<input id="signup-education-detail" name="education_detail" maxlength="100" placeholder="Ex.: 2º ano"></label>
+      </fieldset>
+      <fieldset id="teacher-fields" class="account-form" hidden>
+        <legend>Dados do professor</legend>
+        <label for="signup-degree">Formação
+          <select id="signup-degree" name="teacher_degree_level"><option value="">Selecione</option><option>Bacharelado</option><option>Licenciatura</option><option>Tecnólogo</option><option>Especialização</option><option>Mestrado acadêmico</option><option>Mestrado profissional</option><option>Doutorado acadêmico</option><option>Doutorado profissional</option><option>Ainda cursando graduação</option><option>Outro</option></select>
+        </label>
+        <label for="signup-course">Curso ou área<input id="signup-course" name="teacher_degree_program" maxlength="160" placeholder="Ex.: Licenciatura em Física"></label>
+        <label for="signup-institution">Instituição (opcional)<input id="signup-institution" name="teacher_institution" maxlength="160"></label>
+        <label class="account-check"><input id="teacher-ack-check" name="teacher_ack" type="checkbox"><span>Entendo que o acesso de professor depende da aprovação do responsável pelo site.</span></label>
+      </fieldset>
+      <label for="signup-password">Senha<input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres.</small></label>
+      <label for="signup-confirm">Repita a senha<input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required></label>
+      <label class="account-check"><input name="consent" type="checkbox" required><span>Aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
+      <button class="account-button account-button-primary" type="submit">Criar conta</button>
+      <p class="account-message" data-status aria-live="polite"></p>
+    </form>
+    <p>Já tem conta? <a href="login.html">Entrar</a></p>
+  </section></main>
 </body>
 </html>

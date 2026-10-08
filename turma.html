@@ -1,17 +1,27 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><meta name="description" content="Aulas, avisos, materiais e atividades da turma.">
+  <title>Turma — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais áreas de turmas por conta.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="classroom">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="turmas.html">Turmas</a><a href="minha-area.html">Painel da conta</a></nav></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Espaço da turma</p><h1 id="classroom-title">Turma</h1><p id="classroom-description" class="account-muted"></p>
+    <p id="classroom-status" class="account-message" role="status" aria-live="polite">Abrindo a turma…</p>
+    <a id="classroom-signin" class="account-link-button" href="login.html" hidden>Entrar na conta</a>
+    <div id="classroom-content" class="account-workspace">
+      <section class="account-section"><h2>Avisos</h2><div id="class-announcements-list" class="account-grid"></div></section>
+      <section class="account-section"><h2>Aulas</h2><div id="class-lessons-list" class="account-grid"></div></section>
+      <section class="account-section"><h2>Materiais</h2><div id="class-resources-list" class="account-grid"></div></section>
+      <section class="account-section"><h2>Atividades</h2><div id="class-activities-list" class="account-grid"></div></section>
+      <section id="class-authoring" class="account-section"><h2>Contribuir com a turma</h2></section>
+    </div>
+  </section></main>
 </body>
 </html>

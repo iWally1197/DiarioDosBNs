@@ -1,17 +1,32 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Recuperar senha — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais criação de contas, login ou recuperação de senha.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="recovery">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="login.html">Entrar</a></nav></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Ajuda com a conta</p><h1>Recuperar senha</h1>
+    <form id="recovery-form" class="account-form" method="post">
+      <p>Informe seu e-mail. Vamos enviar um link para escolher outra senha.</p>
+      <label for="recovery-email">E-mail<input id="recovery-email" name="email" type="email" autocomplete="email" required></label>
+      <button class="account-button account-button-primary" type="submit">Enviar link</button>
+      <p class="account-message" data-status aria-live="polite"></p>
+    </form>
+    <p id="recovery-link-status" class="account-message" aria-live="polite"></p>
+    <form id="password-update-form" class="account-form" method="post" hidden>
+      <p>Escolha uma senha nova.</p>
+      <label for="new-password">Nova senha<input id="new-password" name="password" type="password" autocomplete="new-password" minlength="10" required></label>
+      <label for="new-password-confirm">Repita a nova senha<input id="new-password-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required></label>
+      <button class="account-button account-button-primary" type="submit">Salvar senha</button>
+      <p class="account-message" data-status aria-live="polite"></p>
+    </form>
+    <p><a href="login.html">Voltar para entrar</a></p>
+  </section></main>
 </body>
 </html>

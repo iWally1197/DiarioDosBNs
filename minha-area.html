@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Painel da conta — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
+</head>
+<body data-account-page="workspace">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="turmas.html">Turmas</a><a href="cadastro.html">Criar conta</a></nav></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Seu espaço de estudo</p><h1>Painel da conta</h1>
+    <p id="workspace-status" class="account-message" role="status" aria-live="polite">Verificando sua conta…</p>
+    <a id="workspace-signin" class="account-link-button" href="login.html" hidden>Entrar na conta</a>
+    <div id="workspace-content" class="account-workspace" hidden>
+      <section class="account-card"><h2 id="workspace-name">Conta</h2><p id="workspace-email"></p><p id="workspace-role"></p><button id="logout-button" class="account-button account-button-light" type="button">Sair da conta</button></section>
+      <section id="student-tools" class="account-section" hidden><h2>Entrar em uma turma</h2><p>Digite o código que o professor compartilhou com você.</p>
+        <form id="join-class-form" class="account-form" method="post"><label for="join-code">Código da turma<input id="join-code" name="code" autocomplete="off" maxlength="20" required></label><button class="account-button account-button-primary" type="submit">Entrar na turma</button><p class="account-message" data-status aria-live="polite"></p></form>
+      </section>
+      <section id="teacher-pending" class="account-card" hidden><h2>Cadastro de professor em análise</h2><p id="teacher-note">O responsável pelo site vai analisar sua solicitação.</p>
+        <form id="teacher-reanalysis-form" class="account-form" method="post" hidden><button class="account-button account-button-primary" type="submit">Pedir nova análise</button><p class="account-message" data-status aria-live="polite"></p></form>
+      </section>
+      <section id="teacher-tools" class="account-section" hidden><h2>Turmas vinculadas</h2><p>O administrador fornece os códigos e as permissões de cada turma.</p></section>
+      <section id="class-list-section" class="account-section" hidden><h2>Suas turmas</h2><div id="class-list" class="account-grid" aria-live="polite"><p>Carregando…</p></div></section>
+      <section id="admin-tools" class="account-section" hidden>
+        <h2>Ferramentas do administrador</h2>
+        <form id="create-class-form" class="account-form account-card" method="post"><h3>Criar turma</h3><label for="new-class-name">Nome<input id="new-class-name" name="name" maxlength="100" required></label><label for="new-class-description">Descrição<textarea id="new-class-description" name="description" maxlength="1000"></textarea></label><button class="account-button account-button-primary" type="submit">Criar turma</button><p class="account-message" data-status aria-live="polite"></p></form>
+        <form id="assign-teacher-form" class="account-form account-card" method="post"><h3>Vincular professor a uma turma</h3><label for="teacher-class-select">Turma<select id="teacher-class-select" name="classroom" required><option value="">Carregando turmas…</option></select></label><label for="teacher-select">Professor aprovado<select id="teacher-select" name="teacher" required><option value="">Carregando professores…</option></select></label><button class="account-button account-button-primary" type="submit">Vincular professor</button><p class="account-message" data-status aria-live="polite"></p></form>
+        <form id="permissions-form" class="account-form account-card" method="post" hidden><h3>Permissões de professor</h3><label for="permission-class-select">Turma<select id="permission-class-select" required><option value="">Escolha uma turma</option></select></label><div class="account-label-row"><label><input type="checkbox" name="can_create_activities"> Criar atividades</label><label><input type="checkbox" name="can_edit_activities"> Editar atividades</label><label><input type="checkbox" name="can_publish_activities"> Publicar atividades</label><label><input type="checkbox" name="require_activity_approval" checked> Pedir aprovação antes de publicar</label><label><input type="checkbox" name="can_create_lessons"> Criar aulas</label><label><input type="checkbox" name="can_edit_lessons"> Editar aulas</label><label><input type="checkbox" name="can_send_materials"> Enviar avisos e materiais</label><label><input type="checkbox" name="can_view_progress"> Ver progresso dos alunos</label></div><button class="account-button account-button-primary" type="submit">Salvar permissões</button><p id="permission-status" class="account-message" data-status aria-live="polite"></p></form>
+        <div class="account-section"><h3>Solicitações de professores</h3><div id="teacher-requests" class="account-grid" aria-live="polite"><p>Carregando…</p></div></div>
+        <div class="account-section"><h3>Revisar atividades</h3><div id="activity-reviews" class="account-grid" aria-live="polite"><p>Carregando…</p></div></div>
+      </section>
+    </div>
+  </section></main>
+</body>
+</html>

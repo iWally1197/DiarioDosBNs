@@ -1,17 +1,19 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Confirmar e-mail — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais criação de contas, login ou recuperação de senha.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="callback">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Confirmação segura</p><h1>Confirmar e-mail</h1>
+    <p id="callback-status" class="account-message" role="status" aria-live="polite">Verificando o link…</p>
+    <div id="callback-links" class="account-actions" hidden><a href="login.html">Entrar</a><a href="cadastro.html">Criar conta</a></div>
+  </section></main>
 </body>
 </html>

@@ -1,17 +1,30 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="2;url=index.html">
-  <title>Área removida — Diário dos BNs</title>
+  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><meta name="description" content="Entre na sua conta para acessar turmas e atividades do Diário dos BNs.">
+  <title>Turmas — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
+  <script defer src="account-system.js"></script>
 </head>
-<body>
-  <main>
-    <h1>Esta área foi removida</h1>
-    <p>O Diário dos BNs agora é aberto e não oferece mais áreas de turmas por conta.</p>
-    <p><a href="index.html">Voltar ao início</a></p>
-  </main>
-  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
+<body data-account-page="classes">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a class="nav-account" href="login.html">Entrar</a><a href="cadastro.html">Criar conta</a></nav></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Aprender em grupo</p><h1>Turmas e atividades</h1>
+    <p>Entre na sua conta para ver suas turmas, abrir aulas e acompanhar atividades.</p>
+    <p id="workspace-status" class="account-message" role="status" aria-live="polite">Verificando sua conta…</p>
+    <a id="workspace-signin" class="account-link-button" href="login.html" hidden>Entrar na conta</a>
+    <div id="workspace-content" class="account-workspace" hidden>
+      <section class="account-card"><h2 id="workspace-name">Conta</h2><p id="workspace-email"></p><p id="workspace-role"></p><a class="account-link-button" href="minha-area.html">Abrir painel da conta</a></section>
+      <section id="student-tools" class="account-section" hidden><h2>Entrar em uma turma</h2><p>Digite o código que o professor compartilhou com você.</p><form id="join-class-form" class="account-form" method="post"><label for="join-code">Código da turma<input id="join-code" name="code" maxlength="20" required></label><button class="account-button account-button-primary" type="submit">Entrar na turma</button><p class="account-message" data-status aria-live="polite"></p></form></section>
+      <section id="teacher-pending" class="account-card" hidden><h2>Cadastro de professor em análise</h2><p id="teacher-note"></p><form id="teacher-reanalysis-form" class="account-form" method="post" hidden><button class="account-button account-button-primary" type="submit">Pedir nova análise</button><p class="account-message" data-status aria-live="polite"></p></form></section>
+      <section id="teacher-tools" class="account-section" hidden><h2>Turmas vinculadas</h2><p>As turmas aparecem depois que o administrador vincular o professor aprovado.</p></section>
+      <section id="class-list-section" class="account-section" hidden><h2>Suas turmas</h2><div id="class-list" class="account-grid" aria-live="polite"><p>Carregando…</p></div></section>
+      <section id="admin-tools" class="account-section" hidden><h2>Ferramentas do administrador</h2><p>Gerencie turmas e pedidos de professor no <a href="minha-area.html">painel da conta</a>.</p></section>
+      <button id="logout-button" class="account-button account-button-light" type="button">Sair da conta</button>
+    </div>
+  </section></main>
 </body>
 </html>
