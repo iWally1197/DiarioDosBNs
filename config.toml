@@ -1,5 +1,5 @@
-project_id = "diariodosbns"
+project_id = "glzerebxnlkdtsbrwbhh"
 
 [db.seed]
 enabled = true
-sql_paths = ["./seed.sql"]
+sql_paths = ["../supabase-seed.sql"]

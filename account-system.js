@@ -14,6 +14,7 @@
   const pageUrl = (file) => new URL(file, document.baseURI);
   const go = (file) => window.location.assign(pageUrl(file).href);
   const roleName = (role) => ({ aluno: 'Aluno', professor: 'Professor', admin: 'Administrador' }[role] || 'Conta');
+  const destinationFor = (role) => ({ admin: 'admin.html', professor: 'professor.html', aluno: 'aluno.html' }[role?.role] || 'minha-area.html');
 
   function withDeadline(promise, message, ms = deadlineMs) {
     let timer;
@@ -65,14 +66,37 @@
     const lower = raw.toLowerCase();
     if (lower.includes('invalid login') || lower.includes('invalid credentials')) return 'E-mail ou senha não conferem.';
     if (lower.includes('email not confirmed')) return 'Confirme seu e-mail pelo link enviado antes de entrar.';
-    if (lower.includes('already registered') || lower.includes('user already registered')) return 'Este e-mail já tem cadastro. Tente entrar.';
+    if (lower.includes('already registered') || lower.includes('user already registered')) return 'Não foi possível concluir o cadastro. Se você já tiver uma conta, tente entrar ou recuperar a senha.';
     if (lower.includes('signup is disabled') || lower.includes('signups not allowed')) return 'O cadastro está desativado no Supabase. O responsável precisa ativar novos cadastros.';
     if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('abort')) return 'A conexão demorou ou caiu. Atualize a página e tente novamente.';
     if (lower.includes('redirect') && lower.includes('not allowed')) return 'O endereço de retorno ainda não foi liberado nas configurações do Supabase.';
-    if (raw.includes('Aprovação docente necessária')) return 'A conta de professor ainda aguarda aprovação do responsável pelo site.';
-    if (raw.includes('Somente o administrador')) return 'Essa ação só pode ser feita pelo administrador do site.';
+    if (raw.includes('A senha precisa') || raw.includes('As senhas digitadas')) return raw;
+    if (raw.includes('Esta conta está indisponível')) return raw;
+    if (raw.includes('Aprovação docente necessária') || raw.includes('aguarda aprovação')) return 'A conta de professor ainda aguarda aprovação do responsável pelo site.';
+    if (raw.includes('Somente o administrador') || raw.includes('Apenas o administrador')) return 'Essa ação só pode ser feita pelo administrador do site.';
     if (raw.includes('Código inválido') || raw.includes('código de turma')) return 'O código não confere ou a turma não está aceitando novos alunos.';
-    return raw || fallback;
+    if (/aceite vigente dos termos/i.test(raw)) return 'Marque que leu e aceitou os Termos de Uso e a Política de Privacidade.';
+    if (/escolha aluno ou professor/i.test(raw)) return 'Escolha se a conta será de aluno ou professor.';
+    if (/informe seu nome/i.test(raw)) return 'Digite seu nome para continuar.';
+    if (/selecione sua faixa etária/i.test(raw)) return 'Escolha sua faixa etária.';
+    if (/selecione sua etapa de ensino/i.test(raw)) return 'Escolha sua etapa de ensino.';
+    if (/informe sua formação docente/i.test(raw)) return 'Preencha sua formação e seu curso ou área.';
+    if (/confirme.*conta de professor/i.test(raw)) return 'Confirme que o cadastro de professor precisa de aprovação.';
+    if (/permission denied|database error|trigger|profiles|user_roles|row-level security|rls/i.test(raw)) return 'O banco precisa de um ajuste para concluir esta ação. Avise o responsável pelo site.';
+    return fallback;
+  }
+
+  function bindPasswordToggles() {
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+      const input = byId(button.dataset.passwordToggle);
+      if (!input) return;
+      button.addEventListener('click', () => {
+        const reveal = input.type === 'password';
+        input.type = reveal ? 'text' : 'password';
+        button.textContent = reveal ? 'Ocultar senha' : 'Mostrar senha';
+        button.setAttribute('aria-pressed', String(reveal));
+      });
+    });
   }
 
   function status(node, text, kind = '') {
@@ -122,13 +146,18 @@
 
   function initLogin() {
     bindSubmit(byId('login-form'), async (form, client, notice) => {
-      const { error } = await client.auth.signInWithPassword({
+      const { data, error } = await client.auth.signInWithPassword({
         email: form.elements.email.value.trim(),
         password: form.elements.password.value
       });
       if (error) throw error;
+      const role = await readRole(client, data.user.id);
+      if (!role || role.status === 'blocked') {
+        await client.auth.signOut();
+        throw new Error('Esta conta está indisponível. Fale com o responsável pelo site.');
+      }
       status(notice, 'Entrada realizada. Abrindo suas turmas…', 'success');
-      go('minha-area.html');
+      go(destinationFor(role));
     });
   }
 
@@ -184,8 +213,9 @@
       });
       if (error) throw error;
       if (data.session) {
+        const userRole = await readRole(client, data.user.id);
         status(notice, teacher ? 'Conta criada. A conta de professor precisa ser aprovada.' : 'Conta criada com sucesso.', 'success');
-        go('minha-area.html');
+        go(destinationFor(userRole));
         return;
       }
       status(notice, 'Cadastro iniciado. Abra o e-mail de confirmação para ativar a conta. Se a mensagem não chegar, confira o spam.', 'success');
@@ -233,7 +263,11 @@
         return;
       }
       status(notice, 'E-mail confirmado. Abrindo sua conta…', 'success');
-      window.setTimeout(() => go('minha-area.html'), 700);
+      getClient().then((client) => readRole(client, session.user.id)).then((role) => {
+        window.setTimeout(() => go(destinationFor(role)), 700);
+      }).catch(() => {
+        window.setTimeout(() => go('minha-area.html'), 700);
+      });
     }).catch((error) => {
       status(notice, messageFor(error), 'error');
       show(byId('callback-links'), true);
@@ -785,6 +819,7 @@
   }
 
   function init() {
+    bindPasswordToggles();
     if (page === 'login') initLogin();
     else if (page === 'signup') initSignup();
     else if (page === 'recovery') initRecovery();

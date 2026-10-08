@@ -37,4 +37,15 @@
 .account-panel [hidden] { display: none !important; }
 .account-label-row { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
 .account-label-row label { display: inline-flex; align-items: center; gap: .45rem; color: var(--text, #f5f7fb); }
+.account-password-control { display: flex; align-items: center; gap: .5rem; }
+.account-password-control input { flex: 1 1 auto; min-width: 0; }
+.account-password-toggle { flex: 0 0 auto; min-height: 2.8rem; padding: .55rem .7rem; border: 1px solid #43516a; border-radius: .55rem; background: transparent; color: var(--text, #f5f7fb); font: inherit; font-size: .85rem; cursor: pointer; }
+.account-password-toggle:hover { border-color: var(--gold, #e6c477); }
+.account-password-toggle:focus-visible, .account-button:focus-visible, .account-link-button:focus-visible { outline: 3px solid var(--gold, #e6c477); outline-offset: 3px; }
+.hero-account-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1rem 0 .7rem; }
+.hero-account-actions .button { min-width: 10.5rem; justify-content: center; }
+.hero-account-actions a:focus-visible { outline: 3px solid var(--gold, #e6c477); outline-offset: 3px; }
+.account-form [hidden], .account-section [hidden] { display: none !important; }
+@media (max-width: 520px) { .hero-account-actions { display: grid; grid-template-columns: 1fr 1fr; } .hero-account-actions .button { min-width: 0; padding-inline: .55rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 @media (max-width: 36rem) { .account-page { width: min(100% - 1rem, 54rem); margin-top: .75rem; } .account-panel { padding: 1rem; } }

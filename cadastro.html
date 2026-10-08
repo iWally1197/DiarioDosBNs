@@ -4,8 +4,8 @@
   <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f"><title>Criar conta — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
-  <script defer src="account-system.js"></script>
+  <link rel="stylesheet" href="styles.css?v=site-20261008"><link rel="stylesheet" href="account-system.css?v=site-20261008">
+  <script defer src="account-system.js?v=site-20261008"></script>
 </head>
 <body data-account-page="signup">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -42,8 +42,8 @@
         <label for="signup-institution">Instituição (opcional)<input id="signup-institution" name="teacher_institution" maxlength="160"></label>
         <label class="account-check"><input id="teacher-ack-check" name="teacher_ack" type="checkbox"><span>Entendo que o acesso de professor depende da aprovação do responsável pelo site.</span></label>
       </fieldset>
-      <label for="signup-password">Senha<input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><small>Use pelo menos 10 caracteres.</small></label>
-      <label for="signup-confirm">Repita a senha<input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required></label>
+      <label for="signup-password">Senha<div class="account-password-control"><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-password" aria-pressed="false">Mostrar senha</button></div><small>Use pelo menos 10 caracteres.</small></label>
+      <label for="signup-confirm">Repita a senha<div class="account-password-control"><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-confirm" aria-pressed="false">Mostrar senha</button></div></label>
       <label class="account-check"><input name="consent" type="checkbox" required><span>Aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
       <button class="account-button account-button-primary" type="submit">Criar conta</button>
       <p class="account-message" data-status aria-live="polite"></p>

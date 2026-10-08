@@ -4,8 +4,8 @@
   <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f"><title>Recuperar senha — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="account-system.css">
-  <script defer src="account-system.js"></script>
+  <link rel="stylesheet" href="styles.css?v=site-20261008"><link rel="stylesheet" href="account-system.css?v=site-20261008">
+  <script defer src="account-system.js?v=site-20261008"></script>
 </head>
 <body data-account-page="recovery">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -21,8 +21,8 @@
     <p id="recovery-link-status" class="account-message" aria-live="polite"></p>
     <form id="password-update-form" class="account-form" method="post" hidden>
       <p>Escolha uma senha nova.</p>
-      <label for="new-password">Nova senha<input id="new-password" name="password" type="password" autocomplete="new-password" minlength="10" required></label>
-      <label for="new-password-confirm">Repita a nova senha<input id="new-password-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required></label>
+      <label for="new-password">Nova senha<div class="account-password-control"><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="new-password" aria-pressed="false">Mostrar senha</button></div></label>
+      <label for="new-password-confirm">Repita a nova senha<div class="account-password-control"><input id="new-password-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="new-password-confirm" aria-pressed="false">Mostrar senha</button></div></label>
       <button class="account-button account-button-primary" type="submit">Salvar senha</button>
       <p class="account-message" data-status aria-live="polite"></p>
     </form>
