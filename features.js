@@ -17,6 +17,20 @@ function attachCountdown(button, kind, label) {
   }
 }
 
+const MAX_PIX_IMAGE_BYTES = 512 * 1024;
+const PIX_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+function readPixImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !PIX_IMAGE_TYPES.has(file.type)) { reject(new Error('Escolha uma imagem PNG, JPG ou WebP.')); return; }
+    if (file.size > MAX_PIX_IMAGE_BYTES) { reject(new Error('A imagem precisa ter até 512 KB.')); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 function setupTeacherSignup() {
   const form = document.querySelector('#signup-form');
   const fields = form && form.querySelector('#teacher-education-fields');
@@ -415,13 +429,15 @@ async function adminWorkspace(root) {
       '<button type="button" data-review-activity="' + esc(a.id) + '" data-review-status="rejected">Recusar</button></li>';
   }).join('');
   const pix = pixRow && pixRow.value || {};
+  const currentPixImage = String(pix.qr_image_data || pix.qr_image_url || '').trim();
+  const safePixImage = /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(currentPixImage) || /^https:\/\//i.test(currentPixImage);
   const section = document.createElement('section');
   section.className = 'account-section';
   section.dataset.adminExtra = 'true';
   section.innerHTML =
-    '<div class="section-kicker">CONFIGURAÇÃO DO PIX</div><h2>Apoie o Diário dos BNs</h2><form data-pix-settings class="admin-form">' +
+    '<div class="section-kicker">CONFIGURAÇÃO DO PIX</div><h2>Apoie o Diário dos BNs</h2><p>Edite como a página de apoio apresenta a contribuição. A imagem do QR Code fica salva na configuração do site.</p><form data-pix-settings class="admin-form">' +
     '<label>Chave PIX<input name="pix_key" maxlength="200" value="' + esc(pix.pix_key || '') + '"></label>' +
-    '<label>Link HTTPS da imagem do QR Code<input name="qr_image_url" type="url" placeholder="https://…" value="' + esc(pix.qr_image_url || '') + '"></label>' +
+    '<label>Imagem do QR Code (PNG, JPG ou WebP; até 512 KB)<input name="qr_image_file" type="file" accept="image/png,image/jpeg,image/webp"></label><figure data-pix-preview class="pix-qr pix-admin-preview" aria-live="polite">' + (safePixImage ? '<img data-pix-qr-preview src="' + esc(currentPixImage) + '" alt="Prévia do QR Code Pix">' : '<p>Nenhuma imagem de QR Code selecionada.</p>') + '</figure>' +
     '<label>Texto de apoio<textarea name="instructions" maxlength="500">' + esc(pix.instructions || '') + '</textarea></label><button class="button button-primary" type="submit">Salvar PIX</button><p role="status" aria-live="polite"></p></form>' +
     '<div class="section-kicker">TURMAS</div><h2>Criar turma e definir responsáveis</h2>' +
     '<form data-enhanced-class-form class="admin-form"><label>Nome<input name="name" maxlength="100" required></label><label>Descrição<textarea name="description" maxlength="1000"></textarea></label>' +
@@ -440,18 +456,39 @@ async function adminWorkspace(root) {
     '<div class="section-kicker">VERIFICAÇÃO DE PROFESSORES</div><h2>Solicitações e acesso docente</h2><ul class="private-list">' + (verificationRows || '<li>Nenhuma solicitação de verificação.</li>') + '</ul>' +
     '<div class="section-kicker">ATIVIDADES PENDENTES</div><h2>Revisar atividades enviadas</h2><ul class="private-list">' + (pendingRows || '<li>Nenhuma atividade aguardando aprovação.</li>') + '</ul>';
   root.append(section);
-  bindAdminExtras(section, classes || [], teacherLinks || [], allActivities || []);
+  bindAdminExtras(section, classes || [], teacherLinks || [], allActivities || [], pix);
 }
 
-async function bindAdminExtras(section, classes, teacherLinks, allActivities) {
-  section.querySelector('[data-pix-settings]')?.addEventListener('submit', async (event) => {
+async function bindAdminExtras(section, classes, teacherLinks, allActivities, pixSettings = {}) {
+  const pixForm = section.querySelector('[data-pix-settings]');
+  pixForm?.querySelector('[name="qr_image_file"]')?.addEventListener('change', async (event) => {
+    const input = event.currentTarget, preview = pixForm.querySelector('[data-pix-preview]'), note = pixForm.querySelector('[role="status"]');
+    const file = input.files && input.files[0];
+    if (!file) return;
+    try {
+      const data = await readPixImage(file);
+      const image = document.createElement('img'); image.dataset.pixQrPreview = ''; image.alt = 'Prévia do QR Code Pix'; image.src = data;
+      preview.replaceChildren(image);
+      statusText(note, 'Imagem carregada. Salve para atualizar a página de apoio.', false);
+    } catch (error) {
+      input.value = '';
+      statusText(note, error.message || 'Não foi possível usar essa imagem.', true);
+    }
+  });
+  pixForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget, v = new FormData(form), note = form.querySelector('[role="status"]');
-    const qr = String(v.get('qr_image_url') || '').trim();
-    if (qr && !/^https:\/\//i.test(qr)) { statusText(note, 'Use um endereço HTTPS para o QR Code.', true); return; }
-    const value = { pix_key: String(v.get('pix_key') || '').trim(), qr_image_url: qr, instructions: String(v.get('instructions') || '').trim() };
+    const file = v.get('qr_image_file');
+    let qrImageData = String(pixSettings.qr_image_data || '').trim();
+    let qrImageUrl = String(pixSettings.qr_image_url || '').trim();
+    if (file instanceof File && file.size) {
+      try { qrImageData = await readPixImage(file); qrImageUrl = ''; }
+      catch (error) { statusText(note, error.message || 'Não foi possível usar essa imagem.', true); return; }
+    }
+    const value = { pix_key: String(v.get('pix_key') || '').trim(), qr_image_data: qrImageData, qr_image_url: qrImageUrl, instructions: String(v.get('instructions') || '').trim() };
     const { error } = await supabase.from('site_settings').upsert({ key: 'pix', value: value, updated_at: new Date().toISOString() });
     statusText(note, error ? 'Não foi possível salvar. Aplique a migração de turmas/PIX.' : 'Configuração PIX salva.', Boolean(error));
+    if (!error) Object.assign(pixSettings, value);
   });
   section.querySelector('[data-enhanced-class-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -702,10 +739,13 @@ async function loadPix(root) {
   if (error || !root.isConnected) { root.innerHTML = '<p>Não foi possível carregar a configuração PIX. O responsável pelo site precisa aplicar a migração no Supabase.</p>'; return; }
   const value = data && data.value || {};
   const key = String(value.pix_key || '').trim();
-  const qr = String(value.qr_image_url || '').trim();
-  const validQr = /^https:\/\//i.test(qr);
-  root.innerHTML = key ? '<div class="pix-layout">' + (validQr ? '<figure class="pix-qr"><img src="' + esc(qr) + '" alt="QR Code para contribuir com o Diário dos BNs"><figcaption>Leia o QR Code com o aplicativo do seu banco.</figcaption></figure>' : '<div class="pix-qr pix-qr-empty">O administrador ainda não adicionou um QR Code.</div>') +
-    '<div class="pix-key-block"><p>' + esc(value.instructions || 'Sua contribuição apoia a continuidade do projeto.') + '</p><p class="pix-key-label">Chave PIX</p><code class="pix-key-value">' + esc(key) + '</code><button class="button button-primary" type="button" data-copy-pix="' + esc(key) + '">Copiar chave PIX</button><p data-pix-copy-status role="status" aria-live="polite"></p></div></div>' : '<p>A chave PIX ainda não foi configurada. Volte mais tarde ou entre em contato com o responsável pelo site.</p>';
+  const qrData = String(value.qr_image_data || '').trim();
+  const qrUrl = String(value.qr_image_url || '').trim();
+  const validDataImage = /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(qrData);
+  const qr = validDataImage ? qrData : (/^https:\/\//i.test(qrUrl) ? qrUrl : '');
+  const keyBlock = key ? '<p class="pix-key-label">Chave PIX</p><code class="pix-key-value">' + esc(key) + '</code><button class="button button-primary" type="button" data-copy-pix="' + esc(key) + '">Copiar chave PIX</button><p data-pix-copy-status role="status" aria-live="polite"></p>' : '';
+  root.innerHTML = (key || qr) ? '<div class="pix-layout">' + (qr ? '<figure class="pix-qr"><img src="' + esc(qr) + '" alt="QR Code para contribuir com o Diário dos BNs"><figcaption>Leia o QR Code com o aplicativo do seu banco.</figcaption></figure>' : '<div class="pix-qr pix-qr-empty">O administrador ainda não adicionou um QR Code.</div>') +
+    '<div class="pix-key-block"><p>' + esc(value.instructions || 'Sua contribuição apoia a continuidade do projeto.') + '</p>' + keyBlock + '</div></div>' : '<p>A chave ou o QR Code PIX ainda não foram configurados. Volte mais tarde.</p>';
 }
 
 async function loadClassroom(root) {
