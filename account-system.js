@@ -69,6 +69,7 @@
     if (lower.includes('already registered') || lower.includes('user already registered')) return 'Não foi possível concluir o cadastro. Se você já tiver uma conta, tente entrar ou recuperar a senha.';
     if (lower.includes('signup is disabled') || lower.includes('signups not allowed')) return 'O cadastro está desativado no Supabase. O responsável precisa ativar novos cadastros.';
     if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('abort')) return 'A conexão demorou ou caiu. Atualize a página e tente novamente.';
+    if (lower.includes('demorou para responder') || lower.includes('timed out') || lower.includes('timeout')) return raw;
     if (lower.includes('redirect') && lower.includes('not allowed')) return 'O endereço de retorno ainda não foi liberado nas configurações do Supabase.';
     if (raw.includes('A senha precisa') || raw.includes('As senhas digitadas')) return raw;
     if (raw.includes('Esta conta está indisponível')) return raw;
@@ -146,10 +147,14 @@
 
   function initLogin() {
     bindSubmit(byId('login-form'), async (form, client, notice) => {
-      const { data, error } = await client.auth.signInWithPassword({
-        email: form.elements.email.value.trim(),
-        password: form.elements.password.value
-      });
+      const { data, error } = await withDeadline(
+        client.auth.signInWithPassword({
+          email: form.elements.email.value.trim(),
+          password: form.elements.password.value
+        }),
+        'O login demorou para responder. Confira sua conexão e tente novamente.',
+        18000
+      );
       if (error) throw error;
       const role = await readRole(client, data.user.id);
       if (!role || role.status === 'blocked') {
@@ -191,7 +196,8 @@
       const requestedRole = String(values.get('role'));
       const teacher = requestedRole === 'professor';
       const callback = pageUrl('auth-callback.html').href;
-      const { data, error } = await client.auth.signUp({
+      const { data, error } = await withDeadline(
+        client.auth.signUp({
         email: String(values.get('email') || '').trim(),
         password,
         options: {
@@ -210,7 +216,10 @@
             privacy_version: '1.0'
           }
         }
-      });
+        }),
+        'O cadastro demorou para responder. Confira sua conexão e tente novamente.',
+        22000
+      );
       if (error) throw error;
       if (data.session) {
         const userRole = await readRole(client, data.user.id);
