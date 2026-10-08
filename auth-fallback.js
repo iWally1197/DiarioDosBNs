@@ -10,9 +10,9 @@
     message.setAttribute('role', 'alert');
 
     const title = document.createElement('h1');
-    title.textContent = 'Não foi possível abrir o cadastro';
+    title.textContent = 'Esta área está demorando para abrir';
     const description = document.createElement('p');
-    description.textContent = 'Não foi possível abrir esta área. Atualize a página. Se continuar, volte ao início e tente entrar de novo. A mensagem abaixo ajuda a identificar o problema.';
+    description.textContent = 'O site não conseguiu carregar esta página. Atualize a página. Se continuar, volte para a tela de entrada e tente novamente.';
     message.append(title, description);
 
     if (detail) {
@@ -28,6 +28,11 @@
     reload.textContent = 'Atualizar página';
     reload.addEventListener('click', () => location.reload());
     message.append(reload);
+    const login = document.createElement('a');
+    login.className = 'button button-outline';
+    login.href = new URL('login.html', document.baseURI).href;
+    login.textContent = 'Voltar para entrar';
+    message.append(login);
     main.replaceChildren(message);
   };
 
