@@ -4,7 +4,7 @@ Este pacote substitui as páginas antigas de conta por telas separadas. Os campo
 
 ## Arquivos
 
-Copie os arquivos deste pacote para a raiz do repositório do site, mantendo os mesmos nomes. A pasta `supabase/migrations` deve ficar no mesmo caminho dentro do repositório. Envie os arquivos para a raiz da branch que publica o GitHub Pages; não envie a pasta `arquivos-do-sistema-novo` inteira como uma subpasta.
+Copie os arquivos deste pacote para a raiz do repositório do site, mantendo os mesmos nomes. A página `index.html` mostra, logo no início, os botões **Criar conta** e **Entrar na conta**. A pasta `supabase/migrations` deve ficar no mesmo caminho dentro do repositório. Envie os arquivos para a raiz da branch que publica o GitHub Pages; não envie a pasta `arquivos-do-sistema-novo` inteira como uma subpasta.
 
 O pacote inclui as páginas de login, cadastro, recuperação de senha, painel, turmas e conteúdo de cada turma. As páginas antigas `admin.html`, `aluno.html`, `professor.html`, `perfil.html` e `conta.html` agora levam ao painel novo.
 
