@@ -4,6 +4,7 @@
   if (!section || !player) return;
 
   const status = document.querySelector('#live-video-status');
+  const liveNav = document.querySelector('a[href="#ao-vivo"]');
   const title = document.querySelector('#live-video-name');
   const description = document.querySelector('#live-video-description');
 
@@ -53,6 +54,7 @@
   loadConfig()
     .then((config) => {
       section.hidden = config.enabled !== true;
+      if (liveNav) liveNav.hidden = section.hidden;
       if (section.hidden) return;
       if (title) title.textContent = config.title || 'Diário dos BNs ao vivo';
       if (description) description.textContent = config.description || 'Acompanhe as transmissões e aulas ao vivo do projeto.';
@@ -75,5 +77,6 @@
     })
     .catch(() => {
       section.hidden = true;
+      if (liveNav) liveNav.hidden = true;
     });
 })();
