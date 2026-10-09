@@ -649,7 +649,7 @@ async function syncLegacyFavorite(event) {
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
-import('./features.js?v=conta-solta-20261005-3').catch(()=>{});
+import('./features.js?v=pix-load-fix-20261008-1').catch(()=>{});
 
 if (main) {
   attachAuthNavigation();
