@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const penroseVideo = document.querySelector('#penrose-feature-video');
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const syncPenroseMotion = () => {
@@ -55,8 +55,36 @@
   }));
   document.querySelectorAll('.year').forEach((year) => { year.textContent = new Date().getFullYear(); });
 
-  const topics = window.DIARIO_TOPICS || [];
+  let topics = window.DIARIO_TOPICS || [];
   const topicGrid = document.querySelector('#topic-grid');
+  let publicationCheckFailed = false;
+  let publishedSlugs = new Set();
+  if (topicGrid || document.querySelector('#topic-page')) {
+    try {
+      const { loadPublishedAnimationSlugs } = await import('./public-catalog.js');
+      publishedSlugs = await loadPublishedAnimationSlugs();
+      topics = topics.map((topic) => ({
+        ...topic,
+        animations: topic.animations.filter((item) => publishedSlugs.has(`${topic.id}--${item[2]}`))
+      }));
+    } catch {
+      publicationCheckFailed = true;
+      topics = topics.map((topic) => ({ ...topic, animations: [] }));
+    }
+    window.DIARIO_TOPICS = topics;
+  }
+  const homeDownloads = document.querySelectorAll('.download-list .download-item');
+  homeDownloads.forEach((card) => {
+    const href = card.querySelector('a[href$=".blend"]')?.getAttribute('href');
+    const item = topics.flatMap((topic) => topic.animations.map((animation) => ({
+      topic, file: animation[2]
+    }))).find(({ topic, file }) => href === `downloads-${topic.id}-${file}.blend`);
+    card.hidden = !item;
+  });
+  const publishedCount = topics.reduce((sum, topic) => sum + topic.animations.length, 0);
+  const countLink = document.querySelector('.downloads-section a[href="downloads.html"]');
+  if (countLink) countLink.textContent = `Ver ${publishedCount} projetos na central de downloads →`;
+
   if (topicGrid) {
     const topicGroups = [
       {name:'Mecânica', ids:['cinematica','dinamica','estatica','gravitacao','trabalho-energia','quantidade-movimento']},
@@ -66,11 +94,11 @@
       {name:'Física moderna', ids:['fisica-moderna']},
     ];
     topicGrid.innerHTML = topicGroups.map((group) => {
-      const members = group.ids.map((id) => topics.find((topic) => topic.id === id)).filter(Boolean);
+      const members = group.ids.map((id) => topics.find((topic) => topic.id === id)).filter((topic) => topic && topic.animations.length);
       return `<section class="topic-group"><div class="topic-group-heading"><h3>${group.name}</h3><span>${members.length} ${members.length === 1 ? 'tópico' : 'tópicos'}</span></div><div class="topic-links">${members.map((topic) => `
         <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`).join('')}
       </div></section>`;
-    }).join('');
+    }).filter(Boolean).join('') || `<p class="empty-state">${publicationCheckFailed ? 'Não foi possível carregar os conteúdos agora. Tente novamente em instantes.' : 'Nenhuma animação está publicada no momento.'}</p>`;
     const topicSearch = document.querySelector('#topic-search');
     const topicSearchResults = document.querySelector('#topic-search-results');
     topicSearch?.addEventListener('input', () => {
@@ -92,7 +120,7 @@
   if (topicPage) {
     const id = new URLSearchParams(window.location.search).get('topico');
     const topic = topics.find((item) => item.id === id);
-    if (!topic) {
+    if (!topic || !topic.animations.length) {
       topicPage.innerHTML = `<section class="section-wrap topic-not-found"><div class="section-kicker">BIBLIOTECA DE FÍSICA</div><h1>Escolha um tópico</h1><p>Não encontrei esse assunto. Volte à biblioteca para escolher entre os tópicos de Física.</p><a class="button button-primary" href="index.html#animacoes">Ver os tópicos <span aria-hidden="true">↗</span></a></section>`;
     } else {
       const ideas = topic.ideas.map((idea) => `<li>${idea}</li>`).join('');
