@@ -15,13 +15,16 @@
     text.textContent = message || 'A transmissão ainda não foi configurada.';
     empty.append(text);
     player.append(empty);
-    if (status) status.textContent = 'AGUARDANDO TRANSMISSÃO';
+    if (status) {
+      status.textContent = 'AGUARDANDO TRANSMISSÃO';
+      status.classList.remove('is-live');
+    }
   }
 
   function youtubeEmbed(value) {
     let url;
     try { url = new URL(String(value || '').trim()); } catch { return ''; }
-    const host = url.hostname.toLowerCase().replace(/^www\\./, '');
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
     if (host === 'youtu.be') {
       const id = url.pathname.split('/').filter(Boolean)[0];
       return id ? 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) : '';
