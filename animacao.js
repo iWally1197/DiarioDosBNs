@@ -1,11 +1,21 @@
-(() => {
+(async () => {
   const root = document.querySelector('#animation-detail');
   if (!root) return;
   const params = new URLSearchParams(location.search);
+  let published = new Set();
+  let publicationCheckFailed = false;
+  try {
+    const { loadPublishedAnimationSlugs } = await import('./public-catalog.js');
+    published = await loadPublishedAnimationSlugs();
+  } catch {
+    publicationCheckFailed = true;
+  }
   const topic = (window.DIARIO_TOPICS || []).find((item) => item.id === params.get('topico'));
   const animation = topic?.animations.find((item) => item[2] === params.get('animacao'));
-  if (!topic || !animation) {
-    root.innerHTML = `<section class="section-wrap topic-not-found"><div class="section-kicker">BIBLIOTECA DE FÍSICA</div><h1>Animação não encontrada</h1><p>Volte ao tópico para escolher outra cena.</p><a class="button button-primary" href="index.html#animacoes">Ver tópicos</a></section>`;
+  const isPublished = Boolean(topic && animation && published.has(`${topic.id}--${animation[2]}`));
+  if (!topic || !animation || !isPublished) {
+    const message = publicationCheckFailed ? 'Não foi possível carregar este conteúdo agora. Tente novamente em instantes.' : 'Este conteúdo não está publicado no momento.';
+    root.innerHTML = `<section class="section-wrap topic-not-found"><div class="section-kicker">BIBLIOTECA DE FÍSICA</div><h1>Conteúdo indisponível</h1><p>${message}</p><a class="button button-primary" href="index.html#animacoes">Ver tópicos</a></section>`;
     return;
   }
   const [title, description, file] = animation;
