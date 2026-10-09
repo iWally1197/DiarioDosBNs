@@ -82,6 +82,8 @@
     card.hidden = !item;
   });
   const publishedCount = topics.reduce((sum, topic) => sum + topic.animations.length, 0);
+  const penroseFeature = document.querySelector('#primeira-animacao');
+  if (penroseFeature) penroseFeature.hidden = !publishedSlugs.has('fisica-moderna--processo-penrose');
   const countLink = document.querySelector('.downloads-section a[href="downloads.html"]');
   if (countLink) countLink.textContent = `Ver ${publishedCount} projetos na central de downloads →`;
 
