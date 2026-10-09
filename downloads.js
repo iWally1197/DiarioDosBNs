@@ -1,5 +1,15 @@
-(() => {
-  const topics = window.DIARIO_TOPICS || [];
+(async () => {
+  let topics = window.DIARIO_TOPICS || [];
+  let publicationCheckFailed = false;
+  try {
+    const { loadPublishedAnimationSlugs } = await import('./public-catalog.js');
+    const published = await loadPublishedAnimationSlugs();
+    topics = topics.map((topic) => ({ ...topic, animations: topic.animations.filter((item) => published.has(`${topic.id}--${item[2]}`)) }));
+  } catch {
+    publicationCheckFailed = true;
+    topics = [];
+  }
+  window.DIARIO_TOPICS = topics;
   const search = document.querySelector('#download-search');
   const topicFilter = document.querySelector('#download-topic');
   const results = document.querySelector('#download-results');
@@ -7,8 +17,8 @@
   const summary = document.querySelector('#download-summary');
   if (!results) return;
   const animations = topics.flatMap((topic) => topic.animations.map(([title, description, file]) => ({topic, title, description, file})));
-  topics.forEach((topic) => { const option = document.createElement('option'); option.value = topic.id; option.textContent = `${topic.name} · ${topic.animations.length}`; topicFilter.append(option); });
-  summary.innerHTML = `<strong>${animations.length}</strong> projetos Blender disponíveis <span>· ${topics.length} tópicos de Física</span>`;
+  topics.filter((topic) => topic.animations.length).forEach((topic) => { const option = document.createElement('option'); option.value = topic.id; option.textContent = `${topic.name} · ${topic.animations.length}`; topicFilter.append(option); });
+  summary.innerHTML = `<strong>${animations.length}</strong> projetos Blender publicados <span>· ${topics.filter((topic) => topic.animations.length).length} tópicos de Física</span>`;
   const render = () => {
     const query = search.value.trim().toLocaleLowerCase('pt-BR');
     const selected = topicFilter.value;
@@ -17,6 +27,7 @@
     empty.hidden = filtered.length > 0;
     summary.setAttribute('aria-label', `${filtered.length} projetos Blender encontrados`);
   };
+  if (!animations.length) empty.textContent = publicationCheckFailed ? 'Não foi possível carregar os downloads agora. Tente novamente em instantes.' : 'Nenhum projeto está publicado no momento.';
   search.addEventListener('input', render); topicFilter.addEventListener('change', render); render();
   document.querySelector('#export-csv')?.addEventListener('click', () => {
     const rows = [['Tópico','Área','Animação','Descrição','Arquivo Blender'], ...animations.map(({topic,title,description,file}) => [topic.name,topic.area,title,description,`downloads-${topic.id}-${file}.blend`])];
