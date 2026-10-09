@@ -833,7 +833,7 @@ async function loadClassroom(root) {
   const submissionResult = isStudent
     ? await supabase.from('activity_submissions').select('student_id,activity_id,response,submitted_at,submission_feedback(feedback)').eq('classroom_id', id).eq('student_id', auth.user.id)
     : (isAdmin || (isTeacher && p.can_view_progress)
-      ? await supabase.from('activity_submissions').select('student_id,activity_id,response,submitted_at,activities(title),profiles!activity_submissions_student_id_fkey(display_name)').eq('classroom_id', id)
+      ? await supabase.from('activity_submissions').select('student_id,activity_id,response,submitted_at,profiles!activity_submissions_student_id_fkey(display_name)').eq('classroom_id', id)
       : { data: [], error: null });
   const roster = rosterResult.data || [];
   const teacherRoster = roster.filter((item) => item.participant_role === 'professor');
@@ -842,6 +842,7 @@ async function loadClassroom(root) {
   const students = studentRoster;
   const studentCount = Number(studentCountResult.data || 0);
   const visibleActivities = (activityResult.data || []).filter((row) => isAdmin || isTeacher || row.activities && row.activities.is_published && row.activities.approval_status === 'approved');
+  const activityTitles = new Map((activityResult.data || []).map((row) => [row.activity_id, row.activities && row.activities.title || '']));
   const visibleLessons = (lessonResult.data || []).filter((l) => isAdmin || isTeacher || l.is_published);
   const submitted = new Map((submissionResult.data || []).map((row) => [row.activity_id, row]));
   const requiredActivityIds = new Set(visibleActivities.filter((row) => row.activities && row.activities.requires_response).map((row) => row.activity_id));
@@ -863,7 +864,7 @@ async function loadClassroom(root) {
     }).join('') + '</ul>'
     : '<p>Você enviou ' + Array.from(submittedByStudent.get(auth.user.id) || []).filter((activityId) => requiredActivityIds.has(activityId)).length + ' de ' + requiredActivityIds.size + ' respostas solicitadas.</p>';
   const responseReview = progressAccess
-    ? '<h3>Respostas enviadas</h3><div class="db-grid">' + ((submissionResult.data || []).map((row) => '<article class="db-card"><h4>' + esc(row.profiles && row.profiles.display_name || 'Aluno') + ' · ' + esc(row.activities && row.activities.title || 'Atividade') + '</h4><p>' + esc(row.response || 'Resposta em branco.') + '</p><small>Enviada em ' + new Date(row.submitted_at).toLocaleString('pt-BR') + '</small></article>').join('') || '<p>Ainda não há respostas registradas.</p>') + '</div>'
+    ? '<h3>Respostas enviadas</h3><div class="db-grid">' + ((submissionResult.data || []).map((row) => '<article class="db-card"><h4>' + esc(row.profiles && row.profiles.display_name || 'Aluno') + ' · ' + esc(activityTitles.get(row.activity_id) || 'Atividade') + '</h4><p>' + esc(row.response || 'Resposta em branco.') + '</p><small>Enviada em ' + new Date(row.submitted_at).toLocaleString('pt-BR') + '</small></article>').join('') || '<p>Ainda não há respostas registradas.</p>') + '</div>'
     : '';
   const activityCards = visibleActivities.map((row) => {
     const activity = row.activities || {}, prior = submitted.get(row.activity_id);
