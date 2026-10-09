@@ -95,6 +95,7 @@
     ];
     topicGrid.innerHTML = topicGroups.map((group) => {
       const members = group.ids.map((id) => topics.find((topic) => topic.id === id)).filter((topic) => topic && topic.animations.length);
+      if (!members.length) return '';
       return `<section class="topic-group"><div class="topic-group-heading"><h3>${group.name}</h3><span>${members.length} ${members.length === 1 ? 'tópico' : 'tópicos'}</span></div><div class="topic-links">${members.map((topic) => `
         <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`).join('')}
       </div></section>`;
