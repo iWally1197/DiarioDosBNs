@@ -382,7 +382,7 @@ async function adminWorkspace(root) {
   if (schemaError) {
     const warning = document.createElement('aside');
     warning.className = 'auth-notice'; warning.dataset.adminExtra = 'true';
-    warning.innerHTML = '<strong>Novas ferramentas aguardam a migração do banco</strong><p>' + esc(schemaError.error.message) + '. Execute supabase-migrations-20261005120000_classrooms_pix_approvals.sql no SQL Editor do Supabase. Esse arquivo não deve ser publicado junto com o site.</p>';
+    warning.innerHTML = '<strong>Não foi possível carregar esta parte do painel.</strong><p>Atualize a página. Se o problema continuar, fale com o responsável pelo site.</p>';
     root.append(warning); return;
   }
   const teacherIds = Array.from(new Set((roles || []).map((r) => r.user_id).concat((verification || []).map((r) => r.user_id))));
@@ -438,7 +438,7 @@ async function adminWorkspace(root) {
     '<div class="section-kicker">CONFIGURAÇÃO DO PIX</div><h2>Apoie o Diário dos BNs</h2><p>Edite como a página de apoio apresenta a contribuição. A imagem do QR Code fica salva na configuração do site.</p><form data-pix-settings class="admin-form">' +
     '<label>Chave PIX<input name="pix_key" maxlength="200" value="' + esc(pix.pix_key || '') + '"></label>' +
     '<label>Imagem do QR Code (PNG, JPG ou WebP; até 512 KB)<input name="qr_image_file" type="file" accept="image/png,image/jpeg,image/webp"></label><figure data-pix-preview class="pix-qr pix-admin-preview" aria-live="polite">' + (safePixImage ? '<img data-pix-qr-preview src="' + esc(currentPixImage) + '" alt="Prévia do QR Code Pix">' : '<p>Nenhuma imagem de QR Code selecionada.</p>') + '</figure>' +
-    '<label>Texto de apoio<textarea name="instructions" maxlength="500">' + esc(pix.instructions || '') + '</textarea></label><button class="button button-primary" type="submit">Salvar PIX</button><p role="status" aria-live="polite"></p></form>' +
+    '<label>Texto de apoio<textarea name="instructions" maxlength="500">' + esc(pix.instructions || '') + '</textarea></label><button class="button button-primary" type="submit">Salvar e publicar no site</button><p role="status" aria-live="polite"></p></form>' +
     '<div class="section-kicker">TURMAS</div><h2>Criar turma e definir responsáveis</h2>' +
     '<form data-enhanced-class-form class="admin-form"><label>Nome<input name="name" maxlength="100" required></label><label>Descrição<textarea name="description" maxlength="1000"></textarea></label>' +
     '<label>Disciplina<input name="discipline" maxlength="100" placeholder="Física"></label><label>Ano/série<input name="grade_level" maxlength="100" placeholder="2º ano do Ensino Médio"></label>' +
@@ -487,8 +487,12 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities, pi
     }
     const value = { pix_key: String(v.get('pix_key') || '').trim(), qr_image_data: qrImageData, qr_image_url: qrImageUrl, instructions: String(v.get('instructions') || '').trim() };
     const { error } = await supabase.from('site_settings').upsert({ key: 'pix', value: value, updated_at: new Date().toISOString() });
-    statusText(note, error ? 'Não foi possível salvar. Aplique a migração de turmas/PIX.' : 'Configuração PIX salva.', Boolean(error));
-    if (!error) Object.assign(pixSettings, value);
+    if (error) { statusText(note, 'Não foi possível publicar o Pix. Confira sua conexão e tente novamente.', true); return; }
+    const saved = await supabase.from('site_settings').select('value').eq('key', 'pix').maybeSingle();
+    const savedValue = saved.data && saved.data.value || {};
+    const verified = !saved.error && (value.qr_image_data ? savedValue.qr_image_data === value.qr_image_data : savedValue.pix_key === value.pix_key);
+    statusText(note, verified ? 'Pix salvo e publicado. Confira a página Apoie o projeto.' : 'Não foi possível confirmar a publicação do Pix. Tente salvar novamente.', !verified);
+    if (verified) Object.assign(pixSettings, value);
   });
   section.querySelector('[data-enhanced-class-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -736,7 +740,7 @@ function enhance() {
 async function loadPix(root) {
   if (!supabase) { root.innerHTML = '<p>As informações PIX ainda não estão disponíveis.</p>'; return; }
   const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'pix').maybeSingle();
-  if (error || !root.isConnected) { root.innerHTML = '<p>Não foi possível carregar a configuração PIX. O responsável pelo site precisa aplicar a migração no Supabase.</p>'; return; }
+  if (error || !root.isConnected) { root.innerHTML = '<p>Não foi possível carregar o Pix agora. Atualize a página ou volte mais tarde.</p>'; return; }
   const value = data && data.value || {};
   const key = String(value.pix_key || '').trim();
   const qrData = String(value.qr_image_data || '').trim();
