@@ -363,6 +363,12 @@ async function teacherActivityForm(root) {
 
 async function adminWorkspace(root) {
   if (!root || root.querySelector('[data-admin-extra]') || root.dataset.adminExtraLoading) return;
+  if (!supabase) {
+    const warning = document.createElement('aside');
+    warning.className = 'auth-notice'; warning.dataset.adminExtra = 'true';
+    warning.textContent = supabaseLoadError || 'O serviço do site não está disponível. Atualize a página e tente novamente.';
+    root.append(warning); return;
+  }
   const legacyClassPanel = root.querySelector('#admin-class-form')?.closest('.account-section');
   if (legacyClassPanel) legacyClassPanel.hidden = true;
   root.dataset.adminExtraLoading = 'true';
@@ -486,13 +492,26 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities, pi
       catch (error) { statusText(note, error.message || 'Não foi possível usar essa imagem.', true); return; }
     }
     const value = { pix_key: String(v.get('pix_key') || '').trim(), qr_image_data: qrImageData, qr_image_url: qrImageUrl, instructions: String(v.get('instructions') || '').trim() };
-    const { error } = await supabase.from('site_settings').upsert({ key: 'pix', value: value, updated_at: new Date().toISOString() });
-    if (error) { statusText(note, 'Não foi possível publicar o Pix. Confira sua conexão e tente novamente.', true); return; }
-    const saved = await supabase.from('site_settings').select('value').eq('key', 'pix').maybeSingle();
-    const savedValue = saved.data && saved.data.value || {};
-    const verified = !saved.error && (value.qr_image_data ? savedValue.qr_image_data === value.qr_image_data : savedValue.pix_key === value.pix_key);
-    statusText(note, verified ? 'Pix salvo e publicado. Confira a página Apoie o projeto.' : 'Não foi possível confirmar a publicação do Pix. Tente salvar novamente.', !verified);
-    if (verified) Object.assign(pixSettings, value);
+    const submit = form.querySelector('[type="submit"]');
+    if (submit) { submit.disabled = true; submit.textContent = 'Salvando…'; }
+    try {
+      const client = await supabasePromise;
+      if (!client) throw new Error(supabaseLoadError || 'O serviço do site não está disponível.');
+      const { error } = await client.from('site_settings').upsert({ key: 'pix', value: value, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      const saved = await client.from('site_settings').select('value').eq('key', 'pix').maybeSingle();
+      if (saved.error) throw saved.error;
+      const savedValue = saved.data && saved.data.value || {};
+      const verified = value.qr_image_data ? savedValue.qr_image_data === value.qr_image_data : savedValue.pix_key === value.pix_key;
+      if (!verified) throw new Error('O banco não confirmou os dados salvos.');
+      Object.assign(pixSettings, value);
+      statusText(note, 'Pix salvo e publicado. Confira a página Apoie o projeto.', false);
+    } catch (error) {
+      const detail = String(error?.message || '').trim();
+      statusText(note, 'Não foi possível publicar o Pix.' + (detail ? ' Motivo: ' + detail : ' Confira sua conexão e as permissões do painel.'), true);
+    } finally {
+      if (submit) { submit.disabled = false; submit.textContent = 'Salvar e publicar no site'; }
+    }
   });
   section.querySelector('[data-enhanced-class-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -719,7 +738,24 @@ async function bindAdminExtras(section, classes, teacherLinks, allActivities, pi
   }));
 }
 
+let supabaseEnhancementReady = false;
+let supabaseEnhancementPending = false;
+
 function enhance() {
+  if (!supabaseEnhancementReady) {
+    if (supabaseEnhancementPending) return;
+    supabaseEnhancementPending = true;
+    supabasePromise.then(() => {
+      supabaseEnhancementReady = true;
+      supabaseEnhancementPending = false;
+      enhance();
+    }).catch(() => {
+      supabaseEnhancementReady = true;
+      supabaseEnhancementPending = false;
+      enhance();
+    });
+    return;
+  }
   setupTeacherSignup();
   setupAuthMessages();
   const student = document.querySelector('#student-workspace');
