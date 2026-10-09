@@ -86,4 +86,8 @@ values
   ('Fissão nuclear','Física moderna e nuclear','fisica-moderna--fissao-nuclear','Observe uma representação esquemática de uma reação em cadeia de fissão.','Ensino médio',true),
   ('Relatividade e espaço-tempo','Física moderna e nuclear','fisica-moderna--relatividade','Explore uma representação didática de referenciais e dilatação do tempo; o desenho é uma analogia visual.','Ensino médio',true)
 on conflict (slug) do nothing;
+
+insert into public.animations(title,topic,slug,summary,level,is_published)
+values ('Processo de Penrose','Física moderna','fisica-moderna--processo-penrose','Modelo didático do processo de Penrose e da extração de energia rotacional de um buraco negro.','Ensino médio',false)
+on conflict (slug) do nothing;
 commit;
