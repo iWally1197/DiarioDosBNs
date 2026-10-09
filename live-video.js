@@ -1,6 +1,7 @@
 (() => {
+  const section = document.querySelector('.live-video-section');
   const player = document.querySelector('#live-video-player');
-  if (!player) return;
+  if (!section || !player) return;
 
   const status = document.querySelector('#live-video-status');
   const title = document.querySelector('#live-video-name');
@@ -40,14 +41,21 @@
     return id ? 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) : '';
   }
 
-  fetch(new URL('live-video.json?v=live-area-20261008-1', document.baseURI), { cache: 'no-store' })
-    .then((response) => {
-      if (!response.ok) throw new Error('Não foi possível carregar a configuração da transmissão.');
-      return response.json();
-    })
+  async function loadConfig() {
+    const module = await import('./src-supabase.js?v=live-admin-settings');
+    const client = await module.supabasePromise;
+    if (!client) throw new Error(module.supabaseLoadError || 'Serviço de configuração indisponível.');
+    const { data, error } = await client.from('site_settings').select('value').eq('key', 'live_video').maybeSingle();
+    if (error) throw error;
+    return data?.value || { enabled: false };
+  }
+
+  loadConfig()
     .then((config) => {
-      if (title) title.textContent = config.title || 'Próxima transmissão';
-      if (description) description.textContent = config.description || 'A transmissão aparecerá aqui quando estiver ao vivo.';
+      section.hidden = config.enabled !== true;
+      if (section.hidden) return;
+      if (title) title.textContent = config.title || 'Diário dos BNs ao vivo';
+      if (description) description.textContent = config.description || 'Acompanhe as transmissões e aulas ao vivo do projeto.';
       const src = youtubeEmbed(config.youtube_url);
       if (!src) {
         showOffline(config.youtube_url ? 'O link configurado não é um vídeo válido do YouTube.' : 'A transmissão ainda não foi configurada.');
@@ -61,9 +69,11 @@
       frame.allowFullscreen = true;
       player.replaceChildren(frame);
       if (status) {
-        status.textContent = 'VÍDEO AO VIVO';
+        status.textContent = 'VÍDEO CONFIGURADO';
         status.classList.add('is-live');
       }
     })
-    .catch((error) => showOffline(error.message));
+    .catch(() => {
+      section.hidden = true;
+    });
 })();
