@@ -3117,3 +3117,6 @@ a.button:not(.button-primary):not(.button-danger) { color: var(--text); }
 .live-video-badge.is-live { border-color:#ba5555; color:#ffaaaa; }
 .live-video-badge.is-live::before { content:""; width:8px; height:8px; border-radius:50%; background:#ef5350; box-shadow:0 0 0 4px rgba(239,83,80,.14); }
 @media (max-width:760px) { .live-video-layout { grid-template-columns:1fr; } .live-video-frame { border-radius:10px; } .live-video-empty { min-height:190px; } }
+
+/* Respeita o controle de visibilidade da área ao vivo e do atalho de navegação. */
+.live-video-section[hidden], .nav a[hidden] { display: none !important; }
