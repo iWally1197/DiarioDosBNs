@@ -1,4 +1,4 @@
-import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js?v=conta-solta-20261005-3';
+import { supabase, supabasePromise, supabaseLoadError } from './src-supabase.js?v=auth-fix-20261008';
 
 const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statusText = (node, text, error) => { if (node) { node.textContent = text; node.dataset.state = error ? 'error' : 'ok'; } };
