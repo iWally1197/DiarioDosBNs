@@ -653,7 +653,7 @@ async function syncLegacyFavorite(event) {
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
-import('./features.js?v=teacher-proof-20261008-1').catch(()=>{});
+import('./features.js?v=teacher-response-fix-20261008-1').catch(()=>{});
 
 if (main) {
   attachAuthNavigation();
