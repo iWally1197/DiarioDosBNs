@@ -304,11 +304,29 @@ async function teacherVerification(root) {
   delete root.dataset.verificationLoading;
   if (!root.isConnected || root.querySelector('[data-teacher-verification-status]')) return;
   const state = data && data.status || 'pending';
-  const label = {pending:'Aguardando análise',verified:'Perfil docente verificado',rejected:'Solicitação recusada',review:'O administrador solicitou mais informações',blocked:'Acesso docente suspenso'}[state] || 'Aguardando análise';
+  const proofRequired = ['pending', 'review', 'rejected'].includes(state);
+  const label = {pending:'Ação obrigatória: comprovar perfil docente',verified:'Perfil docente verificado',rejected:'Comprovação docente pendente',review:'Envie as informações solicitadas',blocked:'Acesso docente suspenso'}[state] || 'Aguardando análise';
   const box = document.createElement('aside');
-  box.className = 'auth-notice';
+  box.className = 'auth-notice' + (proofRequired ? ' teacher-proof-required' : '');
+  box.setAttribute('role', proofRequired ? 'alert' : 'status');
+  box.setAttribute('aria-live', proofRequired ? 'assertive' : 'polite');
   box.dataset.teacherVerificationStatus = 'true';
-  box.innerHTML = '<strong>' + esc(label) + '</strong><p>' + (state === 'verified' ? 'Acesso às ferramentas docentes liberado conforme as permissões de cada turma.' : state === 'blocked' ? 'O administrador suspendeu o acesso às ferramentas docentes. Entre em contato com o responsável pelo site para entender os próximos passos.' : 'Envie as informações de verificação para <a href="mailto:enzoraphael1197@gmail.com">enzoraphael1197@gmail.com</a>.') + (data && data.admin_note ? '<br>Observação: ' + esc(data.admin_note) : '') + '</p>' + (['rejected','review'].includes(state) ? '<button class="button button-primary" type="button" data-request-teacher-reanalysis>Solicitar reanálise</button><p role="status" aria-live="polite"></p>' : '');
+  const subject = encodeURIComponent('Comprovação de atuação como professor — Diário dos BNs');
+  const body = encodeURIComponent('Olá!\n\nMeu perfil de professor no Diário dos BNs precisa de verificação.\n\nNome usado no cadastro: \nE-mail usado no cadastro: \n\nSegue em anexo uma comprovação atual da minha atuação como professor.\n');
+  const mailto = 'mailto:enzoraphael1197@gmail.com?subject=' + subject + '&body=' + body;
+  const details = state === 'blocked'
+    ? 'O administrador suspendeu o acesso às ferramentas docentes. Entre em contato com o responsável pelo site para entender os próximos passos.'
+    : state === 'verified'
+      ? 'Acesso às ferramentas docentes liberado conforme as permissões de cada turma.'
+      : state === 'review'
+        ? 'Seu e-mail de acesso foi confirmado, mas a verificação docente ainda não foi concluída. Envie as informações solicitadas pelo administrador para <strong>enzoraphael1197@gmail.com</strong>.'
+        : state === 'rejected'
+          ? 'A verificação docente ainda não foi concluída. Envie uma comprovação atual da sua atuação como professor para <strong>enzoraphael1197@gmail.com</strong> e solicite a reanálise.'
+          : 'Seu e-mail de acesso foi confirmado. Para concluir a verificação docente, envie uma comprovação atual da sua atuação como professor para <strong>enzoraphael1197@gmail.com</strong>. A liberação das ferramentas docentes depende da análise do responsável pelo site.';
+  box.innerHTML = '<strong>' + esc(label) + '</strong><p>' + details + '</p>' +
+    (proofRequired ? '<p>Informe seu nome e o e-mail usado no cadastro e anexe a comprovação. Não envie sua senha.</p><p><a class="button button-primary" href="' + esc(mailto) + '">Enviar comprovação por e-mail</a></p>' : '') +
+    (data && data.admin_note ? '<p><strong>Observação do administrador:</strong> ' + esc(data.admin_note) + '</p>' : '') +
+    (['rejected','review'].includes(state) ? '<button class="button button-outline" type="button" data-request-teacher-reanalysis>Solicitar reanálise</button><p role="status" aria-live="polite"></p>' : '');
   root.prepend(box);
   box.querySelector('[data-request-teacher-reanalysis]')?.addEventListener('click', async (event) => {
     const button = event.currentTarget, status = box.querySelector('[role="status"]');
