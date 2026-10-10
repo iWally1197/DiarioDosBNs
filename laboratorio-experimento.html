@@ -9,11 +9,11 @@
   <title>Experimento de Física — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-2">
-  <link rel="stylesheet" href="laboratorio-suite.css?v=motion-reference-20261009-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=lab-optics-fullscreen-20261010-1">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
   <script type="module" src="laboratorio.js?v=motion-reference-20261009-1"></script>
-  <script type="module" src="laboratorio-workspace.js?v=lab-optics-20261010-1"></script>
+  <script type="module" src="laboratorio-workspace.js?v=lab-optics-fullscreen-20261010-1"></script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-2"></script>
 </head>
 <body>
@@ -43,7 +43,7 @@
     </section>
 
     <section id="lab-workspace" class="lab-workspace" aria-labelledby="workspace-title" hidden>
-      <div class="lab-workspace-heading"><div><div id="workspace-kicker" class="lesson-tag"></div><h2 id="workspace-title">Experimento</h2><p id="workspace-description"></p></div><span id="workspace-mode" class="model-tag"></span></div>
+      <div class="lab-workspace-heading"><div><div id="workspace-kicker" class="lesson-tag"></div><h2 id="workspace-title">Experimento</h2><p id="workspace-description"></p></div><div class="lab-workspace-heading-actions"><span id="workspace-mode" class="model-tag"></span><button id="workspace-controls-toggle" class="button button-outline lab-controls-toggle" type="button" aria-controls="workspace-controls-sidebar" aria-expanded="false" hidden>Controles</button><button id="workspace-fullscreen" class="button button-outline" type="button" aria-label="Abrir a simulação em tela cheia" hidden>Tela cheia</button></div></div>
       <div class="lab-workspace-grid">
         <div class="lab-workspace-visuals">
           <div class="lab-workspace-panels">
@@ -54,7 +54,7 @@
           <div class="lab-workspace-transport"><button id="workspace-play" class="button button-primary" type="button">Iniciar</button><button id="workspace-step" class="button button-outline" type="button">Avançar 0,1 s</button><button id="workspace-reset" class="button button-outline" type="button">Reiniciar</button><label>Reprodução <output id="workspace-speed-out">1×</output><input id="workspace-speed" type="range" min="0.25" max="2" step="0.25" value="1"></label><label for="workspace-time" class="lab-time-control">Instante <output id="workspace-time-out">0,00 s</output><input id="workspace-time" type="range" min="0" max="10" step="0.01" value="0"></label></div>
           <div class="lab-measurements"><div class="lab-measurement-heading"><div><h3>Medições</h3><p>Registre estados calculados pelo modelo ou exporte a tabela em CSV.</p></div><div><button id="workspace-record" class="button button-outline" type="button">Registrar medição</button><button id="workspace-export" class="button button-outline" type="button" disabled>Exportar CSV</button></div></div><div class="lab-table-scroll"><table><caption id="workspace-table-caption">Medições simuladas; não são observações de um experimento real.</caption><thead id="workspace-table-head"></thead><tbody id="workspace-table-body"></tbody></table></div></div>
         </div>
-        <aside class="lab-workspace-controls"><h3>Parâmetros</h3><div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
+        <aside id="workspace-controls-sidebar" class="lab-workspace-controls"><h3>Parâmetros</h3><div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
       </div>
     </section>
 
@@ -100,4 +100,3 @@
   <footer class="site-footer"><div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Uma simulação por página para facilitar a investigação.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Consulte as hipóteses de cada simulação.</span><a href="laboratorio.html">Catálogo ↗</a><a href="downloads.html">Projetos Blender ↗</a></div></footer>
 </body>
 </html>
-
