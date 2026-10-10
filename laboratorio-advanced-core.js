@@ -1,3 +1,5 @@
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=lab-optics-20261010-1";
+
 const G = 9.81;
 const COULOMB = 8.9875517923e9;
 
@@ -37,6 +39,10 @@ export function durationFor(id, p) {
     case "collision": return 4;
     case "spring": return 8 * 2 * Math.PI * Math.sqrt(positive(p.mass, "Massa") / positive(p.k, "Constante elástica"));
     case "wave": return 4 / positive(p.frequency, "Frequência");
+    case "optics-reflection":
+    case "optics-refraction":
+    case "optics-concave-mirror":
+    case "optics-convex-mirror": return opticalDurationFor();
     case "calorimetry": {
       const c1 = positive(p.mass1, "Massa 1") * 4186;
       const c2 = positive(p.mass2, "Massa 2") * 4186;
@@ -73,6 +79,10 @@ export function stateAt(id, p, time = 0) {
   const duration = durationFor(id, p);
   const t = duration > 0 ? Math.max(0, Math.min(duration, finite(time, "Tempo"))) : 0;
   switch (id) {
+    case "optics-reflection":
+    case "optics-refraction":
+    case "optics-concave-mirror":
+    case "optics-convex-mirror": return opticalModelFor(id, p, t);
     case "mru": {
       const x = finite(p.x0 ?? 0, "Posição inicial") + finite(p.velocity, "Velocidade") * t;
       return { time: t, duration, values: { x, v: Number(p.velocity), a: 0 } };
@@ -208,6 +218,9 @@ function line(id, p, time, yKey, yLabel, yUnit, count = 121) {
 }
 
 export function graphFor(id, p, time = 0, chart = "") {
+  if (["optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(id)) {
+    return opticalGraphFor(id, p, time);
+  }
   if (["mru", "muv", "newton", "energy", "collision", "spring"].includes(id)) {
     const options = {
       mru: { x: "t", xu: "s", charts: { position: ["x", "Posição", "m"], velocity: ["v", "Velocidade", "m/s"] } },

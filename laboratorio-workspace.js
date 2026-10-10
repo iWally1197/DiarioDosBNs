@@ -1,5 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=motion-reference-20261009-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-optics-20261010-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-optics-20261010-1";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-optics-20261010-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-20261010-1";
 
 const $ = (selector) => document.querySelector(selector);
 const requestedId = new URLSearchParams(location.search).get("topico");
@@ -18,10 +20,13 @@ function initializeExperimentPage(topicId) {
     return { bg: read("--surface-2", "#131f32"), surface: read("--surface", "#101a2c"), text: read("--text", "#f4f5f8"), muted: read("--muted", "#9aa6b9"), subtle: read("--subtle", "#6b7890"), gold: read("--gold", "#d6b87a"), blue: read("--blue", "#79a8ff"), line: read("--line", "rgba(206,218,240,.18)") };
   };
   const fmt = (value, digits = 2) => {
+    if (value === null || value === undefined) return "—";
+    if (typeof value === "string") return value;
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return numeric === Infinity ? "∞" : numeric === -Infinity ? "−∞" : "—";
     return numeric.toLocaleString("pt-BR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
   };
+  const currentTimeUnit = () => state.id?.startsWith("optics-") ? "ns" : experimentById.get(state.id)?.timeUnit || "s";
   function selectExperiment(id) {
     const experiment = experimentById.get(id);
     if (!experiment) return;
@@ -54,9 +59,15 @@ function initializeExperimentPage(topicId) {
       energy: "Um carrinho desce a rampa ideal. A coordenada s parte da origem O no alto; altura, velocidade e energias vêm do mesmo movimento.",
       collision: "Os dois carrinhos percorrem uma pista e uma régua fixas. As posições e velocidades antes e depois do contato usam esse mesmo referencial.",
       spring: "Um carrinho oscila preso à mola. O é o ponto de equilíbrio fixo; x indica o deslocamento do carrinho em relação a essa origem.",
-      wave: "A corda e o eixo x formam o referencial fixo: os pontos materiais da corda oscilam verticalmente enquanto o padrão da onda se desloca para +x."
+      wave: "A corda e o eixo x formam o referencial fixo: os pontos materiais da corda oscilam verticalmente enquanto o padrão da onda se desloca para +x.",
+      "optics-reflection": "Espelho, normal e feixe são calculados pela geometria do raio. Arraste o centro para reposicionar o espelho, uma extremidade para girá-lo ou use os controles para mover o ponto de incidência.",
+      "optics-refraction": "A direção do raio atravessando a interface é calculada pela lei de Snell. Se o ângulo crítico for ultrapassado, o modelo mostra reflexão interna total.",
+      "optics-concave-mirror": "Os raios refletem em pontos de uma superfície esférica real. A posição da imagem indicada usa a aproximação paraxial, permitindo observar aberração fora do eixo.",
+      "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial."
     };
     $("#workspace-scene-caption").textContent = sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.";
+    canvas.setAttribute("aria-label", `${experiment.title}. ${sceneCaptions[state.id] || "Animação física interativa."}`);
+    canvas.style.cursor = state.id === "optics-reflection" ? "grab" : "default";
     $("#workspace-mode").textContent = experiment.mode;
     $("#workspace-equation").textContent = experiment.equation;
     $("#workspace-method").textContent = `Modelo analítico · unidades SI · ${experiment.assumptions}`;
@@ -71,7 +82,8 @@ function initializeExperimentPage(topicId) {
     syncProbeRange();
     updateTimeControls();
     updateRecords();
-    $("#workspace-status").textContent = experiment.duration === 0 ? "Modelo estático: altere os parâmetros ou selecione um ponto do gráfico." : "Pronto. Inicie, avance em passos ou selecione um ponto do gráfico.";
+    $("#workspace-step").textContent = `Avançar ${fmt(durationFor(state.id, state.parameters) / 20, 2)} ${currentTimeUnit()}`;
+    $("#workspace-status").textContent = "Pronto. Inicie, avance em passos ou selecione um ponto do gráfico.";
     render();
     workspace.scrollIntoView({ behavior: "auto", block: "start" });
     workspace.setAttribute("tabindex", "-1");
@@ -152,7 +164,7 @@ function initializeExperimentPage(topicId) {
     $("#workspace-play").disabled = duration === 0;
     $("#workspace-step").disabled = duration === 0;
     $("#workspace-speed").disabled = duration === 0;
-    $("#workspace-time-out").textContent = duration === 0 ? "sem evolução temporal" : `${fmt(state.time)} s`;
+    $("#workspace-time-out").textContent = duration === 0 ? "sem evolução temporal" : `${fmt(state.time)} ${currentTimeUnit()}`;
     $("#workspace-speed-out").textContent = `${fmt($("#workspace-speed").value, 2).replace(/,00$/, "")}×`;
   }
 
@@ -179,7 +191,7 @@ function initializeExperimentPage(topicId) {
   });
   $("#workspace-step").addEventListener("click", () => {
     const duration = durationFor(state.id, state.parameters);
-    state.time = Math.min(duration, state.time + Math.min(0.1, duration / 20));
+    state.time = Math.min(duration, state.time + duration / 20);
     stop(false); updateTimeControls(); render();
   });
   $("#workspace-reset").addEventListener("click", () => {
@@ -199,7 +211,10 @@ function initializeExperimentPage(topicId) {
 
   function tick(timestamp) {
     if (!state.running) return;
-    if (state.lastFrame) state.time += Math.min(0.05, (timestamp - state.lastFrame) / 1000) * Number($("#workspace-speed").value);
+    if (state.lastFrame) {
+      const clockRate = state.id?.startsWith("optics-") ? 4 : 1;
+      state.time += Math.min(0.05, (timestamp - state.lastFrame) / 1000) * Number($("#workspace-speed").value) * clockRate;
+    }
     state.lastFrame = timestamp;
     const duration = durationFor(state.id, state.parameters);
     if (state.time >= duration) {
@@ -405,6 +420,10 @@ function initializeExperimentPage(topicId) {
     ctx.font = "12px system-ui"; ctx.fillStyle = c.muted;
     const baseline = height * 0.72;
     const values = model.values;
+    if (id.startsWith("optics-")) {
+      drawOpticalScene(ctx, width, height, id, p, model, c);
+      return;
+    }
     if (["mru", "muv", "newton"].includes(id)) {
       drawMotionCartScene(id, p, model, width, height, c);
     } else if (id === "energy") {
@@ -554,6 +573,10 @@ function initializeExperimentPage(topicId) {
     wave: [["y", "Deslocamento no marcador", "m"], ["waveSpeed", "Velocidade da onda", "m/s"], ["wavelength", "Comprimento de onda", "m"], ["frequency", "Frequência", "Hz"]],
     ohm: [["voltage", "Tensão", "V"], ["resistance", "Resistência", "Ω"], ["current", "Corrente", "A"], ["power", "Potência", "W"]],
     lens: [["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["f", "Distância focal", "m"]],
+    "optics-reflection": [["angleIncident", "Ângulo de incidência", "°"], ["angleReflected", "Ângulo refletido", "°"], ["wavelengthVacuumNm", "Comprimento de onda no vácuo", "nm"], ["frequencyTHz", "Frequência da luz", "THz"], ["speed", "Velocidade no meio", "m/s"]],
+    "optics-refraction": [["angleIncident", "Ângulo no meio 1", "°"], ["angleTransmitted", "Ângulo no meio 2", "°"], ["speed1", "Velocidade no meio 1", "m/s"], ["speed2", "Velocidade no meio 2", "m/s"], ["wavelength1Nm", "Comprimento de onda no meio 1", "nm"], ["wavelength2Nm", "Comprimento de onda no meio 2", "nm"], ["frequencyTHz", "Frequência constante", "THz"], ["criticalAngle", "Ângulo crítico", "°"]],
+    "optics-concave-mirror": [["radius", "Raio assinado", "m"], ["focalLength", "Distância focal", "m"], ["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["image", "Natureza da imagem", ""]],
+    "optics-convex-mirror": [["radius", "Raio assinado", "m"], ["focalLength", "Distância focal", "m"], ["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["image", "Natureza da imagem", ""]],
     calorimetry: [["temperature1", "Temperatura do corpo quente", "°C"], ["temperature2", "Temperatura do corpo frio", "°C"], ["equilibrium", "Equilíbrio previsto", "°C"], ["energyBalance", "Balanço de energia", "J"]],
     field: [["electricField", "Campo elétrico Eₓ", "N/C"], ["xProbe", "Posição do marcador", "m"], ["q1", "Carga 1", "nC"], ["q2", "Carga 2", "nC"]]
   };
@@ -561,7 +584,7 @@ function initializeExperimentPage(topicId) {
   function renderReadouts(values) {
     const definitions = readoutDefinitions[state.id] || [];
     $("#workspace-readouts").innerHTML = definitions.map(([key, label, unit]) => `<div><span>${label}</span><b>${fmt(values[key])} ${unit}</b></div>`).join("");
-    $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} s` : "modelo estático";
+    $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} ${currentTimeUnit()}` : "modelo estático";
   }
 
   function render() {
@@ -579,7 +602,7 @@ function initializeExperimentPage(topicId) {
 
   function graphSelection(x) {
     const id = state.id;
-    if (["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry"].includes(id)) {
+    if (["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry", "optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(id)) {
       state.time = Math.max(0, Math.min(durationFor(id, state.parameters), x)); stop(false); updateTimeControls();
     } else {
       const key = { wave: "xProbe", lens: "objectDistance", field: "xProbe", ohm: "voltage" }[id];
@@ -592,6 +615,68 @@ function initializeExperimentPage(topicId) {
     }
     try { render(); } catch (error) { showError(error); }
   }
+  let opticalDrag = null;
+  canvas.addEventListener("pointerdown", (event) => {
+    if (state.id !== "optics-reflection") return;
+    const model = stateAt(state.id, state.parameters, state.time);
+    const rect = canvas.getBoundingClientRect();
+    const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
+    const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    const handleScreen = (handle) => view.toScreen(handle);
+    const distanceTo = (handle) => {
+      const screen = handleScreen(handle);
+      return Math.hypot(screen.x - point.x, screen.y - point.y);
+    };
+    if (distanceTo(model.geometry.handles.top) < 24) opticalDrag = { kind: "tilt", endSign: 1 };
+    else if (distanceTo(model.geometry.handles.bottom) < 24) opticalDrag = { kind: "tilt", endSign: -1 };
+    else if (distanceTo(model.geometry.handles.center) < 24) opticalDrag = { kind: "move" };
+    else if (distanceTo(model.geometry.handles.hit) < 24) opticalDrag = { kind: "impact" };
+    else if (distanceTo(model.geometry.handles.source) < 24) opticalDrag = { kind: "source" };
+    if (opticalDrag) {
+      event.preventDefault();
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = "grabbing";
+    }
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (!opticalDrag || state.id !== "optics-reflection") return;
+    const model = stateAt(state.id, state.parameters, state.time);
+    const rect = canvas.getBoundingClientRect();
+    const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
+    const world = opticalPointerToWorld(event, canvas, view);
+    const center = model.geometry.center;
+    if (opticalDrag.kind === "source") {
+      const hit = model.geometry.hit;
+      const towardHit = { x: hit.x - world.x, y: hit.y - world.y };
+      const angle = Math.atan2(towardHit.y, towardHit.x) * 180 / Math.PI;
+      const controls = experimentById.get(state.id).controls;
+      setParameter(controls.find((item) => item.id === "incidenceAngle"), angle);
+      setParameter(controls.find((item) => item.id === "sourceDistance"), Math.hypot(towardHit.x, towardHit.y));
+    } else if (opticalDrag.kind === "move") {
+      const controls = experimentById.get(state.id).controls;
+      setParameter(controls.find((item) => item.id === "mirrorX"), world.x);
+      setParameter(controls.find((item) => item.id === "mirrorY"), world.y);
+    } else if (opticalDrag.kind === "tilt") {
+      const dx = (world.x - center.x) * opticalDrag.endSign;
+      const dy = (world.y - center.y) * opticalDrag.endSign;
+      const angle = Math.atan2(-dx, dy) * 180 / Math.PI;
+      const control = experimentById.get(state.id).controls.find((item) => item.id === "mirrorTilt");
+      setParameter(control, angle);
+    } else {
+      const tangent = model.geometry.tangent;
+      const offset = (world.x - center.x) * tangent.x + (world.y - center.y) * tangent.y;
+      const control = experimentById.get(state.id).controls.find((item) => item.id === "impactOffset");
+      setParameter(control, offset);
+    }
+  });
+  const stopOpticalDrag = (event) => {
+    if (!opticalDrag) return;
+    opticalDrag = null;
+    canvas.style.cursor = "grab";
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  };
+  canvas.addEventListener("pointerup", stopOpticalDrag);
+  canvas.addEventListener("pointercancel", stopOpticalDrag);
   graphCanvas.addEventListener("click", (event) => {
     if (!state.plot) return;
     const rect = graphCanvas.getBoundingClientRect();
@@ -603,7 +688,7 @@ function initializeExperimentPage(topicId) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     const step = (state.plot.xMax - state.plot.xMin) / 100 * (event.shiftKey ? 10 : 1);
-    const current = ["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry"].includes(state.id) ? state.time : Number(state.parameters[{ wave: "xProbe", lens: "objectDistance", field: "xProbe", ohm: "voltage" }[state.id]]);
+    const current = ["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry", "optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(state.id) ? state.time : Number(state.parameters[{ wave: "xProbe", lens: "objectDistance", field: "xProbe", ohm: "voltage" }[state.id]]);
     graphSelection(current + (event.key === "ArrowRight" ? step : -step));
   });
 
@@ -611,7 +696,7 @@ function initializeExperimentPage(topicId) {
     const record = sampleValues(state.id, state.parameters, state.time);
     state.records.push(record);
     updateRecords();
-    $("#workspace-status").textContent = `Medição ${state.records.length} registrada no instante ${fmt(state.time)} s.`;
+    $("#workspace-status").textContent = `Medição ${state.records.length} registrada no instante ${fmt(state.time)} ${currentTimeUnit()}.`;
   });
   $("#workspace-export").addEventListener("click", () => {
     if (!state.records.length) return;
@@ -627,7 +712,7 @@ function initializeExperimentPage(topicId) {
   function updateRecords() {
     const head = $("#workspace-table-head"); const body = $("#workspace-table-body");
     const keys = state.records.length ? [...new Set(state.records.flatMap((row) => Object.keys(row)))] : ["time"];
-    const headings = { time: "Tempo (s)", x: "x (m)", v: "v (m/s)", a: "a (m/s²)", y: "y (m)", force: "Força (N)", friction: "Atrito (N)", normal: "Normal (N)", s: "Percurso (m)", kinetic: "E cinética (J)", potential: "E potencial (J)", total: "E total (J)", x1: "x₁ (m)", x2: "x₂ (m)", v1: "v₁ (m/s)", v2: "v₂ (m/s)", momentum: "Momento (kg·m/s)", period: "Período (s)", waveSpeed: "v onda (m/s)", wavelength: "λ (m)", frequency: "f (Hz)", voltage: "V (V)", resistance: "R (Ω)", current: "I (A)", power: "P (W)", imageDistance: "dᵢ (m)", magnification: "Ampliação", f: "foco (m)", temperature1: "T₁ (°C)", temperature2: "T₂ (°C)", equilibrium: "T equilíbrio (°C)", energyBalance: "Balanço (J)", electricField: "Eₓ (N/C)", xProbe: "x marcador (m)", q1: "q₁ (nC)", q2: "q₂ (nC)", restitution: "Restituição", kineticBefore: "E antes (J)", kineticAfter: "E depois (J)", momentumBefore: "p antes", momentumAfter: "p depois", collisionTime: "t colisão (s)", singular: "Singularidade", image: "Imagem", omega: "ω (rad/s)" };
+    const headings = { time: `Tempo (${currentTimeUnit()})`, x: "x (m)", v: "v (m/s)", a: "a (m/s²)", y: "y (m)", force: "Força (N)", friction: "Atrito (N)", normal: "Normal (N)", s: "Percurso (m)", kinetic: "E cinética (J)", potential: "E potencial (J)", total: "E total (J)", x1: "x₁ (m)", x2: "x₂ (m)", v1: "v₁ (m/s)", v2: "v₂ (m/s)", momentum: "Momento (kg·m/s)", period: "Período (s)", waveSpeed: "v onda (m/s)", wavelength: "λ (m)", frequency: "f (Hz)", voltage: "V (V)", resistance: "R (Ω)", current: "I (A)", power: "P (W)", imageDistance: "dᵢ (m)", magnification: "Ampliação", f: "foco (m)", temperature1: "T₁ (°C)", temperature2: "T₂ (°C)", equilibrium: "T equilíbrio (°C)", energyBalance: "Balanço (J)", electricField: "Eₓ (N/C)", xProbe: "x marcador (m)", q1: "q₁ (nC)", q2: "q₂ (nC)", restitution: "Restituição", kineticBefore: "E antes (J)", kineticAfter: "E depois (J)", momentumBefore: "p antes", momentumAfter: "p depois", collisionTime: "t colisão (s)", singular: "Singularidade", image: "Imagem", omega: "ω (rad/s)", angleIncident: "Ângulo incidente (°)", angleReflected: "Ângulo refletido (°)", angleTransmitted: "Ângulo refratado (°)", index1: "Índice n₁", index2: "Índice n₂", criticalAngle: "Ângulo crítico (°)", wavelengthVacuumNm: "λ no vácuo (nm)", wavelength1Nm: "λ no meio 1 (nm)", wavelength2Nm: "λ no meio 2 (nm)", frequencyTHz: "Frequência (THz)", speed: "Velocidade da luz (m/s)", speed1: "Velocidade no meio 1 (m/s)", speed2: "Velocidade no meio 2 (m/s)", pathPosition: "Posição do marcador (m)", pathLength: "Comprimento do feixe (m)", totalInternalReflection: "Reflexão total", radius: "Raio assinado (m)" };
     head.innerHTML = `<tr>${keys.map((key) => `<th scope="col">${headings[key] || key}</th>`).join("")}</tr>`;
     body.innerHTML = state.records.map((row) => `<tr>${keys.map((key) => `<td>${typeof row[key] === "boolean" ? (row[key] ? "sim" : "não") : typeof row[key] === "number" ? fmt(row[key], 3) : row[key] ?? "—"}</td>`).join("")}</tr>`).join("");
     $("#workspace-export").disabled = !state.records.length;
@@ -647,3 +732,4 @@ function initializeExperimentPage(topicId) {
   }
   window.addEventListener("beforeunload", () => { stop(); resizeObserver.disconnect(); });
 }
+
