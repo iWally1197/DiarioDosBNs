@@ -9,11 +9,11 @@
   <title>Experimento de Física — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-2">
-  <link rel="stylesheet" href="laboratorio-suite.css?v=laboratorio-suite-20261009-2">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=motion-reference-20261009-1">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio.js?v=laboratorio-pages-20261010-1"></script>
-  <script type="module" src="laboratorio-workspace.js?v=laboratorio-pages-20261010-1"></script>
+  <script type="module" src="laboratorio.js?v=motion-reference-20261009-1"></script>
+  <script type="module" src="laboratorio-workspace.js?v=motion-reference-20261009-1"></script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-2"></script>
 </head>
 <body>
@@ -47,7 +47,7 @@
       <div class="lab-workspace-grid">
         <div class="lab-workspace-visuals">
           <div class="lab-workspace-panels">
-            <div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação do modelo</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" role="img" aria-label="Animação do experimento"></canvas></div></div>
+            <div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Objeto e referencial</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" role="img" aria-label="Animação do experimento com o referencial indicado"></canvas></div><p id="workspace-scene-caption" class="lab-scene-caption"></p></div>
             <div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="workspace-chart"><b>Gráfico sincronizado</b></label><select id="workspace-chart" aria-label="Escolher grandeza no gráfico"></select></div><div class="lab-workspace-canvas-wrap lab-graph-canvas-wrap"><canvas id="workspace-graph" role="img" aria-label="Gráfico calculado pelo mesmo modelo. Clique para selecionar um instante ou posição." tabindex="0"></canvas></div><p class="lab-graph-hint">Clique no gráfico ou use as setas para consultar um ponto e sincronizar a simulação.</p></div>
           </div>
           <div id="workspace-readouts" class="lab-readouts" aria-live="off"></div>
@@ -59,9 +59,9 @@
     </section>
 
     <section class="lab-experiment" id="lancamento" data-lab-special="projectile" aria-labelledby="projectile-title" tabindex="-1" hidden>
-      <div class="lab-experiment-heading"><div><div class="lesson-tag">CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento oblíquo</h2><p>Uma esfera parte de uma altura inicial e se move sob a ação da gravidade. O ar não oferece resistência neste modelo.</p></div><span class="model-tag">MODELO 2D</span></div>
+      <div class="lab-experiment-heading"><div><div class="lesson-tag">CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento oblíquo</h2><p>Uma bola parte de um lançador em uma quadra de referência. A trajetória, a altura e as componentes da velocidade são mostradas no mesmo sistema de coordenadas.</p></div><span class="model-tag">MODELO 2D</span></div>
       <div class="lab-simulation-grid"><div class="lab-visual-column">
-        <div class="lab-workspace-panels lab-existing-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação calculada</b><span>trajetória e vetores</span></div><div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Trajetória bidimensional calculada para o projétil." role="img"></canvas></div></div><div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="projectile-graph"><b>Gráfico sincronizado</b></label><select id="projectile-graph" aria-label="Escolher grandeza no gráfico do lançamento"></select></div><div class="lab-chart-wrap lab-canvas-wrap"><canvas id="projectile-chart" aria-label="Gráfico do movimento do projétil, atualizado pelo mesmo estado da animação." role="img" tabindex="0"></canvas></div></div></div>
+        <div class="lab-workspace-panels lab-existing-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Bola em movimento</b><span>referencial fixo do solo</span></div><div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Bola em trajetória parabólica, com referencial fixo no solo, altura, alcance e vetores de velocidade." role="img"></canvas></div></div><div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="projectile-graph"><b>Gráfico sincronizado</b></label><select id="projectile-graph" aria-label="Escolher grandeza no gráfico do lançamento"></select></div><div class="lab-chart-wrap lab-canvas-wrap"><canvas id="projectile-chart" aria-label="Gráfico do movimento do projétil, atualizado pelo mesmo estado da animação." role="img" tabindex="0"></canvas></div></div></div>
         <div class="lab-readouts" aria-live="off"><div><span>Tempo</span><b id="projectile-time">0,00 s</b></div><div><span>Posição horizontal</span><b id="projectile-x">0,0 m</b></div><div><span>Altura</span><b id="projectile-y">0,0 m</b></div><div><span>Alcance previsto</span><b id="projectile-range">— m</b></div><div><span>Altura máxima</span><b id="projectile-apex">— m</b></div></div>
       </div><aside class="lab-controls"><h3>Condições iniciais</h3>
         <label for="projectile-speed">Velocidade inicial <output id="projectile-speed-out">20,0 m/s</output><input id="projectile-speed" type="range" min="5" max="35" step="0.5" value="20"></label>
@@ -100,4 +100,3 @@
   <footer class="site-footer"><div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Uma simulação por página para facilitar a investigação.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Consulte as hipóteses de cada simulação.</span><a href="laboratorio.html">Catálogo ↗</a><a href="downloads.html">Projetos Blender ↗</a></div></footer>
 </body>
 </html>
-
