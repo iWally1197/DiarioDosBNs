@@ -6,6 +6,10 @@ import {
 } from "./laboratorio-core.js";
 
 const byId = (id) => document.getElementById(id);
+const activeTopic = new URLSearchParams(location.search).get("topico");
+document.querySelectorAll("[data-lab-special]").forEach((section) => {
+  section.hidden = section.dataset.labSpecial !== activeTopic;
+});
 const number = (value, digits = 1) => Number(value).toLocaleString("pt-BR", {
   minimumFractionDigits: digits,
   maximumFractionDigits: digits
@@ -674,10 +678,10 @@ pendulumCanvas.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("resize", () => {
-  drawProjectile();
-  drawPendulum();
+  if (activeTopic === "projectile") drawProjectile();
+  if (activeTopic === "pendulum") drawPendulum();
 });
-resetPendulum();
-drawProjectile();
+if (activeTopic === "projectile") drawProjectile();
+if (activeTopic === "pendulum") resetPendulum();
 
 
