@@ -2,16 +2,10 @@ import { experiments, experimentById, initialParameters } from "./laboratorio-ca
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js";
 
 const $ = (selector) => document.querySelector(selector);
-const catalog = $("#lab-cards");
-if (catalog) initializeLaboratory();
+const requestedId = new URLSearchParams(location.search).get("topico");
+if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
 
-function initializeLaboratory() {
-  const search = $("#lab-search");
-  const category = $("#lab-category");
-  const level = $("#lab-level");
-  const mode = $("#lab-mode");
-  const count = $("#lab-result-count");
-  const empty = $("#lab-empty");
+function initializeExperimentPage(topicId) {
   const workspace = $("#lab-workspace");
   const canvas = $("#workspace-canvas");
   const graphCanvas = $("#workspace-graph");
@@ -28,47 +22,6 @@ function initializeLaboratory() {
     if (!Number.isFinite(numeric)) return numeric === Infinity ? "∞" : numeric === -Infinity ? "−∞" : "—";
     return numeric.toLocaleString("pt-BR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
   };
-  const svgFor = (id) => {
-    const diagrams = {
-      projectile: '<path d="M12 56 Q39 4 72 37"/><circle cx="12" cy="56" r="3"/><circle class="secondary" cx="72" cy="37" r="4"/><path class="secondary" d="M16 57h62M16 59v-8"/>',
-      mru: '<path d="M9 48h64"/><path d="m60 38 13 10-13 10"/><circle cx="24" cy="48" r="7"/><circle class="secondary" cx="49" cy="48" r="7"/>',
-      muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>',
-      newton: '<rect x="30" y="31" width="24" height="21" rx="3"/><path d="M9 42h19m0 0-6-5m6 5-6 5"/><path class="secondary" d="M35 26v-8m14 8v-8M22 54v7m40-7v7"/>',
-      energy: '<path d="M8 17 69 56H8z"/><circle cx="24" cy="26" r="5"/><path class="secondary" d="m26 25 22 20m0 0-8-1m8 1-1-8"/>',
-      collision: '<rect x="11" y="36" width="22" height="14" rx="3"/><rect x="54" y="36" width="20" height="14" rx="3"/><path d="M17 55a3 3 0 1 0 0 .1M28 55a3 3 0 1 0 0 .1M60 55a3 3 0 1 0 0 .1M69 55a3 3 0 1 0 0 .1"/><path class="secondary" d="M34 27h17m0 0-5-5m5 5-5 5"/>',
-      spring: '<path d="M9 20v38m8-19h7l5-10 7 20 7-20 7 20 5-10h7"/><rect x="62" y="31" width="14" height="16" rx="2"/>',
-      wave: '<path d="M7 38c8-30 16 30 24 0s16-30 24 0 16 30 24 0"/><path class="secondary" d="M7 57h72"/>',
-      ohm: '<path d="M13 22v34h54V22H13zM13 39h13l6-9 10 18 8-9h17"/><path class="secondary" d="M30 13h20m0 0-5-5m5 5-5 5"/>',
-      lens: '<path d="M45 12 Q31 38 45 64M51 12Q65 38 51 64"/><path class="secondary" d="M11 53V27m-5 5 5-5 5 5M17 40h58M75 53V27m-5 5 5-5 5 5"/>',
-      calorimetry: '<path d="M18 15v31a10 10 0 1 0 15 0V15a7 7 0 1 0-15 0zM49 15v31a10 10 0 1 0 15 0V15a7 7 0 1 0-15 0z"/><path class="secondary" d="M25 31v21m31-14v14"/>',
-      field: '<circle cx="24" cy="38" r="9"/><circle class="secondary" cx="62" cy="38" r="9"/><path d="M20 38h8m-4-4v8m34 0h8"/><path class="secondary" d="M34 22c8-8 14-8 20 0M34 54c8 8 14 8 20 0"/>',
-      pendulum: '<path d="M41 10v10m0 0-18 35m18-35 18 35"/><circle cx="23" cy="55" r="7"/><circle class="secondary" cx="59" cy="55" r="7"/><path class="secondary" d="M26 13a25 25 0 0 1 29 5"/>'
-    };
-    return `<svg viewBox="0 0 86 76" aria-hidden="true">${diagrams[id] || ""}</svg>`;
-  };
-
-  for (const [select, values] of [[category, [...new Set(experiments.map((item) => item.category))]], [level, [...new Set(experiments.map((item) => item.level))]], [mode, [...new Set(experiments.map((item) => item.mode))]]]) {
-    for (const value of values) select.add(new Option(value, value));
-  }
-
-  function drawCards() {
-    const query = search.value.trim().toLocaleLowerCase("pt-BR");
-    const filtered = experiments.filter((item) => {
-      const haystack = `${item.title} ${item.category} ${item.level} ${item.description}`.toLocaleLowerCase("pt-BR");
-      return haystack.includes(query) && (!category.value || item.category === category.value) && (!level.value || item.level === level.value) && (!mode.value || item.mode === mode.value);
-    });
-    catalog.innerHTML = filtered.map((item) => `<button class="lab-card" type="button" data-lab-select="${item.id}" aria-pressed="${state.id === item.id}"><span class="lab-card-art">${svgFor(item.id)}</span><span class="lab-card-body"><span class="lab-card-title">${item.title}<small>${item.status}</small></span><span class="lab-card-meta">${item.category} · ${item.level} · ${item.mode}</span><span class="lab-card-meta">${item.description}</span></span></button>`).join("");
-    count.textContent = `${filtered.length} ${filtered.length === 1 ? "experimento" : "experimentos"} disponíveis.`;
-    empty.hidden = filtered.length !== 0;
-  }
-
-  function updateFilters() { drawCards(); }
-  [search, category, level, mode].forEach((element) => element.addEventListener(element === search ? "input" : "change", updateFilters));
-  catalog.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-lab-select]");
-    if (button) selectExperiment(button.dataset.labSelect);
-  });
-
   function selectExperiment(id) {
     const experiment = experimentById.get(id);
     if (!experiment) return;
@@ -77,17 +30,21 @@ function initializeLaboratory() {
     state.time = 0;
     state.records = [];
     state.parameters = initialParameters(experiment);
-    drawCards();
+    $("#lab-topic-not-found").hidden = true;
+    $("#lab-topic-kicker").textContent = `${experiments.findIndex((item) => item.id === id) + 1} · ${experiment.category.toLocaleUpperCase("pt-BR")}`;
+    $("#lab-topic-name").textContent = experiment.title;
+    $("#lab-topic-description").textContent = experiment.description;
+    $("#lab-topic-crumb").textContent = experiment.title;
+    document.title = `${experiment.title} — Laboratório Virtual de Física`;
+    document.querySelectorAll("[data-lab-special]").forEach((section) => { section.hidden = section.dataset.labSpecial !== id; });
     if (experiment.anchor) {
       workspace.hidden = true;
-      history.replaceState(null, "", `#${experiment.anchor}`);
-      document.getElementById(experiment.anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById(experiment.anchor)?.focus({ preventScroll: true });
+      const special = document.querySelector(`[data-lab-special="${id}"]`);
+      special?.scrollIntoView({ behavior: "auto", block: "start" });
+      special?.focus({ preventScroll: true });
       return;
     }
     workspace.hidden = false;
-    history.replaceState(null, "", `#lab-${id}`);
-    $("#workspace-kicker").textContent = `${experiments.findIndex((item) => item.id === id) + 1} · ${experiment.category.toLocaleUpperCase("pt-BR")}`;
     $("#workspace-title").textContent = experiment.title;
     $("#workspace-description").textContent = experiment.description;
     $("#workspace-mode").textContent = experiment.mode;
@@ -106,7 +63,7 @@ function initializeLaboratory() {
     updateRecords();
     $("#workspace-status").textContent = experiment.duration === 0 ? "Modelo estático: altere os parâmetros ou selecione um ponto do gráfico." : "Pronto. Inicie, avance em passos ou selecione um ponto do gráfico.";
     render();
-    workspace.scrollIntoView({ behavior: "smooth", block: "start" });
+    workspace.scrollIntoView({ behavior: "auto", block: "start" });
     workspace.setAttribute("tabindex", "-1");
     workspace.focus({ preventScroll: true });
   }
@@ -508,10 +465,15 @@ function initializeLaboratory() {
 
   const resizeObserver = new ResizeObserver(() => { if (state.id && !workspace.hidden) { try { render(); } catch { /* O próximo evento de controle informará erros do modelo. */ } } });
   resizeObserver.observe(workspace);
-  const hash = decodeURIComponent(location.hash.slice(1));
-  const initialId = hash.startsWith("lab-") ? hash.slice(4) : null;
-  drawCards();
-  if (experimentById.has(initialId) && !experimentById.get(initialId).anchor) selectExperiment(initialId);
+  if (experimentById.has(topicId)) selectExperiment(topicId);
+  else {
+    workspace.hidden = true;
+    $("#lab-topic-not-found").hidden = false;
+    $("#lab-topic-kicker").textContent = "LABORATÓRIO VIRTUAL DE FÍSICA";
+    $("#lab-topic-name").textContent = "Experimento não encontrado";
+    $("#lab-topic-description").textContent = "Escolha um tópico no catálogo para abrir a simulação.";
+    document.title = "Experimento não encontrado — Laboratório de Física";
+  }
   window.addEventListener("beforeunload", () => { stop(); resizeObserver.disconnect(); });
 }
 
