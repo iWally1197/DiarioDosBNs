@@ -1,9 +1,10 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-optics-20261010-1";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-optics-20261010-1";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-optics-20261010-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-20261010-1";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-optics-fullscreen-20261010-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-fullscreen-20261010-1";
 
 const $ = (selector) => document.querySelector(selector);
+const isSphericalMirror = (id) => id === "optics-concave-mirror" || id === "optics-convex-mirror";
 const requestedId = new URLSearchParams(location.search).get("topico");
 if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
 
@@ -11,6 +12,9 @@ function initializeExperimentPage(topicId) {
   const workspace = $("#lab-workspace");
   const canvas = $("#workspace-canvas");
   const graphCanvas = $("#workspace-graph");
+  const fullscreenButton = $("#workspace-fullscreen");
+  const controlsToggleButton = $("#workspace-controls-toggle");
+  const controlsSidebar = $("#workspace-controls-sidebar");
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
   const state = { id: null, parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null };
@@ -50,6 +54,13 @@ function initializeExperimentPage(topicId) {
       return;
     }
     workspace.hidden = false;
+    const mirrorWorkspace = isSphericalMirror(id);
+    workspace.classList.toggle("lab-workspace--mirror", mirrorWorkspace);
+    fullscreenButton.hidden = !mirrorWorkspace;
+    controlsToggleButton.hidden = true;
+    controlsSidebar.classList.remove("is-open");
+    controlsToggleButton.setAttribute("aria-expanded", "false");
+    controlsToggleButton.textContent = "Controles";
     $("#workspace-title").textContent = experiment.title;
     $("#workspace-description").textContent = experiment.description;
     const sceneCaptions = {
@@ -208,6 +219,35 @@ function initializeExperimentPage(topicId) {
     if (play) { play.textContent = "Iniciar"; play.setAttribute("aria-pressed", "false"); }
     if (resetButton && state.id) updateTimeControls();
   }
+
+  fullscreenButton.addEventListener("click", async () => {
+    if (!isSphericalMirror(state.id)) return;
+    try {
+      if (document.fullscreenElement === workspace) await document.exitFullscreen();
+      else await workspace.requestFullscreen({ navigationUI: "hide" });
+    } catch {
+      $("#workspace-status").textContent = "Não foi possível abrir em tela cheia neste navegador. Verifique se a permissão de tela cheia está liberada.";
+    }
+  });
+
+  controlsToggleButton.addEventListener("click", () => {
+    const open = controlsSidebar.classList.toggle("is-open");
+    controlsToggleButton.setAttribute("aria-expanded", String(open));
+    controlsToggleButton.textContent = open ? "Fechar controles" : "Controles";
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    const isFullscreen = document.fullscreenElement === workspace;
+    fullscreenButton.textContent = isFullscreen ? "Sair da tela cheia" : "Tela cheia";
+    fullscreenButton.setAttribute("aria-label", isFullscreen ? "Sair da tela cheia" : "Abrir a simulação em tela cheia");
+    controlsToggleButton.hidden = !(isFullscreen && isSphericalMirror(state.id));
+    if (!isFullscreen) {
+      controlsSidebar.classList.remove("is-open");
+      controlsToggleButton.setAttribute("aria-expanded", "false");
+      controlsToggleButton.textContent = "Controles";
+    }
+    if (state.id && !workspace.hidden) requestAnimationFrame(() => { try { render(); } catch (error) { showError(error); } });
+  });
 
   function tick(timestamp) {
     if (!state.running) return;
@@ -732,4 +772,3 @@ function initializeExperimentPage(topicId) {
   }
   window.addEventListener("beforeunload", () => { stop(); resizeObserver.disconnect(); });
 }
-
