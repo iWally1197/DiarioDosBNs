@@ -42,7 +42,7 @@ function pointOnSegment(start, end, distanceAlong) {
 function drawParticles(context, geometry, p, time, view) {
   const wavelengthNm = Number(p.wavelengthNm);
   const color = wavelengthColor(wavelengthNm);
-  const visualSpacing = 0.38 * wavelengthNm / 550;
+  const visualSpacing = 0.78 * wavelengthNm / 550;
   const paths = geometry.particlePaths || [geometry.segments];
   for (const path of paths) {
     for (const segment of path) {
@@ -51,24 +51,16 @@ function drawParticles(context, geometry, p, time, view) {
       const spacing = visualSpacing / segment.index;
       const speed = C_METERS_PER_NS / segment.index;
       const offset = (time * speed) % spacing;
-      const count = Math.min(24, Math.ceil(length / spacing) + 1);
+      const count = Math.min(10, Math.ceil(length / spacing) + 1);
       for (let index = -1; index <= count; index += 1) {
         const distanceAlong = index * spacing + offset;
         if (distanceAlong < 0 || distanceAlong > length) continue;
         const point = view.toScreen(pointOnSegment(segment.start, segment.end, distanceAlong));
         context.save();
-        context.shadowColor = color;
-        context.shadowBlur = 12;
         context.fillStyle = color;
-        context.globalAlpha = 0.88;
+        context.globalAlpha = 0.92;
         context.beginPath();
-        context.arc(point.x, point.y, 4.2, 0, 2 * Math.PI);
-        context.fill();
-        context.shadowBlur = 0;
-        context.fillStyle = "#ffffff";
-        context.globalAlpha = 0.86;
-        context.beginPath();
-        context.arc(point.x - 1.1, point.y - 1.1, 1.25, 0, 2 * Math.PI);
+        context.arc(point.x, point.y, 2.6, 0, 2 * Math.PI);
         context.fill();
         context.restore();
       }
@@ -76,13 +68,13 @@ function drawParticles(context, geometry, p, time, view) {
   }
 }
 
-function drawAxes(context, width, height, bounds, view, palette) {
+function drawAxes(context, width, height, bounds, view, palette, concise = false) {
   context.save();
   context.strokeStyle = palette.line;
   context.lineWidth = 1;
   const spanX = bounds.xMax - bounds.xMin;
   const spanY = bounds.yMax - bounds.yMin;
-  const divisions = 4;
+  const divisions = concise ? 2 : 4;
   for (let index = 0; index <= divisions; index += 1) {
     const x = bounds.xMin + spanX * index / divisions;
     const y = bounds.yMin + spanY * index / divisions;
@@ -107,10 +99,8 @@ function drawReflection(context, geometry, values, p, view, palette) {
   const hit = view.toScreen(geometry.hit);
   const source = view.toScreen(geometry.source);
   context.save();
-  context.shadowColor = wavelengthColor(Number(p.wavelengthNm));
-  context.shadowBlur = 14;
   context.fillStyle = wavelengthColor(Number(p.wavelengthNm));
-  context.beginPath(); context.arc(source.x, source.y, 7, 0, 2 * Math.PI); context.fill();
+  context.beginPath(); context.arc(source.x, source.y, 5, 0, 2 * Math.PI); context.fill();
   context.restore();
   context.fillStyle = palette.text;
   context.font = "10px system-ui";
@@ -142,10 +132,8 @@ function drawRefraction(context, geometry, values, p, view, palette, width) {
   const hit = view.toScreen(geometry.hit);
   const source = view.toScreen(geometry.source);
   context.save();
-  context.shadowColor = wavelengthColor(Number(p.wavelengthNm));
-  context.shadowBlur = 14;
   context.fillStyle = wavelengthColor(Number(p.wavelengthNm));
-  context.beginPath(); context.arc(source.x, source.y, 7, 0, 2 * Math.PI); context.fill();
+  context.beginPath(); context.arc(source.x, source.y, 5, 0, 2 * Math.PI); context.fill();
   context.restore();
   context.fillStyle = palette.text;
   context.font = "10px system-ui";
@@ -177,10 +165,10 @@ function drawSphericalMirror(context, geometry, values, p, view, palette) {
     if (index === 0) context.moveTo(screen.x, screen.y); else context.lineTo(screen.x, screen.y);
   });
   context.strokeStyle = "#dce7f7";
-  context.lineWidth = 7;
+  context.lineWidth = 4;
   context.stroke();
   context.strokeStyle = palette.blue;
-  context.lineWidth = 2;
+  context.lineWidth = 1.5;
   context.stroke();
   let incidentLabeled = false;
   let reflectedLabeled = false;
@@ -226,7 +214,7 @@ export function drawOpticalScene(context, width, height, id, parameters, model, 
   context.save();
   context.fillStyle = palette.bg;
   context.fillRect(0, 0, width, height);
-  drawAxes(context, width, height, geometry.bounds, view, palette);
+  drawAxes(context, width, height, geometry.bounds, view, palette, geometry.kind === "spherical-mirror");
   if (geometry.kind === "plane-mirror") drawReflection(context, geometry, model.values, parameters, view, palette);
   else if (geometry.kind === "interface") drawRefraction(context, geometry, model.values, parameters, view, palette, width);
   else drawSphericalMirror(context, geometry, model.values, parameters, view, palette);
@@ -237,4 +225,3 @@ export function opticalPointerToWorld(event, canvas, view) {
   const rect = canvas.getBoundingClientRect();
   return view.toWorld({ x: (event.clientX - rect.left) * view.width / rect.width, y: (event.clientY - rect.top) * view.height / rect.height });
 }
-
