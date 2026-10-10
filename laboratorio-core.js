@@ -44,8 +44,9 @@ export function pendulumStep(state, parameters, dt) {
     throw new RangeError("Comprimento, gravidade e passo de tempo devem ser positivos.");
   }
   const angularAcceleration = -(gravity / length) * Math.sin(state.theta);
-  const omega = state.omega + angularAcceleration * dt;
-  const theta = state.theta + omega * dt;
+  const theta = state.theta + state.omega * dt + 0.5 * angularAcceleration * dt * dt;
+  const nextAngularAcceleration = -(gravity / length) * Math.sin(theta);
+  const omega = state.omega + 0.5 * (angularAcceleration + nextAngularAcceleration) * dt;
   return { theta, omega };
 }
 
