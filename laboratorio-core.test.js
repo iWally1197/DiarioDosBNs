@@ -29,6 +29,12 @@ test("projectile launched above ground has the correct positive flight root", ()
   closeTo(projectileAtTime(flightTime, parameters).y, 0, 1e-10);
 });
 
+test("projectile rejects non-finite or physically invalid inputs", () => {
+  assert.throws(() => projectileAtTime(1, { speed: NaN, angleDegrees: 30, height: 0, gravity: 9.81 }), /Velocidade inicial/);
+  assert.throws(() => projectileFlightTime({ speed: 10, angleDegrees: 30, height: -1, gravity: 9.81 }), /Altura inicial/);
+  assert.throws(() => projectileMetrics({ speed: 10, angleDegrees: 30, height: 0, gravity: 0 }), /Gravidade/);
+});
+
 test("zero-angle pendulum equilibrium remains stationary", () => {
   const next = pendulumStep({ theta: 0, omega: 0 }, { length: 1, gravity: 9.81 }, 1 / 240);
   closeTo(next.theta, 0);
@@ -71,4 +77,8 @@ test("small-angle pendulum period approaches 2π√(L/g)", () => {
 
 test("invalid pendulum parameters are rejected", () => {
   assert.throws(() => pendulumStep({ theta: 0, omega: 0 }, { length: 0, gravity: 9.81 }, 1 / 240), RangeError);
+  assert.throws(() => pendulumStep({ theta: NaN, omega: 0 }, { length: 1, gravity: 9.81 }, 1 / 240), /Ângulo/);
+  assert.throws(() => pendulumEnergyPerMass({ theta: 0, omega: 0 }, 1, 0), /Gravidade/);
 });
+
+
