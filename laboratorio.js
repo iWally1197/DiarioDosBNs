@@ -44,6 +44,9 @@ function resizeCanvas(canvas, context) {
 
 const projectileCanvas = byId("projectile-canvas");
 const projectileContext = canvasContext(projectileCanvas);
+const projectileChart = byId("projectile-chart");
+const projectileChartContext = canvasContext(projectileChart);
+const projectileGraphSelect = byId("projectile-graph");
 const projectileSpeed = byId("projectile-speed");
 const projectileAngle = byId("projectile-angle");
 const projectileHeight = byId("projectile-height");
@@ -146,7 +149,109 @@ function drawProjectile() {
   byId("projectile-height-out").textContent = number(parameters.height, 1) + " m";
   byId("projectile-gravity-out").textContent = number(parameters.gravity, 2) + " m/s²";
   byId("projectile-playback-out").textContent = number(projectilePlayback.value, 2).replace(/,00$/, "") + "×";
+  drawProjectileChart();
 }
+
+const projectileCharts = {
+  x: { xLabel: "Tempo (s)", yLabel: "Posição x (m)", value: (point) => point.x },
+  y: { xLabel: "Tempo (s)", yLabel: "Posição y (m)", value: (point) => point.y },
+  vx: { xLabel: "Tempo (s)", yLabel: "Velocidade vx (m/s)", value: (point) => point.vx },
+  vy: { xLabel: "Tempo (s)", yLabel: "Velocidade vy (m/s)", value: (point) => point.vy },
+  trajectory: { xLabel: "Posição x (m)", yLabel: "Altura y (m)", value: (point) => point.y }
+};
+let projectilePlot = null;
+
+if (projectileGraphSelect) {
+  projectileGraphSelect.innerHTML = '<option value="x">x(t)</option><option value="y">y(t)</option><option value="vx">vx(t)</option><option value="vy">vy(t)</option><option value="trajectory">Trajetória y(x)</option>';
+  projectileGraphSelect.addEventListener("change", drawProjectile);
+}
+
+function drawProjectileChart() {
+  if (!projectileChartContext || !projectileChart) return;
+  const { width, height } = resizeCanvas(projectileChart, projectileChartContext);
+  const context = projectileChartContext;
+  const color = palette();
+  const parameters = projectileParameters();
+  const metrics = projectileMetrics(parameters);
+  const type = projectileGraphSelect?.value || "x";
+  const config = projectileCharts[type] || projectileCharts.x;
+  const trajectory = type === "trajectory";
+  const xMax = trajectory ? Math.max(metrics.range, 1) : Math.max(metrics.flightTime, 0.1);
+  const samples = Array.from({ length: 121 }, (_, i) => {
+    const t = metrics.flightTime * i / 120;
+    const point = projectileAtTime(t, parameters);
+    return { x: trajectory ? point.x : t, y: config.value(point) };
+  });
+  const currentTime = Math.min(projectileTime, metrics.flightTime);
+  const current = projectileAtTime(currentTime, parameters);
+  const cursor = { x: trajectory ? current.x : currentTime, y: config.value(current) };
+  const yValues = samples.map((sample) => sample.y).concat(cursor.y);
+  let yMin = Math.min(...yValues), yMax = Math.max(...yValues);
+  if (Math.abs(yMax - yMin) < 1e-9) { yMin -= 1; yMax += 1; }
+  const yPadding = (yMax - yMin) * 0.12;
+  yMin -= yPadding; yMax += yPadding;
+  const plot = { left: 48, right: width - 16, top: 17, bottom: height - 41 };
+  const px = (x) => plot.left + x / xMax * (plot.right - plot.left);
+  const py = (y) => plot.bottom - (y - yMin) / (yMax - yMin) * (plot.bottom - plot.top);
+  context.fillStyle = color.surface; context.fillRect(0, 0, width, height);
+  context.font = "10px system-ui, sans-serif"; context.lineWidth = 1; context.strokeStyle = color.line; context.fillStyle = color.muted;
+  for (let i = 0; i <= 4; i += 1) {
+    const x = plot.left + (plot.right - plot.left) * i / 4;
+    const y = plot.top + (plot.bottom - plot.top) * i / 4;
+    context.beginPath(); context.moveTo(x, plot.top); context.lineTo(x, plot.bottom); context.stroke();
+    context.beginPath(); context.moveTo(plot.left, y); context.lineTo(plot.right, y); context.stroke();
+    context.fillText(number(xMax * i / 4, 1), x - 10, plot.bottom + 15);
+    context.fillText(number(yMax - (yMax - yMin) * i / 4, 1), 2, y + 3);
+  }
+  context.strokeStyle = color.text; context.beginPath(); context.moveTo(plot.left, plot.top); context.lineTo(plot.left, plot.bottom); context.lineTo(plot.right, plot.bottom); context.stroke();
+  context.beginPath();
+  samples.forEach((sample, index) => { if (index === 0) context.moveTo(px(sample.x), py(sample.y)); else context.lineTo(px(sample.x), py(sample.y)); });
+  context.strokeStyle = color.gold; context.lineWidth = 2.2; context.stroke();
+  const cursorX = px(cursor.x), cursorY = py(cursor.y);
+  context.strokeStyle = color.blue; context.setLineDash([4, 4]); context.beginPath(); context.moveTo(cursorX, plot.top); context.lineTo(cursorX, plot.bottom); context.stroke(); context.setLineDash([]);
+  context.fillStyle = color.blue; context.beginPath(); context.arc(cursorX, cursorY, 5, 0, 2 * Math.PI); context.fill(); context.strokeStyle = color.text; context.lineWidth = 1.5; context.stroke();
+  context.fillStyle = color.text; context.fillText(trajectory ? "Posição x (m)" : config.xLabel, Math.max(plot.left, width / 2 - 36), height - 5); context.fillText(config.yLabel, 4, 12);
+  projectilePlot = { ...plot, xMax, trajectory, flightTime: metrics.flightTime };
+}
+
+projectileChart?.addEventListener("click", (event) => {
+  if (!projectilePlot) return;
+  const bounds = projectileChart.getBoundingClientRect();
+  const x = event.clientX - bounds.left;
+  if (x < projectilePlot.left || x > projectilePlot.right) return;
+  const fraction = (x - projectilePlot.left) / (projectilePlot.right - projectilePlot.left);
+  const value = fraction * projectilePlot.xMax;
+  projectileTime = projectilePlot.trajectory
+    ? Math.min(projectilePlot.flightTime, value / Math.max(1e-9, projectileParameters().speed * Math.cos(projectileParameters().angleDegrees * Math.PI / 180)))
+    : fraction * projectilePlot.flightTime;
+  if (projectileRunning) {
+    projectileRunning = false;
+    cancelAnimationFrame(projectileFrame);
+    projectilePlay.textContent = "Continuar";
+    projectilePlay.setAttribute("aria-pressed", "false");
+    byId("projectile-status").textContent = "Instante selecionado no gráfico; simulação pausada.";
+  }
+  drawProjectile();
+});
+projectileChart?.addEventListener("keydown", (event) => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key) || !projectilePlot) return;
+  event.preventDefault();
+  if (event.key === "Home") projectileTime = 0;
+  else if (event.key === "End") projectileTime = projectilePlot.flightTime;
+  else {
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const step = projectilePlot.flightTime / 100 * (event.shiftKey ? 10 : 1);
+    projectileTime = Math.max(0, Math.min(projectilePlot.flightTime, projectileTime + direction * step));
+  }
+  if (projectileRunning) {
+    projectileRunning = false;
+    cancelAnimationFrame(projectileFrame);
+    projectilePlay.textContent = "Continuar";
+    projectilePlay.setAttribute("aria-pressed", "false");
+    byId("projectile-status").textContent = "Instante selecionado no gráfico; simulação pausada.";
+  }
+  drawProjectile();
+});
 
 function resetProjectile(message = "Pronto para iniciar. Ajuste os controles para alterar o lançamento.") {
   projectileRunning = false;
@@ -204,6 +309,8 @@ const pendulumCanvas = byId("pendulum-canvas");
 const pendulumContext = canvasContext(pendulumCanvas);
 const pendulumChart = byId("pendulum-chart");
 const pendulumChartContext = canvasContext(pendulumChart);
+const pendulumTimeScrubber = byId("pendulum-time-scrubber");
+const pendulumTimeOutput = byId("pendulum-time-out");
 const pendulumLength = byId("pendulum-length");
 const pendulumInitialAngle = byId("pendulum-angle");
 const pendulumGravity = byId("pendulum-gravity");
@@ -344,7 +451,7 @@ function drawPendulumModel() {
   context.fillStyle = color.muted;
   context.font = "11px system-ui, sans-serif";
   context.fillText("Plano de referência z = −L", 12, height - 14);
-  pendulumCanvas.setAttribute("aria-label", "Pêndulo 3D com comprimento " + number(length, 2) + " metros e ângulo " + number(theta * 180 / Math.PI, 1) + " graus.");
+  pendulumCanvas.setAttribute("aria-label", "Projeção espacial 2D interativa de um pêndulo com comprimento " + number(length, 2) + " metros e ângulo " + number(theta * 180 / Math.PI, 1) + " graus.");
 }
 
 function drawPendulumChart() {
@@ -396,6 +503,15 @@ function drawPendulumChart() {
   context.fillStyle = color.text;
   context.fillText("t (s)", right - 24, height - 10);
   context.fillText("θ", 8, 13);
+  const cursorX = toX(pendulumTime);
+  const cursorY = toY(pendulumState.theta);
+  context.strokeStyle = color.blue;
+  context.setLineDash([4, 4]);
+  context.beginPath(); context.moveTo(cursorX, top); context.lineTo(cursorX, bottom); context.stroke();
+  context.setLineDash([]);
+  context.fillStyle = color.blue;
+  context.beginPath(); context.arc(cursorX, cursorY, 5, 0, 2 * Math.PI); context.fill();
+  context.lineWidth = 1.5; context.strokeStyle = color.text; context.stroke();
 }
 
 function drawPendulum() {
@@ -414,7 +530,51 @@ function drawPendulum() {
   byId("pendulum-angle-out").textContent = number(parameters.angleDegrees, 0) + "°";
   byId("pendulum-gravity-out").textContent = number(parameters.gravity, 2) + " m/s²";
   byId("pendulum-playback-out").textContent = number(pendulumPlayback.value, 2).replace(/,00$/, "") + "×";
+  if (pendulumTimeScrubber) pendulumTimeScrubber.value = String(pendulumTime);
+  if (pendulumTimeOutput) pendulumTimeOutput.textContent = number(pendulumTime, 2) + " s";
 }
+
+function seekPendulum(targetTime) {
+  pendulumRunning = false;
+  pendulumLastFrame = 0;
+  pendulumAccumulator = 0;
+  cancelAnimationFrame(pendulumFrame);
+  const parameters = pendulumParameters();
+  pendulumState = { theta: parameters.angleDegrees * Math.PI / 180, omega: 0 };
+  pendulumTime = 0;
+  pendulumHistory = [{ time: 0, theta: pendulumState.theta }];
+  let nextSample = sampleStep;
+  const target = Math.max(0, Math.min(maxPendulumTime, Number(targetTime) || 0));
+  while (pendulumTime < target) {
+    const dt = Math.min(fixedStep, target - pendulumTime);
+    pendulumState = pendulumStep(pendulumState, parameters, dt);
+    pendulumTime += dt;
+    if (pendulumTime + 1e-10 >= nextSample) {
+      pendulumHistory.push({ time: pendulumTime, theta: pendulumState.theta });
+      nextSample += sampleStep;
+    }
+  }
+  pendulumPlay.textContent = "Iniciar";
+  pendulumPlay.setAttribute("aria-pressed", "false");
+  byId("pendulum-status").textContent = "Instante selecionado. Estado, energia e marcador foram reconstruídos pelo mesmo integrador.";
+  drawPendulum();
+}
+
+pendulumTimeScrubber?.addEventListener("input", (event) => seekPendulum(Number(event.target.value)));
+pendulumChart?.addEventListener("click", (event) => {
+  const rect = pendulumChart.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const left = 48, right = rect.width - 18;
+  if (x < left || x > right) return;
+  seekPendulum((x - left) / (right - left) * maxPendulumTime);
+});
+pendulumChart?.addEventListener("keydown", (event) => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  if (event.key === "Home") seekPendulum(0);
+  else if (event.key === "End") seekPendulum(maxPendulumTime);
+  else seekPendulum(pendulumTime + (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1.2 : 0.12));
+});
 
 function pendulumTick(timestamp) {
   if (!pendulumRunning) return;
@@ -519,3 +679,5 @@ window.addEventListener("resize", () => {
 });
 resetPendulum();
 drawProjectile();
+
+
