@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test:physics": "node --test laboratorio-core.test.js"
+    "test:physics": "node --test laboratorio-core.test.js laboratorio-advanced-core.test.js"
   },
   "engines": {
     "node": ">=20"
   }
 }
+
+
