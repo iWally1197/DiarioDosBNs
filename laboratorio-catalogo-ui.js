@@ -1,4 +1,4 @@
-import { experiments } from "./laboratorio-catalogo.js";
+import { experiments } from "./laboratorio-catalogo.js?v=motion-reference-20261009-1";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
 export const experimentPageUrl = (id) => `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
@@ -54,4 +54,3 @@ function initializeCatalog() {
   [search, category, level, mode].forEach((element) => element.addEventListener(element === search ? "input" : "change", drawCards));
   drawCards();
 }
-
