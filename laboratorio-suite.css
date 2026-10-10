@@ -38,6 +38,7 @@
 .lab-panel-heading select { width:auto; min-height:30px; padding:4px 8px; font-size:10px; }
 .lab-workspace-canvas-wrap { height:300px; min-height:240px; background:var(--surface-2); }
 .lab-workspace-canvas-wrap canvas { display:block; width:100%; height:100%; }
+.lab-scene-caption { margin:0; padding:12px 15px 14px; color:var(--muted); font-size:.88rem; line-height:1.55; border-top:1px solid var(--line); background:var(--surface); }
 .lab-graph-canvas-wrap { cursor:crosshair; }
 .lab-graph-hint { margin:6px 10px 9px; font-size:9px; }
 .lab-workspace .lab-readouts { margin-top:12px; }
@@ -105,4 +106,3 @@
 }
 @media(max-width:420px) { .lab-filters { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .lab-card { transition:none; } }
-
