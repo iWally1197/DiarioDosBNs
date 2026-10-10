@@ -1,42 +1,521 @@
-(() => {
-  const canvas = document.querySelector('#motion-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const velocity = document.querySelector('#velocity-control');
-  const acceleration = document.querySelector('#acceleration-control');
-  const velocityOut = document.querySelector('#velocity-output');
-  const accelerationOut = document.querySelector('#acceleration-output');
-  const timeOut = document.querySelector('#time-readout');
-  const positionOut = document.querySelector('#position-readout');
-  const playButton = document.querySelector('#motion-play');
-  let time = 0; let running = false; let lastFrame = 0; let raf = 0;
-  const position = (t) => 1 + Number(velocity.value) * t + .5 * Number(acceleration.value) * t * t;
-  const format = (value) => Number(value).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1});
-  const updateLabels = () => {
-    velocityOut.value = `${format(velocity.value)} m/s`; velocityOut.textContent = velocityOut.value;
-    accelerationOut.value = `${format(acceleration.value)} m/s²`; accelerationOut.textContent = accelerationOut.value;
-    timeOut.textContent = `t = ${format(time)} s`; positionOut.textContent = `x = ${format(position(time))} m`;
+import {
+  projectileAtTime,
+  projectileMetrics,
+  pendulumStep,
+  pendulumEnergyPerMass
+} from "./laboratorio-core.js";
+
+const byId = (id) => document.getElementById(id);
+const number = (value, digits = 1) => Number(value).toLocaleString("pt-BR", {
+  minimumFractionDigits: digits,
+  maximumFractionDigits: digits
+});
+const cssColor = (name, fallback) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+const palette = () => ({
+  text: cssColor("--text", "#f4f5f8"),
+  muted: cssColor("--muted", "#9aa6b9"),
+  gold: cssColor("--gold", "#d6b87a"),
+  blue: cssColor("--blue", "#79a8ff"),
+  line: cssColor("--line", "rgba(206,218,240,.18)"),
+  surface: cssColor("--surface-2", "#131f32")
+});
+
+function canvasContext(canvas) {
+  const context = canvas?.getContext("2d", { alpha: false });
+  if (!context) return null;
+  return context;
+}
+
+function resizeCanvas(canvas, context) {
+  const box = canvas.getBoundingClientRect();
+  const width = Math.max(320, box.width || 320);
+  const height = Math.max(180, box.height || 240);
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const pixelWidth = Math.round(width * ratio);
+  const pixelHeight = Math.round(height * ratio);
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  return { width, height };
+}
+
+const projectileCanvas = byId("projectile-canvas");
+const projectileContext = canvasContext(projectileCanvas);
+const projectileSpeed = byId("projectile-speed");
+const projectileAngle = byId("projectile-angle");
+const projectileHeight = byId("projectile-height");
+const projectileGravity = byId("projectile-gravity");
+const projectilePlayback = byId("projectile-speed-playback");
+const projectilePlay = byId("projectile-play");
+const projectileReset = byId("projectile-reset");
+let projectileTime = 0;
+let projectileRunning = false;
+let projectileLastFrame = 0;
+let projectileFrame = 0;
+
+function projectileParameters() {
+  return {
+    speed: Number(projectileSpeed.value),
+    angleDegrees: Number(projectileAngle.value),
+    height: Number(projectileHeight.value),
+    gravity: Number(projectileGravity.value)
   };
-  const draw = () => {
-    const rect = canvas.getBoundingClientRect(); const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(300, rect.width); const height = Math.max(190, rect.height);
-    if (canvas.width !== Math.round(width*dpr) || canvas.height !== Math.round(height*dpr)) { canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr); }
-    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,width,height);
-    const styles = getComputedStyle(document.documentElement); const muted = styles.getPropertyValue('--muted').trim() || '#aeb8cc'; const gold = styles.getPropertyValue('--gold').trim() || '#d0ad69'; const line = styles.getPropertyValue('--line').trim() || '#34415a';
-    const y = height*.63, left=38, right=width-30;
-    ctx.strokeStyle=line; ctx.lineWidth=1; ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke();
-    ctx.fillStyle=muted;ctx.font='12px system-ui';ctx.fillText('posição x',left,22);ctx.fillText('tempo →',right-58,y+28);
-    for(let i=0;i<=6;i++){const x=left+(right-left)*i/6;ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x,y+5);ctx.stroke();ctx.fillText(String(i*2),x-4,y+21);}
-    const path=[];for(let t=0;t<=12;t+=.1) path.push([left+(right-left)*t/12,y-Math.max(-7,Math.min(20,position(t)))*(height*.022)]);
-    ctx.strokeStyle=gold;ctx.lineWidth=2;ctx.beginPath();path.forEach(([x,py],i)=>i?ctx.lineTo(x,py):ctx.moveTo(x,py));ctx.stroke();
-    const px=left+(right-left)*Math.min(time,12)/12, py=y-Math.max(-7,Math.min(20,position(time)))*(height*.022);
-    ctx.fillStyle=gold;ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle=gold;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,y);ctx.stroke();ctx.setLineDash([]);
-    updateLabels();
+}
+
+function drawProjectile() {
+  if (!projectileContext || !projectileCanvas) return;
+  const { width, height } = resizeCanvas(projectileCanvas, projectileContext);
+  const context = projectileContext;
+  const color = palette();
+  const parameters = projectileParameters();
+  const metrics = projectileMetrics(parameters);
+  const left = 52;
+  const right = width - 20;
+  const top = 22;
+  const bottom = height - 40;
+  const plotWidth = Math.max(1, right - left);
+  const plotHeight = Math.max(1, bottom - top);
+  const maxX = Math.max(metrics.range * 1.08, 1);
+  const maxY = Math.max(metrics.maxHeight * 1.16, 1);
+  const px = (x) => left + x / maxX * plotWidth;
+  const py = (y) => bottom - y / maxY * plotHeight;
+
+  context.fillStyle = color.surface;
+  context.fillRect(0, 0, width, height);
+  context.font = "12px system-ui, sans-serif";
+  context.lineWidth = 1;
+  context.strokeStyle = color.line;
+  context.fillStyle = color.muted;
+  for (let i = 0; i <= 4; i += 1) {
+    const gx = left + plotWidth * i / 4;
+    const gy = top + plotHeight * i / 4;
+    context.beginPath(); context.moveTo(gx, top); context.lineTo(gx, bottom); context.stroke();
+    context.beginPath(); context.moveTo(left, gy); context.lineTo(right, gy); context.stroke();
+    context.fillText(number(maxX * i / 4, 0), gx - 10, bottom + 18);
+    context.fillText(number(maxY * (4 - i) / 4, 0), 7, gy + 4);
+  }
+
+  context.strokeStyle = color.text;
+  context.beginPath(); context.moveTo(left, top); context.lineTo(left, bottom); context.lineTo(right, bottom); context.stroke();
+  context.fillStyle = color.text;
+  context.fillText("x (m)", right - 32, height - 8);
+  context.fillText("y (m)", 8, 15);
+
+  const steps = 180;
+  context.beginPath();
+  for (let i = 0; i <= steps; i += 1) {
+    const point = projectileAtTime(metrics.flightTime * i / steps, parameters);
+    if (i === 0) context.moveTo(px(point.x), py(Math.max(0, point.y)));
+    else context.lineTo(px(point.x), py(Math.max(0, point.y)));
+  }
+  context.setLineDash([5, 5]);
+  context.strokeStyle = color.gold;
+  context.globalAlpha = 0.55;
+  context.lineWidth = 1.5;
+  context.stroke();
+  context.setLineDash([]);
+  context.globalAlpha = 1;
+
+  const elapsed = Math.min(projectileTime, metrics.flightTime);
+  const point = projectileAtTime(elapsed, parameters);
+  context.beginPath();
+  context.moveTo(px(0), py(parameters.height));
+  context.lineTo(px(point.x), py(Math.max(0, point.y)));
+  context.lineWidth = 3;
+  context.strokeStyle = color.gold;
+  context.stroke();
+
+  context.beginPath();
+  context.arc(px(point.x), py(Math.max(0, point.y)), 7, 0, Math.PI * 2);
+  context.fillStyle = color.gold;
+  context.fill();
+  context.lineWidth = 2;
+  context.strokeStyle = color.text;
+  context.stroke();
+
+  byId("projectile-time").textContent = number(elapsed, 2) + " s";
+  byId("projectile-x").textContent = number(point.x, 1) + " m";
+  byId("projectile-y").textContent = number(Math.max(0, point.y), 1) + " m";
+  byId("projectile-range").textContent = number(metrics.range, 1) + " m";
+  byId("projectile-apex").textContent = number(metrics.maxHeight, 1) + " m";
+  byId("projectile-speed-out").textContent = number(parameters.speed, 1) + " m/s";
+  byId("projectile-angle-out").textContent = number(parameters.angleDegrees, 0) + "°";
+  byId("projectile-height-out").textContent = number(parameters.height, 1) + " m";
+  byId("projectile-gravity-out").textContent = number(parameters.gravity, 2) + " m/s²";
+  byId("projectile-playback-out").textContent = number(projectilePlayback.value, 2).replace(/,00$/, "") + "×";
+}
+
+function resetProjectile(message = "Pronto para iniciar. Ajuste os controles para alterar o lançamento.") {
+  projectileRunning = false;
+  projectileTime = 0;
+  projectileLastFrame = 0;
+  cancelAnimationFrame(projectileFrame);
+  projectilePlay.textContent = "Iniciar";
+  projectilePlay.setAttribute("aria-pressed", "false");
+  byId("projectile-status").textContent = message;
+  drawProjectile();
+}
+
+function projectileTick(timestamp) {
+  if (!projectileRunning) return;
+  if (projectileLastFrame) {
+    projectileTime += Math.min(0.05, (timestamp - projectileLastFrame) / 1000) * Number(projectilePlayback.value);
+  }
+  projectileLastFrame = timestamp;
+  const flightTime = projectileMetrics(projectileParameters()).flightTime;
+  if (projectileTime >= flightTime) {
+    projectileTime = flightTime;
+    projectileRunning = false;
+    projectilePlay.textContent = "Executar novamente";
+    projectilePlay.setAttribute("aria-pressed", "false");
+    byId("projectile-status").textContent = "Simulação concluída. O modelo prevê que o projétil retorna ao solo neste instante.";
+  }
+  drawProjectile();
+  if (projectileRunning) projectileFrame = requestAnimationFrame(projectileTick);
+}
+
+projectilePlay.addEventListener("click", () => {
+  if (projectileRunning) {
+    projectileRunning = false;
+    projectilePlay.textContent = "Continuar";
+    projectilePlay.setAttribute("aria-pressed", "false");
+    byId("projectile-status").textContent = "Simulação pausada.";
+    cancelAnimationFrame(projectileFrame);
+    return;
+  }
+  if (projectileTime >= projectileMetrics(projectileParameters()).flightTime) projectileTime = 0;
+  projectileRunning = true;
+  projectileLastFrame = 0;
+  projectilePlay.textContent = "Pausar";
+  projectilePlay.setAttribute("aria-pressed", "true");
+  byId("projectile-status").textContent = "Simulação em andamento. Os valores são calculados pelas equações do movimento.";
+  projectileFrame = requestAnimationFrame(projectileTick);
+});
+projectileReset.addEventListener("click", () => resetProjectile());
+[projectileSpeed, projectileAngle, projectileHeight, projectileGravity].forEach((control) =>
+  control.addEventListener("input", () => resetProjectile("Parâmetros atualizados. A simulação voltou ao instante inicial."))
+);
+projectilePlayback.addEventListener("input", drawProjectile);
+
+const pendulumCanvas = byId("pendulum-canvas");
+const pendulumContext = canvasContext(pendulumCanvas);
+const pendulumChart = byId("pendulum-chart");
+const pendulumChartContext = canvasContext(pendulumChart);
+const pendulumLength = byId("pendulum-length");
+const pendulumInitialAngle = byId("pendulum-angle");
+const pendulumGravity = byId("pendulum-gravity");
+const pendulumPlayback = byId("pendulum-playback");
+const pendulumPlay = byId("pendulum-play");
+const pendulumReset = byId("pendulum-reset");
+const fixedStep = 1 / 480;
+const sampleStep = 1 / 30;
+const maxPendulumTime = 12;
+let pendulumState = { theta: 35 * Math.PI / 180, omega: 0 };
+let pendulumTime = 0;
+let pendulumRunning = false;
+let pendulumLastFrame = 0;
+let pendulumAccumulator = 0;
+let pendulumSampleAccumulator = 0;
+let pendulumFrame = 0;
+let pendulumHistory = [];
+let initialPendulumEnergy = 0;
+let cameraAzimuth = -0.7;
+let cameraElevation = 0.38;
+let pointerPosition = null;
+
+function pendulumParameters() {
+  return {
+    length: Number(pendulumLength.value),
+    angleDegrees: Number(pendulumInitialAngle.value),
+    gravity: Number(pendulumGravity.value)
   };
-  const tick = (now) => { if(!running) return; if(lastFrame) time += Math.min(.05,(now-lastFrame)/1000); lastFrame=now; if(time>=12){time=12;running=false;playButton.textContent='Iniciar';lastFrame=0;} draw(); if(running) raf=requestAnimationFrame(tick); };
-  playButton.addEventListener('click',()=>{running=!running;playButton.textContent=running?'Pausar':'Continuar';if(running){lastFrame=0;raf=requestAnimationFrame(tick);}});
-  document.querySelector('#motion-reset').addEventListener('click',()=>{running=false;cancelAnimationFrame(raf);time=0;lastFrame=0;playButton.textContent='Iniciar';draw();});
-  velocity.addEventListener('input',draw);acceleration.addEventListener('input',draw);window.addEventListener('resize',draw);draw();
-  const cube=document.querySelector('#demo-cube');const views={front:['0deg','0deg','0deg'],side:['0deg','-90deg','0deg'],top:['90deg','0deg','0deg'],orbit:['-25deg','-35deg','0deg']};
-  document.querySelectorAll('[data-view]').forEach((button)=>button.addEventListener('click',()=>{const [x,y,z]=views[button.dataset.view];cube.style.transform=`rotateX(${x}) rotateY(${y}) rotateZ(${z})`;document.querySelectorAll('[data-view]').forEach((other)=>other.setAttribute('aria-pressed',String(other===button)));document.querySelector('#view-status').textContent=`Vista ${button.textContent.toLowerCase()} selecionada.`;}));
-})();
+}
+
+function resetPendulum(message = "Em repouso. O modelo usa a equação não linear do pêndulo, sem a aproximação de ângulo pequeno.") {
+  pendulumRunning = false;
+  pendulumTime = 0;
+  pendulumLastFrame = 0;
+  pendulumAccumulator = 0;
+  pendulumSampleAccumulator = 0;
+  cancelAnimationFrame(pendulumFrame);
+  const parameters = pendulumParameters();
+  pendulumState = { theta: parameters.angleDegrees * Math.PI / 180, omega: 0 };
+  initialPendulumEnergy = pendulumEnergyPerMass(pendulumState, parameters.length, parameters.gravity).total;
+  pendulumHistory = [{ time: 0, theta: pendulumState.theta }];
+  pendulumPlay.textContent = "Iniciar";
+  pendulumPlay.setAttribute("aria-pressed", "false");
+  byId("pendulum-status").textContent = message;
+  drawPendulum();
+}
+
+function project3D(x, y, z, originX, originY, scale) {
+  const ca = Math.cos(cameraAzimuth);
+  const sa = Math.sin(cameraAzimuth);
+  const ce = Math.cos(cameraElevation);
+  const se = Math.sin(cameraElevation);
+  const right = x * ca + y * sa;
+  const up = x * se * sa - y * se * ca + z * ce;
+  return { x: originX + right * scale, y: originY - up * scale };
+}
+
+function drawPendulumModel() {
+  if (!pendulumContext || !pendulumCanvas) return;
+  const { width, height } = resizeCanvas(pendulumCanvas, pendulumContext);
+  const context = pendulumContext;
+  const color = palette();
+  const parameters = pendulumParameters();
+  const length = parameters.length;
+  const originX = width / 2;
+  const originY = Math.max(52, height * 0.28);
+  const scale = Math.max(24, Math.min((width - 76) / (2.55 * length), (height - 92) / (1.72 * length)));
+  context.fillStyle = color.surface;
+  context.fillRect(0, 0, width, height);
+
+  const point = (x, y, z) => project3D(x, y, z, originX, originY, scale);
+  const floor = -length * 1.12;
+  context.lineWidth = 1;
+  context.strokeStyle = color.line;
+  context.globalAlpha = 0.72;
+  for (let i = -2; i <= 2; i += 1) {
+    const offset = i * length * 0.42;
+    let a = point(offset, -length, floor);
+    let b = point(offset, length, floor);
+    context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke();
+    a = point(-length, offset, floor);
+    b = point(length, offset, floor);
+    context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke();
+  }
+  context.globalAlpha = 1;
+
+  const xAxis = point(length * 0.68, 0, 0);
+  const yAxis = point(0, length * 0.68, 0);
+  const zAxis = point(0, 0, -length * 0.78);
+  const drawAxis = (end, label, axisColor) => {
+    context.beginPath(); context.moveTo(originX, originY); context.lineTo(end.x, end.y);
+    context.strokeStyle = axisColor; context.lineWidth = 1.5; context.stroke();
+    context.fillStyle = axisColor; context.fillText(label, end.x + 5, end.y);
+  };
+  context.font = "12px system-ui, sans-serif";
+  drawAxis(xAxis, "x", color.gold);
+  drawAxis(yAxis, "y", color.blue);
+  drawAxis(zAxis, "z", color.muted);
+
+  const theta = pendulumState.theta;
+  const bobWorld = { x: length * Math.sin(theta), y: 0, z: -length * Math.cos(theta) };
+  const bob = point(bobWorld.x, bobWorld.y, bobWorld.z);
+  const pivot = point(0, 0, 0);
+  context.beginPath();
+  context.moveTo(pivot.x, pivot.y);
+  context.lineTo(bob.x, bob.y);
+  context.strokeStyle = color.text;
+  context.lineWidth = 3;
+  context.stroke();
+
+  context.beginPath();
+  context.ellipse(originX, originY, Math.abs(scale * length * Math.sin(theta)), Math.max(3, scale * length * 0.08), 0, 0, Math.PI * 2);
+  context.strokeStyle = color.gold;
+  context.globalAlpha = 0.38;
+  context.setLineDash([4, 5]);
+  context.stroke();
+  context.setLineDash([]);
+  context.globalAlpha = 1;
+
+  context.beginPath();
+  context.arc(pivot.x, pivot.y, 6, 0, Math.PI * 2);
+  context.fillStyle = color.text;
+  context.fill();
+
+  const radius = Math.max(10, Math.min(17, scale * length * 0.11));
+  const gradient = context.createRadialGradient(bob.x - radius * 0.35, bob.y - radius * 0.4, 1, bob.x, bob.y, radius * 1.2);
+  gradient.addColorStop(0, color.text);
+  gradient.addColorStop(0.32, color.gold);
+  gradient.addColorStop(1, "#735426");
+  context.beginPath();
+  context.arc(bob.x, bob.y, radius, 0, Math.PI * 2);
+  context.fillStyle = gradient;
+  context.fill();
+  context.lineWidth = 1.5;
+  context.strokeStyle = color.text;
+  context.stroke();
+
+  context.fillStyle = color.muted;
+  context.font = "11px system-ui, sans-serif";
+  context.fillText("Plano de referência z = −L", 12, height - 14);
+  pendulumCanvas.setAttribute("aria-label", "Pêndulo 3D com comprimento " + number(length, 2) + " metros e ângulo " + number(theta * 180 / Math.PI, 1) + " graus.");
+}
+
+function drawPendulumChart() {
+  if (!pendulumChartContext || !pendulumChart) return;
+  const { width, height } = resizeCanvas(pendulumChart, pendulumChartContext);
+  const context = pendulumChartContext;
+  const color = palette();
+  const left = 48;
+  const right = width - 18;
+  const top = 18;
+  const bottom = height - 34;
+  const plotWidth = right - left;
+  const plotHeight = bottom - top;
+  const maxAngle = Math.max(45, Number(pendulumInitialAngle.value) + 10);
+  context.fillStyle = color.surface;
+  context.fillRect(0, 0, width, height);
+  context.font = "11px system-ui, sans-serif";
+  context.strokeStyle = color.line;
+  context.fillStyle = color.muted;
+  for (let i = 0; i <= 4; i += 1) {
+    const y = top + plotHeight * i / 4;
+    context.beginPath(); context.moveTo(left, y); context.lineTo(right, y); context.stroke();
+    context.fillText(number(maxAngle - 2 * maxAngle * i / 4, 0) + "°", 3, y + 4);
+    const x = left + plotWidth * i / 4;
+    context.beginPath(); context.moveTo(x, top); context.lineTo(x, bottom); context.stroke();
+    context.fillText(number(maxPendulumTime * i / 4, 0), x - 4, height - 10);
+  }
+  const toX = (time) => left + Math.min(maxPendulumTime, time) / maxPendulumTime * plotWidth;
+  const toY = (theta) => top + (maxAngle - theta * 180 / Math.PI) / (2 * maxAngle) * plotHeight;
+  context.strokeStyle = color.muted;
+  context.lineWidth = 1;
+  context.beginPath(); context.moveTo(left, toY(0)); context.lineTo(right, toY(0)); context.stroke();
+  if (pendulumHistory.length) {
+    context.beginPath();
+    pendulumHistory.forEach((sample, index) => {
+      const x = toX(sample.time);
+      const y = toY(sample.theta);
+      if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+    });
+    if (pendulumTime < maxPendulumTime) {
+      const x = toX(pendulumTime);
+      const y = toY(pendulumState.theta);
+      context.lineTo(x, y);
+    }
+    context.strokeStyle = color.gold;
+    context.lineWidth = 2;
+    context.stroke();
+  }
+  context.fillStyle = color.text;
+  context.fillText("t (s)", right - 24, height - 10);
+  context.fillText("θ", 8, 13);
+}
+
+function drawPendulum() {
+  const parameters = pendulumParameters();
+  drawPendulumModel();
+  drawPendulumChart();
+  const energy = pendulumEnergyPerMass(pendulumState, parameters.length, parameters.gravity);
+  const drift = initialPendulumEnergy > 0 ? Math.abs((energy.total - initialPendulumEnergy) / initialPendulumEnergy) * 100 : 0;
+  byId("pendulum-time").textContent = number(pendulumTime, 2) + " s";
+  byId("pendulum-angle-readout").textContent = number(pendulumState.theta * 180 / Math.PI, 1) + "°";
+  byId("pendulum-omega").textContent = number(pendulumState.omega, 2) + " rad/s";
+  byId("pendulum-kinetic").textContent = number(energy.kinetic, 2) + " J/kg";
+  byId("pendulum-potential").textContent = number(energy.potential, 2) + " J/kg";
+  byId("pendulum-energy-drift").textContent = number(drift, 3) + "%";
+  byId("pendulum-length-out").textContent = number(parameters.length, 2) + " m";
+  byId("pendulum-angle-out").textContent = number(parameters.angleDegrees, 0) + "°";
+  byId("pendulum-gravity-out").textContent = number(parameters.gravity, 2) + " m/s²";
+  byId("pendulum-playback-out").textContent = number(pendulumPlayback.value, 2).replace(/,00$/, "") + "×";
+}
+
+function pendulumTick(timestamp) {
+  if (!pendulumRunning) return;
+  if (pendulumLastFrame) {
+    const elapsed = Math.min(0.05, (timestamp - pendulumLastFrame) / 1000) * Number(pendulumPlayback.value);
+    pendulumAccumulator += elapsed;
+    pendulumSampleAccumulator += elapsed;
+    const parameters = pendulumParameters();
+    while (pendulumAccumulator >= fixedStep && pendulumTime < maxPendulumTime) {
+      pendulumState = pendulumStep(pendulumState, parameters, fixedStep);
+      pendulumTime += fixedStep;
+      pendulumAccumulator -= fixedStep;
+      if (pendulumSampleAccumulator >= sampleStep) {
+        pendulumHistory.push({ time: pendulumTime, theta: pendulumState.theta });
+        pendulumSampleAccumulator %= sampleStep;
+      }
+    }
+  }
+  pendulumLastFrame = timestamp;
+  if (pendulumTime >= maxPendulumTime) {
+    pendulumTime = maxPendulumTime;
+    pendulumRunning = false;
+    pendulumHistory.push({ time: maxPendulumTime, theta: pendulumState.theta });
+    pendulumPlay.textContent = "Executar novamente";
+    pendulumPlay.setAttribute("aria-pressed", "false");
+    byId("pendulum-status").textContent = "Trecho de 12 segundos concluído. Recomece ou altere os parâmetros para outra observação.";
+  }
+  drawPendulum();
+  if (pendulumRunning) pendulumFrame = requestAnimationFrame(pendulumTick);
+}
+
+pendulumPlay.addEventListener("click", () => {
+  if (pendulumRunning) {
+    pendulumRunning = false;
+    pendulumPlay.textContent = "Continuar";
+    pendulumPlay.setAttribute("aria-pressed", "false");
+    byId("pendulum-status").textContent = "Simulação pausada.";
+    cancelAnimationFrame(pendulumFrame);
+    return;
+  }
+  if (pendulumTime >= maxPendulumTime) resetPendulum("Reiniciada. A simulação será executada por até 12 segundos.");
+  pendulumRunning = true;
+  pendulumLastFrame = 0;
+  pendulumPlay.textContent = "Pausar";
+  pendulumPlay.setAttribute("aria-pressed", "true");
+  byId("pendulum-status").textContent = "Simulação em andamento. Energia e gráfico vêm do estado integrado do pêndulo.";
+  pendulumFrame = requestAnimationFrame(pendulumTick);
+});
+pendulumReset.addEventListener("click", () => resetPendulum());
+[pendulumLength, pendulumInitialAngle, pendulumGravity].forEach((control) =>
+  control.addEventListener("input", () => resetPendulum("Parâmetros atualizados. Estado, gráfico e energia foram reiniciados."))
+);
+pendulumPlayback.addEventListener("input", drawPendulum);
+
+document.querySelectorAll("[data-pendulum-view]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const view = button.dataset.pendulumView;
+    if (view === "front") { cameraAzimuth = 0; cameraElevation = 0.28; }
+    if (view === "side") { cameraAzimuth = Math.PI / 2; cameraElevation = 0.28; }
+    if (view === "orbit") { cameraAzimuth = -0.7; cameraElevation = 0.38; }
+    document.querySelectorAll("[data-pendulum-view]").forEach((other) =>
+      other.setAttribute("aria-pressed", String(other === button))
+    );
+    byId("pendulum-status").textContent = "Perspectiva " + button.textContent.toLowerCase() + " selecionada.";
+    drawPendulum();
+  });
+});
+
+pendulumCanvas.addEventListener("pointerdown", (event) => {
+  pointerPosition = { x: event.clientX, y: event.clientY };
+  pendulumCanvas.setPointerCapture(event.pointerId);
+});
+pendulumCanvas.addEventListener("pointermove", (event) => {
+  if (!pointerPosition) return;
+  const dx = event.clientX - pointerPosition.x;
+  const dy = event.clientY - pointerPosition.y;
+  pointerPosition = { x: event.clientX, y: event.clientY };
+  cameraAzimuth += dx * 0.01;
+  cameraElevation = Math.max(-0.25, Math.min(1.05, cameraElevation + dy * 0.006));
+  document.querySelectorAll("[data-pendulum-view]").forEach((button) =>
+    button.setAttribute("aria-pressed", "false")
+  );
+  drawPendulumModel();
+});
+const finishPointer = () => { pointerPosition = null; };
+pendulumCanvas.addEventListener("pointerup", finishPointer);
+pendulumCanvas.addEventListener("pointercancel", finishPointer);
+pendulumCanvas.addEventListener("keydown", (event) => {
+  const step = 0.12;
+  if (event.key === "ArrowLeft") cameraAzimuth -= step;
+  else if (event.key === "ArrowRight") cameraAzimuth += step;
+  else if (event.key === "ArrowUp") cameraElevation = Math.min(1.05, cameraElevation + step);
+  else if (event.key === "ArrowDown") cameraElevation = Math.max(-0.25, cameraElevation - step);
+  else return;
+  event.preventDefault();
+  drawPendulumModel();
+});
+
+window.addEventListener("resize", () => {
+  drawProjectile();
+  drawPendulum();
+});
+resetPendulum();
+drawProjectile();
