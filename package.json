@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "test:physics": "node --test laboratorio-core.test.js"
   },
   "engines": {
     "node": ">=20"
