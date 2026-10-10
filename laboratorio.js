@@ -72,6 +72,27 @@ function projectileParameters() {
   };
 }
 
+function drawSportBall(context, x, y, radius, color) {
+  const sphere = context.createRadialGradient(x - radius * 0.35, y - radius * 0.42, 1, x, y, radius * 1.15);
+  sphere.addColorStop(0, "#fff0bd"); sphere.addColorStop(0.28, color.gold); sphere.addColorStop(1, "#92501b");
+  context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2); context.fillStyle = sphere; context.fill();
+  context.save(); context.beginPath(); context.arc(x, y, radius - 0.5, 0, Math.PI * 2); context.clip();
+  context.strokeStyle = "rgba(36,24,12,.72)"; context.lineWidth = Math.max(1, radius * 0.09);
+  context.beginPath(); context.arc(x - radius * 0.65, y, radius * 0.9, -1.15, 1.15); context.stroke();
+  context.beginPath(); context.arc(x + radius * 0.65, y, radius * 0.9, Math.PI - 1.15, Math.PI + 1.15); context.stroke();
+  context.beginPath(); context.moveTo(x - radius, y - radius * 0.18); context.quadraticCurveTo(x, y - radius * 0.48, x + radius, y - radius * 0.18); context.stroke();
+  context.beginPath(); context.moveTo(x - radius, y + radius * 0.18); context.quadraticCurveTo(x, y + radius * 0.48, x + radius, y + radius * 0.18); context.stroke();
+  context.restore(); context.strokeStyle = color.text; context.lineWidth = 1.3; context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2); context.stroke();
+}
+
+function drawVector(context, x1, y1, x2, y2, color, label) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  context.strokeStyle = color; context.fillStyle = color; context.lineWidth = 2.3;
+  context.beginPath(); context.moveTo(x1, y1); context.lineTo(x2, y2); context.stroke();
+  context.beginPath(); context.moveTo(x2, y2); context.lineTo(x2 - 8 * Math.cos(angle - 0.46), y2 - 8 * Math.sin(angle - 0.46)); context.lineTo(x2 - 8 * Math.cos(angle + 0.46), y2 - 8 * Math.sin(angle + 0.46)); context.closePath(); context.fill();
+  context.font = "11px system-ui, sans-serif"; context.fillText(label, x2 + 4, y2 - 4);
+}
+
 function drawProjectile() {
   if (!projectileContext || !projectileCanvas) return;
   const { width, height } = resizeCanvas(projectileCanvas, projectileContext);
@@ -83,14 +104,17 @@ function drawProjectile() {
   const right = width - 20;
   const top = 22;
   const bottom = height - 40;
+  const ballRadius = 9;
   const plotWidth = Math.max(1, right - left);
   const plotHeight = Math.max(1, bottom - top);
   const maxX = Math.max(metrics.range * 1.08, 1);
   const maxY = Math.max(metrics.maxHeight * 1.16, 1);
   const px = (x) => left + x / maxX * plotWidth;
-  const py = (y) => bottom - y / maxY * plotHeight;
+  const py = (y) => bottom - ballRadius - y / maxY * Math.max(1, plotHeight - ballRadius);
 
-  context.fillStyle = color.surface;
+  const backdrop = context.createLinearGradient(0, 0, 0, height);
+  backdrop.addColorStop(0, color.surface); backdrop.addColorStop(0.72, color.surface); backdrop.addColorStop(1, "#182b2c");
+  context.fillStyle = backdrop;
   context.fillRect(0, 0, width, height);
   context.font = "12px system-ui, sans-serif";
   context.lineWidth = 1;
@@ -105,11 +129,17 @@ function drawProjectile() {
     context.fillText(number(maxY * (4 - i) / 4, 0), 7, gy + 4);
   }
 
+  context.fillStyle = "rgba(78,133,102,.22)"; context.fillRect(left, bottom, plotWidth, height - bottom);
   context.strokeStyle = color.text;
   context.beginPath(); context.moveTo(left, top); context.lineTo(left, bottom); context.lineTo(right, bottom); context.stroke();
+  context.strokeStyle = "rgba(220,208,159,.42)"; context.lineWidth = 2;
+  for (let x = left + 8; x < right; x += 23) { context.beginPath(); context.moveTo(x, bottom + 7); context.lineTo(x + 9, bottom + 7); context.stroke(); }
+  const launcherX = px(0);
+  context.fillStyle = color.blue; context.globalAlpha = 0.75; context.fillRect(launcherX - 15, py(parameters.height) + 10, 30, Math.max(4, bottom - py(parameters.height) - 10)); context.globalAlpha = 1;
   context.fillStyle = color.text;
   context.fillText("x (m)", right - 32, height - 8);
   context.fillText("y (m)", 8, 15);
+  context.fillStyle = color.muted; context.font = "10px system-ui"; context.fillText("Referencial fixo do solo · O no lançamento", left + 5, top + 13);
 
   const steps = 180;
   context.beginPath();
@@ -135,13 +165,15 @@ function drawProjectile() {
   context.strokeStyle = color.gold;
   context.stroke();
 
-  context.beginPath();
-  context.arc(px(point.x), py(Math.max(0, point.y)), 7, 0, Math.PI * 2);
-  context.fillStyle = color.gold;
-  context.fill();
-  context.lineWidth = 2;
-  context.strokeStyle = color.text;
-  context.stroke();
+  const ballX = px(point.x), ballY = py(Math.max(0, point.y));
+  context.strokeStyle = color.blue; context.setLineDash([3, 4]); context.beginPath(); context.moveTo(ballX, ballY); context.lineTo(ballX, bottom); context.stroke(); context.setLineDash([]);
+  drawSportBall(context, ballX, ballY, ballRadius, color);
+  if (elapsed < metrics.flightTime - 0.03) {
+    const vectorLength = 34; const scale = vectorLength / Math.max(parameters.speed, 0.01);
+    const vxPixels = point.vx * scale, vyPixels = -point.vy * scale;
+    if (Math.abs(vxPixels) > 1) drawVector(context, ballX + 2, ballY - 13, ballX + 2 + vxPixels, ballY - 13, color.blue, "vₓ");
+    if (Math.abs(vyPixels) > 1) drawVector(context, ballX + 5, ballY - 7, ballX + 5, ballY - 7 + vyPixels, color.text, "vᵧ");
+  }
 
   byId("projectile-time").textContent = number(elapsed, 2) + " s";
   byId("projectile-x").textContent = number(point.x, 1) + " m";
@@ -683,5 +715,4 @@ window.addEventListener("resize", () => {
 });
 if (activeTopic === "projectile") drawProjectile();
 if (activeTopic === "pendulum") resetPendulum();
-
 
