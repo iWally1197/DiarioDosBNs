@@ -24,8 +24,9 @@ function initializeLaboratory() {
     return { bg: read("--surface-2", "#131f32"), surface: read("--surface", "#101a2c"), text: read("--text", "#f4f5f8"), muted: read("--muted", "#9aa6b9"), subtle: read("--subtle", "#6b7890"), gold: read("--gold", "#d6b87a"), blue: read("--blue", "#79a8ff"), line: read("--line", "rgba(206,218,240,.18)") };
   };
   const fmt = (value, digits = 2) => {
-    if (!Number.isFinite(value)) return value === Infinity ? "∞" : value === -Infinity ? "−∞" : "—";
-    return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return numeric === Infinity ? "∞" : numeric === -Infinity ? "−∞" : "—";
+    return numeric.toLocaleString("pt-BR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
   };
   const svgFor = (id) => {
     const diagrams = {
