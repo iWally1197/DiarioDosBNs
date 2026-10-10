@@ -5,13 +5,15 @@
   <base href="./">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f">
-  <meta name="description" content="Laboratório Virtual de Física do Diário dos BNs: investigue o lançamento de projéteis em 2D e um pêndulo com modelo 3D interativo.">
+  <meta name="description" content="Laboratório Virtual de Física do Diário dos BNs: investigue movimentos, forças, energia, ondas, eletricidade, óptica e calor com modelos interativos.">
   <title>Laboratório Virtual de Física — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=laboratorio-suite-20261009-1">
   <script src="script.js?v=laboratorio-fisica-20261009-1" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
   <script type="module" src="laboratorio.js?v=laboratorio-fisica-20261009-1"></script>
+  <script type="module" src="laboratorio-workspace.js?v=laboratorio-suite-20261009-1"></script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-1"></script>
 </head>
 <body>
@@ -30,23 +32,46 @@
     <section class="tool-heading">
       <div class="section-kicker">OBSERVAR · ALTERAR · COMPARAR</div>
       <h1>Laboratório <span>Virtual de Física</span></h1>
-      <p>Altere uma variável por vez, acompanhe a simulação e compare as previsões do modelo com o movimento desenhado. Os cálculos e os gráficos usam as mesmas equações da animação.</p>
+      <p>Escolha um fenômeno, altere os parâmetros e observe a animação, os valores e o gráfico derivados do mesmo modelo físico. As hipóteses e os limites de cada simulação ficam visíveis.</p>
     </section>
 
-    <nav class="lab-index" aria-label="Experimentos do laboratório">
-      <a href="#lancamento"><span>01</span><b>Lançamento de projétil</b><small>Modelo 2D · cinemática</small></a>
-      <a href="#pendulo"><span>02</span><b>Pêndulo simples</b><small>Modelo 3D · dinâmica</small></a>
-    </nav>
+    <section class="lab-catalog" aria-labelledby="lab-catalog-title">
+      <div class="lab-catalog-heading"><div><div class="section-kicker">CATÁLOGO DE EXPERIMENTOS</div><h2 id="lab-catalog-title">O que você quer investigar?</h2></div><p><strong>Funcional</strong> indica uma simulação interativa disponível. As imagens dos cartões são diagramas vetoriais próprios.</p></div>
+      <div class="lab-filters">
+        <label>Buscar experimento<input id="lab-search" type="search" placeholder="Ex.: energia, ondas, colisão" autocomplete="off"></label>
+        <label>Categoria<select id="lab-category"><option value="">Todas as categorias</option></select></label>
+        <label>Nível<select id="lab-level"><option value="">Todos os níveis</option></select></label>
+        <label>Visualização<select id="lab-mode"><option value="">Todas</option></select></label>
+      </div>
+      <p id="lab-result-count" class="lab-result-count" aria-live="polite"></p>
+      <div id="lab-cards" class="lab-cards" aria-label="Lista de experimentos"></div>
+      <p id="lab-empty" class="lab-empty" hidden>Nenhum experimento corresponde a esses filtros.</p>
+    </section>
 
-    <section class="lab-experiment" id="lancamento" aria-labelledby="projectile-title">
+    <section id="lab-workspace" class="lab-workspace" aria-labelledby="workspace-title" hidden>
+      <div class="lab-workspace-heading"><div><div id="workspace-kicker" class="lesson-tag"></div><h2 id="workspace-title">Experimento</h2><p id="workspace-description"></p></div><span id="workspace-mode" class="model-tag"></span></div>
+      <div class="lab-workspace-grid">
+        <div class="lab-workspace-visuals">
+          <div class="lab-workspace-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação do modelo</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" role="img" aria-label="Animação do experimento selecionado"></canvas></div></div>
+            <div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="workspace-chart"><b>Gráfico do mesmo modelo</b></label><select id="workspace-chart" aria-label="Escolher grandeza no gráfico"></select></div><div class="lab-workspace-canvas-wrap lab-graph-canvas-wrap"><canvas id="workspace-graph" role="img" aria-label="Gráfico calculado com o modelo do experimento. Clique no gráfico para selecionar um instante ou posição." tabindex="0"></canvas></div><p class="lab-graph-hint">Clique no gráfico para consultar um ponto e sincronizar a animação quando o modelo permitir.</p></div>
+          </div>
+          <div id="workspace-readouts" class="lab-readouts" aria-live="off"></div>
+          <div class="lab-workspace-transport"><button id="workspace-play" class="button button-primary" type="button">Iniciar</button><button id="workspace-step" class="button button-outline" type="button">Avançar 0,1 s</button><button id="workspace-reset" class="button button-outline" type="button">Reiniciar</button><label>Reprodução <output id="workspace-speed-out">1×</output><input id="workspace-speed" type="range" min="0.25" max="2" step="0.25" value="1"></label><label for="workspace-time" class="lab-time-control">Instante <output id="workspace-time-out">0,00 s</output><input id="workspace-time" type="range" min="0" max="10" step="0.01" value="0"></label></div>
+          <div class="lab-measurements"><div class="lab-measurement-heading"><div><h3>Medições</h3><p>Registre uma observação do estado atual ou exporte a tabela em CSV.</p></div><div><button id="workspace-record" class="button button-outline" type="button">Registrar medição</button><button id="workspace-export" class="button button-outline" type="button" disabled>Exportar CSV</button></div></div><div class="lab-table-scroll"><table><caption id="workspace-table-caption">Medições simuladas; não são observações de um experimento real.</caption><thead id="workspace-table-head"></thead><tbody id="workspace-table-body"></tbody></table></div></div>
+        </div>
+        <aside class="lab-workspace-controls"><h3>Parâmetros</h3><div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
+      </div>
+    </section>
+
+    <section class="lab-experiment" id="lancamento" aria-labelledby="projectile-title" tabindex="-1">
       <div class="lab-experiment-heading">
         <div><div class="lesson-tag">01 · CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento de projétil</h2><p>Uma esfera parte de uma altura inicial e se move sob a ação da gravidade. O ar não oferece resistência neste modelo.</p></div>
         <span class="model-tag">MODELO 2D</span>
       </div>
       <div class="lab-simulation-grid">
         <div class="lab-visual-column">
-          <div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Trajetória bidimensional calculada para o projétil. A esfera percorre a parábola prevista pela equação exibida abaixo." role="img"></canvas></div>
-          <div class="lab-readouts" aria-live="polite">
+          <div class="lab-workspace-panels lab-existing-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação</b><span>trajetória calculada</span></div><div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Trajetória bidimensional calculada para o projétil. A esfera percorre a parábola prevista pela equação exibida abaixo." role="img"></canvas></div></div><div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="projectile-graph"><b>Gráfico sincronizado</b></label><select id="projectile-graph" aria-label="Escolher grandeza no gráfico do lançamento"></select></div><div class="lab-chart-wrap lab-canvas-wrap"><canvas id="projectile-chart" aria-label="Gráfico do movimento do projétil atualizado com o mesmo instante e as mesmas equações da animação." role="img" tabindex="0"></canvas></div></div></div>
+          <div class="lab-readouts" aria-live="off">
             <div><span>Tempo</span><b id="projectile-time">0,00 s</b></div>
             <div><span>Posição horizontal</span><b id="projectile-x">0,0 m</b></div>
             <div><span>Altura</span><b id="projectile-y">0,0 m</b></div>
@@ -72,15 +97,16 @@
       <details class="lab-limitations"><summary>Hipóteses e limites deste modelo</summary><p>O projétil é tratado como um ponto material. A aceleração horizontal é zero e a aceleração vertical é constante e igual a −g. Não há arrasto do ar, vento, rotação, variação da gravidade com a altitude nem colisão com obstáculos. Por isso, o resultado descreve um modelo didático ideal, não uma previsão de engenharia para um objeto real.</p></details>
     </section>
 
-    <section class="lab-experiment" id="pendulo" aria-labelledby="pendulum-title">
+    <section class="lab-experiment" id="pendulo" aria-labelledby="pendulum-title" tabindex="-1">
       <div class="lab-experiment-heading">
         <div><div class="lesson-tag">02 · DINÂMICA ROTACIONAL</div><h2 id="pendulum-title">Pêndulo simples</h2><p>Observe o movimento de uma massa puntiforme presa a um fio sem massa. Arraste a cena para mudar a câmera e use as vistas para comparar perspectivas.</p></div>
-        <span class="model-tag">MODELO 3D</span>
+        <span class="model-tag">PROJEÇÃO ESPACIAL 2D</span>
       </div>
       <div class="lab-simulation-grid pendulum-grid">
         <div class="lab-visual-column">
-          <div class="lab-canvas-wrap pendulum-canvas-wrap"><canvas id="pendulum-canvas" aria-label="Modelo tridimensional interativo de um pêndulo simples, com fio, massa, plano de referência e eixos." role="img" tabindex="0"></canvas><span class="drag-hint">Arraste para girar a câmera</span></div>
-          <div class="lab-readouts" aria-live="polite">
+          <div class="lab-workspace-panels lab-existing-panels pendulum-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Visualização espacial projetada</b><span>arraste para girar</span></div><div class="lab-canvas-wrap pendulum-canvas-wrap"><canvas id="pendulum-canvas" aria-label="Projeção bidimensional interativa de um pêndulo simples, com fio, massa, plano de referência e eixos. Não é uma cena 3D WebGL." role="img" tabindex="0"></canvas><span class="drag-hint">Arraste para girar a perspectiva</span></div></div><div class="lab-workspace-panel"><div class="lab-chart-heading"><b>Ângulo ao longo do tempo</b><span>θ (graus) × t (s)</span></div><div class="lab-chart-wrap lab-canvas-wrap pendulum-chart-wrap"><canvas id="pendulum-chart" aria-label="Gráfico do ângulo do pêndulo em função do tempo, atualizado pela integração numérica da mesma simulação. Use as setas para mudar o instante." role="img" tabindex="0"></canvas></div></div></div>
+          <label class="pendulum-scrubber" for="pendulum-time-scrubber">Instante selecionado <output id="pendulum-time-out">0,00 s</output><input id="pendulum-time-scrubber" type="range" min="0" max="12" step="0.01" value="0" aria-label="Selecionar o instante da simulação do pêndulo"></label>
+          <div class="lab-readouts" aria-live="off">
             <div><span>Tempo</span><b id="pendulum-time">0,00 s</b></div>
             <div><span>Ângulo</span><b id="pendulum-angle-readout">35,0°</b></div>
             <div><span>Velocidade angular</span><b id="pendulum-omega">0,00 rad/s</b></div>
@@ -88,7 +114,6 @@
             <div><span>Energia potencial / kg</span><b id="pendulum-potential">— J/kg</b></div>
             <div><span>Variação da energia total</span><b id="pendulum-energy-drift">0,00%</b></div>
           </div>
-          <div class="lab-chart-wrap"><div class="lab-chart-heading"><b>Ângulo ao longo do tempo</b><span>θ (graus) × t (s)</span></div><canvas id="pendulum-chart" aria-label="Gráfico do ângulo do pêndulo em função do tempo, atualizado pela integração numérica da mesma simulação 3D." role="img"></canvas></div>
         </div>
         <aside class="lab-controls">
           <h3>Parâmetros físicos</h3>
@@ -97,12 +122,12 @@
           <label for="pendulum-gravity">Aceleração da gravidade <output id="pendulum-gravity-out">9,81 m/s²</output><input id="pendulum-gravity" type="range" min="1" max="20" step="0.01" value="9.81"></label>
           <label for="pendulum-playback">Velocidade da reprodução <output id="pendulum-playback-out">1×</output><input id="pendulum-playback" type="range" min="0.25" max="2" step="0.25" value="1"></label>
           <div class="lab-actions"><button id="pendulum-play" class="button button-primary" type="button">Iniciar</button><button id="pendulum-reset" class="button button-outline" type="button">Recomeçar</button></div>
-          <div class="view-controls lab-view-controls" role="group" aria-label="Perspectiva da câmera 3D"><button type="button" data-pendulum-view="front" aria-pressed="false">Frente</button><button type="button" data-pendulum-view="side" aria-pressed="false">Lado</button><button type="button" data-pendulum-view="orbit" aria-pressed="true">Órbita</button></div>
+          <div class="view-controls lab-view-controls" role="group" aria-label="Perspectiva projetada do pêndulo"><button type="button" data-pendulum-view="front" aria-pressed="false">Frente</button><button type="button" data-pendulum-view="side" aria-pressed="false">Lado</button><button type="button" data-pendulum-view="orbit" aria-pressed="true">Órbita</button></div>
           <p id="pendulum-status" class="lab-status" role="status" aria-live="polite">Em repouso. O modelo usa a equação não linear do pêndulo, sem a aproximação de ângulo pequeno.</p>
-          <div class="lab-equation-card"><span>Equação de movimento</span><strong>θ̈ = −(g/L) sen(θ)</strong><span>Integração numérica: velocity-Verlet · Δt = 1/480 s</span></div>
+          <div class="lab-equation-card"><span>Equação de movimento</span><strong>θ̈ = −(g/L) sen(θ)</strong><span>Integração numérica: Euler semi-implícito · Δt = 1/480 s</span></div>
         </aside>
       </div>
-      <details class="lab-limitations"><summary>Hipóteses, integração numérica e limites</summary><p>O pêndulo é ideal: fio inextensível e sem massa, massa puntiforme, pivô sem atrito e sem resistência do ar. A equação não linear θ̈ = −(g/L) sen(θ) é integrada numericamente pelo método velocity-Verlet com passos fixos de 1/480 s. A energia pode oscilar ligeiramente por causa da discretização; o painel mostra a variação em relação à energia inicial. O comprimento e a gravidade alteram a dinâmica. A massa não é um controle porque, neste modelo ideal, ela cancela na equação do movimento.</p></details>
+      <details class="lab-limitations"><summary>Hipóteses, integração numérica e limites</summary><p>O pêndulo é ideal: fio inextensível e sem massa, massa puntiforme, pivô sem atrito e sem resistência do ar. A equação não linear θ̈ = −(g/L) sen(θ) é integrada numericamente com passos fixos de 1/480 s. A energia pode oscilar ligeiramente por causa da discretização; o painel mostra a variação em relação à energia inicial. A animação é uma projeção espacial 2D interativa desenhada em canvas, não uma cena WebGL. O comprimento e a gravidade alteram a dinâmica. A massa não é um controle porque, neste modelo ideal, ela cancela na equação do movimento.</p></details>
     </section>
 
     <aside class="notice-card"><b>Do modelo ao projeto Blender</b><p>As experiências deste laboratório calculam a física no navegador. Para examinar uma cena 3D editável, abra a <a href="downloads.html">central de downloads</a> e explore os arquivos no Blender.</p></aside>
@@ -110,3 +135,5 @@
   <footer class="site-footer"><div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Modelos físicos interativos para investigar.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Consulte as hipóteses de cada simulação.</span><a href="index.html">Início ↗</a><a href="downloads.html">Projetos Blender ↗</a></div></footer>
 </body>
 </html>
+
+
