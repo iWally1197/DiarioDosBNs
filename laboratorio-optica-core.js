@@ -196,7 +196,7 @@ function sphericalMirror(id, p) {
   const yExtent = Math.max(aperture * 1.5, objectHeight * 1.5, Math.abs(imageY ?? 0) > 0 ? Math.min(Math.abs(imageY), 7) * 1.12 : 0.5);
   const bounds = { xMin, xMax, yMin: -yExtent, yMax: yExtent };
   const object = { x: -objectDistance, y: objectHeight };
-  const sampleHeights = [-0.9, -0.55, -0.2, 0.2, 0.55, 0.9].map((factor) => factor * aperture);
+  const sampleHeights = [-0.78, -0.28, 0.28, 0.78].map((factor) => factor * aperture);
   const rays = [];
   const particlePaths = [];
   for (const y of sampleHeights) {
@@ -307,4 +307,3 @@ export function opticalDistance(a, b) {
 export function opticalViewFor(bounds, width, height) {
   return makeView(bounds, width, height);
 }
-
