@@ -49,6 +49,26 @@ test("velocity-Verlet pendulum integration conserves energy within 0.1% at high 
   assert.ok(maxRelativeError < 0.001, "relative energy deviation was " + maxRelativeError);
 });
 
+test("small-angle pendulum period approaches 2π√(L/g)", () => {
+  const parameters = { length: 1.2, gravity: 9.81 };
+  const dt = 1 / 480;
+  let state = { theta: 0.1, omega: 0 };
+  let previousTheta = state.theta;
+  let crossingTime = 0;
+  for (let i = 1; i < 5000; i += 1) {
+    state = pendulumStep(state, parameters, dt);
+    if (state.theta <= 0) {
+      const fraction = previousTheta / (previousTheta - state.theta);
+      crossingTime = (i - 1 + fraction) * dt;
+      break;
+    }
+    previousTheta = state.theta;
+  }
+  const simulatedPeriod = 4 * crossingTime;
+  const smallAnglePeriod = 2 * Math.PI * Math.sqrt(parameters.length / parameters.gravity);
+  assert.ok(Math.abs(simulatedPeriod - smallAnglePeriod) / smallAnglePeriod < 0.002);
+});
+
 test("invalid pendulum parameters are rejected", () => {
   assert.throws(() => pendulumStep({ theta: 0, omega: 0 }, { length: 0, gravity: 9.81 }, 1 / 240), RangeError);
 });
