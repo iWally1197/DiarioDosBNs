@@ -13,13 +13,25 @@ function positive(value, name) {
   return result;
 }
 
+function nonNegative(value, name) {
+  const result = finite(value, name);
+  if (result < 0) throw new RangeError(`${name} não pode ser negativa.`);
+  return result;
+}
+
+function inclineAcceleration(angleDegrees) {
+  const angle = finite(angleDegrees, "Ângulo da rampa");
+  if (!(angle > 0 && angle < 90)) throw new RangeError("O ângulo da rampa deve estar entre 0° e 90°.");
+  return G * Math.sin(angle * Math.PI / 180);
+}
+
 export function durationFor(id, p) {
   switch (id) {
     case "mru":
     case "muv": return 10;
     case "newton": return 8;
     case "energy": {
-      const a = G * Math.sin(finite(p.angle, "Ângulo") * Math.PI / 180);
+      const a = inclineAcceleration(p.angle);
       return Math.sqrt(2 * positive(p.length, "Comprimento") / a);
     }
     case "collision": return 4;
@@ -74,8 +86,10 @@ export function stateAt(id, p, time = 0) {
       const mass = positive(p.mass, "Massa");
       const force = finite(p.force, "Força aplicada");
       const normal = mass * G;
-      const staticMax = finite(p.muStatic, "Atrito estático") * normal;
-      const kinetic = finite(p.muKinetic, "Atrito cinético") * normal;
+      const muStatic = nonNegative(p.muStatic, "Coeficiente de atrito estático");
+      const muKinetic = nonNegative(p.muKinetic, "Coeficiente de atrito cinético");
+      const staticMax = muStatic * normal;
+      const kinetic = muKinetic * normal;
       if (staticMax < kinetic) throw new RangeError("O coeficiente de atrito estático deve ser maior ou igual ao cinético.");
       let net = 0;
       if (Math.abs(force) > staticMax) net = force - Math.sign(force) * kinetic;
@@ -84,9 +98,9 @@ export function stateAt(id, p, time = 0) {
     }
     case "energy": {
       const length = positive(p.length, "Comprimento da rampa");
-      const angle = finite(p.angle, "Ângulo") * Math.PI / 180;
+      const acceleration = inclineAcceleration(p.angle);
+      const angle = Number(p.angle) * Math.PI / 180;
       const mass = positive(p.mass, "Massa");
-      const acceleration = G * Math.sin(angle);
       const duration = Math.sqrt(2 * length / acceleration);
       const s = Math.min(length, 0.5 * acceleration * t ** 2);
       const v = acceleration * t;
@@ -114,7 +128,7 @@ export function stateAt(id, p, time = 0) {
     case "spring": {
       const mass = positive(p.mass, "Massa");
       const k = positive(p.k, "Constante elástica");
-      const amplitude = positive(p.amplitude, "Amplitude");
+      const amplitude = nonNegative(p.amplitude, "Amplitude");
       const omega = Math.sqrt(k / mass);
       const x = amplitude * Math.cos(omega * t);
       const v = -amplitude * omega * Math.sin(omega * t);
@@ -123,7 +137,7 @@ export function stateAt(id, p, time = 0) {
       return { time: t, duration, values: { x, v, a: -(omega ** 2) * x, kinetic, potential, total: kinetic + potential, omega, period: 2 * Math.PI / omega } };
     }
     case "wave": {
-      const amplitude = positive(p.amplitude, "Amplitude");
+      const amplitude = nonNegative(p.amplitude, "Amplitude");
       const wavelength = positive(p.wavelength, "Comprimento de onda");
       const frequency = positive(p.frequency, "Frequência");
       const xProbe = finite(p.xProbe, "Posição de medição");
@@ -137,8 +151,8 @@ export function stateAt(id, p, time = 0) {
       return { time: 0, duration, values: { voltage, resistance, current, power: voltage * current } };
     }
     case "lens": {
-      const f = finite(p.focalLength, "Distância focal");
-      const doDistance = finite(p.objectDistance, "Distância do objeto");
+      const f = positive(p.focalLength, "Distância focal");
+      const doDistance = positive(p.objectDistance, "Distância do objeto");
       if (Math.abs(1 / f - 1 / doDistance) < 1e-10) {
         return { time: 0, duration, values: { f, objectDistance: doDistance, imageDistance: Infinity, magnification: -Infinity, image: "no infinito" } };
       }
@@ -150,6 +164,7 @@ export function stateAt(id, p, time = 0) {
       const m2 = positive(p.mass2, "Massa fria");
       const hot = finite(p.temperature1, "Temperatura inicial quente");
       const cold = finite(p.temperature2, "Temperatura inicial fria");
+      if (cold < 0 || hot > 100 || hot < cold) throw new RangeError("Para este modelo de água líquida, use 0 °C ≤ temperatura fria ≤ temperatura quente ≤ 100 °C.");
       const c = 4186;
       const c1 = m1 * c;
       const c2 = m2 * c;
