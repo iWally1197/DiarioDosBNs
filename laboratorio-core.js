@@ -1,9 +1,27 @@
+function finite(value, name) {
+  const result = Number(value);
+  if (!Number.isFinite(result)) throw new RangeError(`${name} deve ser um número finito.`);
+  return result;
+}
+
+function nonNegative(value, name) {
+  const result = finite(value, name);
+  if (result < 0) throw new RangeError(`${name} não pode ser negativa.`);
+  return result;
+}
+
+function positive(value, name) {
+  const result = finite(value, name);
+  if (!(result > 0)) throw new RangeError(`${name} deve ser maior que zero.`);
+  return result;
+}
+
 export function projectileAtTime(time, parameters) {
-  const t = Math.max(0, Number(time) || 0);
-  const speed = Number(parameters.speed);
-  const angle = Number(parameters.angleDegrees) * Math.PI / 180;
-  const gravity = Number(parameters.gravity);
-  const height = Number(parameters.height);
+  const t = Math.max(0, finite(time, "Tempo"));
+  const speed = nonNegative(parameters.speed, "Velocidade inicial");
+  const angle = finite(parameters.angleDegrees, "Ângulo de lançamento") * Math.PI / 180;
+  const gravity = positive(parameters.gravity, "Gravidade");
+  const height = nonNegative(parameters.height, "Altura inicial");
   const vx = speed * Math.cos(angle);
   const vy = speed * Math.sin(angle);
   return {
@@ -16,17 +34,16 @@ export function projectileAtTime(time, parameters) {
 }
 
 export function projectileFlightTime(parameters) {
-  const gravity = Number(parameters.gravity);
-  if (!(gravity > 0)) throw new RangeError("A gravidade precisa ser maior que zero.");
-  const angle = Number(parameters.angleDegrees) * Math.PI / 180;
-  const vy = Number(parameters.speed) * Math.sin(angle);
-  const height = Math.max(0, Number(parameters.height));
+  const gravity = positive(parameters.gravity, "Gravidade");
+  const angle = finite(parameters.angleDegrees, "Ângulo de lançamento") * Math.PI / 180;
+  const vy = nonNegative(parameters.speed, "Velocidade inicial") * Math.sin(angle);
+  const height = nonNegative(parameters.height, "Altura inicial");
   return (vy + Math.sqrt(vy * vy + 2 * gravity * height)) / gravity;
 }
 
 export function projectileMetrics(parameters) {
-  const angle = Number(parameters.angleDegrees) * Math.PI / 180;
-  const speed = Number(parameters.speed);
+  const angle = finite(parameters.angleDegrees, "Ângulo de lançamento") * Math.PI / 180;
+  const speed = nonNegative(parameters.speed, "Velocidade inicial");
   const flightTime = projectileFlightTime(parameters);
   const maxHeight = Math.max(0, Number(parameters.height)) +
     Math.pow(speed * Math.sin(angle), 2) / (2 * Number(parameters.gravity));
@@ -38,20 +55,29 @@ export function projectileMetrics(parameters) {
 }
 
 export function pendulumStep(state, parameters, dt) {
-  const length = Number(parameters.length);
-  const gravity = Number(parameters.gravity);
-  if (!(length > 0) || !(gravity > 0) || !(dt > 0)) {
+  const length = positive(parameters.length, "Comprimento");
+  const gravity = positive(parameters.gravity, "Gravidade");
+  const step = positive(dt, "Passo de tempo");
+  const theta0 = finite(state.theta, "Ângulo");
+  const omega0 = finite(state.omega, "Velocidade angular");
+  if (!(length > 0) || !(gravity > 0) || !(step > 0)) {
     throw new RangeError("Comprimento, gravidade e passo de tempo devem ser positivos.");
   }
-  const angularAcceleration = -(gravity / length) * Math.sin(state.theta);
-  const theta = state.theta + state.omega * dt + 0.5 * angularAcceleration * dt * dt;
+  const angularAcceleration = -(gravity / length) * Math.sin(theta0);
+  const theta = theta0 + omega0 * step + 0.5 * angularAcceleration * step * step;
   const nextAngularAcceleration = -(gravity / length) * Math.sin(theta);
-  const omega = state.omega + 0.5 * (angularAcceleration + nextAngularAcceleration) * dt;
+  const omega = omega0 + 0.5 * (angularAcceleration + nextAngularAcceleration) * step;
   return { theta, omega };
 }
 
 export function pendulumEnergyPerMass(state, length, gravity) {
-  const kinetic = 0.5 * Math.pow(Number(length) * Number(state.omega), 2);
-  const potential = Number(gravity) * Number(length) * (1 - Math.cos(Number(state.theta)));
+  const normalizedLength = positive(length, "Comprimento");
+  const normalizedGravity = positive(gravity, "Gravidade");
+  const theta = finite(state.theta, "Ângulo");
+  const omega = finite(state.omega, "Velocidade angular");
+  const kinetic = 0.5 * Math.pow(normalizedLength * omega, 2);
+  const potential = normalizedGravity * normalizedLength * (1 - Math.cos(theta));
   return { kinetic, potential, total: kinetic + potential };
 }
+
+
