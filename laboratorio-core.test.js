@@ -35,10 +35,10 @@ test("zero-angle pendulum equilibrium remains stationary", () => {
   closeTo(next.omega, 0);
 });
 
-test("symplectic pendulum integration conserves energy within 0.1% over ten seconds", () => {
+test("velocity-Verlet pendulum integration conserves energy within 0.1% at high amplitude", () => {
   const parameters = { length: 1.2, gravity: 9.81 };
   const dt = 1 / 480;
-  let state = { theta: 0.4, omega: 0 };
+  let state = { theta: 75 * Math.PI / 180, omega: 0 };
   const initialEnergy = pendulumEnergyPerMass(state, parameters.length, parameters.gravity).total;
   let maxRelativeError = 0;
   for (let i = 0; i < 10 / dt; i += 1) {
