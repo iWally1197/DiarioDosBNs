@@ -32,12 +32,24 @@ test("atrito cinético reduz a força resultante após o limiar", () => {
   assert.ok(Math.abs(state.values.a - (8 - 0.18 * 2 * 9.81) / 2) < 1e-12);
 });
 
+test("atrito cinético continua se opondo ao movimento quando a força aponta para o sentido negativo", () => {
+  const state = stateAt("newton", { mass: 2, force: -8, muStatic: 0.25, muKinetic: 0.18 }, 1);
+  assert.ok(state.values.a < 0);
+  assert.ok(state.values.friction > 0);
+  assert.ok(Math.abs(state.values.a - (-8 + 0.18 * 2 * 9.81) / 2) < 1e-12);
+});
+
 test("rampa ideal conserva energia mecânica no início e no final", () => {
   const p = { mass: 1.7, length: 4, angle: 30 };
   const start = stateAt("energy", p, 0).values;
   const end = stateAt("energy", p, durationFor("energy", p)).values;
   assert.ok(Math.abs(start.total - end.total) < 1e-10);
   assert.ok(Math.abs(end.potential) < 1e-10);
+});
+
+test("rampa rejeita ângulos que não produzem o modelo de descida definido", () => {
+  assert.throws(() => durationFor("energy", { length: 4, angle: 0 }), /entre 0° e 90°/);
+  assert.throws(() => stateAt("energy", { mass: 1, length: 4, angle: 90 }, 1), /entre 0° e 90°/);
 });
 
 test("colisão elástica conserva momento e energia; inelástica conserva momento", () => {
@@ -77,6 +89,9 @@ test("lente delgada identifica imagem real, virtual e foco singular", () => {
   assert.ok(stateAt("lens", { focalLength: 0.5, objectDistance: 1.5 }).values.imageDistance > 0);
   assert.ok(stateAt("lens", { focalLength: 0.5, objectDistance: 0.25 }).values.imageDistance < 0);
   assert.equal(stateAt("lens", { focalLength: 0.5, objectDistance: 0.5 }).values.image, "no infinito");
+  assert.ok(stateAt("lens", { focalLength: 0.5, objectDistance: 1.5 }).values.magnification < 0);
+  assert.throws(() => stateAt("lens", { focalLength: 0, objectDistance: 1 }), /Distância focal/);
+  assert.throws(() => stateAt("lens", { focalLength: 0.5, objectDistance: 0 }), /Distância do objeto/);
 });
 
 test("calorimetria conserva energia e converge para a temperatura de equilíbrio", () => {
@@ -86,6 +101,12 @@ test("calorimetria conserva energia e converge para a temperatura de equilíbrio
   assert.ok(Math.abs(initial.energyBalance) < 1e-10);
   assert.ok(Math.abs(end.temperature1 - end.equilibrium) < 0.5);
   assert.ok(Math.abs(end.temperature2 - end.equilibrium) < 0.5);
+});
+
+test("modelo de água líquida rejeita inversão de temperaturas e valores fora da faixa indicada", () => {
+  const p = { temperature1: 80, temperature2: 20, mass1: 0.2, mass2: 0.3, conductance: 50 };
+  assert.throws(() => stateAt("calorimetry", { ...p, temperature1: 10, temperature2: 30 }, 1), /temperatura fria/);
+  assert.throws(() => stateAt("calorimetry", { ...p, temperature2: -5 }, 1), /temperatura fria/);
 });
 
 test("campo de cargas opostas aponta para a carga negativa e diverge nas cargas", () => {
@@ -114,6 +135,7 @@ test("gráficos saem do estado atual de cada modelo e contêm pontos finitos", (
 
 test("valores físicos e parâmetros inválidos geram erros explícitos", () => {
   assert.throws(() => stateAt("spring", { mass: 0, k: 4, amplitude: 1 }, 0), RangeError);
+  assert.throws(() => stateAt("newton", { mass: 2, force: 8, muStatic: -0.1, muKinetic: 0 }, 1), /não pode ser negativa/);
   assert.throws(() => stateAt("newton", { mass: 2, force: 8, muStatic: 0.1, muKinetic: 0.5 }, 1), /maior ou igual/);
   assert.throws(() => stateAt("collision", { mass1: 1, mass2: 1, u1: 1, u2: 2, restitution: 1 }, 0), /alcançar/);
   assert.throws(() => durationFor("unknown", {}), /desconhecido/);
