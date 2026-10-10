@@ -1,4 +1,4 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=motion-reference-20261009-1";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -47,6 +47,16 @@ function initializeExperimentPage(topicId) {
     workspace.hidden = false;
     $("#workspace-title").textContent = experiment.title;
     $("#workspace-description").textContent = experiment.description;
+    const sceneCaptions = {
+      mru: "O trilho e a régua ficam fixos. O é a origem do referencial; o carrinho avança com velocidade constante e sua posição é medida em relação à pista.",
+      muv: "A pista, a origem O e a escala permanecem fixas durante toda a reprodução. Assim você vê o carrinho ganhar ou perder velocidade no mesmo referencial enquanto x(t) e v(t) mudam.",
+      newton: "O carrinho está em uma pista fixa. As setas mostram as forças e o movimento é calculado em relação à origem O; se o atrito estático equilibrar a força, ele permanece em repouso.",
+      energy: "Um carrinho desce a rampa ideal. A coordenada s parte da origem O no alto; altura, velocidade e energias vêm do mesmo movimento.",
+      collision: "Os dois carrinhos percorrem uma pista e uma régua fixas. As posições e velocidades antes e depois do contato usam esse mesmo referencial.",
+      spring: "Um carrinho oscila preso à mola. O é o ponto de equilíbrio fixo; x indica o deslocamento do carrinho em relação a essa origem.",
+      wave: "A corda e o eixo x formam o referencial fixo: os pontos materiais da corda oscilam verticalmente enquanto o padrão da onda se desloca para +x."
+    };
+    $("#workspace-scene-caption").textContent = sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.";
     $("#workspace-mode").textContent = experiment.mode;
     $("#workspace-equation").textContent = experiment.equation;
     $("#workspace-method").textContent = `Modelo analítico · unidades SI · ${experiment.assumptions}`;
@@ -222,6 +232,169 @@ function initializeExperimentPage(topicId) {
     context.beginPath(); context.moveTo(x2, y2); context.lineTo(x2 - 8 * Math.cos(angle - 0.48), y2 - 8 * Math.sin(angle - 0.48)); context.lineTo(x2 - 8 * Math.cos(angle + 0.48), y2 - 8 * Math.sin(angle + 0.48)); context.closePath(); context.fillStyle = color; context.fill();
     if (label) { context.fillStyle = color; context.font = "11px system-ui"; context.fillText(label, x2 + 5, y2 - 5); }
   }
+  function roundedRect(context, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    context.beginPath(); context.moveTo(x + r, y); context.lineTo(x + width - r, y); context.quadraticCurveTo(x + width, y, x + width, y + r);
+    context.lineTo(x + width, y + height - r); context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    context.lineTo(x + r, y + height); context.quadraticCurveTo(x, y + height, x, y + height - r); context.lineTo(x, y + r); context.quadraticCurveTo(x, y, x + r, y); context.closePath();
+  }
+  function drawBackdrop(context, width, height, c) {
+    const gradient = context.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, c.surface); gradient.addColorStop(0.58, c.bg); gradient.addColorStop(1, c.surface);
+    context.fillStyle = gradient; context.fillRect(0, 0, width, height);
+    context.strokeStyle = c.line; context.lineWidth = 1; context.globalAlpha = 0.4;
+    for (let i = 1; i <= 3; i += 1) { const y = height * i / 5; context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
+    context.globalAlpha = 1;
+  }
+  function drawCart(context, centerX, wheelLineY, bodyColor, c, label = "A", orientation = 0, wheelRotation = 0, size = 1) {
+    context.save(); context.translate(centerX, wheelLineY); context.rotate(orientation); context.scale(size, size);
+    context.fillStyle = "rgba(0,0,0,.28)"; context.beginPath(); context.ellipse(0, 9, 37, 7, 0, 0, 2 * Math.PI); context.fill();
+    const body = context.createLinearGradient(0, -34, 0, -5); body.addColorStop(0, c.text); body.addColorStop(0.22, bodyColor); body.addColorStop(1, bodyColor);
+    context.fillStyle = body; roundedRect(context, -34, -31, 68, 22, 7); context.fill();
+    context.fillStyle = c.line; roundedRect(context, -15, -28, 25, 9, 3); context.fill();
+    context.fillStyle = c.text; context.globalAlpha = 0.8; roundedRect(context, -13, -27, 20, 6, 2); context.fill(); context.globalAlpha = 1;
+    context.fillStyle = bodyColor; roundedRect(context, 10, -25, 19, 13, 4); context.fill();
+    context.fillStyle = c.muted; roundedRect(context, -37, -14, 75, 5, 2); context.fill();
+    for (const wheelX of [-21, 21]) {
+      context.fillStyle = "#111722"; context.beginPath(); context.arc(wheelX, -1, 8, 0, 2 * Math.PI); context.fill();
+      context.fillStyle = c.text; context.beginPath(); context.arc(wheelX, -1, 3.5, 0, 2 * Math.PI); context.fill();
+      context.save(); context.translate(wheelX, -1); context.rotate(wheelRotation); context.strokeStyle = c.muted; context.lineWidth = 1.2;
+      for (let spoke = 0; spoke < 4; spoke += 1) { context.rotate(Math.PI / 2); context.beginPath(); context.moveTo(0, -2); context.lineTo(0, -6); context.stroke(); }
+      context.restore();
+    }
+    context.fillStyle = c.bg; context.font = "bold 10px system-ui"; context.textAlign = "center"; context.fillText(label, 0, -15); context.textAlign = "start";
+    context.restore();
+  }
+  function drawTrack(context, width, y, c, left = 18, right = width - 18) {
+    context.fillStyle = "rgba(0,0,0,.13)"; context.fillRect(left, y + 5, right - left, 18);
+    context.fillStyle = c.muted; context.globalAlpha = 0.7;
+    for (let x = left + 3; x < right; x += 24) { roundedRect(context, x, y - 4, 5, 13, 2); context.fill(); }
+    context.globalAlpha = 1;
+    lineTo(context, { x: left, y }, { x: right, y }, c.text, 2);
+    lineTo(context, { x: left, y: y + 5 }, { x: right, y: y + 5 }, c.line, 2);
+  }
+  function drawReferenceAxis(context, range, mapX, y, c, topY) {
+    const left = mapX(range.min), right = mapX(range.max);
+    lineTo(context, { x: left, y }, { x: right, y }, c.text, 1.5);
+    arrow(context, right - 12, y, right, y, c.text, "x (m)");
+    context.font = "10px system-ui"; context.fillStyle = c.muted; context.textAlign = "center";
+    for (let i = 0; i <= 4; i += 1) {
+      const value = range.min + (range.max - range.min) * i / 4; const x = mapX(value);
+      lineTo(context, { x, y: y - 4 }, { x, y: y + 5 }, c.muted, 1);
+      context.fillText(fmt(value, Math.abs(value) >= 10 ? 0 : 1), x, y + 18);
+    }
+    context.textAlign = "start";
+    if (range.min <= 0 && range.max >= 0) {
+      const origin = mapX(0); context.strokeStyle = c.blue; context.setLineDash([4, 4]); context.beginPath(); context.moveTo(origin, topY); context.lineTo(origin, y - 4); context.stroke(); context.setLineDash([]);
+      context.fillStyle = c.blue; context.font = "bold 10px system-ui"; context.textAlign = "center"; context.fillText("O · origem fixa", origin, y - 9); context.textAlign = "start";
+    }
+  }
+  function motionRange(id, p) {
+    const duration = durationFor(id, p);
+    const times = [0, duration];
+    if (id === "muv" && Number(p.acceleration)) {
+      const turningTime = -Number(p.velocity) / Number(p.acceleration);
+      if (turningTime > 0 && turningTime < duration) times.push(turningTime);
+    }
+    const positions = times.map((time) => stateAt(id, p, time).values.x);
+    let min = Math.min(0, ...positions), max = Math.max(0, ...positions);
+    if (max - min < 2) { min -= 2; max += 2; }
+    const padding = Math.max(1, (max - min) * 0.1);
+    return { min: min - padding, max: max + padding };
+  }
+  function drawMotionCartScene(id, p, model, width, height, c) {
+    drawBackdrop(sceneContext, width, height, c);
+    const ctx = sceneContext; const trackY = height * 0.64; const axisY = height - 30; const range = motionRange(id, p);
+    const left = 44, right = width - 22; const mapX = (x) => left + (x - range.min) / (range.max - range.min) * (right - left);
+    drawTrack(ctx, width, trackY, c, left - 20, right);
+    drawReferenceAxis(ctx, range, mapX, axisY, c, trackY - 58);
+    const initialX = stateAt(id, p, 0).values.x; const x = mapX(model.values.x); const originX = mapX(initialX);
+    if (Math.abs(x - originX) > 1) { ctx.strokeStyle = c.gold; ctx.globalAlpha = 0.7; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(originX, trackY - 39); ctx.lineTo(x, trackY - 39); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+    const startX = stateAt(id, p, 0).values.x;
+    drawCart(ctx, x, trackY, id === "muv" ? c.blue : c.gold, c, id === "newton" ? "N" : "A", 0, (model.values.x - startX) / 0.16);
+    const velocity = model.values.v; const acceleration = model.values.a;
+    if (Math.abs(velocity) > 0.01) {
+      const length = Math.min(66, 20 + Math.abs(velocity) * 3.5); const direction = Math.sign(velocity);
+      arrow(ctx, x, trackY - 40, x + direction * length, trackY - 40, c.blue, `v ${fmt(velocity, 1)} m/s`);
+    }
+    if (id === "muv" && Math.abs(acceleration) > 0.01) {
+      const accelerationLength = Math.min(48, 18 + Math.abs(acceleration) * 9);
+      arrow(ctx, x, trackY - 57, x + Math.sign(acceleration) * accelerationLength, trackY - 57, c.gold, `a ${fmt(acceleration, 1)} m/s²`);
+    }
+    ctx.font = "12px system-ui"; ctx.fillStyle = c.text;
+    ctx.fillText(`Referencial fixo da pista · t = ${fmt(model.time)} s`, 14, 21);
+    ctx.fillStyle = c.muted; ctx.fillText(`x = ${fmt(model.values.x)} m   ·   v = ${fmt(velocity, 2)} m/s   ·   a = ${fmt(acceleration, 2)} m/s²`, 14, 41);
+    if (id === "newton") {
+      const forceScale = Math.min(58, 12 + Math.abs(model.values.force) * 1.4);
+      if (Math.abs(model.values.force) > 0.01) arrow(ctx, x, trackY - 57, x + Math.sign(model.values.force) * forceScale, trackY - 57, c.gold, `F ${fmt(model.values.force, 1)} N`);
+      if (Math.abs(acceleration) > 0.01) arrow(ctx, x, trackY - 73, x + Math.sign(acceleration) * Math.min(42, 18 + Math.abs(acceleration) * 4), trackY - 73, c.blue, `a ${fmt(acceleration, 1)} m/s²`);
+      if (Math.abs(velocity) < 0.01) { ctx.fillStyle = c.muted; ctx.fillText("Carrinho em repouso neste referencial", 14, 61); }
+    }
+  }
+  function drawMotionCollisionScene(p, model, width, height, c) {
+    const ctx = sceneContext; drawBackdrop(ctx, width, height, c);
+    const trackY = height * 0.64; const axisY = height - 30; const collisionTime = model.values.collisionTime;
+    const times = [0, collisionTime, durationFor("collision", p)];
+    const positions = times.flatMap((time) => { const values = stateAt("collision", p, time).values; return [values.x1, values.x2]; });
+    let min = Math.min(0, ...positions), max = Math.max(0, ...positions); const padding = Math.max(2, (max - min) * 0.12); min -= padding; max += padding;
+    const range = { min, max }; const left = 44, right = width - 22; const mapX = (x) => left + (x - min) / (max - min) * (right - left);
+    drawTrack(ctx, width, trackY, c, left - 20, right); drawReferenceAxis(ctx, range, mapX, axisY, c, trackY - 58);
+    const x1 = mapX(model.values.x1), x2 = mapX(model.values.x2);
+    const initialState = stateAt("collision", p, 0).values;
+    const wheelA = (model.values.x1 - initialState.x1) / 0.16; const wheelB = (model.values.x2 - initialState.x2) / 0.16;
+    const cartsLocked = model.time >= collisionTime && Number(p.restitution) < 0.01;
+    if (cartsLocked) {
+      const groupX = (x1 + x2) / 2;
+      drawCart(ctx, groupX - 22, trackY, c.gold, c, "A", 0, wheelA, 0.72);
+      drawCart(ctx, groupX + 22, trackY, c.blue, c, "B", 0, wheelB, 0.72);
+      lineTo(ctx, { x: groupX - 5, y: trackY - 15 }, { x: groupX + 5, y: trackY - 15 }, c.text, 3);
+    } else {
+      drawCart(ctx, x1, trackY, c.gold, c, "A", 0, wheelA, 0.72);
+      drawCart(ctx, x2, trackY, c.blue, c, "B", 0, wheelB, 0.72);
+    }
+    const arrowLength1 = Math.min(52, 16 + Math.abs(model.values.v1) * 3); const arrowLength2 = Math.min(52, 16 + Math.abs(model.values.v2) * 3);
+    if (cartsLocked) {
+      if (Math.abs(model.values.v1) > 0.01) arrow(ctx, (x1 + x2) / 2, trackY - 47, (x1 + x2) / 2 + Math.sign(model.values.v1) * arrowLength1, trackY - 47, c.blue, `unidos · v ${fmt(model.values.v1, 1)} m/s`);
+    } else {
+      if (Math.abs(model.values.v1) > 0.01) arrow(ctx, x1, trackY - 43, x1 + Math.sign(model.values.v1) * arrowLength1, trackY - 43, c.gold, `vA ${fmt(model.values.v1, 1)}`);
+      if (Math.abs(model.values.v2) > 0.01) arrow(ctx, x2, trackY - 59, x2 + Math.sign(model.values.v2) * arrowLength2, trackY - 59, c.blue, `vB ${fmt(model.values.v2, 1)}`);
+    }
+    ctx.fillStyle = c.text; ctx.font = "12px system-ui"; ctx.fillText(`Pista fixa · t = ${fmt(model.time)} s`, 14, 21);
+    ctx.fillStyle = c.muted; ctx.fillText(cartsLocked ? "Após o contato inelástico, A e B seguem acoplados" : model.time < collisionTime ? "A se aproxima de B" : "Após o contato: velocidades recalculadas", 14, 41);
+    if (Math.abs(model.time - collisionTime) < 0.12) {
+      const impactX = (x1 + x2) / 2; ctx.strokeStyle = c.text; ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i += 1) { const angle = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(impactX + Math.cos(angle) * 13, trackY - 25 + Math.sin(angle) * 13); ctx.lineTo(impactX + Math.cos(angle) * 24, trackY - 25 + Math.sin(angle) * 24); ctx.stroke(); }
+    }
+  }
+  function drawRollingRampCart(p, model, width, height, c) {
+    const ctx = sceneContext; drawBackdrop(ctx, width, height, c);
+    const start = { x: width * 0.17, y: height * 0.31 }; const end = { x: width * 0.83, y: height * 0.69 };
+    const dx = end.x - start.x, dy = end.y - start.y; const angle = Math.atan2(dy, dx); const lengthPx = Math.hypot(dx, dy); const ratio = Math.max(0, Math.min(1, model.values.s / p.length));
+    ctx.save(); ctx.translate(start.x, start.y); ctx.rotate(angle);
+    ctx.fillStyle = "rgba(0,0,0,.14)"; ctx.fillRect(-8, 6, lengthPx + 18, 15);
+    ctx.fillStyle = c.muted; ctx.globalAlpha = 0.7;
+    for (let x = 0; x < lengthPx; x += 24) { roundedRect(ctx, x, -3, 5, 14, 2); ctx.fill(); }
+    ctx.globalAlpha = 1; lineTo(ctx, { x: 0, y: 0 }, { x: lengthPx, y: 0 }, c.text, 3); lineTo(ctx, { x: 0, y: 5 }, { x: lengthPx, y: 5 }, c.line, 2);
+    ctx.restore();
+    const x = start.x + dx * ratio; const y = start.y + dy * ratio;
+    drawCart(ctx, x, y, c.gold, c, "A", angle, model.values.s / 0.16);
+    ctx.fillStyle = c.blue; ctx.font = "bold 11px system-ui"; ctx.fillText("O · s = 0", start.x - 10, start.y - 18);
+    arrow(ctx, start.x + 24, start.y - 31, start.x + 65, start.y - 31, c.blue, "+s");
+    ctx.fillStyle = c.text; ctx.font = "12px system-ui"; ctx.fillText(`Carrinho na rampa · s = ${fmt(model.values.s)} m · h = ${fmt(model.values.height)} m`, 14, 21);
+    ctx.fillStyle = c.muted; ctx.fillText(`Eₘ = ${fmt(model.values.total)} J  ·  Eₖ = ${fmt(model.values.kinetic)} J  ·  Eₚ = ${fmt(model.values.potential)} J`, 14, 42);
+    lineTo(ctx, { x: end.x + 4, y: start.y + 12 }, { x: end.x + 4, y: end.y + 15 }, c.blue, 1.5, [4, 4]);
+  }
+  function drawBall(context, x, y, radius, c) {
+    const gradient = context.createRadialGradient(x - radius * 0.35, y - radius * 0.4, 1, x, y, radius * 1.2);
+    gradient.addColorStop(0, "#fff0bc"); gradient.addColorStop(0.3, c.gold); gradient.addColorStop(1, "#9c581d");
+    context.beginPath(); context.arc(x, y, radius, 0, Math.PI * 2); context.fillStyle = gradient; context.fill();
+    context.save(); context.beginPath(); context.arc(x, y, radius - 0.5, 0, Math.PI * 2); context.clip(); context.strokeStyle = "rgba(35,24,14,.75)"; context.lineWidth = Math.max(1, radius * 0.09);
+    context.beginPath(); context.arc(x - radius * 0.65, y, radius * 0.9, -1.15, 1.15); context.stroke();
+    context.beginPath(); context.arc(x + radius * 0.65, y, radius * 0.9, Math.PI - 1.15, Math.PI + 1.15); context.stroke();
+    context.beginPath(); context.moveTo(x - radius * 0.95, y - radius * 0.2); context.quadraticCurveTo(x, y - radius * 0.48, x + radius * 0.95, y - radius * 0.2); context.stroke();
+    context.beginPath(); context.moveTo(x - radius * 0.95, y + radius * 0.2); context.quadraticCurveTo(x, y + radius * 0.48, x + radius * 0.95, y + radius * 0.2); context.stroke(); context.restore();
+    context.strokeStyle = c.text; context.lineWidth = 1.3; context.beginPath(); context.arc(x, y, radius, 0, 2 * Math.PI); context.stroke();
+  }
   function drawScene(id, p, model) {
     const { width, height } = prepareCanvas(canvas, sceneContext);
     const c = palette();
@@ -233,50 +406,48 @@ function initializeExperimentPage(topicId) {
     const baseline = height * 0.72;
     const values = model.values;
     if (["mru", "muv", "newton"].includes(id)) {
-      const span = Math.max(6, Math.abs(values.x) * 1.25, Math.abs(stateAt(id, p, 0).values.x) + 3);
-      const x = width * 0.5 + Math.max(-1, Math.min(1, values.x / span)) * width * 0.38;
-      lineTo(ctx, { x: 34, y: baseline + 16 }, { x: width - 24, y: baseline + 16 }, c.muted, 2);
-      ctx.fillStyle = c.gold; ctx.fillRect(x - 19, baseline - 16, 38, 32); ctx.fillStyle = c.text; ctx.fillRect(x - 13, baseline - 22, 12, 7); ctx.fillRect(x + 2, baseline - 22, 12, 7);
-      ctx.fillStyle = c.muted; ctx.fillText(`x = ${fmt(values.x)} m`, 15, 25);
-      if (id === "newton") { const forceScale = Math.min(70, 2 + Math.abs(values.force) * 1.7); arrow(ctx, x, baseline - 2, x + Math.sign(values.force || 1) * forceScale, baseline - 2, c.blue, `F=${fmt(values.force, 1)} N`); ctx.fillText(`fₛ máximo = ${fmt(p.muStatic * p.mass * 9.81, 1)} N`, 15, 44); }
-      if (id === "muv") ctx.fillText(`a = ${fmt(values.a)} m/s²`, 15, 44);
+      drawMotionCartScene(id, p, model, width, height, c);
     } else if (id === "energy") {
-      const left = 35, top = 40, right = width - 35, bottom = height - 35;
-      lineTo(ctx, { x: left, y: top }, { x: right, y: bottom }, c.gold, 4);
-      lineTo(ctx, { x: left, y: bottom }, { x: right, y: bottom }, c.muted, 2);
-      const ratio = Math.min(1, values.s / p.length);
-      const x = left + (right - left) * ratio;
-      const y = top + (bottom - top) * ratio;
-      ctx.fillStyle = c.blue; ctx.beginPath(); ctx.arc(x, y - 9, 11, 0, 2 * Math.PI); ctx.fill();
-      ctx.fillStyle = c.text; ctx.fillText(`Eₘ = ${fmt(values.total)} J`, 14, 23);
-      ctx.fillStyle = c.muted; ctx.fillText(`Eₚ ${fmt(values.potential)} J · E꜀ ${fmt(values.kinetic)} J`, 14, height - 9);
+      drawRollingRampCart(p, model, width, height, c);
     } else if (id === "collision") {
-      const pos1 = values.x1, pos2 = values.x2;
-      const maxPosition = Math.max(2, Math.abs(pos1), Math.abs(pos2), Math.abs(values.x1 - values.x2)) * 1.2;
-      const mapX = (x) => width / 2 + x / maxPosition * width * 0.42;
-      lineTo(ctx, { x: 22, y: baseline + 17 }, { x: width - 22, y: baseline + 17 }, c.muted, 2);
-      for (const [xValue, mass, color] of [[pos1, p.mass1, c.gold], [pos2, p.mass2, c.blue]]) {
-        const x = mapX(xValue); ctx.fillStyle = color; ctx.fillRect(x - 22, baseline - 19, 44, 34); ctx.fillStyle = c.text; ctx.beginPath(); ctx.arc(x - 12, baseline + 17, 5, 0, 7); ctx.arc(x + 12, baseline + 17, 5, 0, 7); ctx.fill(); ctx.fillStyle = c.bg; ctx.fillText(`${fmt(mass, 1)} kg`, x - 17, baseline + 2);
-      }
-      ctx.fillStyle = c.muted; ctx.fillText(state.time < 2 ? "Antes do impacto" : "Depois do impacto", 14, 24);
-      if (Math.abs(state.time - 2) < 0.18) ctx.fillText("Colisão", width / 2 - 18, baseline - 30);
+      drawMotionCollisionScene(p, model, width, height, c);
     } else if (id === "spring") {
-      const anchor = 48; const center = width * 0.59; const scale = Math.min(120, width * 0.25 / p.amplitude); const blockX = center + values.x * scale;
-      lineTo(ctx, { x: anchor, y: baseline - 47 }, { x: anchor, y: baseline + 47 }, c.muted, 4);
-      const start = anchor, end = blockX - 24; const segments = 12;
-      ctx.beginPath(); ctx.moveTo(start, baseline);
-      for (let i = 1; i <= segments; i += 1) { const x = start + (end - start) * i / segments; const y = baseline + (i === segments ? 0 : (i % 2 ? -1 : 1) * 10); ctx.lineTo(x, y); }
-      ctx.strokeStyle = c.gold; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = c.blue; ctx.fillRect(blockX - 24, baseline - 21, 48, 42);
-      ctx.fillStyle = c.muted; ctx.fillText(`x=${fmt(values.x)} m`, 13, 23); ctx.fillText(`T=${fmt(values.period)} s`, 13, 42);
+      drawBackdrop(ctx, width, height, c);
+      const trackY = height * 0.67; const center = width * 0.55; const amplitude = Math.max(0, Number(p.amplitude)); const scale = width * 0.28 / Math.max(amplitude, 0.08); const cartX = center + values.x * scale;
+      drawTrack(ctx, width, trackY, c, 20, width - 16);
+      lineTo(ctx, { x: center, y: trackY - 58 }, { x: center, y: height - 27 }, c.blue, 1.3, [4, 4]);
+      ctx.fillStyle = c.blue; ctx.font = "bold 10px system-ui"; ctx.textAlign = "center"; ctx.fillText("O · x = 0", center, height - 40); ctx.textAlign = "start";
+      const axisY = height - 27; const axisExtent = amplitude * scale; lineTo(ctx, { x: center - axisExtent, y: axisY }, { x: center + axisExtent, y: axisY }, c.text, 1.2);
+      ctx.fillStyle = c.muted; ctx.font = "10px system-ui"; ctx.textAlign = "center";
+      const springTicks = amplitude > 0 ? [[-1, `−${fmt(amplitude, 2)} m`], [0, "0"], [1, `+${fmt(amplitude, 2)} m`]] : [[0, "0"]];
+      for (const [tick, label] of springTicks) { const x = center + tick * axisExtent; lineTo(ctx, { x, y: axisY - 4 }, { x, y: axisY + 4 }, c.muted, 1); ctx.fillText(label, x, axisY + 15); }
+      ctx.textAlign = "start";
+      const anchor = 38, springEnd = cartX - 37, segments = 14;
+      lineTo(ctx, { x: anchor, y: trackY - 27 }, { x: anchor, y: trackY + 6 }, c.muted, 4);
+      ctx.beginPath(); ctx.moveTo(anchor, trackY - 12);
+      for (let i = 1; i <= segments; i += 1) { const x = anchor + (springEnd - anchor) * i / segments; const y = trackY - 12 + (i === segments ? 0 : (i % 2 ? -1 : 1) * 8); ctx.lineTo(x, y); }
+      ctx.strokeStyle = c.gold; ctx.lineWidth = 3; ctx.stroke();
+      drawCart(ctx, cartX, trackY, c.blue, c, "m", 0, values.x / 0.16);
+      ctx.fillStyle = c.text; ctx.font = "12px system-ui"; ctx.fillText(`Carrinho-massa · x = ${fmt(values.x)} m · v = ${fmt(values.v)} m/s`, 14, 21);
+      ctx.fillStyle = c.muted; ctx.fillText(`Referencial fixo no equilíbrio · T = ${fmt(values.period)} s`, 14, 41);
     } else if (id === "wave") {
-      const amplitudeScale = Math.min(100, height * 0.28 / p.amplitude); const mid = height / 2; const xMin = -p.wavelength; const xMax = p.wavelength;
-      lineTo(ctx, { x: 20, y: mid }, { x: width - 20, y: mid }, c.muted, 1);
+      drawBackdrop(ctx, width, height, c);
+      const amplitudeScale = Math.min(72, height * 0.22 / Math.max(p.amplitude, 0.01)); const mid = height * 0.57; const xMin = -p.wavelength; const xMax = p.wavelength; const left = 28, right = width - 26;
+      const mapX = (x) => left + (x - xMin) / (xMax - xMin) * (right - left);
+      lineTo(ctx, { x: left, y: mid }, { x: right, y: mid }, c.muted, 1.2);
       ctx.beginPath();
-      for (let i = 0; i <= 240; i += 1) { const xValue = xMin + (xMax - xMin) * i / 240; const yValue = p.amplitude * Math.sin(2 * Math.PI * (xValue / p.wavelength - p.frequency * state.time)); const x = 20 + (width - 40) * i / 240; const y = mid - yValue * amplitudeScale; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-      ctx.strokeStyle = c.gold; ctx.lineWidth = 2.5; ctx.stroke();
-      const markerX = 20 + (p.xProbe - xMin) / (xMax - xMin) * (width - 40); const markerY = mid - values.y * amplitudeScale; ctx.fillStyle = c.blue; ctx.beginPath(); ctx.arc(markerX, markerY, 6, 0, 7); ctx.fill();
-      ctx.fillStyle = c.muted; ctx.fillText(`v = λf = ${fmt(values.waveSpeed)} m/s`, 14, 23);
+      for (let i = 0; i <= 240; i += 1) { const xValue = xMin + (xMax - xMin) * i / 240; const yValue = p.amplitude * Math.sin(2 * Math.PI * (xValue / p.wavelength - p.frequency * state.time)); const x = mapX(xValue); const y = mid - yValue * amplitudeScale; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.strokeStyle = c.gold; ctx.lineWidth = 3; ctx.stroke();
+      for (let i = 0; i <= 24; i += 1) { const xValue = xMin + (xMax - xMin) * i / 24; const yValue = p.amplitude * Math.sin(2 * Math.PI * (xValue / p.wavelength - p.frequency * state.time)); const x = mapX(xValue), y = mid - yValue * amplitudeScale; const radius = i % 3 === 0 ? 4.5 : 2.3; ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI); ctx.fillStyle = i % 3 === 0 ? c.blue : c.text; ctx.globalAlpha = i % 3 === 0 ? 0.95 : 0.52; ctx.fill(); ctx.globalAlpha = 1; }
+      const markerX = mapX(p.xProbe); const markerY = mid - values.y * amplitudeScale;
+      lineTo(ctx, { x: markerX, y: mid }, { x: markerX, y: markerY }, c.blue, 1.5, [4, 4]);
+      ctx.fillStyle = c.blue; ctx.beginPath(); ctx.arc(markerX, markerY, 7, 0, 7); ctx.fill();
+      ctx.fillStyle = c.text; ctx.font = "12px system-ui"; ctx.fillText("Corda com partículas · a onda propaga-se para +x", 14, 21);
+      ctx.fillStyle = c.muted; ctx.fillText(`Cada ponto da corda oscila verticalmente · v = λf = ${fmt(values.waveSpeed)} m/s`, 14, 41);
+      const axisY = height - 25; lineTo(ctx, { x: left, y: axisY }, { x: right, y: axisY }, c.text, 1.2);
+      ctx.font = "10px system-ui"; ctx.fillStyle = c.muted; ctx.textAlign = "center";
+      for (let i = 0; i <= 4; i += 1) { const value = xMin + (xMax - xMin) * i / 4; const x = mapX(value); lineTo(ctx, { x, y: axisY - 4 }, { x, y: axisY + 4 }, c.muted, 1); ctx.fillText(`${fmt(value, 1)} m`, x, axisY + 16); }
+      ctx.textAlign = "start";
     } else if (id === "ohm") {
       const left = 45, right = width - 44, top = 55, bottom = height - 55;
       ctx.strokeStyle = c.text; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.lineTo(right, bottom); ctx.lineTo(right, top); ctx.lineTo(left, top); ctx.stroke();
@@ -476,4 +647,3 @@ function initializeExperimentPage(topicId) {
   }
   window.addEventListener("beforeunload", () => { stop(); resizeObserver.disconnect(); });
 }
-
