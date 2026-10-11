@@ -413,25 +413,48 @@
     "slug": "fis-014-movimento-circular-uniforme",
     "title": "Movimento circular uniforme",
     "category": "Mecânica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Movimento circular",
+    "description": "Carrinho em movimento circular uniforme, com velocidade tangencial e aceleração centrípeta.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-circular-motion",
+    "linkedExperimentTitle": "Movimento circular uniforme — laboratório 2D",
+    "modelPhysics": "Movimento circular uniforme de velocidade escalar v e raio r; ω=v/r, ac=v²/r e T=2πr/v.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "a꜀ = v²/r",
+      "ω = v/r",
+      "T = 2πr/v"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Velocidade",
+        "symbol": "v",
+        "unit": "m/s",
+        "range": "0,5–15"
+      },
+      {
+        "name": "Raio",
+        "symbol": "r",
+        "unit": "m",
+        "range": "0,5–5"
+      }
+    ],
+    "units": [
+      "m",
+      "s",
+      "m/s",
+      "m/s²",
+      "rad/s"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Movimento circular uniforme ideal; pista esquemática e sem atrito ou variação de velocidade."
   },
   {
     "id": "FIS-015",
@@ -913,25 +936,58 @@
     "slug": "fis-031-plano-inclinado",
     "title": "Plano inclinado",
     "category": "Mecânica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Dinâmica",
+    "description": "Bloco em rampa com condição de atrito estático e movimento sob atrito cinético.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-friction-incline",
+    "linkedExperimentTitle": "Plano inclinado — laboratório 2D",
+    "modelPhysics": "Bloco parte do repouso em plano inclinado. Se tan(θ)≤μs, o atrito estático equilibra a componente paralela do peso; caso contrário, a=g(senθ−μk cosθ).",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "a = g(sen θ − μₖ cos θ)",
+      "repouso se tan θ ≤ μₛ"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Ângulo da rampa",
+        "symbol": "θ",
+        "unit": "°",
+        "range": "10–60"
+      },
+      {
+        "name": "Atrito estático",
+        "symbol": "μₛ",
+        "unit": "1",
+        "range": "0,05–0,8"
+      },
+      {
+        "name": "Atrito cinético",
+        "symbol": "μₖ",
+        "unit": "1",
+        "range": "0,02–0,6"
+      },
+      {
+        "name": "Massa",
+        "symbol": "m",
+        "unit": "kg",
+        "range": "0,5–8"
+      }
+    ],
+    "units": [
+      "m",
+      "s",
+      "kg",
+      "°"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Bloco rígido inicialmente parado; coeficientes constantes; sem resistência do ar, rotação ou deformação."
   },
   {
     "id": "FIS-032",
@@ -2570,25 +2626,60 @@
     "slug": "fis-094-empuxo-e-principio-de-arquimedes",
     "title": "Empuxo e princípio de Arquimedes",
     "category": "Mecânica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Hidrostática",
+    "description": "Peso, empuxo e pressão hidrostática determinam a flutuação ou o afundamento de um objeto.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-hydrostatics",
+    "linkedExperimentTitle": "Empuxo e princípio de Arquimedes — laboratório 2D",
+    "modelPhysics": "Empuxo igual ao peso do fluido deslocado E=ρf g Vsub; pressão hidrostática p=p0+ρfgh. No equilíbrio de flutuação, Vsub/V=ρobj/ρf.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "E = ρf g Vsub",
+      "p = p₀ + ρf g h",
+      "Vsub/V = ρobj/ρf"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Densidade do fluido",
+        "symbol": "ρf",
+        "unit": "kg/m³",
+        "range": "500–1500"
+      },
+      {
+        "name": "Densidade do objeto",
+        "symbol": "ρobj",
+        "unit": "kg/m³",
+        "range": "300–3000"
+      },
+      {
+        "name": "Profundidade",
+        "symbol": "h",
+        "unit": "m",
+        "range": "0,5–3"
+      },
+      {
+        "name": "Volume",
+        "symbol": "V",
+        "unit": "m³",
+        "range": "0,001–0,02"
+      }
+    ],
+    "units": [
+      "kg/m³",
+      "m",
+      "m³",
+      "N",
+      "Pa"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Fluido incompressível em repouso; pressão manométrica; visualização do movimento simplificada, sem viscosidade, arrasto ou turbulência."
   },
   {
     "id": "FIS-095",
@@ -3068,25 +3159,46 @@
     "slug": "fis-113-efeito-doppler",
     "title": "Efeito Doppler",
     "category": "Ondulatória e acústica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Acústica",
+    "description": "Frentes de onda de uma fonte sonora móvel e frequência percebida por um observador parado.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-doppler-effect",
+    "linkedExperimentTitle": "Efeito Doppler — laboratório 2D",
+    "modelPhysics": "Observador parado e fonte móvel no ar em repouso: f'=f0 c/(c∓vs), com sinal negativo para aproximação e positivo para afastamento; c=343 m/s.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "f′ = f₀c/(c−vₛ) · aproximação",
+      "f′ = f₀c/(c+vₛ) · afastamento"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Frequência emitida",
+        "symbol": "f₀",
+        "unit": "Hz",
+        "range": "100–1000"
+      },
+      {
+        "name": "Velocidade da fonte",
+        "symbol": "vs",
+        "unit": "m/s",
+        "range": "0–100"
+      }
+    ],
+    "units": [
+      "Hz",
+      "m/s",
+      "m",
+      "s"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Observador parado e fonte em velocidade constante menor que a velocidade do som; sem vento, aceleração ou variação de intensidade."
   },
   {
     "id": "FIS-114",
@@ -3302,25 +3414,51 @@
     "slug": "fis-122-ressonancia-acustica",
     "title": "Ressonância acústica",
     "category": "Ondulatória e acústica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Acústica",
+    "description": "Modos de onda estacionária e frequências de ressonância para tubos abertos e fechados.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-sound-resonance",
+    "linkedExperimentTitle": "Ressonância acústica — laboratório 2D",
+    "modelPhysics": "Tubo aberto-aberto: fn=nv/(2L); tubo fechado-aberto: fn=(2n−1)v/(4L), com nó de deslocamento no extremo fechado.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "fₙ = nv/(2L)",
+      "fₙ = (2n−1)v/(4L) · tubo fechado-aberto"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Comprimento",
+        "symbol": "L",
+        "unit": "m",
+        "range": "0,2–2"
+      },
+      {
+        "name": "Velocidade do som",
+        "symbol": "v",
+        "unit": "m/s",
+        "range": "300–360"
+      },
+      {
+        "name": "Modo",
+        "symbol": "n",
+        "unit": "1",
+        "range": "1–5"
+      }
+    ],
+    "units": [
+      "m",
+      "m/s",
+      "Hz"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Tubo ideal unidimensional; despreza correção de extremidade, amortecimento e perdas; deslocamento longitudinal ampliado transversalmente."
   },
   {
     "id": "FIS-123",
@@ -4832,25 +4970,58 @@
     "slug": "fis-180-interferometro-de-dupla-fenda",
     "title": "Interferômetro de dupla fenda",
     "category": "Óptica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Óptica ondulatória",
+    "description": "Padrão de intensidade de dupla fenda com franjas de interferência moduladas por difração.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-interference-diffraction",
+    "linkedExperimentTitle": "Interferômetro de dupla fenda — laboratório 2D",
+    "modelPhysics": "Duas fendas coerentes idênticas: I(θ)∝cos²(πd senθ/λ)sinc²(πa senθ/λ), com geometria de tela a distância finita.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "I(θ) ∝ cos²(πd senθ/λ) sinc²(πa senθ/λ)",
+      "Δy ≈ λL/d · aproximação para ângulos pequenos"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Comprimento de onda",
+        "symbol": "λ",
+        "unit": "nm",
+        "range": "380–700"
+      },
+      {
+        "name": "Separação",
+        "symbol": "d",
+        "unit": "mm",
+        "range": "0,1–0,8"
+      },
+      {
+        "name": "Largura da fenda",
+        "symbol": "a",
+        "unit": "mm",
+        "range": "0,02–0,25"
+      },
+      {
+        "name": "Distância da tela",
+        "symbol": "L",
+        "unit": "m",
+        "range": "0,5–3"
+      }
+    ],
+    "units": [
+      "nm",
+      "mm",
+      "m",
+      "rad"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Fendas idênticas, iluminação monocromática coerente e tela distante; intensidade normalizada; frentes de onda sem escala."
   },
   {
     "id": "FIS-181",
@@ -5564,25 +5735,53 @@
     "slug": "fis-208-equacao-de-estado-dos-gases-ideais",
     "title": "Equação de estado dos gases ideais",
     "category": "Termologia e termodinâmica",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Gases ideais",
+    "description": "Pistão e partículas ilustram a equação de estado do gás ideal e a dependência térmica da energia cinética média.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-gas-thermodynamics",
+    "linkedExperimentTitle": "Equação de estado dos gases ideais — laboratório 2D",
+    "modelPhysics": "Gás ideal em equilíbrio: pV=nRT; energia cinética translacional média por molécula ⟨Ec⟩=3kBT/2.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "pV = nRT",
+      "⟨Ec⟩ = 3kBT/2"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Temperatura",
+        "symbol": "T",
+        "unit": "K",
+        "range": "150–600"
+      },
+      {
+        "name": "Volume",
+        "symbol": "V",
+        "unit": "L",
+        "range": "2–20"
+      },
+      {
+        "name": "Quantidade de matéria",
+        "symbol": "n",
+        "unit": "mol",
+        "range": "0,01–0,1"
+      }
+    ],
+    "units": [
+      "K",
+      "L",
+      "mol",
+      "Pa",
+      "J"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Gás ideal em equilíbrio, sem interações intermoleculares, mudanças de fase ou colisões realistas; partículas desenhadas esquematicamente."
   },
   {
     "id": "FIS-209",
@@ -8211,25 +8410,51 @@
     "slug": "fis-307-eletroimas",
     "title": "Eletroímãs",
     "category": "Eletricidade e eletromagnetismo",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Eletromagnetismo",
+    "description": "Campo magnético no interior de um solenoide ideal em função da corrente e da densidade de espiras.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-magnetic-field",
+    "linkedExperimentTitle": "Eletroímãs — laboratório 2D",
+    "modelPhysics": "Solenoide longo ideal: B=μ0NI/L; orientação do campo muda quando o sentido da corrente se inverte.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "B = μ₀NI/L"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Corrente",
+        "symbol": "I",
+        "unit": "A",
+        "range": "−3 a 3"
+      },
+      {
+        "name": "Espiras",
+        "symbol": "N",
+        "unit": "1",
+        "range": "100–1000"
+      },
+      {
+        "name": "Comprimento",
+        "symbol": "L",
+        "unit": "m",
+        "range": "0,2–1"
+      }
+    ],
+    "units": [
+      "A",
+      "m",
+      "espiras",
+      "T"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "Aproximação de solenoide longo; campo uniforme interno; sem campo de borda, campo externo, resistência, aquecimento ou material do núcleo."
   },
   {
     "id": "FIS-308",
@@ -10369,25 +10594,45 @@
     "slug": "fis-390-meia-vida-radioativa",
     "title": "Meia-vida radioativa",
     "category": "Física nuclear e de partículas",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
+    "subcategory": "Radioatividade",
+    "description": "Curva média de decaimento exponencial e amostra visual ilustrativa de núcleos.",
     "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
+    "difficulty": "Intermediário",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "priority-radioactivity",
+    "linkedExperimentTitle": "Meia-vida radioativa — laboratório 2D",
+    "modelPhysics": "Decaimento radioativo: N(t)=N0 e^(−λt)=N0 2^(−t/T1/2), com λ=ln(2)/T1/2.",
+    "interfaceStatus": "Página 2D individual responsiva com controles, gráfico e tela cheia; revisão visual em navegador pendente.",
+    "interactionsStatus": "Iniciar, pausar, avançar, reiniciar, ajustar parâmetros, consultar o gráfico e ocultar o painel lateral.",
+    "equations": [
+      "N(t) = N₀ · 2^(−t/T½)",
+      "λ = ln 2/T½"
+    ],
+    "equationsStatus": "Equações implementadas na simulação; aguardam validação didática independente.",
+    "variables": [
+      {
+        "name": "Núcleos iniciais",
+        "symbol": "N₀",
+        "unit": "núcleos",
+        "range": "1000–10000"
+      },
+      {
+        "name": "Meia-vida",
+        "symbol": "T½",
+        "unit": "s",
+        "range": "1–10"
+      }
+    ],
+    "units": [
+      "núcleos",
+      "s",
+      "s⁻¹"
+    ],
     "references": [],
     "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "testsStatus": "Aguardando validação da interface e comparação independente dos casos físicos.",
+    "limitations": "A curva é a esperança estatística; pontos ilustram uma amostra pequena e não reproduzem exatamente a contagem média. Sem cadeias de decaimento."
   },
   {
     "id": "FIS-391",

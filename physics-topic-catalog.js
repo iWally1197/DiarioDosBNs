@@ -13,11 +13,14 @@ export function physicsTopicCardMarkup(topic) {
   const available=topic.implementationStatus==="implemented-awaiting-validation"&&/^[a-z0-9-]+$/.test(topic.linkedExperimentId||"");
   const state=available?"Simulação existente · aguardando validação":"Planejado";
   const cardClass=available?"is-existing":"is-planned";
-  const target=topic.linkedExperimentId==="faraday-induction"
-    ?"laboratorio-faraday.html"
-    :topic.linkedExperimentId==="freefall"
-      ?"laboratorio-queda-livre.html"
-      :`laboratorio-experimento.html?topico=${encodeURIComponent(topic.linkedExperimentId)}`;
+  const prioritySlug=/^priority-([a-z0-9-]+)$/.exec(topic.linkedExperimentId||"");
+  const target=prioritySlug
+    ? "laboratorio-prioritario.html?topico="+encodeURIComponent(prioritySlug[1])
+    :topic.linkedExperimentId==="faraday-induction"
+      ?"laboratorio-faraday.html"
+      :topic.linkedExperimentId==="freefall"
+        ?"laboratorio-queda-livre.html"
+        :"laboratorio-experimento.html?topico="+encodeURIComponent(topic.linkedExperimentId);
   const action=available
     ?`<a class="text-link" href="${target}">Abrir experimento relacionado →</a>`
     :'<span class="physics-topic-pending">Ainda não há um experimento para abrir.</span>';
@@ -69,16 +72,16 @@ async function initializePhysicsTopicCatalog(root) {
 }
 
 function physicsPriorityGroupMarkup(group,index) {
-  const stateLabel={published:"Disponível · aguarda validação",related:"Simulação relacionada",planned:"Próximo laboratório"};
+  const stateLabel={published:"Animação disponível",related:"Simulação relacionada",planned:"Próximo laboratório"};
   const items=group.items.map((item)=> {
     const state=stateLabel[item.state]||"Planejado";
-    const links=(item.links||[]).filter((link)=>/^(laboratorio-experimento\.html\?topico=[a-z0-9-]+|laboratorio-faraday\.html|laboratorio-queda-livre\.html)$/.test(link.href||""))
+    const links=(item.links||[]).filter((link)=>/^(laboratorio-experimento\.html\?topico=[a-z0-9-]+|laboratorio-prioritario\.html\?topico=[a-z0-9-]+|laboratorio-faraday\.html|laboratorio-queda-livre\.html)$/.test(link.href||""))
       .map((link)=>'<a href="'+esc(link.href)+'">'+esc(link.label)+' →</a>').join("");
     const className=item.state==="published"?"is-published":item.state==="related"?"is-related":"is-planned";
     return '<article class="physics-priority-item '+className+'"><div class="physics-priority-item-head"><span class="physics-priority-rank">TÓPICO '+String(item.number).padStart(2,"0")+'</span><span class="physics-priority-state">'+state+'</span></div><div class="physics-priority-title-line"><h3>'+esc(item.title)+'</h3><span class="physics-priority-mode">FORMATO: '+esc(item.mode||"A definir")+'</span></div><p>'+esc(item.detail)+'</p>'+(links?'<div class="physics-priority-links">'+links+'</div>':"")+'</article>';
   }).join("");
   const published=group.items.filter((item)=>item.state==="published").length;
-  const summary=published===5?"5 animações publicadas · validação pendente":published+" de 5 animações publicadas";
+  const summary=published===5?"5 animações disponíveis":published+" de 5 disponíveis";
   return '<details class="physics-priority-group"'+(index===0?" open":"")+'><summary><span class="physics-priority-group-number">'+(index+1)+'</span><span class="physics-priority-group-title"><strong>'+esc(group.title)+'</strong><small>Grupo '+(index+1)+' de 5 · '+summary+'</small></span></summary><div class="physics-priority-items">'+items+'</div></details>';
 }
 
@@ -93,7 +96,7 @@ async function initializePhysicsPriorityGroups() {
     const data=await response.json();
     if(!Array.isArray(data.groups)||data.groups.length!==5||data.groups.some((group)=>!Array.isArray(group.items)||group.items.length!==5))throw new Error("O roteiro precisa conter cinco grupos de cinco tópicos.");
     container.innerHTML=data.groups.map(physicsPriorityGroupMarkup).join("");
-    status.textContent="25 tópicos organizados. O primeiro grupo tem cinco animações disponíveis.";
+    status.textContent="25 laboratórios disponíveis em cinco grupos.";
   } catch(error) {
     status.textContent=error?.message||"Os grupos prioritários não puderam ser carregados.";
     status.classList.add("physics-priority-error");

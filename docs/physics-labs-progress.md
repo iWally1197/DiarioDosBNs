@@ -4,10 +4,10 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 ## Auditoria inicial
 
-- O catálogo estático agora contém **18 experiências interativas**, incluindo a nova queda livre; a página 2D/3D de Faraday permanece como laboratório dedicado.
+- O catálogo estático agora contém **27 experiências interativas**, incluindo a queda livre e as nove simulações prioritárias adicionadas; a página 2D/3D de Faraday permanece como laboratório dedicado.
 - O banco Supabase possui **83 registros** em `public.animations`; na auditoria, os 83 estavam publicados. O painel administrativo controla estes registros, que são usados na biblioteca principal e nas páginas públicas de tópicos.
 - O plano mestre contém **480 tópicos em 9 áreas**. O catálogo estruturado abaixo mantém os 480 títulos, sem gerar páginas vazias.
-- **20 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **460** permanecem **Planejados**. FIS-021 e FIS-023 apontam para a mesma experiência de Newton.
+- **29 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **451** permanecem **Planejados**. FIS-021 e FIS-023 apontam para a mesma experiência de Newton.
 - Há testes automatizados de modelos físicos existentes (MRU/MUV, lançamento, atrito, energia, colisões, mola, ondas, Ohm, óptica, calorimetria, campo elétrico e pêndulo). A presença de testes de modelo não valida, por si só, a experiência completa nem a interface no navegador.
 
 ## Arquitetura nesta etapa
@@ -585,3 +585,10 @@ Acessibilidade e desempenho incluem teclado, leitores de tela, legendas e descri
 2. Implementar os tópicos seguintes em lotes pequenos, com modelo físico próprio e testes de caso conhecido.
 3. Atualizar o estado por tópico somente após executar os testes correspondentes e revisar o comportamento real.
 4. Não publicar um tópico planejado até haver uma experiência funcional e revisada.
+
+
+## Publicação dos 25 laboratórios prioritários
+
+Em 11/10/2026, o percurso prioritário foi completado com cinco grupos de cinco itens. Os 16 itens que já tinham experimentos mantêm seus links individuais; nove simulações 2D novas foram adicionadas para atrito e plano inclinado, movimento circular, hidrostática e empuxo, gases ideais, ressonância acústica, efeito Doppler, interferência e difração, eletroímãs e meia-vida. Cada nova página tem controles, animação, gráfico e modo de tela cheia com painel lateral recolhível.
+
+Os nove tópicos correspondentes no catálogo de 480 agora estão como **Implementado, aguardando validação**. Isso não significa validação científica completa: revisão visual em navegador e checagem independente de casos físicos ainda são necessárias. O percurso prioritário abre uma animação em cada um dos 25 itens.

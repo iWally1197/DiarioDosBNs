@@ -3,7 +3,7 @@
     {
       "id": "group-1",
       "title": "Movimento e leis fundamentais",
-      "description": "O primeiro grupo reúne as cinco animações iniciais do percurso. Todas já abrem uma simulação individual.",
+      "description": "Cinco simulações individuais de cinemática, forças e trajetória.",
       "items": [
         {
           "number": 1,
@@ -75,32 +75,42 @@
     {
       "id": "group-2",
       "title": "Forças, energia e sistemas",
-      "description": "Atrito, movimento circular, energia, colisões e oscilações.",
+      "description": "Cinco simulações de dinâmica, energia, colisões e oscilações.",
       "items": [
         {
           "number": 6,
           "title": "Atrito e plano inclinado",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Bloco em rampa; compare atrito estático e cinético, forças e aceleração.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=friction-incline"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 7,
           "title": "Movimento circular e aceleração centrípeta",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Carrinho em pista circular com vetores tangencial e centrípeto.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=circular-motion"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 8,
           "title": "Trabalho, energia e potência",
-          "detail": "Há uma simulação relacionada à conservação de energia na rampa.",
-          "state": "related",
+          "detail": "Carrinho na rampa: acompanhe trabalho e transformações de energia.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: energia na rampa",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=energy"
             }
           ],
@@ -109,11 +119,11 @@
         {
           "number": 9,
           "title": "Quantidade de movimento e colisões",
-          "detail": "Há uma simulação relacionada a colisões elásticas entre carrinhos.",
-          "state": "related",
+          "detail": "Colisão entre carrinhos com comparação do movimento antes e depois do choque.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: colisões",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=collision"
             }
           ],
@@ -122,11 +132,11 @@
         {
           "number": 10,
           "title": "Lei de Hooke e oscilações",
-          "detail": "Há uma simulação relacionada ao sistema massa-mola.",
-          "state": "related",
+          "detail": "Sistema massa-mola com oscilação e parâmetros ajustáveis.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: massa-mola",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=spring"
             }
           ],
@@ -137,24 +147,29 @@
     {
       "id": "group-3",
       "title": "Fluidos, calor e ondas",
-      "description": "Pressão, temperatura, transformações de energia e propagação ondulatória.",
+      "description": "Cinco simulações de fluidos, calor, gases e ondas sonoras.",
       "items": [
         {
           "number": 11,
           "title": "Hidrostática e empuxo",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Compare peso e empuxo; observe flutuação, equilíbrio e pressão.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=hydrostatics"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 12,
           "title": "Calorimetria",
-          "detail": "Há uma simulação relacionada às trocas de calor entre corpos.",
-          "state": "related",
+          "detail": "Trocas de calor entre corpos e evolução das temperaturas.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: calorimetria",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=calorimetry"
             }
           ],
@@ -163,19 +178,24 @@
         {
           "number": 13,
           "title": "Gases e termodinâmica",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Pistão e partículas de gás ideal; relacione pressão, volume e temperatura.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=gas-thermodynamics"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 14,
           "title": "Ondas em uma corda",
-          "detail": "Há uma simulação relacionada à propagação de onda transversal.",
-          "state": "related",
+          "detail": "Propagação de uma onda transversal ao longo de uma corda.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: onda na corda",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=wave"
             }
           ],
@@ -184,42 +204,52 @@
         {
           "number": 15,
           "title": "Som e ressonância",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Onda estacionária em tubo aberto ou fechado, com nós, ventres e harmônicos.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=sound-resonance"
+            }
+          ],
+          "mode": "2D"
         }
       ]
     },
     {
       "id": "group-4",
       "title": "Ondas e óptica",
-      "description": "Efeitos ondulatórios, espelhos, refração e formação de imagens.",
+      "description": "Cinco simulações de ondas e óptica geométrica e física.",
       "items": [
         {
           "number": 16,
           "title": "Efeito Doppler",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Frentes sonoras de uma fonte móvel e mudança da frequência percebida.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=doppler-effect"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 17,
           "title": "Espelhos planos e esféricos",
-          "detail": "Há simulações relacionadas a espelho plano, côncavo e convexo.",
-          "state": "related",
+          "detail": "Traçado de raios e formação de imagens em espelhos planos e esféricos.",
+          "state": "published",
           "links": [
             {
-              "label": "Espelho plano",
+              "label": "Abrir: Espelho plano",
               "href": "laboratorio-experimento.html?topico=optics-reflection"
             },
             {
-              "label": "Espelho esférico côncavo",
+              "label": "Abrir: Espelho esférico côncavo",
               "href": "laboratorio-experimento.html?topico=optics-concave-mirror"
             },
             {
-              "label": "Espelho esférico convexo",
+              "label": "Abrir: Espelho esférico convexo",
               "href": "laboratorio-experimento.html?topico=optics-convex-mirror"
             }
           ],
@@ -228,11 +258,11 @@
         {
           "number": 18,
           "title": "Refração da luz",
-          "detail": "Há uma simulação relacionada à lei de Snell e à reflexão total.",
-          "state": "related",
+          "detail": "Refração pela lei de Snell e reflexão total interna.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: refração",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=optics-refraction"
             }
           ],
@@ -241,11 +271,11 @@
         {
           "number": 19,
           "title": "Lentes e formação de imagens",
-          "detail": "Há uma simulação relacionada a lentes delgadas convergentes.",
-          "state": "related",
+          "detail": "Lentes delgadas e formação geométrica de imagens.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: lentes",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=lens"
             }
           ],
@@ -254,26 +284,31 @@
         {
           "number": 20,
           "title": "Interferência e difração",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Dupla fenda: franjas de interferência moduladas pelo envelope de difração.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=interference-diffraction"
+            }
+          ],
+          "mode": "2D"
         }
       ]
     },
     {
       "id": "group-5",
       "title": "Eletricidade, magnetismo e física moderna",
-      "description": "Circuitos, campos, indução e fenômenos nucleares.",
+      "description": "Cinco simulações de eletricidade, magnetismo e fenômenos nucleares.",
       "items": [
         {
           "number": 21,
           "title": "Eletrostática e campo elétrico",
-          "detail": "Há uma simulação relacionada ao campo produzido por duas cargas.",
-          "state": "related",
+          "detail": "Campo elétrico resultante de cargas em posições ajustáveis.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: campo elétrico",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=field"
             }
           ],
@@ -282,11 +317,11 @@
         {
           "number": 22,
           "title": "Circuitos e lei de Ohm",
-          "detail": "Há uma simulação relacionada à relação entre tensão, corrente e resistência.",
-          "state": "related",
+          "detail": "Relação entre tensão, corrente e resistência em circuito simples.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: lei de Ohm",
+              "label": "Abrir animação",
               "href": "laboratorio-experimento.html?topico=ohm"
             }
           ],
@@ -295,19 +330,24 @@
         {
           "number": 23,
           "title": "Campo magnético e eletroímãs",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Bobina e campo magnético; varie corrente, espiras e comprimento.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=magnetic-field"
+            }
+          ],
+          "mode": "2D"
         },
         {
           "number": 24,
           "title": "Indução eletromagnética e lei de Faraday",
-          "detail": "Há uma simulação individual 2D/3D de uma bobina em rotação.",
-          "state": "related",
+          "detail": "Bobina rotativa, fluxo magnético e força eletromotriz induzida.",
+          "state": "published",
           "links": [
             {
-              "label": "Ver simulação relacionada: Faraday",
+              "label": "Abrir animação",
               "href": "laboratorio-faraday.html"
             }
           ],
@@ -316,10 +356,15 @@
         {
           "number": 25,
           "title": "Radioatividade e meia-vida",
-          "detail": "Próximo tópico do percurso.",
-          "state": "planned",
-          "links": [],
-          "mode": "A definir"
+          "detail": "Núcleos ilustrativos e curva média de decaimento radioativo.",
+          "state": "published",
+          "links": [
+            {
+              "label": "Abrir animação",
+              "href": "laboratorio-prioritario.html?topico=radioactivity"
+            }
+          ],
+          "mode": "2D"
         }
       ]
     }

@@ -19,8 +19,8 @@ test("as nove áreas preservam os totais definidos no plano",()=>{
 });
 
 test("os estados não tratam tópicos planejados como implementados",()=>{
-  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,20);
-  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,460);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,29);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,451);
   assert.ok(topics.filter((item)=>item.implementationStatus==="planned").every((item)=>!item.linkedExperimentId));
   assert.ok(topics.every((item)=>item.implementationStatus!=="validated"));
 });
@@ -28,7 +28,7 @@ test("os estados não tratam tópicos planejados como implementados",()=>{
 test("busca, área e estado filtram os mesmos registros do catálogo",()=>{
   assert.deepEqual(filterPhysicsTopics(topics,{query:"149"}).map((item)=>item.number),[149]);
   assert.equal(filterPhysicsTopics(topics,{category:"Óptica"}).length,51);
-  assert.equal(filterPhysicsTopics(topics,{status:"planned"}).length,462);
+  assert.equal(filterPhysicsTopics(topics,{status:"planned"}).length,451);
 });
 
 
