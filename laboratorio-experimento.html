@@ -8,12 +8,12 @@
   <meta name="description" content="Simulação de Física interativa do Diário dos BNs com animação, gráfico sincronizado, parâmetros e hipóteses do modelo.">
   <title>Experimento de Física — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-2">
-  <link rel="stylesheet" href="laboratorio-suite.css?v=lab-optics-fullscreen-20261010-1">
+  <link rel="stylesheet" href="styles.css?v=lab-fullscreen-all-20261010-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=lab-fullscreen-all-20261010-1">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
   <script type="module" src="laboratorio.js?v=motion-reference-20261009-1"></script>
-  <script type="module" src="laboratorio-workspace.js?v=lab-optics-fullscreen-20261010-1"></script>
+  <script type="module" src="laboratorio-workspace.js?v=lab-fullscreen-all-20261010-1"></script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-2"></script>
 </head>
 <body>
@@ -59,7 +59,7 @@
     </section>
 
     <section class="lab-experiment" id="lancamento" data-lab-special="projectile" aria-labelledby="projectile-title" tabindex="-1" hidden>
-      <div class="lab-experiment-heading"><div><div class="lesson-tag">CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento oblíquo</h2><p>Uma bola parte de um lançador em uma quadra de referência. A trajetória, a altura e as componentes da velocidade são mostradas no mesmo sistema de coordenadas.</p></div><span class="model-tag">MODELO 2D</span></div>
+      <div class="lab-experiment-heading"><div><div class="lesson-tag">CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento oblíquo</h2><p>Uma bola parte de um lançador em uma quadra de referência. A trajetória, a altura e as componentes da velocidade são mostradas no mesmo sistema de coordenadas.</p></div><div class="lab-special-heading-actions"><button class="button button-outline" type="button" data-lab-special-controls aria-controls="projectile-special-controls" aria-expanded="false" hidden>Gráfico e parâmetros</button><button class="button button-outline" type="button" data-lab-special-fullscreen aria-label="Abrir o lançamento em tela cheia">Tela cheia</button><span class="model-tag">MODELO 2D</span></div></div>
       <div class="lab-simulation-grid"><div class="lab-visual-column">
         <div class="lab-workspace-panels lab-existing-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Bola em movimento</b><span>referencial fixo do solo</span></div><div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Bola em trajetória parabólica, com referencial fixo no solo, altura, alcance e vetores de velocidade." role="img"></canvas></div></div><div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="projectile-graph"><b>Gráfico sincronizado</b></label><select id="projectile-graph" aria-label="Escolher grandeza no gráfico do lançamento"></select></div><div class="lab-chart-wrap lab-canvas-wrap"><canvas id="projectile-chart" aria-label="Gráfico do movimento do projétil, atualizado pelo mesmo estado da animação." role="img" tabindex="0"></canvas></div></div></div>
         <div class="lab-readouts" aria-live="off"><div><span>Tempo</span><b id="projectile-time">0,00 s</b></div><div><span>Posição horizontal</span><b id="projectile-x">0,0 m</b></div><div><span>Altura</span><b id="projectile-y">0,0 m</b></div><div><span>Alcance previsto</span><b id="projectile-range">— m</b></div><div><span>Altura máxima</span><b id="projectile-apex">— m</b></div></div>
@@ -77,7 +77,7 @@
     </section>
 
     <section class="lab-experiment" id="pendulo" data-lab-special="pendulum" aria-labelledby="pendulum-title" tabindex="-1" hidden>
-      <div class="lab-experiment-heading"><div><div class="lesson-tag">OSCILAÇÕES · PÊNDULO SIMPLES</div><h2 id="pendulum-title">Pêndulo simples</h2><p>Observe uma massa puntiforme presa a um fio sem massa. Arraste a cena para mudar a perspectiva projetada.</p></div><span class="model-tag">PROJEÇÃO 2D</span></div>
+      <div class="lab-experiment-heading"><div><div class="lesson-tag">OSCILAÇÕES · PÊNDULO SIMPLES</div><h2 id="pendulum-title">Pêndulo simples</h2><p>Observe uma massa puntiforme presa a um fio sem massa. Arraste a cena para mudar a perspectiva projetada.</p></div><div class="lab-special-heading-actions"><button class="button button-outline" type="button" data-lab-special-controls aria-controls="pendulum-special-controls" aria-expanded="false" hidden>Gráfico e parâmetros</button><button class="button button-outline" type="button" data-lab-special-fullscreen aria-label="Abrir o pêndulo em tela cheia">Tela cheia</button><span class="model-tag">PROJEÇÃO 2D</span></div></div>
       <div class="lab-simulation-grid pendulum-grid"><div class="lab-visual-column">
         <div class="lab-workspace-panels lab-existing-panels pendulum-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação do pêndulo</b><span>projeção espacial 2D</span></div><div class="lab-canvas-wrap pendulum-canvas-wrap"><canvas id="pendulum-canvas" aria-label="Projeção bidimensional interativa de um pêndulo simples. Não é uma cena WebGL." role="img" tabindex="0"></canvas><span class="drag-hint">Arraste para girar a perspectiva</span></div></div><div class="lab-workspace-panel"><div class="lab-chart-heading"><b>Gráfico sincronizado</b><span>θ (graus) × t (s)</span></div><div class="lab-chart-wrap lab-canvas-wrap pendulum-chart-wrap"><canvas id="pendulum-chart" aria-label="Ângulo do pêndulo em função do tempo, integrado a partir da mesma simulação." role="img" tabindex="0"></canvas></div></div></div>
         <label class="pendulum-scrubber" for="pendulum-time-scrubber">Instante selecionado <output id="pendulum-time-out">0,00 s</output><input id="pendulum-time-scrubber" type="range" min="0" max="12" step="0.01" value="0" aria-label="Selecionar o instante da simulação do pêndulo"></label>
