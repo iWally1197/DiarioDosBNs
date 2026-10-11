@@ -4,6 +4,8 @@
   const KB=1.380649e-23;
   const root=document.getElementById("priority-lab");
   if(!root)return;
+  root.hidden=false;
+  document.body.classList.add("lab-virtual-topic");
   const scene=document.getElementById("lab-scene"), graph=document.getElementById("lab-graph");
   const sc=scene.getContext("2d"), gc=graph.getContext("2d");
   const $=(id)=>document.getElementById(id);
@@ -19,8 +21,10 @@
     "magnetic-field":{title:"Campo magnético de um eletroímã",summary:"Altere a corrente, o número de espiras e o comprimento da bobina para observar a intensidade e o sentido do campo no interior.",equation:"Bobina longa ideal: B = μ₀NI/L",note:"A aproximação de solenoide longo considera campo uniforme no interior e despreza o campo externo e os efeitos de borda. O desenho mostra poucas espiras para clareza, mesmo quando o número usado no cálculo é maior.",duration:5,params:[{id:"current",label:"Corrente elétrica",unit:"A",min:-3,max:3,step:0.05,value:1.5},{id:"turns",label:"Número de espiras",unit:"espiras",min:100,max:1000,step:25,value:500},{id:"coilLength",label:"Comprimento da bobina",unit:"m",min:0.2,max:1,step:0.05,value:0.5}],derive(p,t){const field=MU0*p.turns*p.current/p.coilLength;return{field,fieldMilli:field*1000,direction:Math.sign(field),phase:t};},readouts(p,t){const d=this.derive(p,t);return[["Campo interno",fmt(d.fieldMilli,3)+" mT"],["Densidade de espiras",fmt(p.turns/p.coilLength,0)+" m⁻¹"],["Sentido do campo",d.direction>0?"Para a direita":d.direction<0?"Para a esquerda":"Nulo"],["Corrente",fmt(p.current,2)+" A"]];},graph(p,t){const max=Math.max(0.1,Math.abs(MU0*p.turns*3/p.coilLength*1000));return{xLabel:"I (A)",yLabel:"B (mT)",xMin:-3,xMax:3,yMin:-max*1.1,yMax:max*1.1,markerX:p.current,value:x=>MU0*p.turns*x/p.coilLength*1000};}},
     "radioactivity":{title:"Radioatividade e meia-vida",summary:"Acompanhe o decaimento radioativo e compare uma amostra ilustrativa com a curva estatística prevista para muitos núcleos.",equation:"N(t) = N₀ · 2^(−t/T½) · λ = ln 2/T½",note:"A curva mostra o número médio esperado de núcleos não decaídos, não uma contagem exata para cada amostra pequena. Os pontos ilustram núcleos individuais; a distribuição real tem flutuações estatísticas. O tempo da interface é expresso em segundos.",duration:p=>5*p.halfLife,params:[{id:"initialCount",label:"Núcleos iniciais N₀",unit:"núcleos",min:1000,max:10000,step:1000,value:8000},{id:"halfLife",label:"Meia-vida",unit:"s",min:1,max:10,step:0.1,value:4}],derive(p,t){return{remaining:p.initialCount*Math.pow(0.5,t/p.halfLife),decayed:p.initialCount*(1-Math.pow(0.5,t/p.halfLife)),decayConstant:Math.LN2/p.halfLife,probability:Math.pow(0.5,t/p.halfLife)};},readouts(p,t){const d=this.derive(p,t);return[["Restantes (média)",fmt(d.remaining,0)+" núcleos"],["Decaídos (média)",fmt(d.decayed,0)+" núcleos"],["Constante λ",fmt(d.decayConstant,4)+" s⁻¹"],["Meias-vidas",fmt(t/p.halfLife,2)]];},graph(p,t){const end=5*p.halfLife;return{xLabel:"t (s)",yLabel:"N(t) (núcleos)",xMin:0,xMax:end,yMin:0,yMax:p.initialCount*1.08,markerX:t,value:x=>p.initialCount*Math.pow(0.5,x/p.halfLife)};}}
   };
-  const id=new URLSearchParams(location.search).get("topico"),spec=specs[id];
-  if(!spec){$("lab-title").textContent="Simulação não encontrada";$("lab-summary").textContent="Volte à biblioteca e abra um dos 25 tópicos do percurso.";return;}
+  const route=new URLSearchParams(location.search).get("topico")||"";
+  const id=route.startsWith("lab-")?route.slice(4):"";
+  const spec=specs[id];
+  if(!spec){$("lab-title").textContent="Simulação não encontrada";$("lab-summary").textContent="Volte ao catálogo do Laboratório Virtual de Física e escolha um dos 25 experimentos.";return;}
   document.title=spec.title+" — Diário dos BNs";
   $("lab-title").textContent=spec.title;$("lab-summary").textContent=spec.summary;$("lab-equation").textContent=spec.equation;$("lab-note").textContent=spec.note;
   scene.setAttribute("aria-label","Animação 2D: "+spec.title);graph.setAttribute("aria-label","Gráfico: "+spec.title);

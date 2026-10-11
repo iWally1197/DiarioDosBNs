@@ -12,8 +12,16 @@
   <link rel="stylesheet" href="laboratorio-suite.css?v=lab-grid-touch-20261010-2">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio.js?v=lab-grid-touch-20261010-2"></script>
-  <script type="module" src="laboratorio-workspace.js?v=lab-grid-touch-20261010-2"></script>
+  <link rel="stylesheet" href="physics-topic-labs.css?v=unified-labs-20261011-1">
+  <script type="module">
+    const topic = new URLSearchParams(location.search).get("topico") || "";
+    if (topic.startsWith("lab-")) {
+      import("./physics-topic-labs.js?v=unified-labs-20261011-1");
+    } else {
+      import("./laboratorio.js?v=lab-grid-touch-20261010-2");
+      import("./laboratorio-workspace.js?v=lab-grid-touch-20261010-2");
+    }
+  </script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-2"></script>
 </head>
 <body>
@@ -94,6 +102,54 @@
       </aside></div>
       <details class="lab-limitations"><summary>Hipóteses, integração numérica e limites</summary><p>Fio inextensível e sem massa, massa puntiforme, pivô sem atrito e sem resistência do ar. A equação não linear θ̈ = −(g/L) sen(θ) é integrada pelo método Velocity-Verlet, com passos fixos de 1/480 s. Pequenas variações de energia decorrem da discretização. O desenho é uma projeção 2D em canvas, não uma cena WebGL.</p></details>
     </section>
+
+    <section class="priority-lab priority-lab-fragment" id="priority-lab" data-lab-special="lab-virtual" hidden>
+        <header class="priority-header">
+          <a class="priority-back" href="laboratorio.html">← Voltar ao laboratório</a>
+          <div class="priority-header-actions">
+            <button class="priority-button priority-quiet" id="panel-toggle" type="button" aria-expanded="true" aria-controls="priority-panel">Ocultar painel</button>
+            <button class="priority-button" id="fullscreen-toggle" type="button" aria-pressed="false">Tela cheia</button>
+          </div>
+        </header>
+        <section class="priority-intro" aria-live="polite">
+          <p class="priority-kicker" id="lab-kicker">LABORATÓRIO VIRTUAL · FÍSICA 2D</p>
+          <h1 id="lab-title">Carregando simulação…</h1>
+          <p class="priority-lede" id="lab-summary"></p>
+          <p class="priority-equation" id="lab-equation"></p>
+        </section>
+        <section class="priority-workspace" aria-label="Simulação e controles">
+          <div class="priority-stage">
+            <div class="priority-stage-toolbar">
+              <div class="priority-playback">
+                <button class="priority-button priority-primary" id="play-toggle" type="button">Iniciar</button>
+                <button class="priority-button" id="step-button" type="button">Avançar 0,1 s</button>
+                <button class="priority-button" id="reset-button" type="button">Reiniciar</button>
+              </div>
+              <label class="priority-time">Tempo <output id="time-output">0,00 s</output><input id="time-control" type="range" min="0" max="1000" value="0" aria-label="Instante da simulação"></label>
+            </div>
+            <canvas id="lab-scene" aria-label="Animação científica 2D" role="img"></canvas>
+            <p class="priority-status" id="lab-status" role="status" aria-live="polite">Ajuste os parâmetros e inicie a simulação.</p>
+            <div class="priority-readouts" id="lab-readouts" aria-live="polite"></div>
+          </div>
+          <aside class="priority-panel" id="priority-panel" aria-label="Parâmetros e gráfico">
+            <section class="priority-panel-section">
+              <div class="priority-section-heading"><div><p class="priority-kicker">CONTROLES</p><h2>Parâmetros</h2></div><button class="priority-reset-link" id="parameters-reset" type="button">Restaurar</button></div>
+              <div class="priority-controls" id="lab-controls"></div>
+            </section>
+            <section class="priority-panel-section priority-graph-section">
+              <div class="priority-section-heading"><div><p class="priority-kicker">GRÁFICO</p><h2 id="graph-title">Grandeza física</h2></div></div>
+              <canvas id="lab-graph" aria-label="Gráfico físico atualizado com os parâmetros" role="img" tabindex="0"></canvas>
+              <p class="priority-graph-help" id="graph-caption">O ponto mostra o valor correspondente aos parâmetros atuais.</p>
+            </section>
+            <details class="priority-explanation">
+              <summary>Modelo e hipótese</summary>
+              <p id="lab-note"></p>
+            </details>
+            <p class="priority-panel-footer">Unidades no SI, salvo quando indicadas. Modelo didático 2D.</p>
+          </aside>
+        </section>
+        
+      </section>
 
     <aside class="notice-card"><b>Do modelo ao projeto Blender</b><p>As experiências do laboratório calculam a Física no navegador. Para examinar uma cena 3D editável, abra a <a href="downloads.html">central de downloads</a> e explore os arquivos no Blender.</p></aside>
   </main>

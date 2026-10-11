@@ -173,3 +173,9 @@
   .lab-workspace:fullscreen .lab-workspace-transport { align-items:stretch; }
   .lab-workspace:fullscreen .lab-workspace-transport label { flex:1 1 130px; }
 }
+
+.lab-card-multiple { cursor:default; }
+.lab-card-multiple:hover { transform:none; }
+.lab-card-links { display:flex; flex-wrap:wrap; gap:6px; }
+.lab-card-link { display:inline-flex; align-items:center; min-height:30px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; color:var(--gold); font-size:10px; font-weight:700; text-decoration:none; }
+.lab-card-link:hover { border-color:var(--gold); background:var(--surface-2); }
