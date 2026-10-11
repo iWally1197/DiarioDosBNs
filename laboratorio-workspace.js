@@ -1,6 +1,6 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-optics-20261010-1";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-optics-20261010-1";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-optics-fullscreen-20261010-1";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-grid-touch-20261010-1";
 import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-fullscreen-20261010-1";
 
 const $ = (selector) => document.querySelector(selector);
@@ -55,10 +55,10 @@ function initializeCanvasViewControls() {
     const hint = document.createElement("span");
     hint.className = "lab-view-hint";
     hint.textContent = isOpticalScene
-      ? "Arraste os elementos para ajustar o espelho. Ative Mover vista para deslocar o enquadramento; +/− ou a roda ajustam o zoom."
+      ? "Arraste os elementos para ajustar o espelho. Use Mover vista ou dois dedos para deslocar; +/− ou pinça ajustam o zoom."
       : isPendulumScene
-        ? "Arraste para girar o pêndulo. Ative Mover vista para deslocar o enquadramento; +/− ou a roda ajustam o zoom."
-        : "Arraste para mover a vista; use +/− ou a roda do mouse para zoom.";
+        ? "Arraste para girar o pêndulo. Use Mover vista ou dois dedos para deslocar; +/− ou pinça ajustam o zoom."
+        : "Arraste para mover a vista; dois dedos deslocam e fazem pinça para zoom.";
     wrapper.append(controls, hint);
 
     const apply = () => {
@@ -85,11 +85,47 @@ function initializeCanvasViewControls() {
     reset.addEventListener("click", clearView);
     canvas.addEventListener("wheel", (event) => {
       event.preventDefault();
-      zoomBy(event.deltaY < 0 ? 1.12 : 1 / 1.12);
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (canvas.clientHeight || 600) : 1;
+      if (event.ctrlKey) {
+        const delta = Math.max(-240, Math.min(240, event.deltaY * unit));
+        camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * Math.exp(-delta * 0.002)));
+      } else {
+        camera.x -= event.deltaX * unit;
+        camera.y -= event.deltaY * unit;
+      }
+      apply();
     }, { passive: false });
 
     let drag = null;
+    const touchPoints = new Map();
+    let touchGesture = null;
+    const startTouchGesture = () => {
+      const points = [...touchPoints.entries()].slice(0, 2);
+      if (points.length < 2) return;
+      const [[firstId, first], [secondId, second]] = points;
+      const centerX = (first.x + second.x) / 2;
+      const centerY = (first.y + second.y) / 2;
+      const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+      touchGesture = {
+        ids: [firstId, secondId], centerX, centerY, distance,
+        x: camera.x, y: camera.y, zoom: camera.zoom
+      };
+      drag = null;
+      canvas.classList.remove("is-view-dragging");
+      canvas.classList.add("lab-view-multitouch");
+      for (const pointerId of touchGesture.ids) {
+        try { canvas.setPointerCapture(pointerId); } catch {}
+      }
+    };
     canvas.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "touch") {
+        touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (touchPoints.size >= 2) {
+          event.preventDefault();
+          startTouchGesture();
+          return;
+        }
+      }
       if (!event.isPrimary) return;
       const shouldPan = isOpticalScene || isPendulumScene
         ? (event.button === 1 || event.button === 2 || event.shiftKey || event.altKey
@@ -102,12 +138,35 @@ function initializeCanvasViewControls() {
       try { canvas.setPointerCapture(event.pointerId); } catch {}
     });
     canvas.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch" && touchPoints.has(event.pointerId)) {
+        touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (touchGesture?.ids.includes(event.pointerId)) {
+          const first = touchPoints.get(touchGesture.ids[0]);
+          const second = touchPoints.get(touchGesture.ids[1]);
+          if (first && second) {
+            const centerX = (first.x + second.x) / 2;
+            const centerY = (first.y + second.y) / 2;
+            const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+            camera.x = touchGesture.x + centerX - touchGesture.centerX;
+            camera.y = touchGesture.y + centerY - touchGesture.centerY;
+            camera.zoom = Math.max(0.55, Math.min(3, touchGesture.zoom * distance / touchGesture.distance));
+            apply();
+            event.preventDefault();
+            return;
+          }
+        }
+      }
       if (!drag || event.pointerId !== drag.pointerId) return;
       camera.x = drag.x + event.clientX - drag.startX;
       camera.y = drag.y + event.clientY - drag.startY;
       apply();
     });
     const finishDrag = (event) => {
+      if (event.pointerType === "touch") {
+        touchPoints.delete(event.pointerId);
+        if (touchGesture?.ids.includes(event.pointerId)) touchGesture = null;
+        if (touchPoints.size === 0) canvas.classList.remove("lab-view-multitouch");
+      }
       if (!drag || event.pointerId !== drag.pointerId) return;
       drag = null;
       canvas.classList.remove("is-view-dragging");
@@ -468,13 +527,26 @@ function initializeExperimentPage(topicId) {
     context.lineTo(x + width, y + height - r); context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
     context.lineTo(x + r, y + height); context.quadraticCurveTo(x, y + height, x, y + height - r); context.lineTo(x, y + r); context.quadraticCurveTo(x, y, x + r, y); context.closePath();
   }
+  function drawBackgroundGrid(context, width, height, color, spacing = 44, alpha = 0.4) {
+    context.save();
+    context.strokeStyle = color;
+    context.lineWidth = 1;
+    context.globalAlpha = alpha;
+    context.beginPath();
+    const centerX = Math.round(width / 2 / spacing) * spacing;
+    const centerY = Math.round(height / 2 / spacing) * spacing;
+    for (let x = centerX; x >= 0; x -= spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+    for (let x = centerX + spacing; x <= width; x += spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+    for (let y = centerY; y >= 0; y -= spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+    for (let y = centerY + spacing; y <= height; y += spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+    context.stroke();
+    context.restore();
+  }
   function drawBackdrop(context, width, height, c) {
     const gradient = context.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, c.surface); gradient.addColorStop(0.58, c.bg); gradient.addColorStop(1, c.surface);
     context.fillStyle = gradient; context.fillRect(0, 0, width, height);
-    context.strokeStyle = c.line; context.lineWidth = 1; context.globalAlpha = 0.4;
-    for (let i = 1; i <= 3; i += 1) { const y = height * i / 5; context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
-    context.globalAlpha = 1;
+    drawBackgroundGrid(context, width, height, c.line);
   }
   function drawCart(context, centerX, wheelLineY, bodyColor, c, label = "A", orientation = 0, wheelRotation = 0, size = 1) {
     context.save(); context.translate(centerX, wheelLineY); context.rotate(orientation); context.scale(size, size);
@@ -630,8 +702,7 @@ function initializeExperimentPage(topicId) {
     const c = palette();
     const ctx = sceneContext;
     ctx.fillStyle = c.bg; ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = c.line; ctx.lineWidth = 1;
-    for (let i = 1; i < 5; i += 1) { const x = width * i / 5; ctx.beginPath(); ctx.moveTo(x, 14); ctx.lineTo(x, height - 24); ctx.stroke(); }
+    drawBackgroundGrid(ctx, width, height, c.line);
     ctx.font = "12px system-ui"; ctx.fillStyle = c.muted;
     const baseline = height * 0.72;
     const values = model.values;
@@ -846,7 +917,7 @@ function initializeExperimentPage(topicId) {
   let opticalDrag = null;
   canvas.addEventListener("pointerdown", (event) => {
     if (state.id !== "optics-reflection" || event.button !== 0 || event.shiftKey || event.altKey
-      || canvas.classList.contains("lab-view-pan-mode")) return;
+      || canvas.classList.contains("lab-view-pan-mode") || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
     const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
@@ -868,7 +939,7 @@ function initializeExperimentPage(topicId) {
     }
   });
   canvas.addEventListener("pointermove", (event) => {
-    if (!opticalDrag || state.id !== "optics-reflection") return;
+    if (!opticalDrag || state.id !== "optics-reflection" || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
     const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
