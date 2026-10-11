@@ -25,6 +25,13 @@ function initializeCanvasViewControls() {
     const label = document.createElement("span");
     label.className = "lab-view-controls-label";
     label.textContent = "Perspectiva";
+    const moveToggle = document.createElement("button");
+    moveToggle.type = "button";
+    moveToggle.className = "lab-view-pan-toggle";
+    moveToggle.setAttribute("aria-pressed", "false");
+    moveToggle.setAttribute("aria-label", "Ativar movimento da vista");
+    moveToggle.textContent = "Mover vista";
+    moveToggle.hidden = !(isOpticalScene || isPendulumScene);
     const zoomOut = document.createElement("button");
     zoomOut.type = "button";
     zoomOut.className = "lab-view-control-button";
@@ -44,13 +51,13 @@ function initializeCanvasViewControls() {
     reset.setAttribute("aria-label", "Restaurar perspectiva inicial");
     reset.title = "Restaurar perspectiva inicial";
     reset.textContent = "Recentrar";
-    controls.append(label, zoomOut, zoomValue, zoomIn, reset);
+    controls.append(label, moveToggle, zoomOut, zoomValue, zoomIn, reset);
     const hint = document.createElement("span");
     hint.className = "lab-view-hint";
     hint.textContent = isOpticalScene
-      ? "Shift + arrastar move a vista; arrastar os elementos ajusta a óptica. Use +/− ou a roda para zoom."
+      ? "Arraste os elementos para ajustar o espelho. Ative Mover vista para deslocar o enquadramento; +/− ou a roda ajustam o zoom."
       : isPendulumScene
-        ? "Arrastar gira o pêndulo; Shift + arrastar move a vista. Use +/− ou a roda para zoom."
+        ? "Arraste para girar o pêndulo. Ative Mover vista para deslocar o enquadramento; +/− ou a roda ajustam o zoom."
         : "Arraste para mover a vista; use +/− ou a roda do mouse para zoom.";
     wrapper.append(controls, hint);
 
@@ -68,6 +75,11 @@ function initializeCanvasViewControls() {
       camera.y = 0;
       apply();
     };
+    moveToggle.addEventListener("click", () => {
+      const enabled = canvas.classList.toggle("lab-view-pan-mode");
+      moveToggle.setAttribute("aria-pressed", String(enabled));
+      moveToggle.setAttribute("aria-label", enabled ? "Desativar movimento da vista" : "Ativar movimento da vista");
+    });
     zoomOut.addEventListener("click", () => zoomBy(1 / 1.2));
     zoomIn.addEventListener("click", () => zoomBy(1.2));
     reset.addEventListener("click", clearView);
@@ -80,7 +92,8 @@ function initializeCanvasViewControls() {
     canvas.addEventListener("pointerdown", (event) => {
       if (!event.isPrimary) return;
       const shouldPan = isOpticalScene || isPendulumScene
-        ? (event.button === 1 || event.button === 2 || event.shiftKey || event.altKey)
+        ? (event.button === 1 || event.button === 2 || event.shiftKey || event.altKey
+          || (canvas.classList.contains("lab-view-pan-mode") && event.button === 0))
         : (event.button === 0 || event.button === 1 || event.button === 2);
       if (!shouldPan) return;
       event.preventDefault();
@@ -831,7 +844,8 @@ function initializeExperimentPage(topicId) {
   }
   let opticalDrag = null;
   canvas.addEventListener("pointerdown", (event) => {
-    if (state.id !== "optics-reflection") return;
+    if (state.id !== "optics-reflection" || event.button !== 0 || event.shiftKey || event.altKey
+      || canvas.classList.contains("lab-view-pan-mode")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
     const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
