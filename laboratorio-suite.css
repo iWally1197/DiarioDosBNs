@@ -142,6 +142,7 @@
 .lab-workspace:fullscreen .lab-readouts span { font-size:9px; }
 .lab-workspace:fullscreen .lab-readouts b { font-size:11px; overflow-wrap:anywhere; }
 .lab-workspace-canvas-wrap { position:relative; }
+.lab-workspace-canvas-wrap,.lab-existing-panels .lab-canvas-wrap { display:grid; place-items:center; overflow:hidden; }
 .lab-view-canvas { transform-origin:center center; touch-action:none; }
 .lab-view-canvas:not(.lab-view-canvas--optics):not(.lab-view-canvas--pendulum) { cursor:grab; }
 .lab-view-canvas.is-view-dragging,.lab-view-canvas.lab-view-multitouch { cursor:grabbing; }
