@@ -1736,6 +1736,17 @@ body:before {
   font-size: 13px;
   line-height: 1.4;
 }
+.topic-link-mode {
+  flex: none;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
 .topic-link-count {
   display: flex;
   align-items: center;
