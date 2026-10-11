@@ -7,6 +7,108 @@ const $ = (selector) => document.querySelector(selector);
 const requestedId = new URLSearchParams(location.search).get("topico");
 if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
 initializeSpecialExperimentFullscreen();
+initializeCanvasViewControls();
+
+function initializeCanvasViewControls() {
+  const topicId = new URLSearchParams(location.search).get("topico") || "";
+  document.querySelectorAll("#workspace-canvas, #projectile-canvas, #pendulum-canvas").forEach((canvas) => {
+    const wrapper = canvas.parentElement;
+    if (!wrapper || wrapper.dataset.viewControlsReady === "true") return;
+    wrapper.dataset.viewControlsReady = "true";
+    const camera = { zoom: 1, x: 0, y: 0 };
+    const isOpticalScene = canvas.id === "workspace-canvas" && topicId.startsWith("optics-");
+    const isPendulumScene = canvas.id === "pendulum-canvas";
+    const controls = document.createElement("div");
+    controls.className = "lab-view-controls-overlay";
+    controls.setAttribute("role", "group");
+    controls.setAttribute("aria-label", "Controles da perspectiva da animação");
+    const label = document.createElement("span");
+    label.className = "lab-view-controls-label";
+    label.textContent = "Perspectiva";
+    const zoomOut = document.createElement("button");
+    zoomOut.type = "button";
+    zoomOut.className = "lab-view-control-button";
+    zoomOut.setAttribute("aria-label", "Afastar a perspectiva");
+    zoomOut.textContent = "−";
+    const zoomValue = document.createElement("output");
+    zoomValue.className = "lab-view-zoom";
+    zoomValue.setAttribute("aria-live", "polite");
+    const zoomIn = document.createElement("button");
+    zoomIn.type = "button";
+    zoomIn.className = "lab-view-control-button";
+    zoomIn.setAttribute("aria-label", "Aproximar a perspectiva");
+    zoomIn.textContent = "+";
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "lab-view-reset";
+    reset.setAttribute("aria-label", "Restaurar perspectiva inicial");
+    reset.title = "Restaurar perspectiva inicial";
+    reset.textContent = "Recentrar";
+    controls.append(label, zoomOut, zoomValue, zoomIn, reset);
+    const hint = document.createElement("span");
+    hint.className = "lab-view-hint";
+    hint.textContent = isOpticalScene
+      ? "Shift + arrastar move a vista; arrastar os elementos ajusta a óptica. Use +/− ou a roda para zoom."
+      : isPendulumScene
+        ? "Arrastar gira o pêndulo; Shift + arrastar move a vista. Use +/− ou a roda para zoom."
+        : "Arraste para mover a vista; use +/− ou a roda do mouse para zoom.";
+    wrapper.append(controls, hint);
+
+    const apply = () => {
+      canvas.style.transform = `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
+      zoomValue.textContent = `${Math.round(camera.zoom * 100)}%`;
+    };
+    const zoomBy = (factor) => {
+      camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * factor));
+      apply();
+    };
+    const clearView = () => {
+      camera.zoom = 1;
+      camera.x = 0;
+      camera.y = 0;
+      apply();
+    };
+    zoomOut.addEventListener("click", () => zoomBy(1 / 1.2));
+    zoomIn.addEventListener("click", () => zoomBy(1.2));
+    reset.addEventListener("click", clearView);
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      zoomBy(event.deltaY < 0 ? 1.12 : 1 / 1.12);
+    }, { passive: false });
+
+    let drag = null;
+    canvas.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary) return;
+      const shouldPan = isOpticalScene || isPendulumScene
+        ? (event.button === 1 || event.button === 2 || event.shiftKey || event.altKey)
+        : (event.button === 0 || event.button === 1 || event.button === 2);
+      if (!shouldPan) return;
+      event.preventDefault();
+      drag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, x: camera.x, y: camera.y };
+      canvas.classList.add("is-view-dragging");
+      try { canvas.setPointerCapture(event.pointerId); } catch {}
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      camera.x = drag.x + event.clientX - drag.startX;
+      camera.y = drag.y + event.clientY - drag.startY;
+      apply();
+    });
+    const finishDrag = (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      drag = null;
+      canvas.classList.remove("is-view-dragging");
+    };
+    canvas.addEventListener("pointerup", finishDrag);
+    canvas.addEventListener("pointercancel", finishDrag);
+    canvas.addEventListener("lostpointercapture", finishDrag);
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    canvas.classList.add("lab-view-canvas");
+    if (isOpticalScene) canvas.classList.add("lab-view-canvas--optics");
+    if (isPendulumScene) canvas.classList.add("lab-view-canvas--pendulum");
+    apply();
+  });
+}
 
 function initializeSpecialExperimentFullscreen() {
   document.querySelectorAll("[data-lab-special]").forEach((section) => {
