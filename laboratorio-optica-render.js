@@ -207,6 +207,22 @@ function drawSphericalMirror(context, geometry, values, p, view, palette) {
   context.fillText(`Equação paraxial: p′=${Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞"} m · m=${Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"}`, 12, 39);
 }
 
+function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = 1;
+  context.globalAlpha = 0.34;
+  context.beginPath();
+  const centerX = Math.round(width / 2 / spacing) * spacing;
+  const centerY = Math.round(height / 2 / spacing) * spacing;
+  for (let x = centerX; x >= 0; x -= spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+  for (let x = centerX + spacing; x <= width; x += spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+  for (let y = centerY; y >= 0; y -= spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+  for (let y = centerY + spacing; y <= height; y += spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+  context.stroke();
+  context.restore();
+}
+
 export function drawOpticalScene(context, width, height, id, parameters, model, palette) {
   const geometry = model.geometry;
   const view = opticalViewFor(geometry.bounds, width, height);
@@ -214,6 +230,7 @@ export function drawOpticalScene(context, width, height, id, parameters, model, 
   context.save();
   context.fillStyle = palette.bg;
   context.fillRect(0, 0, width, height);
+  drawOpticalBackgroundGrid(context, width, height, palette.line);
   drawAxes(context, width, height, geometry.bounds, view, palette, geometry.kind === "spherical-mirror");
   if (geometry.kind === "plane-mirror") drawReflection(context, geometry, model.values, parameters, view, palette);
   else if (geometry.kind === "interface") drawRefraction(context, geometry, model.values, parameters, view, palette, width);
