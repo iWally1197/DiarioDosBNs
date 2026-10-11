@@ -19,6 +19,10 @@ function initializeSpecialExperimentFullscreen() {
     if (!fullscreenButton || !controlsToggleButton || !controlsSidebar || !graphPanel || !graphHome) return;
 
     const refreshCanvas = () => window.dispatchEvent(new Event("resize"));
+    if (typeof ResizeObserver !== "undefined") {
+      const specialResizeObserver = new ResizeObserver(refreshCanvas);
+      [section, graphPanel, graphCanvas.parentElement, section.querySelector(".lab-canvas-wrap")].filter(Boolean).forEach((element) => specialResizeObserver.observe(element));
+    }
     fullscreenButton.addEventListener("click", async () => {
       try {
         if (document.fullscreenElement === section) await document.exitFullscreen();
@@ -323,8 +327,8 @@ function initializeExperimentPage(topicId) {
 
   function prepareCanvas(element, context) {
     const box = element.getBoundingClientRect();
-    const width = Math.max(280, box.width || 280);
-    const height = Math.max(220, box.height || 220);
+    const width = Math.max(1, box.width || element.clientWidth || 280);
+    const height = Math.max(1, box.height || element.clientHeight || 220);
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     const pixelWidth = Math.round(width * ratio);
     const pixelHeight = Math.round(height * ratio);
@@ -694,6 +698,19 @@ function initializeExperimentPage(topicId) {
     stop();
     $("#workspace-status").textContent = `Não foi possível atualizar esta simulação: ${error.message}`;
   }
+
+  const scheduleWorkspaceRender = () => {
+    if (!state.id || workspace.hidden) return;
+    requestAnimationFrame(() => {
+      if (!state.id || workspace.hidden) return;
+      try { render(); } catch (error) { showError(error); }
+    });
+  };
+  if (typeof ResizeObserver !== "undefined") {
+    const workspaceResizeObserver = new ResizeObserver(scheduleWorkspaceRender);
+    [workspace, canvas.parentElement, graphCanvas.parentElement].filter(Boolean).forEach((element) => workspaceResizeObserver.observe(element));
+  }
+  window.addEventListener("resize", scheduleWorkspaceRender, { passive: true });
 
   function graphSelection(x) {
     const id = state.id;
