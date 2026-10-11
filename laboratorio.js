@@ -33,8 +33,10 @@ function canvasContext(canvas) {
 
 function resizeCanvas(canvas, context) {
   const box = canvas.getBoundingClientRect();
-  const width = Math.max(1, box.width || canvas.clientWidth || 320);
-  const height = Math.max(1, box.height || canvas.clientHeight || 240);
+  // clientWidth/clientHeight ignore the CSS zoom transform; use them to keep
+  // the backing store stable while the user changes the camera scale.
+  const width = Math.max(1, canvas.clientWidth || box.width || 320);
+  const height = Math.max(1, canvas.clientHeight || box.height || 240);
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
   const pixelWidth = Math.round(width * ratio);
   const pixelHeight = Math.round(height * ratio);
@@ -680,11 +682,15 @@ document.querySelectorAll("[data-pendulum-view]").forEach((button) => {
 });
 
 pendulumCanvas.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0 || event.shiftKey || event.altKey || pendulumCanvas.classList.contains("lab-view-pan-mode")) {
+    pointerPosition = null;
+    return;
+  }
   pointerPosition = { x: event.clientX, y: event.clientY };
   pendulumCanvas.setPointerCapture(event.pointerId);
 });
 pendulumCanvas.addEventListener("pointermove", (event) => {
-  if (!pointerPosition) return;
+  if (!pointerPosition || pendulumCanvas.classList.contains("lab-view-pan-mode")) return;
   const dx = event.clientX - pointerPosition.x;
   const dy = event.clientY - pointerPosition.y;
   pointerPosition = { x: event.clientX, y: event.clientY };
