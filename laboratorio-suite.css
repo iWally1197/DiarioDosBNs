@@ -144,7 +144,7 @@
 .lab-workspace-canvas-wrap { position:relative; }
 .lab-view-canvas { transform-origin:center center; touch-action:none; }
 .lab-view-canvas:not(.lab-view-canvas--optics):not(.lab-view-canvas--pendulum) { cursor:grab; }
-.lab-view-canvas.is-view-dragging { cursor:grabbing; }
+.lab-view-canvas.is-view-dragging,.lab-view-canvas.lab-view-multitouch { cursor:grabbing; }
 .lab-view-controls-overlay { position:absolute; top:10px; right:10px; z-index:4; display:flex; align-items:center; gap:5px; max-width:calc(100% - 20px); padding:5px; border:1px solid var(--line); border-radius:8px; background:color-mix(in srgb,var(--surface) 94%,transparent); box-shadow:0 4px 16px rgba(0,0,0,.22); }
 .lab-view-controls-label { padding:0 5px; color:var(--muted); font-size:10px; font-weight:700; white-space:nowrap; }
 .lab-view-control-button,.lab-view-reset,.lab-view-pan-toggle { min-width:30px; min-height:30px; padding:4px 8px; border:1px solid var(--line); border-radius:5px; background:var(--bg-soft); color:var(--text); font:600 14px/1 var(--font); cursor:pointer; }
