@@ -102,8 +102,11 @@
     topicGrid.innerHTML = topicGroups.map((group) => {
       const members = group.ids.map((id) => topics.find((topic) => topic.id === id)).filter((topic) => topic && topic.animations.length);
       if (!members.length) return '';
-      return `<section class="topic-group"><div class="topic-group-heading"><h3>${group.name}</h3><span>${members.length} ${members.length === 1 ? 'tópico' : 'tópicos'}</span></div><div class="topic-links">${members.map((topic) => `
-        <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`).join('')}
+      return `<section class="topic-group"><div class="topic-group-heading"><h3>${group.name}</h3><span>${members.length} ${members.length === 1 ? 'tópico' : 'tópicos'}</span></div><div class="topic-links">${members.map((topic) => {
+        const modes = [...new Set(topic.animations.map((item) => String(item[3] || '3D').toUpperCase() === '2D' ? '2D' : '3D'))];
+        return `
+        <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-mode" aria-label="Tipo de animação">${modes.join(' + ')}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`;
+      }).join('')}
       </div></section>`;
     }).filter(Boolean).join('') || `<p class="empty-state">${publicationCheckFailed ? 'Não foi possível carregar os conteúdos agora. Tente novamente em instantes.' : 'Nenhuma animação está publicada no momento.'}</p>`;
     const topicSearch = document.querySelector('#topic-search');
@@ -132,12 +135,13 @@
     } else {
       const ideas = topic.ideas.map((idea) => `<li>${idea}</li>`).join('');
       const savedFavorites = (() => { try { return JSON.parse(localStorage.getItem('diario-bns-favorites') || '[]'); } catch { return []; } })();
-      const animations = topic.animations.map(([title, description, filename], i) => {
+      const animations = topic.animations.map(([title, description, filename, mode = '3D'], i) => {
+        const modeLabel = String(mode).toUpperCase() === '2D' ? '2D' : '3D';
         const saved = savedFavorites.some((item) => item.topicId === topic.id && item.filename === filename);
         return `
         <article class="topic-animation-card" id="animacao-${filename}">
           <div class="topic-animation-index">${String(i + 1).padStart(2, '0')}</div>
-          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO BLENDER</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="animacao.html?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: downloads-${topic.id}-${filename}.blend</span></div>
+          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO ${modeLabel}</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="animacao.html?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: downloads-${topic.id}-${filename}.blend</span></div>
           <div class="animation-actions"><button class="favorite-toggle" type="button" data-favorite-topic="${topic.id}" data-favorite-file="${filename}" aria-pressed="${saved}" aria-label="${saved ? 'Remover dos favoritos' : 'Salvar como favorita'}: ${title}">${saved ? '★ Favorita' : '☆ Salvar favorita'}</button><a class="blend-download" href="downloads-${topic.id}-${filename}.blend" download aria-label="Baixar projeto Blender: ${title}">Baixar projeto <span>.blend</span><b aria-hidden="true">↓</b></a></div>
         </article>`;
       }).join('');
