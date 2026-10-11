@@ -13,8 +13,11 @@ export function physicsTopicCardMarkup(topic) {
   const available=topic.implementationStatus==="implemented-awaiting-validation"&&/^[a-z0-9-]+$/.test(topic.linkedExperimentId||"");
   const state=available?"Simulação existente · aguardando validação":"Planejado";
   const cardClass=available?"is-existing":"is-planned";
+  const target=topic.linkedExperimentId==="faraday-induction"
+    ?"laboratorio-faraday.html"
+    :`laboratorio-experimento.html?topico=${encodeURIComponent(topic.linkedExperimentId)}`;
   const action=available
-    ?`<a class="text-link" href="laboratorio-experimento.html?topico=${encodeURIComponent(topic.linkedExperimentId)}">Abrir experimento relacionado →</a>`
+    ?`<a class="text-link" href="${target}">Abrir experimento relacionado →</a>`
     :'<span class="physics-topic-pending">Ainda não há um experimento para abrir.</span>';
   const description=available?topic.description:"Modelo, interface e validação serão desenvolvidos em uma etapa futura.";
   return `<article class="physics-topic-card"><div><span class="physics-topic-number">TÓPICO ${String(topic.number).padStart(3,"0")}</span><h3>${esc(topic.title)}</h3><p>${esc(topic.category)} · ${esc(topic.simulationType)}</p><span class="physics-topic-state ${cardClass}">${state}</span><p>${esc(description)}</p></div>${action}</article>`;
