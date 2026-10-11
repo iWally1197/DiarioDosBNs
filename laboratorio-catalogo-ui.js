@@ -1,7 +1,7 @@
-import { experiments } from "./laboratorio-catalogo.js?v=lab-optics-20261010-1";
+import { experiments } from "./laboratorio-catalogo.js?v=priority-batch-20261011-1";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
-export const experimentPageUrl = (id) => `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
+export const experimentPageUrl = (id) => id === "freefall" ? "laboratorio-queda-livre.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
 function initializeCatalog() {
@@ -16,6 +16,7 @@ function initializeCatalog() {
     projectile: '<path d="M12 56 Q39 4 72 37"/><circle cx="12" cy="56" r="3"/><circle class="secondary" cx="72" cy="37" r="4"/><path class="secondary" d="M16 57h62M16 59v-8"/>',
     mru: '<path d="M9 48h64"/><path d="m60 38 13 10-13 10"/><circle cx="24" cy="48" r="7"/><circle class="secondary" cx="49" cy="48" r="7"/>',
     muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>',
+    freefall: '<path d="M42 12v38m0 0-7-9m7 9 7-9"/><path class="secondary" d="M12 62h60"/><circle cx="42" cy="27" r="7"/>',
     newton: '<rect x="30" y="31" width="24" height="21" rx="3"/><path d="M9 42h19m0 0-6-5m6 5-6 5"/><path class="secondary" d="M35 26v-8m14 8v-8M22 54v7m40-7v7"/>',
     energy: '<path d="M8 17 69 56H8z"/><circle cx="24" cy="26" r="5"/><path class="secondary" d="m26 25 22 20m0 0-8-1m8 1-1-8"/>',
     collision: '<rect x="11" y="36" width="22" height="14" rx="3"/><rect x="54" y="36" width="20" height="14" rx="3"/><path d="M17 55a3 3 0 1 0 0 .1M28 55a3 3 0 1 0 0 .1M60 55a3 3 0 1 0 0 .1M69 55a3 3 0 1 0 0 .1"/><path class="secondary" d="M34 27h17m0 0-5-5m5 5-5 5"/>',

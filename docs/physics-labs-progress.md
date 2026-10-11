@@ -4,16 +4,17 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 ## Auditoria inicial
 
-- O repositório contém **17 experimentos interativos** no catálogo estático atual; um piloto 2D/3D de Faraday foi acrescentado como página dedicada.
+- O catálogo estático agora contém **18 experiências interativas**, incluindo a nova queda livre; a página 2D/3D de Faraday permanece como laboratório dedicado.
 - O banco Supabase possui **83 registros** em `public.animations`; na auditoria, os 83 estavam publicados. O painel administrativo controla estes registros, que são usados na biblioteca principal e nas páginas públicas de tópicos.
 - O plano mestre contém **480 tópicos em 9 áreas**. O catálogo estruturado abaixo mantém os 480 títulos, sem gerar páginas vazias.
-- **18 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **462** permanecem **Planejados**.
+- **20 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **460** permanecem **Planejados**. FIS-021 e FIS-023 apontam para a mesma experiência de Newton.
 - Há testes automatizados de modelos físicos existentes (MRU/MUV, lançamento, atrito, energia, colisões, mola, ondas, Ohm, óptica, calorimetria, campo elétrico e pêndulo). A presença de testes de modelo não valida, por si só, a experiência completa nem a interface no navegador.
 
 ## Arquitetura nesta etapa
 
 - `physics-topics.json`: registro estruturado individual dos 480 tópicos e seus estados.
-- `biblioteca-fisica.html` + `physics-topic-catalog.js`: catálogo pesquisável por assunto, área, subárea, dificuldade e estado. Os filtros complementares mostram apenas os valores já registrados. Somente os 18 assuntos com experimento relacionado têm um link; os demais mostram o estado planejado, sem abrir páginas vazias.
+- `biblioteca-fisica.html` + `physics-topic-catalog.js`: catálogo pesquisável por assunto, área, subárea, dificuldade e estado; inclui um roteiro dos 25 tópicos prioritários em cinco grupos, com links e estados reais.
+- `laboratorio-queda-livre.html` + `physics-freefall-model.js` + `physics-freefall.js` + `physics-freefall.css`: comparação 2D de massas em queda ideal, com referencial no solo, gráfico sincronizado, parâmetros e modo de tela cheia. Os filtros complementares mostram apenas os valores já registrados. Somente os 18 assuntos com experimento relacionado têm um link; os demais mostram o estado planejado, sem abrir páginas vazias.
 - `laboratorio-faraday.html` + `physics-faraday-model.js` + `physics-faraday.js` + `physics-faraday.css`: piloto de bobina girando em campo uniforme, com modelo analítico de fluxo concatenado e lei de Faraday, vistas 2D/3D, parâmetros, gráfico e perspectiva ajustável; implementação em espera de validação visual.
 - `admin-laboratorios.html`: painel administrativo para os registros reais de `public.animations`, com seleção individual e em massa, busca, filtros e publicação persistente.
 - `supabase/migrations/20261011031216_admin_only_animation_publication.sql`: trigger de proteção para impedir que contas sem papel de administrador alterem `is_published` diretamente. A migração reutiliza `public.is_admin()` e preserva as permissões de edição dos demais campos.
@@ -23,7 +24,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 | Área | Total | Com simulação existente (aguardando validação) | Planejados |
 |---|---:|---:|---:|
-| Mecânica | 96 | 8 | 88 |
+| Mecânica | 96 | 10 | 86 |
 | Ondulatória e acústica | 42 | 1 | 41 |
 | Óptica | 51 | 5 | 46 |
 | Termologia e termodinâmica | 41 | 1 | 40 |
@@ -48,7 +49,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 | FIS-007 | Aceleração instantânea | Planejado | — |
 | FIS-008 | Movimento retilíneo uniforme | Implementado, aguardando validação | Movimento retilíneo uniforme |
 | FIS-009 | Movimento retilíneo uniformemente variado | Implementado, aguardando validação | Movimento uniformemente variado |
-| FIS-010 | Queda livre | Planejado | — |
+| FIS-010 | Queda livre | Implementado, aguardando validação | Queda livre — comparação de massas |
 | FIS-011 | Lançamento vertical | Planejado | — |
 | FIS-012 | Lançamento horizontal | Planejado | — |
 | FIS-013 | Lançamento oblíquo | Implementado, aguardando validação | Lançamento oblíquo |
@@ -59,7 +60,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 | FIS-018 | Aceleração tangencial | Planejado | — |
 | FIS-019 | Movimento relativo | Planejado | — |
 | FIS-020 | Gráficos de posição, velocidade e aceleração | Planejado | — |
-| FIS-021 | Leis de Newton | Planejado | — |
+| FIS-021 | Leis de Newton | Implementado, aguardando validação | Segunda lei de Newton e atrito |
 | FIS-022 | Inércia | Planejado | — |
 | FIS-023 | Força resultante | Implementado, aguardando validação | Segunda lei de Newton e atrito |
 | FIS-024 | Peso e massa | Planejado | — |
@@ -562,7 +563,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 ## Testes e comprovações desta etapa
 
-Em 11/10/2026, a suíte automatizada executou **53 testes e todos passaram**, cobrindo os modelos físicos e páginas já existentes, o modelo analítico do piloto de Faraday, a integridade dos 480 registros, filtros e links do catálogo, e verificações estruturais do painel e do trigger. A verificação de sintaxe dos módulos do painel e do piloto também passou. O piloto de Faraday tem página própria, vista 2D e 3D, controle de perspectiva, gráfico, grandezas, parâmetros, tela cheia e indicação das limitações do modelo; aguarda validação visual no navegador. Esses testes de código não substituem uma checagem visual no navegador nem um teste de autorização com uma conta comum e uma conta administradora. Esses dois fluxos de ponta a ponta continuam pendentes porque não foi feita uma alteração real nos registros do banco nem foram fornecidas contas de teste. A publicação na biblioteca e o bloqueio de página direta seguem as consultas existentes filtradas por `is_published`; a verificação pública após o deploy ainda precisa ser feita no navegador.
+Em 11/10/2026, antes deste lote, a suíte automatizada executou **53 testes e todos passaram**, cobrindo os modelos físicos e páginas existentes até então, o modelo analítico do piloto de Faraday, a integridade dos 480 registros, filtros e links do catálogo, e verificações estruturais do painel e do trigger. Não foi executada uma nova suíte nesta publicação. A verificação de sintaxe dos módulos do painel e do piloto também passou. O piloto de Faraday tem página própria, vista 2D e 3D, controle de perspectiva, gráfico, grandezas, parâmetros, tela cheia e indicação das limitações do modelo; aguarda validação visual no navegador. A página de queda livre também aguarda validação visual e não recebeu uma suíte de testes nesta publicação. Esses testes de código não substituem uma checagem visual no navegador nem um teste de autorização com uma conta comum e uma conta administradora. Esses dois fluxos de ponta a ponta continuam pendentes porque não foi feita uma alteração real nos registros do banco nem foram fornecidas contas de teste. A publicação na biblioteca e o bloqueio de página direta seguem as consultas existentes filtradas por `is_published`; a verificação pública após o deploy ainda precisa ser feita no navegador.
 
 ## Requisitos preservados do prompt mestre
 
@@ -580,7 +581,7 @@ Acessibilidade e desempenho incluem teclado, leitores de tela, legendas e descri
 
 ## Próximos lotes
 
-1. Validar no navegador e documentar os 17 experimentos atuais, incluindo equações, grandezas SI, condições iniciais, acessibilidade e limitações.
+1. Validar visualmente no navegador o primeiro grupo de cinco laboratórios e documentar equações, grandezas SI, condições iniciais, acessibilidade e limitações.
 2. Implementar os tópicos seguintes em lotes pequenos, com modelo físico próprio e testes de caso conhecido.
 3. Atualizar o estado por tópico somente após executar os testes correspondentes e revisar o comportamento real.
 4. Não publicar um tópico planejado até haver uma experiência funcional e revisada.

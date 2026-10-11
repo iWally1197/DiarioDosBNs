@@ -249,24 +249,80 @@
     "title": "Queda livre",
     "category": "Mecânica",
     "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
-    "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
-    "references": [],
-    "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "description": "Compare dois objetos de massas diferentes em queda vertical, com o solo como referencial. No modelo ideal sem resistência do ar, ambos têm a mesma aceleração e o mesmo tempo de queda.",
+    "learningObjectives": [
+      "Relacionar altura, tempo e velocidade na queda livre.",
+      "Comparar objetos de massas diferentes em um modelo sem resistência do ar.",
+      "Interpretar a posição e a velocidade com eixo vertical positivo para baixo."
+    ],
+    "difficulty": "Ensino médio",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "freefall",
+    "linkedExperimentTitle": "Queda livre — comparação de massas",
+    "modelPhysics": "Queda vertical a partir do repouso, com aceleração gravitacional uniforme g e resistência do ar desprezada. A coordenada de deslocamento é positiva para baixo: s=gt²/2, v=gt e h=h₀−gt²/2. O modelo não depende da massa.",
+    "interfaceStatus": "Página própria responsiva com animação 2D, referencial e régua, instrumentos numéricos, gráfico sincronizado e modo de tela cheia com controles laterais. Aguarda validação visual no navegador.",
+    "interactionsStatus": "Iniciar, pausar, continuar, avançar ou voltar no tempo; ajustar altura, gravidade, massas dos dois objetos e velocidade de reprodução; escolher o gráfico e consultar um instante.",
+    "equations": [
+      "s=gt²/2",
+      "v=gt",
+      "h=h₀−gt²/2",
+      "t_impacto=√(2h₀/g)"
+    ],
+    "equationsStatus": "Equações do modelo ideal exibidas na página. A verificação automatizada e a revisão visual desta nova interface ainda estão pendentes.",
+    "variables": [
+      {
+        "name": "Altura inicial",
+        "symbol": "h₀",
+        "unit": "m",
+        "range": "5–80 m na interface"
+      },
+      {
+        "name": "Aceleração gravitacional",
+        "symbol": "g",
+        "unit": "m/s²",
+        "range": "1–20 m/s² na interface"
+      },
+      {
+        "name": "Tempo",
+        "symbol": "t",
+        "unit": "s",
+        "range": "0 até o impacto"
+      },
+      {
+        "name": "Massa do objeto A",
+        "symbol": "m₁",
+        "unit": "kg",
+        "range": "0,1–10 kg; não altera o movimento no modelo"
+      },
+      {
+        "name": "Massa do objeto B",
+        "symbol": "m₂",
+        "unit": "kg",
+        "range": "0,1–10 kg; não altera o movimento no modelo"
+      }
+    ],
+    "units": [
+      "m",
+      "s",
+      "m/s",
+      "m/s²",
+      "kg"
+    ],
+    "references": [
+      {
+        "title": "OpenStax, College Physics 2e, seção 2.7 — Falling Objects",
+        "url": "https://openstax.org/books/college-physics-2e/pages/2-7-falling-objects"
+      }
+    ],
+    "validationTests": [
+      "Com h₀=19,62 m e g=9,81 m/s², o tempo de impacto previsto é 2,00 s.",
+      "Para duas massas diferentes, altura, velocidade e instante de impacto permanecem iguais.",
+      "No instante inicial, deslocamento e velocidade são nulos.",
+      "No instante de impacto, altura em relação ao solo é zero."
+    ],
+    "testsStatus": "Não foi executada suíte automatizada específica nesta publicação. A validação visual do laboratório em navegador também está pendente.",
+    "limitations": "Queda vertical a partir do repouso, aceleração gravitacional constante, sem resistência do ar, vento, empuxo ou ressalto. O tamanho dos objetos é apenas ilustrativo e não está em escala; a massa não altera o movimento neste modelo."
   },
   {
     "id": "FIS-011",
@@ -540,24 +596,78 @@
     "title": "Leis de Newton",
     "category": "Mecânica",
     "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
-    "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
-    "references": [],
-    "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "description": "Aplique uma força horizontal a um bloco e observe como a força resultante, a massa e o atrito determinam sua aceleração.",
+    "learningObjectives": [
+      "Relacionar força resultante, massa e aceleração.",
+      "Distinguir atrito estático de atrito cinético.",
+      "Prever o efeito de alterar a força ou a massa."
+    ],
+    "difficulty": "Ensino médio",
+    "simulationType": "2D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "newton",
+    "linkedExperimentTitle": "Segunda lei de Newton e atrito",
+    "modelPhysics": "Bloco em superfície horizontal; peso e normal se equilibram. O atrito estático impede o movimento até o limite μsN. Após o início do movimento, o atrito cinético vale μkN e a aceleração horizontal é a força resultante dividida pela massa.",
+    "interfaceStatus": "Simulação 2D existente em página individual, com bloco, vetores de força, referencial, instrumentos e gráficos sincronizados; aguarda validação integral.",
+    "interactionsStatus": "Alterar a massa, a força aplicada e os coeficientes de atrito estático e cinético; iniciar, pausar, consultar gráficos e reiniciar.",
+    "equations": [
+      "ΣF=ma",
+      "P=mg",
+      "N=mg",
+      "|fₛ|≤μₛN",
+      "fₖ=μₖN"
+    ],
+    "equationsStatus": "Modelo existente com testes automatizados relacionados; revisão visual integral pendente.",
+    "variables": [
+      {
+        "name": "Massa",
+        "symbol": "m",
+        "unit": "kg",
+        "range": "0,5–10 kg na interface"
+      },
+      {
+        "name": "Força aplicada",
+        "symbol": "F",
+        "unit": "N",
+        "range": "−30 a 30 N na interface"
+      },
+      {
+        "name": "Coeficiente de atrito estático",
+        "symbol": "μₛ",
+        "unit": "1",
+        "range": "0–0,8 na interface"
+      },
+      {
+        "name": "Coeficiente de atrito cinético",
+        "symbol": "μₖ",
+        "unit": "1",
+        "range": "0–0,6 na interface"
+      },
+      {
+        "name": "Aceleração",
+        "symbol": "a",
+        "unit": "m/s²",
+        "range": "Calculada pelo modelo"
+      }
+    ],
+    "units": [
+      "kg",
+      "N",
+      "m/s²"
+    ],
+    "references": [
+      {
+        "title": "OpenStax, Physics, seção 4.3 — Newton’s Second Law of Motion",
+        "url": "https://openstax.org/books/physics/pages/4-3-newtons-second-law-of-motion"
+      }
+    ],
+    "validationTests": [
+      "Com atrito estático suficiente, força aplicada abaixo do limite não produz aceleração.",
+      "Acima do limite estático, a aceleração segue a força resultante dividida pela massa.",
+      "O peso e a normal se equilibram na superfície horizontal."
+    ],
+    "testsStatus": "Há testes automatizados relacionados ao modelo de atrito; a validação visual da experiência completa continua pendente.",
+    "limitations": "Movimento unidimensional em superfície horizontal; coeficientes de atrito constantes; força e massa não variam durante a simulação. Não representa plano inclinado, deformações nem resistência do ar."
   },
   {
     "id": "FIS-022",

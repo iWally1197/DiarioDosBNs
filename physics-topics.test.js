@@ -19,8 +19,8 @@ test("as nove áreas preservam os totais definidos no plano",()=>{
 });
 
 test("os estados não tratam tópicos planejados como implementados",()=>{
-  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,18);
-  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,462);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,20);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,460);
   assert.ok(topics.filter((item)=>item.implementationStatus==="planned").every((item)=>!item.linkedExperimentId));
   assert.ok(topics.every((item)=>item.implementationStatus!=="validated"));
 });
