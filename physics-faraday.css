@@ -1,0 +1,36 @@
+.faraday-page { max-width: 1460px; padding-block: clamp(28px,5vw,58px); }
+.faraday-page h1 { margin:.35rem 0 .8rem; font-size:clamp(2rem,5vw,3.2rem); }
+.faraday-lede { max-width:76ch; color:var(--muted); line-height:1.7; }
+.faraday-equation { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; padding:15px 18px; margin:18px 0 22px; border-left:3px solid var(--gold); background:var(--surface); }
+.faraday-equation strong,.faraday-equation span { color:var(--text); font:600 clamp(16px,2vw,21px) var(--display); }
+.faraday-lab-shell { display:grid; grid-template-columns:minmax(0,1fr) minmax(270px,330px); border:1px solid var(--line); background:var(--surface); }
+.faraday-stage { min-width:0; padding:clamp(12px,2vw,22px); }
+.faraday-toolbar,.faraday-actions,.faraday-mode { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.faraday-toolbar { justify-content:space-between; }
+.faraday-mode { padding:3px; border:1px solid var(--line); border-radius:999px; }
+.faraday-mode button { min-height:38px; padding:7px 14px; border:0; border-radius:999px; background:transparent; color:var(--text); cursor:pointer; }
+.faraday-mode button[aria-pressed="true"] { background:var(--gold); color:#111827; font-weight:750; }
+.faraday-help { min-height:1.4em; color:var(--muted); font-size:12px; }
+#faraday-scene { display:block; width:100%; height:clamp(300px,48vh,560px); border:1px solid var(--line); background:var(--bg-soft); touch-action:none; }
+#faraday-scene:focus-visible { outline:3px solid var(--gold-bright); outline-offset:2px; }
+.faraday-readouts { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:8px; margin-top:10px; }
+.faraday-readouts div { display:grid; gap:4px; min-width:0; padding:10px; border:1px solid var(--line); background:var(--bg-soft); }
+.faraday-readouts span { color:var(--muted); font-size:10px; }
+.faraday-readouts b { color:var(--text); font-size:13px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.faraday-chart-heading { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin:20px 0 8px; color:var(--text); font-size:12px; }
+.faraday-chart-heading span { color:var(--muted); }
+#faraday-chart { display:block; width:100%; height:240px; border:1px solid var(--line); background:var(--bg-soft); }
+.faraday-controls { display:grid; align-content:start; gap:14px; padding:clamp(16px,2vw,22px); border-left:1px solid var(--line); background:var(--bg-soft); }
+.faraday-controls h2 { margin:0; font-size:20px; }
+.faraday-controls label { display:grid; grid-template-columns:1fr auto; gap:6px 10px; color:var(--muted); font-size:12px; line-height:1.4; }
+.faraday-controls output { color:var(--gold); text-align:right; font-variant-numeric:tabular-nums; }
+.faraday-controls input[type=range] { grid-column:1/-1; width:100%; min-height:28px; margin:0; accent-color:var(--gold); }
+.faraday-note,.faraday-model p { color:var(--muted); font-size:12px; line-height:1.65; }
+.faraday-model summary { color:var(--gold); cursor:pointer; }
+.faraday-model a { color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+.faraday-lab-shell:fullscreen { box-sizing:border-box; position:fixed; inset:0; z-index:9999; width:100vw; height:100vh; height:100dvh; overflow:auto; background:var(--surface); }
+.faraday-lab-shell:fullscreen .faraday-stage { overflow:auto; }
+.faraday-lab-shell:fullscreen #faraday-scene { height:clamp(280px,48dvh,620px); }
+@media(max-width:900px) { .faraday-lab-shell { grid-template-columns:1fr; } .faraday-controls { border-top:1px solid var(--line); border-left:0; grid-template-columns:repeat(2,minmax(0,1fr)); } .faraday-controls h2,.faraday-note,.faraday-model { grid-column:1/-1; } }
+@media(max-width:580px) { .faraday-toolbar { align-items:flex-start; flex-direction:column; } .faraday-actions { width:100%; } .faraday-actions .button { flex:1; justify-content:center; min-width:0; padding-inline:8px; } .faraday-controls { grid-template-columns:1fr; } .faraday-controls h2,.faraday-note,.faraday-model { grid-column:auto; } #faraday-scene { height:340px; } }
+@media(prefers-reduced-motion:reduce) { #faraday-scene { scroll-behavior:auto; } }
