@@ -3200,30 +3200,32 @@ a.button:not(.button-primary):not(.button-danger) { color: var(--text); }
   .lab-index a { transition:none; }
 }
 
-/* Shared full-screen controls for the dedicated 2D physics experiments. */
+/* Fullscreen responsivo para as simulações especiais do catálogo. */
 .lab-special-heading-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
 .lab-special-heading-actions .button { min-height:38px; padding:8px 12px; white-space:nowrap; }
 .lab-special-heading-actions [data-lab-special-controls][hidden] { display:none; }
-.lab-experiment:fullscreen { box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); width:100vw; height:100dvh; max-width:none; margin:0; padding:12px 16px; overflow:hidden; border:0; background:var(--surface); color:var(--text); }
+.lab-experiment:fullscreen { box-sizing:border-box; position:fixed; inset:0; z-index:9999; display:flex !important; flex-direction:column; width:100vw; height:100vh; height:100dvh; max-width:none; margin:0; padding:12px 16px; overflow:hidden; border:0; background:var(--surface); color:var(--text); }
 .lab-experiment:fullscreen::backdrop { background:var(--bg); }
-.lab-experiment:fullscreen .lab-experiment-heading { align-items:center; min-width:0; margin:0 0 8px; }
+.lab-experiment:fullscreen .lab-experiment-heading { flex:0 0 auto; align-items:center; min-width:0; margin:0 0 8px; }
 .lab-experiment:fullscreen .lab-experiment-heading h2 { font-size:clamp(20px,2vw,28px); }
 .lab-experiment:fullscreen .lab-experiment-heading p { margin-top:3px; font-size:11px; }
-.lab-experiment:fullscreen .lab-simulation-grid { position:relative; display:block; min-width:0; min-height:0; height:100%; overflow:hidden; }
-.lab-experiment:fullscreen .lab-visual-column { display:grid; grid-template-rows:minmax(0,1fr) auto auto; width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; }
-.lab-experiment:fullscreen .lab-existing-panels { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); width:100%; height:auto; min-height:0; gap:0; }
-.lab-experiment:fullscreen .lab-workspace-panel { display:grid; grid-template-rows:auto minmax(0,1fr); height:100%; min-height:0; }
+.lab-experiment:fullscreen .lab-simulation-grid { position:relative; display:flex !important; flex:1 1 auto; min-width:0; min-height:0; height:auto; overflow:hidden; }
+.lab-experiment:fullscreen .lab-visual-column { display:flex !important; flex:1 1 auto; flex-direction:column; width:100%; height:auto; min-width:0; min-height:0; overflow:hidden; }
+.lab-experiment:fullscreen .lab-existing-panels { display:flex !important; flex:1 1 auto; flex-direction:row; width:100%; height:auto; min-height:0; gap:0; }
+.lab-experiment:fullscreen .lab-workspace-panel { display:flex !important; flex:1 1 auto; flex-direction:column; height:auto; min-width:0; min-height:0; }
 .lab-experiment:fullscreen .lab-canvas-wrap,
-.lab-experiment:fullscreen .pendulum-canvas-wrap { width:100%; height:auto; min-height:0; }
-.lab-experiment:fullscreen .lab-readouts { grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:6px; margin-top:7px; }
+.lab-experiment:fullscreen .pendulum-canvas-wrap { flex:1 1 auto; width:100%; height:auto; min-height:0; aspect-ratio:auto; }
+.lab-experiment:fullscreen .lab-canvas-wrap canvas,
+.lab-experiment:fullscreen .lab-chart-wrap canvas { display:block; width:100%; height:100%; }
+.lab-experiment:fullscreen .lab-readouts { flex:0 0 auto; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:6px; margin-top:7px; }
 .lab-experiment:fullscreen .lab-readouts>div { padding:7px; }
 .lab-experiment:fullscreen .lab-readouts span { font-size:9px; }
 .lab-experiment:fullscreen .lab-readouts b { font-size:11px; }
-.lab-experiment:fullscreen .pendulum-scrubber { margin-top:4px; }
+.lab-experiment:fullscreen .pendulum-scrubber { flex:0 0 auto; margin-top:4px; }
 .lab-experiment:fullscreen .lab-controls { position:absolute; top:0; right:0; bottom:0; z-index:5; display:none; box-sizing:border-box; width:min(410px,40vw); max-height:100%; align-content:start; gap:10px; padding:12px; overflow:auto; border:1px solid var(--line); background:var(--bg-soft); box-shadow:0 14px 42px rgba(0,0,0,.35); }
 .lab-experiment:fullscreen .lab-controls.is-open { display:grid; }
-.lab-experiment:fullscreen .lab-controls > .lab-workspace-panel { height:auto; }
-.lab-experiment:fullscreen .lab-controls .lab-chart-wrap { height:clamp(170px,24dvh,280px); min-height:0; }
+.lab-experiment:fullscreen .lab-controls > .lab-workspace-panel { display:grid; grid-template-rows:auto minmax(0,1fr) auto; flex:none; height:auto; }
+.lab-experiment:fullscreen .lab-controls .lab-chart-wrap { flex:none; height:clamp(170px,24dvh,280px); min-height:0; }
 .lab-experiment:fullscreen .lab-equations,
 .lab-experiment:fullscreen > .lab-limitations { display:none; }
 @media(max-width:720px) {
@@ -3235,5 +3237,5 @@ a.button:not(.button-primary):not(.button-danger) { color: var(--text); }
   .lab-experiment:fullscreen .model-tag { display:none; }
   .lab-experiment:fullscreen .lab-experiment-heading h2 { font-size:18px; }
   .lab-experiment:fullscreen .lab-controls { width:min(380px,calc(100vw - 16px)); }
-  .lab-experiment:fullscreen .lab-readouts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .lab-experiment:fullscreen .lab-readouts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
