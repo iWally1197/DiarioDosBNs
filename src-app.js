@@ -10,9 +10,9 @@ if (!document.querySelector('script[data-diario-accessibility]')) {
 
 const siteRoot = new URL('./', document.baseURI).pathname;
 const routePart = location.pathname.slice(siteRoot.length).replace(/^\/+|\/+$|\.html$/g, '');
-const routeAliases = {'login':'/login','cadastro':'/cadastro','conta':'/perfil','recuperar-senha':'/recuperar-senha','auth-callback':'/auth/callback','auth/callback':'/auth/callback','aluno':'/aluno','professor':'/professor','admin':'/admin','perfil':'/perfil'};
+const routeAliases = {'login':'/login','cadastro':'/cadastro','conta':'/perfil','recuperar-senha':'/recuperar-senha','auth-callback':'/auth/callback','auth/callback':'/auth/callback','aluno':'/aluno','professor':'/professor','admin':'/admin','admin-laboratorios':'/admin/laboratorios','perfil':'/perfil'};
 const route = routeAliases[routePart] || (routePart ? '/' + routePart : '/');
-const flatPages = {'/login':'login.html','/cadastro':'cadastro.html','/recuperar-senha':'recuperar-senha.html','/auth/callback':'auth-callback.html','/aluno':'aluno.html','/professor':'professor.html','/admin':'admin.html','/perfil':'perfil.html'};
+const flatPages = {'/login':'login.html','/cadastro':'cadastro.html','/recuperar-senha':'recuperar-senha.html','/auth/callback':'auth-callback.html','/aluno':'aluno.html','/professor':'professor.html','/admin':'admin.html','/admin/laboratorios':'admin-laboratorios.html','/perfil':'perfil.html'};
 const siteHref = (path='') => {
   const raw=String(path); const split=raw.search(/[?#]/); const routePart=split<0?raw:raw.slice(0,split); const suffix=split<0?'':raw.slice(split);
   const clean=routePart.replace(/^\/+|\/+$/g,''); const page=flatPages['/'+clean];
@@ -32,7 +32,7 @@ document.addEventListener('click', (event) => {
     link.href=siteHref(raw);
   }
 }, true);
-const protectedRoutes = ['/aluno','/professor','/admin','/perfil'];
+const protectedRoutes = ['/aluno','/professor','/admin','/admin/laboratorios','/perfil'];
 const accountLabels = {aluno:'Aluno',professor:'Professor',admin:'Administrador'};
 const educationStages = ['Ensino Fundamental I','Ensino Fundamental II','Ensino Médio','Ensino Técnico','Ensino Superior','Pós-graduação','Outro'];
 const degreeLevels = ['Bacharelado','Licenciatura','Tecnólogo','Especialização','Mestrado acadêmico','Mestrado profissional','Doutorado acadêmico','Doutorado profissional','Ainda cursando graduação','Outro'];
@@ -285,11 +285,11 @@ async function protectRoute() {
     if(!role){routeMessage('Perfil não encontrado','O cadastro ainda não terminou. Confirme o e-mail e tente entrar novamente.','<a href="/login">Voltar ao login</a>');return;}
     if(role.status==='blocked'){await supabase.auth.signOut();routeMessage('Conta indisponível','Entre em contato com o responsável pelo site.');return;}
     if(route==='/perfil'){await renderProfile(user,role);return;}
-    const desired=route==='/admin'?'admin':route==='/professor'?'professor':'aluno';
+    const desired=route==='/admin'||route==='/admin/laboratorios'?'admin':route==='/professor'?'professor':'aluno';
     if(role.role!==desired){navigate(destination(role), true);return;}
     if(desired==='professor'&&role.status==='pending'){renderPendingTeacher(user);return;}
     if(role.status!=='active'){routeMessage('Acesso aguardando','Seu perfil aguarda análise do responsável pelo site.');return;}
-    if(desired==='admin')await renderAdmin(user);else if(desired==='professor')await renderTeacher(user);else await renderStudent(user);
+    if(desired==='admin')await (route==='/admin/laboratorios'?renderAdminLaboratories(user):renderAdmin(user));else if(desired==='professor')await renderTeacher(user);else await renderStudent(user);
   } catch(error) { routeMessage('Não foi possível abrir sua área',`Tente entrar novamente. ${safeText(error.message||'')}`,'<a href="/login">Fazer login</a>'); }
 }
 
@@ -427,8 +427,150 @@ async function loadTeacherTools(root,user) {
 
 async function renderAdmin(user) {
   replaceMain('Painel administrativo',`${profileHeader(user,{role:'admin'},'Painel administrativo','Gerencie publicação, usuários, cursos e arquivos. O cadastro público não pode criar administradores.')}
-    <div class="account-shortcuts"><a href="/perfil">Meu perfil</a><a href="/">Ver site</a></div><div id="admin-tools" class="staff-workspace"><p role="status">Carregando dados administrativos…</p></div>`);wireLogout();
+    <div class="account-shortcuts"><a href="/perfil">Meu perfil</a><a href="/admin-laboratorios.html">Gerenciar laboratórios</a><a href="/">Ver site</a></div><div id="admin-tools" class="staff-workspace"><p role="status">Carregando dados administrativos…</p></div>`);wireLogout();
   await loadAdminTools(document.querySelector('#admin-tools'),user);
+}
+
+
+async function renderAdminLaboratories(user) {
+  replaceMain('Gerenciar laboratórios',`${profileHeader(user,{role:'admin'},'Gerenciar laboratórios','Controle quais animações e tópicos já cadastrados ficam disponíveis na biblioteca pública.')}
+    <div class="account-shortcuts"><a href="/admin/">Voltar ao painel</a><a href="/biblioteca-fisica.html">Ver o mapa dos 480 tópicos</a><a href="/">Ver site</a></div>
+    <div id="admin-laboratory-tools" class="staff-workspace"><p role="status">Carregando laboratórios cadastrados…</p></div>`);wireLogout();
+  const root=document.querySelector('#admin-laboratory-tools');
+  const load=async()=>{
+    try { await loadAdminLaboratoryRecords(root); }
+    catch(error) {
+      root.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível carregar os registros</strong><p>${safeText(error?.message||'Confira sua conexão e tente novamente.')}</p><button class="button button-outline" type="button" data-retry-admin-labs>Tentar novamente</button></aside>`;
+      root.querySelector('[data-retry-admin-labs]')?.addEventListener('click',load,{once:true});
+    }
+  };
+  await load();
+}
+
+async function loadAdminLaboratoryRecords(root) {
+  const {data,error}=await withDeadline(
+    supabase.from('animations').select('id,title,topic,slug,is_published,created_at').order('topic').order('title'),
+    'A consulta dos laboratórios demorou demais. Tente novamente.'
+  );
+  if(error)throw error;
+  const records=data||[];
+  const categories=[...new Set(records.map((item)=>item.topic).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const selected=new Set();
+  let search='',category='',publication='all',busy=false,message='',messageIsError=false;
+  const visibleRecords=()=>records.filter((item)=>{
+    const haystack=`${item.title||''} ${item.topic||''} ${item.slug||''}`.toLocaleLowerCase('pt-BR');
+    return (!search||haystack.includes(search.toLocaleLowerCase('pt-BR'))) &&
+      (!category||item.topic===category) &&
+      (publication==='all'||(publication==='published'?item.is_published:!item.is_published));
+  });
+  const render=()=>{
+    const focusId=document.activeElement?.id;
+    const caret=focusId==='admin-lab-search'?document.activeElement.selectionStart:null;
+    const filtered=visibleRecords();
+    const publishedCount=records.filter((item)=>item.is_published).length;
+    const unpublishedCount=records.length-publishedCount;
+    const selectedCount=selected.size;
+    const options=categories.map((item)=>`<option value="${safeText(item)}" ${category===item?'selected':''}>${safeText(item)}</option>`).join('');
+    const rows=filtered.map((item)=>`<tr>
+      <td><input type="checkbox" data-admin-lab-select="${safeText(item.id)}" aria-label="Selecionar ${safeText(item.title)}" ${selected.has(item.id)?'checked':''} ${busy?'disabled':''}></td>
+      <td><b>${safeText(item.title||'Sem título')}</b><small class="admin-user-detail">${safeText(item.slug||'')}</small></td>
+      <td>${safeText(item.topic||'Sem categoria')}</td>
+      <td><span class="admin-lab-state ${item.is_published?'is-published':'is-unpublished'}">${item.is_published?'No ar':'Fora do ar'}</span></td>
+    </tr>`).join('');
+    root.innerHTML=`<div class="dashboard-cards admin-lab-stats">
+      <article><b>${records.length}</b><span>registros cadastrados</span></article>
+      <article><b>${publishedCount}</b><span>publicados</span></article>
+      <article><b>${unpublishedCount}</b><span>fora do ar</span></article>
+      <article><b>${selectedCount}</b><span>selecionados</span></article>
+    </div>
+    <section class="account-section">
+      <div class="section-kicker">PUBLICAÇÃO DA BIBLIOTECA</div>
+      <h2>Escolha quais conteúdos ficam no ar</h2>
+      <p>Este painel lista todos os registros existentes no banco. A busca e os filtros afetam a tabela; a seleção fica preservada enquanto você pesquisa. Publicar um registro não cria uma página ou simulação que ainda não exista.</p>
+      <div class="admin-lab-toolbar">
+        <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${busy?'disabled':''}></label>
+        <label for="admin-lab-category">Categoria<select id="admin-lab-category" ${busy?'disabled':''}><option value="">Todas as categorias</option>${options}</select></label>
+        <label for="admin-lab-publication">Situação<select id="admin-lab-publication" ${busy?'disabled':''}>
+          <option value="all" ${publication==='all'?'selected':''}>Todas</option>
+          <option value="published" ${publication==='published'?'selected':''}>No ar</option>
+          <option value="unpublished" ${publication==='unpublished'?'selected':''}>Fora do ar</option>
+        </select></label>
+      </div>
+      <div class="admin-lab-actions">
+        <button class="button button-outline" type="button" data-select-all ${busy||records.length===0?'disabled':''}>Selecionar todos (${records.length})</button>
+        <button class="button button-outline" type="button" data-select-visible ${busy||filtered.length===0?'disabled':''}>Adicionar resultados filtrados (${filtered.length})</button>
+        <button class="button button-outline" type="button" data-clear-selection ${busy||selectedCount===0?'disabled':''}>Desmarcar seleção</button>
+        <button class="button button-primary" type="button" data-set-publication="true" ${busy||selectedCount===0?'disabled':''}>${busy?'Salvando…':'Publicar selecionados'}</button>
+        <button class="button button-outline" type="button" data-set-publication="false" ${busy||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Retirar selecionados do ar'}</button>
+      </div>
+      <p class="admin-lab-feedback" role="status" aria-live="polite" data-error="${messageIsError}">${safeText(message||`Mostrando ${filtered.length} de ${records.length} registros. A seleção atual inclui ${selectedCount}.`)}</p>
+      <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Situação</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhum resultado corresponde aos filtros.</td></tr>'}</tbody></table></div>
+      <p class="privacy-note">A autorização também é conferida pelo Supabase. Somente uma sessão com papel de administrador ativo pode alterar o estado de publicação; a interface não é a barreira de segurança.</p>
+    </section>`;
+    if(focusId==='admin-lab-search'){
+      const input=root.querySelector('#admin-lab-search');input?.focus();
+      if(input&&caret!==null)input.setSelectionRange(caret,caret);
+    }
+  };
+  root.addEventListener('input',(event)=>{if(event.target.id==='admin-lab-search'){search=event.target.value;render();}});
+  root.addEventListener('change',(event)=>{
+    const target=event.target;
+    if(target.id==='admin-lab-category'){category=target.value;render();return;}
+    if(target.id==='admin-lab-publication'){publication=target.value;render();return;}
+    if(target.matches('[data-admin-lab-select]')){
+      const id=target.dataset.adminLabSelect;
+      if(target.checked)selected.add(id);else selected.delete(id);
+      render();
+    }
+  });
+  const setPublication=async(publish)=>{
+    const ids=[...selected];if(!ids.length||busy)return;
+    const action=publish?'publicar':'retirar do ar';
+    if(!window.confirm(`Confirma ${action} ${ids.length} registro(s) selecionado(s)?`))return;
+    busy=true;message='';messageIsError=false;render();
+    let completed=0,failure=null;
+    for(let offset=0;offset<ids.length;offset+=50){
+      const batch=ids.slice(offset,offset+50);
+      try{
+        const result=await withDeadline(
+          supabase.from('animations').update({is_published:publish}).in('id',batch).select('id,is_published'),
+          'A atualização demorou demais. Confira o estado e tente novamente.',20000
+        );
+        if(result.error)throw result.error;
+        const changed=new Map((result.data||[]).map((row)=>[row.id,row.is_published]));
+        for(const item of records){if(changed.has(item.id))item.is_published=changed.get(item.id);}
+        completed+=changed.size;
+        for(const id of changed.keys())selected.delete(id);
+        render();
+        if(changed.size!==batch.length)throw new Error(`O banco confirmou ${changed.size} de ${batch.length} registros neste lote.`);
+      }catch(error){failure=error;break;}
+    }
+    let refreshed=false;
+    if(failure){
+      try{
+        const latest=await withDeadline(
+          supabase.from('animations').select('id,title,topic,slug,is_published,created_at').order('topic').order('title'),
+          'A atualização do estado atual demorou demais. Tente recarregar a página.',
+          12000
+        );
+        if(!latest.error&&Array.isArray(latest.data)){records.splice(0,records.length,...latest.data);refreshed=true;}
+      }catch{}
+    }
+    busy=false;
+    if(failure){
+      message=`${completed} alteração(ões) confirmada(s) antes da falha. ${refreshed?'Os estados foram recarregados do banco.':'Não foi possível confirmar o estado final; recarregue a página antes de tentar novamente.'} ${failure.message||''}`;
+      messageIsError=true;
+    }else{message=`${completed} registro(s) ${publish?'publicados':'retirados do ar'} com sucesso.`;messageIsError=false;}
+    render();
+  };
+  root.addEventListener('click',(event)=>{
+    const button=event.target.closest('button');if(!button)return;
+    if(button.matches('[data-select-all]')){for(const item of records)selected.add(item.id);render();}
+    else if(button.matches('[data-select-visible]')){for(const item of visibleRecords())selected.add(item.id);render();}
+    else if(button.matches('[data-clear-selection]')){selected.clear();render();}
+    else if(button.matches('[data-set-publication]'))void setPublication(button.dataset.setPublication==='true');
+  });
+  render();
 }
 
 async function loadAdminTools(root,user) {
