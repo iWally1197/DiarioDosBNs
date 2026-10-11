@@ -442,8 +442,9 @@ function initializeExperimentPage(topicId) {
 
   function prepareCanvas(element, context) {
     const box = element.getBoundingClientRect();
-    const width = Math.max(1, box.width || element.clientWidth || 280);
-    const height = Math.max(1, box.height || element.clientHeight || 220);
+    // Keep the drawing buffer tied to the layout size, not the camera transform.
+    const width = Math.max(1, element.clientWidth || box.width || 280);
+    const height = Math.max(1, element.clientHeight || box.height || 220);
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     const pixelWidth = Math.round(width * ratio);
     const pixelHeight = Math.round(height * ratio);
