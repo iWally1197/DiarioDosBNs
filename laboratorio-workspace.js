@@ -4,14 +4,64 @@ import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-re
 import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-fullscreen-20261010-1";
 
 const $ = (selector) => document.querySelector(selector);
-const isSphericalMirror = (id) => id === "optics-concave-mirror" || id === "optics-convex-mirror";
 const requestedId = new URLSearchParams(location.search).get("topico");
 if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
+initializeSpecialExperimentFullscreen();
+
+function initializeSpecialExperimentFullscreen() {
+  document.querySelectorAll("[data-lab-special]").forEach((section) => {
+    const fullscreenButton = section.querySelector("[data-lab-special-fullscreen]");
+    const controlsToggleButton = section.querySelector("[data-lab-special-controls]");
+    const controlsSidebar = section.querySelector(".lab-controls");
+    const graphCanvas = section.querySelector(".lab-chart-wrap canvas, .lab-graph-canvas-wrap canvas");
+    const graphPanel = graphCanvas?.closest(".lab-workspace-panel");
+    const graphHome = graphPanel?.parentElement;
+    if (!fullscreenButton || !controlsToggleButton || !controlsSidebar || !graphPanel || !graphHome) return;
+
+    const refreshCanvas = () => window.dispatchEvent(new Event("resize"));
+    fullscreenButton.addEventListener("click", async () => {
+      try {
+        if (document.fullscreenElement === section) await document.exitFullscreen();
+        else await section.requestFullscreen({ navigationUI: "hide" });
+      } catch {
+        const status = section.querySelector(".lab-status");
+        if (status) status.textContent = "Não foi possível abrir em tela cheia neste navegador. Verifique a permissão de tela cheia.";
+      }
+    });
+    controlsToggleButton.addEventListener("click", () => {
+      const open = controlsSidebar.classList.toggle("is-open");
+      controlsToggleButton.setAttribute("aria-expanded", String(open));
+      controlsToggleButton.textContent = open ? "Fechar menu" : "Gráfico e parâmetros";
+      requestAnimationFrame(refreshCanvas);
+    });
+    document.addEventListener("fullscreenchange", () => {
+      const isFullscreen = document.fullscreenElement === section;
+      fullscreenButton.textContent = isFullscreen ? "Sair da tela cheia" : "Tela cheia";
+      fullscreenButton.setAttribute("aria-label", isFullscreen ? "Sair da tela cheia" : "Abrir o experimento em tela cheia");
+      if (isFullscreen) {
+        if (graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.firstElementChild);
+        controlsSidebar.classList.remove("is-open");
+        controlsToggleButton.hidden = false;
+        controlsToggleButton.setAttribute("aria-expanded", "false");
+        controlsToggleButton.textContent = "Gráfico e parâmetros";
+      } else {
+        if (graphPanel.parentElement !== graphHome) graphHome.append(graphPanel);
+        controlsSidebar.classList.remove("is-open");
+        controlsToggleButton.hidden = true;
+        controlsToggleButton.setAttribute("aria-expanded", "false");
+        controlsToggleButton.textContent = "Gráfico e parâmetros";
+      }
+      requestAnimationFrame(refreshCanvas);
+    });
+  });
+}
 
 function initializeExperimentPage(topicId) {
   const workspace = $("#lab-workspace");
   const canvas = $("#workspace-canvas");
   const graphCanvas = $("#workspace-graph");
+  const graphPanel = graphCanvas?.closest(".lab-workspace-panel");
+  const animationPanels = graphPanel?.parentElement;
   const fullscreenButton = $("#workspace-fullscreen");
   const controlsToggleButton = $("#workspace-controls-toggle");
   const controlsSidebar = $("#workspace-controls-sidebar");
@@ -54,13 +104,11 @@ function initializeExperimentPage(topicId) {
       return;
     }
     workspace.hidden = false;
-    const mirrorWorkspace = isSphericalMirror(id);
-    workspace.classList.toggle("lab-workspace--mirror", mirrorWorkspace);
-    fullscreenButton.hidden = !mirrorWorkspace;
+    fullscreenButton.hidden = false;
     controlsToggleButton.hidden = true;
     controlsSidebar.classList.remove("is-open");
     controlsToggleButton.setAttribute("aria-expanded", "false");
-    controlsToggleButton.textContent = "Controles";
+    controlsToggleButton.textContent = "Gráfico e parâmetros";
     $("#workspace-title").textContent = experiment.title;
     $("#workspace-description").textContent = experiment.description;
     const sceneCaptions = {
@@ -221,7 +269,6 @@ function initializeExperimentPage(topicId) {
   }
 
   fullscreenButton.addEventListener("click", async () => {
-    if (!isSphericalMirror(state.id)) return;
     try {
       if (document.fullscreenElement === workspace) await document.exitFullscreen();
       else await workspace.requestFullscreen({ navigationUI: "hide" });
@@ -233,18 +280,26 @@ function initializeExperimentPage(topicId) {
   controlsToggleButton.addEventListener("click", () => {
     const open = controlsSidebar.classList.toggle("is-open");
     controlsToggleButton.setAttribute("aria-expanded", String(open));
-    controlsToggleButton.textContent = open ? "Fechar controles" : "Controles";
+    controlsToggleButton.textContent = open ? "Fechar menu" : "Gráfico e parâmetros";
+    requestAnimationFrame(() => { try { render(); } catch (error) { showError(error); } });
   });
 
   document.addEventListener("fullscreenchange", () => {
     const isFullscreen = document.fullscreenElement === workspace;
     fullscreenButton.textContent = isFullscreen ? "Sair da tela cheia" : "Tela cheia";
     fullscreenButton.setAttribute("aria-label", isFullscreen ? "Sair da tela cheia" : "Abrir a simulação em tela cheia");
-    controlsToggleButton.hidden = !(isFullscreen && isSphericalMirror(state.id));
-    if (!isFullscreen) {
+    if (isFullscreen) {
+      if (graphPanel && graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.firstElementChild);
+      controlsToggleButton.hidden = false;
       controlsSidebar.classList.remove("is-open");
       controlsToggleButton.setAttribute("aria-expanded", "false");
-      controlsToggleButton.textContent = "Controles";
+      controlsToggleButton.textContent = "Gráfico e parâmetros";
+    } else {
+      if (graphPanel && animationPanels && graphPanel.parentElement !== animationPanels) animationPanels.append(graphPanel);
+      controlsToggleButton.hidden = true;
+      controlsSidebar.classList.remove("is-open");
+      controlsToggleButton.setAttribute("aria-expanded", "false");
+      controlsToggleButton.textContent = "Gráfico e parâmetros";
     }
     if (state.id && !workspace.hidden) requestAnimationFrame(() => { try { render(); } catch (error) { showError(error); } });
   });
