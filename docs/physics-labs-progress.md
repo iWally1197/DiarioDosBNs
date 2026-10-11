@@ -4,16 +4,17 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 ## Auditoria inicial
 
-- O repositório contém **17 experimentos interativos** no catálogo estático atual.
+- O repositório contém **17 experimentos interativos** no catálogo estático atual; um piloto 2D/3D de Faraday foi acrescentado como página dedicada.
 - O banco Supabase possui **83 registros** em `public.animations`; na auditoria, os 83 estavam publicados. O painel administrativo controla estes registros, que são usados na biblioteca principal e nas páginas públicas de tópicos.
 - O plano mestre contém **480 tópicos em 9 áreas**. O catálogo estruturado abaixo mantém os 480 títulos, sem gerar páginas vazias.
-- **17 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **463** permanecem **Planejados**.
+- **18 tópicos** têm vínculo com uma simulação existente e ficam como **Implementado, aguardando validação**. Os outros **462** permanecem **Planejados**.
 - Há testes automatizados de modelos físicos existentes (MRU/MUV, lançamento, atrito, energia, colisões, mola, ondas, Ohm, óptica, calorimetria, campo elétrico e pêndulo). A presença de testes de modelo não valida, por si só, a experiência completa nem a interface no navegador.
 
 ## Arquitetura nesta etapa
 
 - `physics-topics.json`: registro estruturado individual dos 480 tópicos e seus estados.
-- `biblioteca-fisica.html` + `physics-topic-catalog.js`: catálogo pesquisável por assunto, área e estado. Somente os 17 assuntos com experimento relacionado têm um link; os demais mostram o estado planejado, sem abrir páginas vazias.
+- `biblioteca-fisica.html` + `physics-topic-catalog.js`: catálogo pesquisável por assunto, área, subárea, dificuldade e estado. Os filtros complementares mostram apenas os valores já registrados. Somente os 18 assuntos com experimento relacionado têm um link; os demais mostram o estado planejado, sem abrir páginas vazias.
+- `laboratorio-faraday.html` + `physics-faraday-model.js` + `physics-faraday.js` + `physics-faraday.css`: piloto de bobina girando em campo uniforme, com modelo analítico de fluxo concatenado e lei de Faraday, vistas 2D/3D, parâmetros, gráfico e perspectiva ajustável; implementação em espera de validação visual.
 - `admin-laboratorios.html`: painel administrativo para os registros reais de `public.animations`, com seleção individual e em massa, busca, filtros e publicação persistente.
 - `supabase/migrations/20261011031216_admin_only_animation_publication.sql`: trigger de proteção para impedir que contas sem papel de administrador alterem `is_published` diretamente. A migração reutiliza `public.is_admin()` e preserva as permissões de edição dos demais campos.
 - As páginas públicas já filtram os registros de animação por `is_published`; a rota de tópico retorna para a biblioteca quando não há animação publicada.
@@ -26,7 +27,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 | Ondulatória e acústica | 42 | 1 | 41 |
 | Óptica | 51 | 5 | 46 |
 | Termologia e termodinâmica | 41 | 1 | 40 |
-| Eletricidade e eletromagnetismo | 90 | 2 | 88 |
+| Eletricidade e eletromagnetismo | 90 | 3 | 87 |
 | Física moderna, relatividade e física quântica | 60 | 0 | 60 |
 | Física nuclear e de partículas | 30 | 0 | 30 |
 | Astronomia e cosmologia | 35 | 0 | 35 |
@@ -356,7 +357,7 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 | FIS-296 | Lei de Ampère | Planejado | — |
 | FIS-297 | Fluxo magnético | Planejado | — |
 | FIS-298 | Indução eletromagnética | Planejado | — |
-| FIS-299 | Lei de Faraday | Planejado | — |
+| FIS-299 | Lei de Faraday | Implementado, aguardando validação | Indução eletromagnética — piloto dedicado 2D/3D |
 | FIS-300 | Lei de Lenz | Planejado | — |
 | FIS-301 | Força eletromotriz induzida | Planejado | — |
 | FIS-302 | Geradores elétricos | Planejado | — |
@@ -561,11 +562,11 @@ Atualizado em 11/10/2026. Este registro cobre o plano de 480 tópicos do Diário
 
 ## Testes e comprovações desta etapa
 
-A suíte automatizada cobre os modelos físicos e páginas já existentes, a integridade dos 480 registros, filtros e links do catálogo, e verificações estruturais do painel e do trigger. Esses testes de código não substituem uma checagem visual no navegador nem um teste de autorização com uma conta comum e uma conta administradora. Esses dois fluxos de ponta a ponta continuam pendentes porque não foi feita uma alteração real nos registros do banco nem foram fornecidas contas de teste. A publicação na biblioteca e o bloqueio de página direta seguem as consultas existentes filtradas por `is_published`; a verificação pública após o deploy ainda precisa ser feita no navegador.
+Em 11/10/2026, a suíte automatizada executou **53 testes e todos passaram**, cobrindo os modelos físicos e páginas já existentes, o modelo analítico do piloto de Faraday, a integridade dos 480 registros, filtros e links do catálogo, e verificações estruturais do painel e do trigger. A verificação de sintaxe dos módulos do painel e do piloto também passou. O piloto de Faraday tem página própria, vista 2D e 3D, controle de perspectiva, gráfico, grandezas, parâmetros, tela cheia e indicação das limitações do modelo; aguarda validação visual no navegador. Esses testes de código não substituem uma checagem visual no navegador nem um teste de autorização com uma conta comum e uma conta administradora. Esses dois fluxos de ponta a ponta continuam pendentes porque não foi feita uma alteração real nos registros do banco nem foram fornecidas contas de teste. A publicação na biblioteca e o bloqueio de página direta seguem as consultas existentes filtradas por `is_published`; a verificação pública após o deploy ainda precisa ser feita no navegador.
 
 ## Requisitos preservados do prompt mestre
 
-O catálogo mantém estes campos por registro: identificador permanente, slug, título, área, subárea, descrição, objetivos de aprendizagem, dificuldade, tipo de simulação, estado, modelo físico, interface, interações, equações, variáveis, unidades SI, referências, testes de validação e limitações. Campos sem definição no texto fonte ou sem validação no site ficam explícitos como não definidos; não são preenchidos com dados inventados. A página já permite busca por nome/número e filtros por área e estado. Os filtros de subárea e dificuldade aparecem desativados enquanto não houver metadados confiáveis para preenchê-los.
+O catálogo mantém estes campos por registro: identificador permanente, slug, título, área, subárea, descrição, objetivos de aprendizagem, dificuldade, tipo de simulação, estado, modelo físico, interface, interações, equações, variáveis, unidades SI, referências, testes de validação e limitações. Campos sem definição no texto fonte ou sem validação no site ficam explícitos como não definidos; não são preenchidos com dados inventados. A página permite busca por nome/número e filtros por área e estado; subárea e dificuldade listam os valores cadastrados, sem extrapolar metadados ausentes nos demais assuntos.
 
 A implementação futura seguirá as etapas solicitadas, nesta ordem: (1) auditoria da arquitetura e do que existe; (2) planejamento e mapeamento dos 480 assuntos, modelos e testes; (3) componentes reutilizáveis de simulação, controles, gráficos, instrumentos, dados, roteiro de experiência, perguntas, histórico e exportação; (4) validação dos pilotos de mecânica, ondas, óptica, termodinâmica, circuitos e eletromagnetismo; (5) expansão por lotes pequenos; (6) modelos conceituais de física moderna, relatividade, núcleo, partículas, astronomia e cosmologia; (7) ferramentas de medição, incerteza, ajuste e comparação de dados; (8) acessibilidade, responsividade e desempenho; (9) validação integral; (10) documentação de arquitetura, modelos, limitações, testes e manutenção.
 
