@@ -7,7 +7,8 @@ if(shell&&scene&&chart){
   const ctx=scene.getContext("2d");
   const chartCtx=chart.getContext("2d");
   const controls=[...shell.querySelectorAll("[data-param]")];
-  const parameters={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:1};
+  const defaults={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:1};
+  const parameters={...defaults};
   let time=0,playing=false,raf=0,lastFrame=0,mode="2d";
   let yaw=-.42,pitch=-.16,drag=null;
   const format=(value,digits=2)=>Number(value).toLocaleString("pt-BR",{minimumFractionDigits:digits,maximumFractionDigits:digits});
@@ -137,7 +138,8 @@ if(shell&&scene&&chart){
     });
   });
   shell.querySelector("[data-play]").addEventListener("click",()=>playing?pause():start());
-  shell.querySelector("[data-reset]").addEventListener("click",()=>{pause();time=0;yaw=-.42;pitch=-.16;draw();});
+  shell.querySelectorAll("[data-step]").forEach((button)=>button.addEventListener("click",()=>{pause();time=Math.max(0,time+Number(button.dataset.step));draw();}));
+  shell.querySelector("[data-reset]").addEventListener("click",()=>{pause();time=0;Object.assign(parameters,defaults);for(const input of controls)input.value=String(parameters[input.dataset.param]);yaw=-.42;pitch=-.16;setControlOutputs();draw();});
   shell.querySelectorAll("[data-mode]").forEach((button)=>button.addEventListener("click",()=>{
     mode=button.dataset.mode;shell.querySelectorAll("[data-mode]").forEach((other)=>other.setAttribute("aria-pressed",String(other===button)));
     shell.querySelector("#faraday-help").textContent=mode==="3d"?"Vista 3D: arraste com mouse ou toque para mudar a perspectiva. Isso não altera o modelo físico.":"Vista 2D: projeção da espira e direção do campo. Selecione Vista 3D para girar a perspectiva com o mouse ou toque.";
@@ -155,6 +157,6 @@ if(shell&&scene&&chart){
   scene.addEventListener("pointercancel",()=>{drag=null;});
   scene.addEventListener("keydown",(event)=>{if(mode!=="3d")return;const step=.08;if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;else if(event.key==="ArrowUp")pitch=Math.max(-1.1,pitch-step);else if(event.key==="ArrowDown")pitch=Math.min(1.1,pitch+step);else return;event.preventDefault();draw();});
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&playing)pause();});
-  new ResizeObserver(draw).observe(shell);
+  if("ResizeObserver" in window)new ResizeObserver(draw).observe(shell);else window.addEventListener("resize",draw);
   setControlOutputs();draw();
 }
