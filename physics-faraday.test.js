@@ -40,6 +40,8 @@ test("página do piloto oferece modos 2D/3D, parâmetros e tela cheia",async()=>
   assert.match(page,/data-mode="2d"/);
   assert.match(page,/data-mode="3d"/);
   assert.match(page,/data-fullscreen/);
+  assert.match(page,/data-step="-0.1"/);
+  assert.match(page,/Restaurar início e parâmetros/);
   assert.match(page,/data-param="turns"/);
   assert.match(page,/id="faraday-chart"/);
   assert.match(page,/Modelo e limitações/);
