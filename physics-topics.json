@@ -7828,25 +7828,90 @@
     "slug": "fis-299-lei-de-faraday",
     "title": "Lei de Faraday",
     "category": "Eletricidade e eletromagnetismo",
-    "subcategory": null,
-    "description": "Este tópico está no plano de implementação; o modelo e a explicação específicos ainda serão definidos.",
-    "learningObjectives": [],
-    "difficulty": null,
-    "simulationType": "A definir",
-    "implementationStatus": "planned",
-    "linkedExperimentId": null,
-    "linkedExperimentTitle": null,
-    "modelPhysics": "Ainda não definido.",
-    "interfaceStatus": "Não implementada.",
-    "interactionsStatus": "Não implementadas.",
-    "equations": [],
-    "equationsStatus": "A verificar contra a implementação e as hipóteses do modelo.",
-    "variables": [],
-    "units": [],
-    "references": [],
-    "validationTests": [],
-    "testsStatus": "Ainda não há testes específicos.",
-    "limitations": "Modelo científico e limitações ainda não definidos."
+    "subcategory": "Indução eletromagnética",
+    "description": "Explore como a rotação uniforme de uma bobina em um campo magnético uniforme altera o fluxo magnético concatenado e a força eletromotriz.",
+    "learningObjectives": [
+      "Relacionar fluxo magnético, orientação da espira e área efetiva.",
+      "Usar a lei de Faraday para interpretar o sinal e o módulo da força eletromotriz induzida.",
+      "Comparar a previsão analítica com as curvas de fluxo e tensão."
+    ],
+    "difficulty": "Intermediário",
+    "simulationType": "2D e 3D",
+    "implementationStatus": "implemented-awaiting-validation",
+    "linkedExperimentId": "faraday-induction",
+    "linkedExperimentTitle": "Indução eletromagnética — Lei de Faraday",
+    "modelPhysics": "Bobina rígida de N espiras e área constante, girando com velocidade angular uniforme em campo magnético uniforme: λ=N B A cos(ωt+φ₀); ε=−dλ/dt=N B A ω sen(ωt+φ₀).",
+    "interfaceStatus": "Interface própria responsiva, com cena 2D/3D, instrumentos numéricos, controle de perspectiva e gráfico sincronizado; aguarda validação visual em navegador.",
+    "interactionsStatus": "Iniciar, pausar, continuar, reiniciar, alterar espiras, campo, área, frequência, fase e velocidade; alternar perspectiva; arrastar para orbitar a câmera.",
+    "equations": [
+      "Φ=B A cos θ",
+      "λ=NΦ",
+      "ε=−dλ/dt",
+      "ε=N B A ω sen(ωt+φ₀)",
+      "ω=2πf"
+    ],
+    "equationsStatus": "Equações analíticas testadas para fase inicial, máximo de fluxo, máximo de fem e frequência nula.",
+    "variables": [
+      {
+        "name": "Número de espiras",
+        "symbol": "N",
+        "unit": "1",
+        "range": "1–100 na interface"
+      },
+      {
+        "name": "Campo magnético uniforme",
+        "symbol": "B",
+        "unit": "T",
+        "range": "0–1,5 T na interface"
+      },
+      {
+        "name": "Área de cada espira",
+        "symbol": "A",
+        "unit": "m²",
+        "range": "0,02–1 m² na interface"
+      },
+      {
+        "name": "Frequência angular",
+        "symbol": "f",
+        "unit": "Hz",
+        "range": "0–2 Hz na interface"
+      },
+      {
+        "name": "Fase inicial",
+        "symbol": "φ₀",
+        "unit": "rad",
+        "range": "−180° a 180° na interface"
+      },
+      {
+        "name": "Tempo",
+        "symbol": "t",
+        "unit": "s",
+        "range": "Contínuo durante a animação"
+      }
+    ],
+    "units": [
+      "T",
+      "m²",
+      "Hz",
+      "rad",
+      "s",
+      "Wb",
+      "V"
+    ],
+    "references": [
+      {
+        "title": "OpenStax, University Physics Volume 2, seção 13.1 — Faraday’s Law",
+        "url": "https://openstax.org/books/university-physics-volume-2/pages/13-1-faradays-law"
+      }
+    ],
+    "validationTests": [
+      "Fluxo máximo e fem nula em θ=0",
+      "Fluxo nulo e fem máxima em θ=90°",
+      "Fase inicial de 90° produz fem máxima no instante inicial",
+      "Frequência zero produz fem nula"
+    ],
+    "testsStatus": "Modelo analítico coberto por testes automatizados; interface e desenho ainda precisam de teste em navegador.",
+    "limitations": "Campo uniforme, área constante e rotação uniforme; não calcula resistência, corrente, indutância, perdas ou reação mecânica; projeção gráfica 3D esquemática."
   },
   {
     "id": "FIS-300",
