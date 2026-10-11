@@ -19,8 +19,8 @@ test("as nove áreas preservam os totais definidos no plano",()=>{
 });
 
 test("os estados não tratam tópicos planejados como implementados",()=>{
-  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,17);
-  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,463);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="implemented-awaiting-validation").length,18);
+  assert.equal(topics.filter((item)=>item.implementationStatus==="planned").length,462);
   assert.ok(topics.filter((item)=>item.implementationStatus==="planned").every((item)=>!item.linkedExperimentId));
   assert.ok(topics.every((item)=>item.implementationStatus!=="validated"));
 });
@@ -28,7 +28,7 @@ test("os estados não tratam tópicos planejados como implementados",()=>{
 test("busca, área e estado filtram os mesmos registros do catálogo",()=>{
   assert.deepEqual(filterPhysicsTopics(topics,{query:"149"}).map((item)=>item.number),[149]);
   assert.equal(filterPhysicsTopics(topics,{category:"Óptica"}).length,51);
-  assert.equal(filterPhysicsTopics(topics,{status:"planned"}).length,463);
+  assert.equal(filterPhysicsTopics(topics,{status:"planned"}).length,462);
 });
 
 
@@ -39,6 +39,13 @@ test("subárea e dificuldade filtram quando os metadados existem",()=>{
   ];
   assert.deepEqual(filterPhysicsTopics(enriched,{subcategory:"Dinâmica"}).map((item)=>item.number),[2]);
   assert.deepEqual(filterPhysicsTopics(enriched,{difficulty:"Básico"}).map((item)=>item.number),[1]);
+});
+
+test("o piloto de Faraday aparece como 2D/3D e abre sua página própria",()=>{
+  const faraday=topics.find((item)=>item.number===299);
+  assert.equal(faraday.implementationStatus,"implemented-awaiting-validation");
+  assert.equal(faraday.simulationType,"2D e 3D");
+  assert.match(physicsTopicCardMarkup(faraday),/laboratorio-faraday\.html/);
 });
 
 test("apenas tópicos com experimento existente recebem um link",()=>{
