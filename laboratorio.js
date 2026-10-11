@@ -74,6 +74,22 @@ function projectileParameters() {
   };
 }
 
+function drawCanvasGrid(context, width, height, color, spacing = 44, alpha = 0.4) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = 1;
+  context.globalAlpha = alpha;
+  context.beginPath();
+  const centerX = Math.round(width / 2 / spacing) * spacing;
+  const centerY = Math.round(height / 2 / spacing) * spacing;
+  for (let x = centerX; x >= 0; x -= spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+  for (let x = centerX + spacing; x <= width; x += spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+  for (let y = centerY; y >= 0; y -= spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+  for (let y = centerY + spacing; y <= height; y += spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+  context.stroke();
+  context.restore();
+}
+
 function drawSportBall(context, x, y, radius, color) {
   const sphere = context.createRadialGradient(x - radius * 0.35, y - radius * 0.42, 1, x, y, radius * 1.15);
   sphere.addColorStop(0, "#fff0bd"); sphere.addColorStop(0.28, color.gold); sphere.addColorStop(1, "#92501b");
@@ -118,6 +134,7 @@ function drawProjectile() {
   backdrop.addColorStop(0, color.surface); backdrop.addColorStop(0.72, color.surface); backdrop.addColorStop(1, "#182b2c");
   context.fillStyle = backdrop;
   context.fillRect(0, 0, width, height);
+  drawCanvasGrid(context, width, height, color.line);
   context.font = "12px system-ui, sans-serif";
   context.lineWidth = 1;
   context.strokeStyle = color.line;
@@ -418,6 +435,7 @@ function drawPendulumModel() {
   const scale = Math.max(24, Math.min((width - 76) / (2.55 * length), (height - 92) / (1.72 * length)));
   context.fillStyle = color.surface;
   context.fillRect(0, 0, width, height);
+  drawCanvasGrid(context, width, height, color.line, 44, 0.32);
 
   const point = (x, y, z) => project3D(x, y, z, originX, originY, scale);
   const floor = -length * 1.12;
@@ -690,7 +708,8 @@ pendulumCanvas.addEventListener("pointerdown", (event) => {
   pendulumCanvas.setPointerCapture(event.pointerId);
 });
 pendulumCanvas.addEventListener("pointermove", (event) => {
-  if (!pointerPosition || pendulumCanvas.classList.contains("lab-view-pan-mode")) return;
+  if (!pointerPosition || pendulumCanvas.classList.contains("lab-view-pan-mode")
+    || pendulumCanvas.classList.contains("lab-view-multitouch")) return;
   const dx = event.clientX - pointerPosition.x;
   const dy = event.clientY - pointerPosition.y;
   pointerPosition = { x: event.clientX, y: event.clientY };
