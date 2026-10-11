@@ -33,8 +33,8 @@ function canvasContext(canvas) {
 
 function resizeCanvas(canvas, context) {
   const box = canvas.getBoundingClientRect();
-  const width = Math.max(320, box.width || 320);
-  const height = Math.max(180, box.height || 240);
+  const width = Math.max(1, box.width || canvas.clientWidth || 320);
+  const height = Math.max(1, box.height || canvas.clientHeight || 240);
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
   const pixelWidth = Math.round(width * ratio);
   const pixelHeight = Math.round(height * ratio);
