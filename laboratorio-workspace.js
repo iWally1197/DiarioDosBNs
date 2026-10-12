@@ -85,15 +85,12 @@ function initializeCanvasViewControls() {
     zoomIn.addEventListener("click", () => zoomBy(1.2));
     reset.addEventListener("click", clearView);
     canvas.addEventListener("wheel", (event) => {
+      // Deixa a rolagem comum navegar pela página; só usa Ctrl+roda para zoom.
+      if (!event.ctrlKey) return;
       event.preventDefault();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (canvas.clientHeight || 600) : 1;
-      if (event.ctrlKey) {
-        const delta = Math.max(-240, Math.min(240, event.deltaY * unit));
-        camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * Math.exp(-delta * 0.002)));
-      } else {
-        camera.x -= event.deltaX * unit;
-        camera.y -= event.deltaY * unit;
-      }
+      const delta = Math.max(-240, Math.min(240, event.deltaY * unit));
+      camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * Math.exp(-delta * 0.002)));
       apply();
     }, { passive: false });
 
@@ -1284,3 +1281,4 @@ function initializeExperimentPage(topicId) {
   }
   window.addEventListener("beforeunload", () => { stop(); resizeObserver.disconnect(); });
 }
+
