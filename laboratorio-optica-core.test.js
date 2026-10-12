@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { stateAt } from "./laboratorio-advanced-core.js";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-2";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-1";
 
 const degrees = (radians) => radians * 180 / Math.PI;
 const closeTo = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} deve estar próximo de ${expected}`);
@@ -150,7 +150,7 @@ test("feixe colimado mantém direções paralelas e modo divergente parte da lan
   assert.equal(divergent.flashlight.parallel, false);
 });
 
-test("convergência idealizada passa todos os raios pelo foco ajustado e continua após ele", () => {
+test("lanterna idealizada emite cone que toca o espelho, passa por F* e continua", () => {
   const geometry = stateAt("optics-concave-mirror", {
     radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", lightMode: "lantern",
     lanternOpticsMode: "idealized", focusOffsetX: 0.35, focusOffsetY: -0.2, particleCount: 12,
@@ -162,22 +162,38 @@ test("convergência idealizada passa todos os raios pelo foco ajustado e continu
   assert.equal(geometry.flashlight.opticsMode, "idealized");
   assert.equal(geometry.flashlight.actualRayCount, 7);
   assert.equal(geometry.flashlight.particleCount, 12);
+  assert.ok(geometry.flashlight.opening > 0 && geometry.flashlight.opening <= 42 * Math.PI / 180);
   closeTo(geometry.flashlight.focus.x, focus.x, 1e-12);
   closeTo(geometry.flashlight.focus.y, focus.y, 1e-12);
   assert.equal(geometry.particlePaths.length, 7);
+  assert.equal(geometry.rays.length, 21);
+  assert.equal(geometry.flashlight.conePoints.length, 9);
+  closeTo(geometry.flashlight.conePoints[0].x, geometry.source.x, 1e-12);
+  closeTo(geometry.flashlight.conePoints[0].y, geometry.source.y, 1e-12);
+  closeTo(geometry.flashlight.conePoints.at(-1).x, geometry.source.x, 1e-12);
+  assert.ok(geometry.flashlight.direction.x > 0, "a lanterna deve apontar para o espelho");
   for (const path of geometry.particlePaths) {
-    assert.equal(path.length, 2);
-    closeTo(path[0].end.x, focus.x, 1e-12);
-    closeTo(path[0].end.y, focus.y, 1e-12);
-    closeTo(path[1].start.x, focus.x, 1e-12);
-    closeTo(path[1].start.y, focus.y, 1e-12);
-    const dx = focus.x - path[0].start.x;
-    const dy = focus.y - path[0].start.y;
-    const crossTrack = Math.abs(dx * (path[0].end.y - path[0].start.y) - dy * (path[0].end.x - path[0].start.x));
-    closeTo(crossTrack, 0, 1e-12);
-    assert.ok(Math.hypot(path[1].end.x - focus.x, path[1].end.y - focus.y) > 0, "cada raio deve continuar após F");
+    assert.equal(path.length, 3);
+    const [incident, reflected, continued] = path;
+    closeTo(incident.start.x, geometry.source.x, 1e-12);
+    closeTo(incident.start.y, geometry.source.y, 1e-12);
+    closeTo(incident.end.x + incident.end.y ** 2 / (4 * geometry.focalLength), 0, 1e-10);
+    assert.ok(Math.abs(incident.end.y) <= geometry.aperture);
+    closeTo(reflected.start.x, incident.end.x, 1e-12);
+    closeTo(reflected.start.y, incident.end.y, 1e-12);
+    closeTo(reflected.end.x, focus.x, 1e-12);
+    closeTo(reflected.end.y, focus.y, 1e-12);
+    closeTo(continued.start.x, focus.x, 1e-12);
+    closeTo(continued.start.y, focus.y, 1e-12);
+    const dx = focus.x - reflected.start.x;
+    const dy = focus.y - reflected.start.y;
+    const continuationDx = continued.end.x - continued.start.x;
+    const continuationDy = continued.end.y - continued.start.y;
+    closeTo(Math.abs(dx * continuationDy - dy * continuationDx), 0, 1e-9);
+    assert.ok(dx * continuationDx + dy * continuationDy > 0, "o raio deve continuar no mesmo sentido depois de F*");
   }
 });
+
 
 test("fonte coincidente com o foco não causa divisão por zero", () => {
   const geometry = stateAt("optics-concave-mirror", {
@@ -239,7 +255,7 @@ test("recalcular a simulação repetidamente não acumula raios ou partículas",
       experimentMode: "lantern", lightMode: "lantern", lanternOpticsMode: "idealized",
       focusOffsetX: index % 5 * 0.03, focusOffsetY: index % 7 * 0.02, particleCount: 16
     }).geometry;
-    assert.equal(geometry.rays.length, 14);
+    assert.equal(geometry.rays.length, 21);
     assert.equal(geometry.particlePaths.length, 7);
     assert.equal(geometry.flashlight.particleCount, 16);
   }

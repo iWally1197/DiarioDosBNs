@@ -350,6 +350,33 @@ function directionToTarget(origin, target, fallback = { x: 1, y: 0 }) {
   return { x: dx / length, y: dy / length };
 }
 
+function parabolicSurfacePoint(y, geometry) {
+  return { x: -(y ** 2) / (4 * geometry.focalLength), y };
+}
+
+function parabolicHitAtAngle(source, angle, geometry, apertureLimit) {
+  const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+  const focalLength = geometry.focalLength;
+  const a = direction.y ** 2 / (4 * focalLength);
+  const b = direction.x + source.y * direction.y / (2 * focalLength);
+  const c = source.x + source.y ** 2 / (4 * focalLength);
+  const roots = [];
+  if (Math.abs(a) < 1e-12) {
+    if (Math.abs(b) > 1e-12) roots.push(-c / b);
+  } else {
+    const discriminant = b ** 2 - 4 * a * c;
+    if (discriminant >= -1e-10) {
+      const root = Math.sqrt(Math.max(0, discriminant));
+      roots.push((-b - root) / (2 * a), (-b + root) / (2 * a));
+    }
+  }
+  const travel = roots.filter((value) => value > 1e-8).sort((left, right) => left - right)[0];
+  if (!Number.isFinite(travel)) return null;
+  const hit = { x: source.x + direction.x * travel, y: source.y + direction.y * travel };
+  if (Math.abs(hit.y) > apertureLimit + 1e-7) return null;
+  return hit;
+}
+
 function idealizedFocusMirror(p, geometry, source, settings) {
   const focus = {
     x: -geometry.focalLength + finite(p.focusOffsetX ?? 0, "Deslocamento horizontal do foco"),
@@ -362,34 +389,48 @@ function idealizedFocusMirror(p, geometry, source, settings) {
     yMin: Math.min(geometry.bounds.yMin, focus.y - padding),
     yMax: Math.max(geometry.bounds.yMax, focus.y + padding)
   };
-  const centralDirection = directionToTarget(source, focus);
-  const perpendicular = { x: -centralDirection.y, y: centralDirection.x };
-  const sourceSpread = Math.min(
-    geometry.aperture * 0.85,
-    distance(source, focus) * Math.tan(settings.opening / 2)
-  );
+
+  // Mantém as sete direções dentro da abertura refletora, mesmo nas posições extremas da fonte.
+  const sourceDistance = Math.abs(source.x);
+  const reachableAperture = Math.sqrt(4 * geometry.focalLength * Math.max(sourceDistance - 1e-6, 1e-6));
+  const apertureLimit = Math.min(geometry.aperture * 0.96, reachableAperture * 0.98);
+  const lowerHit = parabolicSurfacePoint(-apertureLimit, geometry);
+  const upperHit = parabolicSurfacePoint(apertureLimit, geometry);
+  const lowerAngle = Math.atan2(lowerHit.y - source.y, lowerHit.x - source.x);
+  const upperAngle = Math.atan2(upperHit.y - source.y, upperHit.x - source.x);
+  const allowedMin = Math.min(lowerAngle, upperAngle);
+  const allowedMax = Math.max(lowerAngle, upperAngle);
+  const opening = Math.min(settings.opening, allowedMax - allowedMin);
+  const requestedCenterAngle = settings.beamAngle ?? 0;
+  const centerAngle = clamp(requestedCenterAngle, allowedMin + opening / 2, allowedMax - opening / 2);
+  const firstAngle = centerAngle - opening / 2;
   const rayCount = 7;
   const rays = [];
   const particlePaths = [];
+  const coneHits = [];
+
   for (let index = 0; index < rayCount; index += 1) {
-    const fraction = rayCount === 1 ? 0 : (index / (rayCount - 1)) * 2 - 1;
-    const origin = {
-      x: source.x + perpendicular.x * fraction * sourceSpread,
-      y: source.y + perpendicular.y * fraction * sourceSpread
-    };
-    const direction = directionToTarget(origin, focus, centralDirection);
-    const toFocusLength = distance(origin, focus);
-    const path = [];
-    if (toFocusLength > 1e-12) {
-      path.push({ start: origin, end: focus, index: 1 });
-      rays.push({ role: "trajetória idealizada até F", points: [origin, focus], index: 1, color: "beam" });
-    }
-    const afterFocusStart = addScaled(focus, direction, 1e-8);
-    const end = rayToBounds(afterFocusStart, direction, geometry.bounds);
-    path.push({ start: focus, end, index: 1 });
-    rays.push({ role: "continuação após F", points: [focus, end], index: 1, color: "beam" });
+    const fraction = rayCount === 1 ? 0 : index / (rayCount - 1);
+    const angle = firstAngle + fraction * opening;
+    const fallbackY = -apertureLimit + fraction * 2 * apertureLimit;
+    const hit = parabolicHitAtAngle(source, angle, geometry, apertureLimit)
+      || parabolicSurfacePoint(fallbackY, geometry);
+    coneHits.push(hit);
+
+    const direction = directionToTarget(hit, focus, { x: -Math.cos(angle), y: -Math.sin(angle) });
+    const end = rayToBounds(addScaled(focus, direction, 1e-8), direction, geometry.bounds);
+    const path = [
+      { start: source, end: hit, index: 1 },
+      { start: hit, end: focus, index: 1 },
+      { start: focus, end, index: 1 }
+    ];
     particlePaths.push(path);
+    rays.push({ role: "raio incidente do cone", points: [source, hit], index: 1, color: "beam" });
+    rays.push({ role: "reflexão idealizada até F*", points: [hit, focus], index: 1, color: "beam" });
+    rays.push({ role: "continuação após F*", points: [focus, end], index: 1, color: "beam" });
   }
+
+  const centralDirection = { x: Math.cos(centerAngle), y: Math.sin(centerAngle) };
   geometry.source = source;
   geometry.focus = focus;
   geometry.rays = rays;
@@ -407,11 +448,13 @@ function idealizedFocusMirror(p, geometry, source, settings) {
     focusAligned: true,
     idealized: true,
     opticsMode: "idealized",
-    beamAngle: 0,
-    opening: settings.opening,
+    beamAngle: centerAngle,
+    opening,
+    requestedOpening: settings.opening,
     emissionRate: settings.emissionRate,
     visualSpeed: settings.visualSpeed,
     intensity: settings.intensity,
+    conePoints: [source, ...coneHits, source],
     primaryInteraction: null,
     showRays: p.showRays !== false,
     showNormal: p.showNormal !== false,
@@ -450,7 +493,7 @@ function flashlightMirror(id, p, geometry) {
     ? addScaled(geometry.hit, { x: -geometry.incomingDirection.x, y: -geometry.incomingDirection.y }, positive(p.sourceDistance ?? 1.8, "Distância da lanterna"))
     : { x: -positive(p.objectDistance, "Distância da lanterna"), y: finite(p.flashlightHeight ?? 0.6, "Altura da lanterna") };
   if (geometry.surfaceProfile === "parabolic" && id === "optics-concave-mirror" && p.lanternOpticsMode === "idealized" && p.lightMode !== "parallel") {
-    return idealizedFocusMirror(p, geometry, source, { opening, emissionRate, visualSpeed, intensity, particleCount });
+    return idealizedFocusMirror(p, geometry, source, { opening, beamAngle, emissionRate, visualSpeed, intensity, particleCount });
   }
   if (geometry.kind === "plane-mirror") {
     const image = reflectedPointAcrossPlane(source, geometry.center, geometry.normal);

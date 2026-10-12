@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-focus-models-20261012-2";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-focus-models-20261012-2";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-focus-models-20261012-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-2";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-cone-reflection-20261012-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-cone-reflection-20261012-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-cone-reflection-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -338,7 +338,7 @@ function initializeExperimentPage(topicId) {
       wave: "A corda e o eixo x formam o referencial fixo: os pontos materiais da corda oscilam verticalmente enquanto o padrão da onda se desloca para +x.",
       "optics-reflection": "Espelho, normal e feixe são calculados pela geometria do raio. Arraste o centro para reposicionar o espelho, uma extremidade para girá-lo ou use os controles para mover o ponto de incidência.",
       "optics-refraction": "A direção do raio atravessando a interface é calculada pela lei de Snell. Se o ângulo crítico for ultrapassado, o modelo mostra reflexão interna total.",
-      "optics-concave-mirror": "A lanterna é colimada e ilumina um espelho parabólico: todos os raios e bolinhas refletidos atravessam o foco F. No modo Corpo humano, a imagem usa as equações paraxiais do espelho.",
+      "optics-concave-mirror": "No modo Lanterna didático, um cone atinge a parábola e cada raio atravessa F* e continua; no modo realista, a reflexão segue a normal local. No modo Corpo humano, a imagem usa as equações paraxiais.",
       "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial."
     };
     $("#workspace-scene-caption").textContent = MIRROR_EXPERIMENTS.has(state.id) ? mirrorSceneCaption() : (sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.");
@@ -465,13 +465,13 @@ function initializeExperimentPage(topicId) {
       : state.mode === "lantern"
         ? state.id === "optics-concave-mirror"
           ? opticalMode === "idealized"
-            ? "Convergência idealizada: os pontos atravessam o foco didático ajustável; este modo não aplica a reflexão especular."
+            ? "Modo didático: o cone atinge a parábola, passa por F* e continua; não aplica a lei especular."
             : "Óptica realista: a fonte e a superfície refletem os raios pela normal; o foco não é imposto."
           : "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
         : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
     const lanternCardDescription = document.querySelector('[data-mirror-mode="lantern"] small');
     if (lanternCardDescription) lanternCardDescription.textContent = state.id === "optics-concave-mirror"
-      ? "Escolha entre foco didático ajustável e reflexão realista pela superfície."
+      ? "Modo didático: cone refletido por F*. Modo realista: reflexão pela normal da superfície."
       : "Feixe divergente emitido pela lanterna; ajuste a abertura e a direção.";
     const bindings = {
       "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
@@ -531,7 +531,7 @@ function initializeExperimentPage(topicId) {
         ? state.id === "optics-concave-mirror"
           ? state.parameters.lanternOpticsMode === "realistic"
             ? "Óptica realista selecionada: cada raio é recalculado pela lei da reflexão."
-            : "Convergência idealizada selecionada: todos os pontos atravessam o foco didático."
+            : "Modo didático selecionado: o cone toca o espelho e segue por F*."
           : "Lançamento de lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
         : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
   }
@@ -570,7 +570,7 @@ function initializeExperimentPage(topicId) {
     syncMirrorModeButtons();
     updateTimeControls();
     $("#workspace-status").textContent = state.parameters.lanternOpticsMode === "idealized"
-      ? "Convergência idealizada: os pontos seguem trajetórias atualizadas até o foco didático."
+      ? "Modo didático: a lanterna emite um cone; cada raio toca a parábola, passa por F* e continua."
       : "Óptica realista: cada raio é recalculado pela lei da reflexão na superfície.";
     try { render(); } catch (error) { showError(error); }
   });

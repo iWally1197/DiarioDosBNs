@@ -522,11 +522,25 @@ function drawSphericalHuman(context, geometry, values, p, view, palette) {
 }
 
 function drawSphericalLantern(context, geometry, values, p, view, palette) {
-  drawSphericalSurface(context, geometry, view, palette);
   const flashlight = geometry.flashlight;
   const idealized = geometry.surfaceProfile === "parabolic" && flashlight.opticsMode === "idealized";
+  if (idealized && flashlight.showRays && flashlight.conePoints?.length > 3) {
+    context.save();
+    context.beginPath();
+    flashlight.conePoints.forEach((point, index) => {
+      const screen = view.toScreen(point);
+      if (index === 0) context.moveTo(screen.x, screen.y);
+      else context.lineTo(screen.x, screen.y);
+    });
+    context.closePath();
+    context.fillStyle = wavelengthColor(Number(p.wavelengthNm));
+    context.globalAlpha = 0.13 * flashlight.intensity;
+    context.fill();
+    context.restore();
+  }
+  drawSphericalSurface(context, geometry, view, palette);
   if (flashlight.showRays) {
-    let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false;
+    let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false, idealizedLabeled = false, continuationLabeled = false;
     for (const ray of geometry.rays) {
       const points = ray.points.map((point) => view.toScreen(point));
       const virtual = ray.role.includes("virtual");
@@ -534,14 +548,16 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
       const afterFocus = ray.role.includes("após F");
       const incident = ray.role.includes("incidente");
       const label = idealizedRay
-        ? (incidentLabeled ? "" : "trajetória idealizada")
+        ? (idealizedLabeled ? "" : "reflexão idealizada até F*")
         : afterFocus
-          ? (reflectedLabeled ? "" : "continuação após F")
+          ? (continuationLabeled ? "" : "continuação após F*")
           : virtual ? (virtualLabeled ? "" : "prolongamento virtual")
-            : incident ? (incidentLabeled ? "" : "raio incidente")
+            : incident ? (incidentLabeled ? "" : "raio incidente do cone")
               : (reflectedLabeled ? "" : "raio refletido");
       if (virtual) virtualLabeled = true;
-      else if (incident || idealizedRay) incidentLabeled = true;
+      else if (incident) incidentLabeled = true;
+      else if (idealizedRay) idealizedLabeled = true;
+      else if (afterFocus) continuationLabeled = true;
       else reflectedLabeled = true;
       context.save(); context.globalAlpha = flashlight.intensity;
       drawArrow(context, points[0], points[1], virtual ? palette.muted : wavelengthColor(Number(p.wavelengthNm)), label, palette.muted);
@@ -565,14 +581,14 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
   const beamLabel = idealized
-    ? "Convergência idealizada · todos os pontos atravessam F*"
+    ? "Cone incidente · reflexão didática por F* e continuação"
     : geometry.surfaceProfile === "parabolic" && flashlight.focusAligned
       ? "Feixe colimado · reflexão parabólica converge no foco real F"
       : (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "paralelo" : "divergente");
   drawSphericalLandmarks(context, geometry, values, view, palette, beamLabel);
   context.fillStyle = palette.muted; context.font = "10px system-ui";
   const explanation = idealized
-    ? "Modo didático: foco ajustável; não aplica a reflexão especular."
+    ? "Modo didático: o cone atinge o espelho; os raios passam por F* e continuam. Não aplica a lei especular."
     : "Modo físico: cada raio reflete pela normal local; o foco não é imposto.";
   context.fillText(explanation, 12, 58, Math.max(80, context.canvas.width - 24));
 }
