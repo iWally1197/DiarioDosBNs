@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { stateAt } from "./laboratorio-advanced-core.js";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
 
 const degrees = (radians) => radians * 180 / Math.PI;
 const closeTo = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} deve estar próximo de ${expected}`);

@@ -1,4 +1,4 @@
-import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-1";
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
 
 const G = 9.81;
 const COULOMB = 8.9875517923e9;

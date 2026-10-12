@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-cone-reflection-20261012-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-cone-reflection-20261012-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-cone-reflection-20261012-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-cone-reflection-20261012-2";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-cone-reflection-20261012-2";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-cone-reflection-20261012-2";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -273,7 +273,7 @@ function initializeExperimentPage(topicId) {
     if (state.mode === "lantern" && state.id === "optics-concave-mirror") {
       return state.parameters.lanternOpticsMode === "realistic"
         ? "Lanterna com óptica realista: os raios refletem pela normal local, sem foco imposto. A velocidade dos pontos é didática."
-        : "Lanterna em convergência idealizada: todos os pontos atravessam o foco configurado e continuam depois dele. A velocidade é didática.";
+        : "Lanterna didática: o cone atinge o espelho côncavo; cada raio passa por F* e continua na mesma direção. A velocidade é didática.";
     }
     if (state.mode === "lantern") {
       return "A fonte luminosa é calculada separadamente do corpo: os raios saem da lanterna e são refletidos pela normal local. Ajuste abertura, emissão e velocidade visual no menu.";
