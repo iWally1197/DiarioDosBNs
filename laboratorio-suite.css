@@ -181,3 +181,28 @@
 .lab-card-link:hover { border-color:var(--gold); background:var(--surface-2); }
 
 .workspace-panel-play{width:100%;margin:0 0 12px}.lab-workspace:fullscreen .workspace-panel-play{display:block}.lab-workspace:not(:fullscreen) .workspace-panel-play{display:none!important}
+
+.mirror-mode-selector { display:grid; gap:12px; margin:0 0 16px; padding:15px; border:1px solid var(--line); background:var(--surface); }
+.mirror-mode-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.mirror-mode-heading h3 { margin:5px 0 0; font:600 17px/1.2 var(--display); }
+.mirror-mode-heading p { margin:0; color:var(--muted); font-size:11px; }
+.mirror-mode-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.mirror-mode-card { display:flex; align-items:center; gap:12px; min-height:68px; padding:11px 13px; border:1px solid var(--line); border-radius:7px; background:var(--bg-soft); color:var(--text); text-align:left; cursor:pointer; transition:border-color .16s,background .16s; }
+.mirror-mode-card:hover,.mirror-mode-card[aria-pressed="true"] { border-color:var(--gold); background:color-mix(in srgb,var(--gold) 9%,var(--surface)); }
+.mirror-mode-card:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+.mirror-mode-icon { display:grid; flex:none; place-items:center; width:38px; height:38px; border:1px solid var(--line); border-radius:50%; color:var(--gold); font-size:26px; line-height:1; }
+.mirror-mode-card>span:last-child { display:grid; gap:4px; }
+.mirror-mode-card b { font-size:12px; }
+.mirror-mode-card small { color:var(--muted); font-size:10px; line-height:1.35; }
+.mirror-option-group { display:grid; gap:9px; min-width:0; margin:0; padding:11px; border:1px solid var(--line); color:var(--muted); }
+.mirror-option-group legend { padding:0 5px; color:var(--gold); font-size:11px; font-weight:700; }
+.mirror-option-group label { display:flex; align-items:center; gap:8px; font-size:10px; line-height:1.35; }
+.mirror-option-group label:has(select) { display:grid; gap:5px; }
+.mirror-option-group input[type="checkbox"] { flex:none; accent-color:var(--gold); }
+.mirror-option-group select { width:100%; min-height:36px; padding:6px 8px; border:1px solid var(--line); border-radius:5px; background:var(--surface); color:var(--text); font:inherit; }
+.mirror-option-group[hidden],.mirror-mode-selector[hidden] { display:none; }
+@media(max-width:600px) {
+  .mirror-mode-heading { align-items:flex-start; flex-direction:column; }
+  .mirror-mode-cards { grid-template-columns:1fr; }
+}
+@media(prefers-reduced-motion:reduce) { .mirror-mode-card { transition:none; } }

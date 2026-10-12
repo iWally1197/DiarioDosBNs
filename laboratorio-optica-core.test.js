@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { stateAt } from "./laboratorio-advanced-core.js";
 
 const degrees = (radians) => radians * 180 / Math.PI;
@@ -75,5 +76,97 @@ test("raios em espelho esférico refletem na superfície com ângulos iguais", (
 test("comprimento de onda visível fora dos limites e índices inválidos são rejeitados", () => {
   assert.throws(() => stateAt("optics-reflection", { incidenceAngle: 0, mirrorTilt: 0, impactOffset: 0, wavelengthNm: 760 }), /entre 380 nm e 700 nm/);
   assert.throws(() => stateAt("optics-refraction", { incidenceAngle: 30, index1: 0, index2: 1.5, wavelengthNm: 550, impactOffset: 0 }), /maior que zero/);
+});
+
+test("modo corpo humano calcula imagem e medidas nos três espelhos", () => {
+  const plane = stateAt("optics-reflection", {
+    experimentMode: "human", incidenceAngle: 0, mirrorTilt: 0, mirrorX: 2.65, mirrorY: 1.5,
+    sourceDistance: 1.8, impactOffset: 0, wavelengthNm: 550, objectDistance: 1.4, objectHeight: 1.6
+  }).values;
+  closeTo(plane.imageDistance, 1.4);
+  closeTo(plane.objectImageSeparation, 2.8);
+  closeTo(plane.imageHeight, 1.6);
+  assert.equal(plane.imageNature, "virtual");
+  assert.equal(plane.orientation, "direita");
+
+  const concave = stateAt("optics-concave-mirror", { experimentMode: "human", radius: 2, objectDistance: 3, objectHeight: 1.7, wavelengthNm: 550 }).values;
+  closeTo(concave.imageDistance, 1.5);
+  closeTo(concave.imageHeight, 0.85);
+  closeTo(concave.objectImageSeparation, 1.5);
+  assert.equal(concave.orientation, "invertida");
+  assert.equal(concave.imageScale, "reduzida");
+
+  const convex = stateAt("optics-convex-mirror", { experimentMode: "human", radius: 2, objectDistance: 3, objectHeight: 1.7, wavelengthNm: 550 }).values;
+  closeTo(convex.imageDistance, -0.75);
+  closeTo(convex.imageHeight, 0.425);
+  closeTo(convex.objectImageSeparation, 3.75);
+  assert.equal(convex.imageNature, "virtual");
+  assert.equal(convex.orientation, "direita");
+  assert.equal(convex.imageScale, "reduzida");
+});
+
+test("lanterna faz as bolinhas seguirem raios refletidos pelas normais locais", () => {
+  const examples = [
+    ["optics-reflection", { incidenceAngle: 0, mirrorTilt: 0, mirrorX: 2.65, mirrorY: 1.5, sourceDistance: 1.8, impactOffset: 0 }],
+    ["optics-concave-mirror", { radius: 2, objectDistance: 3, flashlightHeight: 0.2 }],
+    ["optics-convex-mirror", { radius: 2, objectDistance: 3, flashlightHeight: 0.2 }]
+  ];
+  for (const [id, specific] of examples) {
+    const model = stateAt(id, {
+      ...specific, experimentMode: "lantern", objectHeight: 0.6, wavelengthNm: 550,
+      flashlightAngle: 0, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1,
+      beamMode: "divergent", showParticles: true, beamIntensity: 0.4
+    }, 12);
+    const geometry = model.geometry;
+    assert.ok(geometry.flashlight.actualRayCount >= 3, id + " deve encontrar o espelho com vários raios");
+    assert.ok(geometry.particlePaths.length >= 3, id + " deve ter trajetórias animáveis");
+    assert.equal(geometry.flashlight.intensity, 0.4);
+    assert.equal(geometry.flashlight.showImage, true);
+    assert.ok(geometry.image, id + " deve calcular a imagem da fonte independente do corpo humano");
+    for (const ray of geometry.rays.filter((item) => item.role === "raio incidente")) {
+      const hit = ray.interaction.hit;
+      const normal = ray.interaction.normal;
+      const incoming = ray.interaction.incomingDirection;
+      const outgoing = ray.interaction.reflectedDirection;
+      closeTo(Math.hypot(outgoing.x, outgoing.y), 1, 1e-9);
+      const angleIn = Math.acos(Math.abs(incoming.x * normal.x + incoming.y * normal.y));
+      const angleOut = Math.acos(Math.abs(outgoing.x * normal.x + outgoing.y * normal.y));
+      closeTo(angleIn, angleOut, 1e-9);
+      assert.ok(Number.isFinite(hit.x) && Number.isFinite(hit.y));
+    }
+  }
+});
+
+test("feixe colimado mantém direções paralelas e modo divergente parte da lanterna", () => {
+  const base = { radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", objectHeight: 0.6, wavelengthNm: 550, flashlightAngle: 0, beamOpening: 24, emissionRate: 0.65, visualSpeed: 1 };
+  const parallel = stateAt("optics-concave-mirror", { ...base, beamMode: "parallel" }).geometry;
+  const incidentParallel = parallel.rays.filter((ray) => ray.role === "raio incidente");
+  assert.ok(incidentParallel.length >= 3);
+  for (const ray of incidentParallel.slice(1)) {
+    closeTo(ray.interaction.incomingDirection.x, incidentParallel[0].interaction.incomingDirection.x);
+    closeTo(ray.interaction.incomingDirection.y, incidentParallel[0].interaction.incomingDirection.y);
+  }
+  assert.equal(parallel.flashlight.parallel, true);
+
+  const divergent = stateAt("optics-concave-mirror", { ...base, beamMode: "divergent" }).geometry;
+  const incidentDivergent = divergent.rays.filter((ray) => ray.role === "raio incidente");
+  assert.ok(incidentDivergent.length >= 3);
+  assert.ok(incidentDivergent.some((ray) => Math.abs(ray.interaction.incomingDirection.y - incidentDivergent[0].interaction.incomingDirection.y) > 1e-3));
+  assert.equal(divergent.flashlight.parallel, false);
+});
+
+test("página expõe seletor de modos e controles para luz e corpo", () => {
+  const html = readFileSync(new URL("./laboratorio-experimento.html", import.meta.url), "utf8");
+  const workspace = readFileSync(new URL("./laboratorio-workspace.js", import.meta.url), "utf8");
+  assert.match(html, /data-mirror-mode="human"/);
+  assert.match(html, /data-mirror-mode="lantern"/);
+  assert.match(html, /mirror-show-image/);
+  assert.match(html, /mirror-show-lantern-image/);
+  assert.match(html, /mirror-beam-mode/);
+  assert.match(workspace, /function setMirrorMode/);
+  assert.match(workspace, /function controlsForExperiment/);
+  assert.match(workspace, /beamIntensity/);
+  assert.match(workspace, /body-height/);
+  assert.match(workspace, /function setParameter/);
 });
 

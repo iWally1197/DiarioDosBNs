@@ -217,27 +217,233 @@ function sphericalMirror(id, p) {
     return { x: -signedRadius + sign * Math.sqrt(Math.max(0, radius ** 2 - y ** 2)), y };
   });
   const primarySegments = particlePaths[Math.floor(particlePaths.length / 2)];
+  const canDisplayImage = imageX !== null && Number.isFinite(imageY) && Math.abs(imageX) <= 8 && Math.abs(imageY) <= 7;
+  const objectBase = { x: -objectDistance, y: 0 };
   return {
-    kind: "spherical-mirror", bounds, center, radius, signedRadius, focalLength, object, image: imageX === null ? null : { x: imageX, y: imageY },
+    kind: "spherical-mirror", bounds, center, radius, signedRadius, focalLength, objectBase, object,
+    image: canDisplayImage ? { x: imageX, y: imageY } : null,
+    imageBase: canDisplayImage ? { x: imageX, y: 0 } : null,
     imageDistance, magnification, surfacePoints, rays, segments: primarySegments, particlePaths, aperture,
     view: null, sign, imageType: imageDistance === Infinity ? "no infinito" : imageDistance > 0 ? "real" : "virtual"
   };
+}
+
+const MIRROR_IDS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
+
+function reflectedPointAcrossPlane(point, center, normal) {
+  const fromPlane = { x: point.x - center.x, y: point.y - center.y };
+  const twiceProjection = 2 * dot(fromPlane, normal);
+  return { x: point.x - twiceProjection * normal.x, y: point.y - twiceProjection * normal.y };
+}
+
+function planeMirrorBody(p, geometry) {
+  const objectDistance = positive(p.objectDistance ?? 1.2, "Distância do corpo");
+  const objectHeight = positive(p.objectHeight ?? 1.7, "Altura do corpo");
+  const objectBase = addScaled(geometry.center, geometry.normal, objectDistance);
+  const object = { x: objectBase.x, y: objectBase.y + objectHeight };
+  const imageBase = addScaled(geometry.center, geometry.normal, -objectDistance);
+  const image = reflectedPointAcrossPlane(object, geometry.center, geometry.normal);
+  const hit = addScaled(geometry.center, geometry.tangent, 0.38);
+  const incomingDirection = unit({ x: hit.x - object.x, y: hit.y - object.y });
+  const reflectedDirection = reflect(incomingDirection, geometry.normal);
+  const virtualEnd = image;
+  const pad = Math.max(0.65, objectHeight * 0.45);
+  geometry.bounds = {
+    xMin: Math.min(objectBase.x, object.x, imageBase.x, image.x, geometry.center.x) - pad,
+    xMax: Math.max(objectBase.x, object.x, imageBase.x, image.x, geometry.center.x) + pad,
+    yMin: Math.min(objectBase.y, object.y, imageBase.y, image.y, geometry.center.y) - pad,
+    yMax: Math.max(objectBase.y, object.y, imageBase.y, image.y, geometry.center.y) + pad
+  };
+  const exit = rayToBounds(hit, reflectedDirection, geometry.bounds);
+  geometry.objectBase = objectBase;
+  geometry.object = object;
+  geometry.imageBase = imageBase;
+  geometry.image = image;
+  geometry.imageDistance = objectDistance;
+  geometry.magnification = 1;
+  geometry.imageType = "virtual";
+  geometry.rays = [
+    { role: "incidente", points: [object, hit], index: 1, color: "beam" },
+    { role: "refletido", points: [hit, exit], index: 1, color: "beam" },
+    { role: "prolongamento virtual", points: [hit, virtualEnd], index: 1, color: "virtual" }
+  ];
+  geometry.segments = [{ start: object, end: hit, index: 1 }, { start: hit, end: exit, index: 1 }];
+  geometry.particlePaths = [];
+  geometry.mode = "human";
+  geometry.bodyHeight = objectHeight;
+  geometry.objectImageSeparation = distance(objectBase, imageBase);
+  geometry.incomingDirection = incomingDirection;
+  geometry.reflectedDirection = reflectedDirection;
+  geometry.hit = hit;
+  return geometry;
+}
+
+function cross(a, b) {
+  return a.x * b.y - a.y * b.x;
+}
+
+function intersectPlaneRay(origin, direction, geometry) {
+  const a = addScaled(geometry.center, geometry.tangent, -1.08);
+  const b = addScaled(geometry.center, geometry.tangent, 1.08);
+  const edge = { x: b.x - a.x, y: b.y - a.y };
+  const denominator = cross(direction, edge);
+  if (Math.abs(denominator) < 1e-10) return null;
+  const offset = { x: a.x - origin.x, y: a.y - origin.y };
+  const rayDistance = cross(offset, edge) / denominator;
+  const edgeRatio = cross(offset, direction) / denominator;
+  if (rayDistance <= 1e-7 || edgeRatio < -1e-8 || edgeRatio > 1 + 1e-8) return null;
+  const hit = addScaled(origin, direction, rayDistance);
+  return { hit, normal: geometry.normal, incomingDirection: direction, reflectedDirection: reflect(direction, geometry.normal) };
+}
+
+function intersectSphericalRay(origin, direction, geometry) {
+  const relative = { x: origin.x - geometry.center.x, y: origin.y - geometry.center.y };
+  const projection = dot(relative, direction);
+  const discriminant = projection * projection - (dot(relative, relative) - geometry.radius ** 2);
+  if (discriminant < 0) return null;
+  const root = Math.sqrt(Math.max(0, discriminant));
+  for (const rayDistance of [-projection - root, -projection + root].filter((value) => value > 1e-7).sort((a, b) => a - b)) {
+    const hit = addScaled(origin, direction, rayDistance);
+    if (Math.abs(hit.y) > geometry.aperture + 1e-8) continue;
+    const surfaceX = -geometry.signedRadius + geometry.sign * Math.sqrt(Math.max(0, geometry.radius ** 2 - hit.y ** 2));
+    if (Math.abs(hit.x - surfaceX) > 1e-5) continue;
+    const normal = unit({ x: hit.x - geometry.center.x, y: hit.y - geometry.center.y });
+    return { hit, normal, incomingDirection: direction, reflectedDirection: reflect(direction, normal) };
+  }
+  return null;
+}
+
+function flashlightMirror(id, p, geometry) {
+  const beamAngle = finite(p.flashlightAngle ?? 0, "Orientação da lanterna") * Math.PI / 180;
+  const opening = finite(p.beamOpening ?? 20, "Abertura do feixe") * Math.PI / 180;
+  const emissionRate = positive(p.emissionRate ?? 0.65, "Frequência visual de emissão");
+  const visualSpeed = positive(p.visualSpeed ?? 1, "Velocidade visual");
+  const intensity = finite(p.beamIntensity ?? 0.8, "Intensidade visual do feixe");
+  if (Math.abs(beamAngle) > 50 * Math.PI / 180 + 1e-9) throw new RangeError("A orientação da lanterna deve permanecer entre −50° e 50°.");
+  if (opening < 2 * Math.PI / 180 - 1e-9 || opening > 50 * Math.PI / 180 + 1e-9) throw new RangeError("A abertura do feixe deve permanecer entre 2° e 50°.");
+  if (emissionRate < 0.2 || emissionRate > 1.5) throw new RangeError("A frequência visual deve permanecer entre 0,2 e 1,5 bolinhas/ns.");
+  if (visualSpeed < 0.25 || visualSpeed > 2) throw new RangeError("A velocidade visual deve permanecer entre 0,25× e 2×.");
+  if (intensity < 0.1 || intensity > 1) throw new RangeError("A intensidade visual deve permanecer entre 0,1 e 1.");
+
+  const parallel = p.beamMode === "parallel";
+  const rayCount = 7;
+  const baseAngle = geometry.kind === "plane-mirror" ? Math.atan2(geometry.incomingDirection.y, geometry.incomingDirection.x) : 0;
+  const centralAngle = baseAngle + beamAngle;
+  const central = unit({ x: Math.cos(centralAngle), y: Math.sin(centralAngle) });
+  const directionAngle = Math.atan2(central.y, central.x);
+  const source = geometry.kind === "plane-mirror"
+    ? addScaled(geometry.hit, { x: -geometry.incomingDirection.x, y: -geometry.incomingDirection.y }, positive(p.sourceDistance ?? 1.8, "Distância da lanterna"))
+    : { x: -positive(p.objectDistance, "Distância da lanterna"), y: finite(p.flashlightHeight ?? 0.6, "Altura da lanterna") };
+  if (geometry.kind === "plane-mirror") {
+    const image = reflectedPointAcrossPlane(source, geometry.center, geometry.normal);
+    const pad = 0.8;
+    geometry.source = source;
+    geometry.image = image;
+    geometry.imageBase = image;
+    geometry.imageType = "virtual";
+    geometry.bounds = {
+      xMin: Math.min(source.x, image.x, geometry.center.x) - pad,
+      xMax: Math.max(source.x, image.x, geometry.center.x) + pad,
+      yMin: Math.min(source.y, image.y, geometry.center.y) - pad,
+      yMax: Math.max(source.y, image.y, geometry.center.y) + pad
+    };
+  }
+  const perpendicular = { x: -central.y, y: central.x };
+  const sourceSpread = parallel
+    ? clamp((geometry.kind === "spherical-mirror" ? positive(p.objectDistance, "Distância da lanterna") : Number(p.sourceDistance ?? 1.8)) * Math.tan(opening / 2), 0.08, geometry.kind === "spherical-mirror" ? geometry.aperture * 0.9 : 0.55)
+    : 0;
+  const rays = [];
+  const particlePaths = [];
+  const hits = [];
+  for (let index = 0; index < rayCount; index += 1) {
+    const fraction = (index / (rayCount - 1)) * 2 - 1;
+    const angle = directionAngle + (parallel ? 0 : fraction * opening / 2);
+    const direction = unit({ x: Math.cos(angle), y: Math.sin(angle) });
+    const offset = parallel ? fraction * sourceSpread : 0;
+    const origin = { x: source.x + perpendicular.x * offset, y: source.y + perpendicular.y * offset };
+    const interaction = geometry.kind === "plane-mirror"
+      ? intersectPlaneRay(origin, direction, geometry)
+      : intersectSphericalRay(origin, direction, geometry);
+    if (!interaction) continue;
+    const end = rayToBounds(addScaled(interaction.hit, interaction.reflectedDirection, 1e-5), interaction.reflectedDirection, geometry.bounds);
+    const virtualEnd = rayToBounds(addScaled(interaction.hit, { x: -interaction.reflectedDirection.x, y: -interaction.reflectedDirection.y }, 1e-5), { x: -interaction.reflectedDirection.x, y: -interaction.reflectedDirection.y }, geometry.bounds);
+    const incidentAngle = Math.acos(clamp(Math.abs(dot(interaction.incomingDirection, interaction.normal)), 0, 1));
+    const reflectedAngle = Math.acos(clamp(Math.abs(dot(interaction.reflectedDirection, interaction.normal)), 0, 1));
+    const particlePath = [
+      { start: origin, end: interaction.hit, index: 1 },
+      { start: interaction.hit, end, index: 1 }
+    ];
+    hits.push({ ...interaction, incidentAngle, reflectedAngle, origin, end, virtualEnd, particlePath });
+    rays.push({ role: "raio incidente", points: [origin, interaction.hit], index: 1, color: "beam", interaction });
+    rays.push({ role: "raio refletido", points: [interaction.hit, end], index: 1, color: "beam", interaction });
+    if (id === "optics-convex-mirror" || geometry.imageType === "virtual") {
+      rays.push({ role: "prolongamento virtual", points: [interaction.hit, virtualEnd], index: 1, color: "virtual", interaction });
+    }
+    particlePaths.push(particlePath);
+  }
+  geometry.rays = rays;
+  geometry.particlePaths = particlePaths;
+  geometry.segments = particlePaths[0] || [];
+  geometry.mode = "lantern";
+  geometry.flashlight = {
+    source, direction: central, rayCount, actualRayCount: hits.length,
+    parallel, beamAngle, opening, emissionRate, visualSpeed, intensity,
+    primaryInteraction: hits[Math.floor(hits.length / 2)] || null,
+    showRays: p.showRays !== false,
+    showNormal: p.showNormal !== false,
+    showAngles: p.showAngles !== false,
+    showTrails: p.showTrails !== false,
+    showParticles: p.showParticles !== false,
+    showImage: p.showLanternImage !== false
+  };
+  return geometry;
+}
+
+function imageClassification(magnification) {
+  if (!Number.isFinite(magnification)) return "sem imagem finita";
+  if (Math.abs(Math.abs(magnification) - 1) < 0.02) return "mesmo tamanho";
+  return Math.abs(magnification) > 1 ? "ampliada" : "reduzida";
 }
 
 export function opticalModelFor(id, parameters, time = 0) {
   const t = clamp(finite(time, "Tempo"), 0, OPTICS_DURATION_NS);
   let geometry;
   let values;
+  const experimentMode = MIRROR_IDS.has(id)
+    ? (parameters.experimentMode === "lantern" ? "lantern" : parameters.experimentMode === "human" ? "human" : "legacy")
+    : "legacy";
   if (id === "optics-reflection") {
     geometry = mirrorPlane(parameters);
+    geometry = experimentMode === "lantern" ? flashlightMirror(id, parameters, geometry) : experimentMode === "human" ? planeMirrorBody(parameters, geometry) : geometry;
     const lambda = wavelengthInfo(parameters);
-    const angle = Math.acos(clamp(Math.abs(dot(geometry.incomingDirection, geometry.normal)), -1, 1));
+    const mainInteraction = geometry.flashlight?.primaryInteraction;
+    const incident = mainInteraction?.incomingDirection || geometry.incomingDirection;
+    const reflected = mainInteraction?.reflectedDirection || geometry.reflectedDirection;
+    const normal = mainInteraction?.normal || geometry.normal;
+    const angle = Math.acos(clamp(Math.abs(dot(incident, normal)), 0, 1));
+    const reflectedAngle = Math.acos(clamp(Math.abs(dot(reflected, normal)), 0, 1));
+    const legacyObjectDistance = Number(parameters.objectDistance ?? 1.2);
+    const planeObject = experimentMode === "lantern"
+      ? geometry.flashlight.source
+      : experimentMode === "human"
+        ? geometry.objectBase
+        : addScaled(geometry.center, geometry.normal, legacyObjectDistance);
+    const planeImage = reflectedPointAcrossPlane(planeObject, geometry.center, geometry.normal);
+    const objectDistance = experimentMode === "lantern"
+      ? Math.abs(dot({ x: planeObject.x - geometry.center.x, y: planeObject.y - geometry.center.y }, geometry.normal))
+      : legacyObjectDistance;
+    const objectHeight = experimentMode === "lantern" ? Math.abs(planeObject.y - geometry.center.y) : Number(parameters.objectHeight ?? 1.7);
+    const imageSeparation = distance(planeObject, planeImage);
     values = {
-      time: t, angleIncident: angle * 180 / Math.PI, angleReflected: angle * 180 / Math.PI,
+      time: t, angleIncident: angle * 180 / Math.PI, angleReflected: reflectedAngle * 180 / Math.PI,
       wavelengthVacuumNm: lambda.wavelengthVacuumNm, wavelengthMediumNm: lambda.wavelengthVacuumNm,
       frequencyTHz: lambda.frequencyTHz, speed: C, refractiveIndex: 1,
       pathPosition: particlePathPosition(geometry.segments, t), pathLength: geometry.segments.reduce((sum, segment) => sum + distance(segment.start, segment.end), 0),
-      totalInternalReflection: false, imageDistance: null, image: "—"
+      totalInternalReflection: false, objectDistance, imageDistance: objectDistance,
+      objectHeight, imageHeight: objectHeight, magnification: 1, image: "virtual",
+      imageNature: "virtual", orientation: "direita", imageScale: "mesmo tamanho",
+      objectImageSeparation: imageSeparation,
+      rayCount: geometry.flashlight?.actualRayCount ?? 1
     };
   } else if (id === "optics-refraction") {
     geometry = refractingInterface(parameters);
@@ -255,15 +461,28 @@ export function opticalModelFor(id, parameters, time = 0) {
       imageDistance: null, image: "—"
     };
   } else if (id === "optics-concave-mirror" || id === "optics-convex-mirror") {
-    geometry = sphericalMirror(id, parameters);
+    const opticalParameters = experimentMode === "lantern" ? { ...parameters, objectHeight: parameters.flashlightHeight ?? 0.6 } : parameters;
+    geometry = sphericalMirror(id, opticalParameters);
+    geometry.mode = experimentMode;
+    if (experimentMode === "lantern") geometry = flashlightMirror(id, parameters, geometry);
     const lambda = wavelengthInfo(parameters);
+    const primaryInteraction = geometry.flashlight?.primaryInteraction;
+    const objectDistance = Number(parameters.objectDistance);
+    const objectHeight = Number(opticalParameters.objectHeight);
+    const imageHeight = Number.isFinite(geometry.magnification) ? Math.abs(geometry.magnification * objectHeight) : Infinity;
+    const incidentAngle = primaryInteraction ? Math.acos(clamp(Math.abs(dot(primaryInteraction.incomingDirection, primaryInteraction.normal)), 0, 1)) * 180 / Math.PI : null;
+    const reflectedAngle = primaryInteraction ? Math.acos(clamp(Math.abs(dot(primaryInteraction.reflectedDirection, primaryInteraction.normal)), 0, 1)) * 180 / Math.PI : null;
     values = {
       time: t, radius: geometry.signedRadius, focalLength: geometry.focalLength, objectDistance: Number(parameters.objectDistance),
-      imageDistance: geometry.imageDistance, magnification: geometry.magnification, image: geometry.imageType,
+      imageDistance: geometry.imageDistance, magnification: geometry.magnification, image: geometry.imageType, angleIncident: incidentAngle, angleReflected: reflectedAngle,
+      objectHeight, imageHeight, imageNature: geometry.imageType,
+      orientation: geometry.magnification >= 0 ? "direita" : "invertida",
+      imageScale: imageClassification(geometry.magnification),
+      objectImageSeparation: Number.isFinite(geometry.imageDistance) ? Math.abs(geometry.imageDistance - objectDistance) : Infinity,
       wavelengthVacuumNm: lambda.wavelengthVacuumNm, wavelengthMediumNm: lambda.wavelengthVacuumNm,
       frequencyTHz: lambda.frequencyTHz, speed: C, refractiveIndex: 1,
       pathPosition: particlePathPosition(geometry.segments, t), pathLength: geometry.segments.reduce((sum, segment) => sum + distance(segment.start, segment.end), 0),
-      totalInternalReflection: false
+      totalInternalReflection: false, rayCount: geometry.flashlight?.actualRayCount ?? geometry.rays.length / 3
     };
   } else {
     throw new RangeError(`Simulação óptica desconhecida: ${id}.`);
@@ -281,7 +500,7 @@ export function opticalGraphFor(id, parameters, time = 0) {
   const duration = OPTICS_DURATION_NS;
   const points = Array.from({ length: 161 }, (_, index) => {
     const t = duration * index / 160;
-    return { x: t, y: opticalModelFor(id, parameters, t).values.pathPosition };
+    return { x: t, y: particlePathPosition(model.geometry.segments, t) };
   });
   return {
     xLabel: "Tempo da simulação (ns)",

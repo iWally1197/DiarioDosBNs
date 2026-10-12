@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=loop-long-20261011-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-labs-20261011-1";
 
 const C_METERS_PER_NS = 0.299792458;
 
@@ -39,33 +39,210 @@ function pointOnSegment(start, end, distanceAlong) {
   return { x: start.x + (end.x - start.x) * ratio, y: start.y + (end.y - start.y) * ratio };
 }
 
+function pointOnPath(path, distanceAlong) {
+  let remaining = distanceAlong;
+  for (const segment of path) {
+    const length = opticalDistance(segment.start, segment.end);
+    if (remaining <= length) return { point: pointOnSegment(segment.start, segment.end, remaining), segment };
+    remaining -= length;
+  }
+  const last = path.at(-1);
+  return { point: last?.end || { x: 0, y: 0 }, segment: last };
+}
+
 function drawParticles(context, geometry, p, time, view) {
+  if (geometry.mode !== "lantern" || !geometry.flashlight?.showParticles) return;
   const wavelengthNm = Number(p.wavelengthNm);
   const color = wavelengthColor(wavelengthNm);
-  const visualSpacing = 0.78 * wavelengthNm / 550;
   const paths = geometry.particlePaths || [geometry.segments];
+  const speed = C_METERS_PER_NS * geometry.flashlight.visualSpeed;
+  const spacing = speed / geometry.flashlight.emissionRate;
+  const travelledAtTime = Math.max(0, time) * speed;
   for (const path of paths) {
-    for (const segment of path) {
-      const length = opticalDistance(segment.start, segment.end);
-      if (!(length > 0)) continue;
-      const spacing = visualSpacing / segment.index;
-      const speed = C_METERS_PER_NS / segment.index;
-      const offset = (time * speed) % spacing;
-      const count = Math.min(10, Math.ceil(length / spacing) + 1);
-      for (let index = -1; index <= count; index += 1) {
-        const distanceAlong = index * spacing + offset;
-        if (distanceAlong < 0 || distanceAlong > length) continue;
-        const point = view.toScreen(pointOnSegment(segment.start, segment.end, distanceAlong));
-        context.save();
-        context.fillStyle = color;
-        context.globalAlpha = 0.92;
-        context.beginPath();
-        context.arc(point.x, point.y, 2.6, 0, 2 * Math.PI);
-        context.fill();
-        context.restore();
+    const pathLength = path.reduce((sum, segment) => sum + opticalDistance(segment.start, segment.end), 0);
+    if (!(pathLength > 0)) continue;
+    const count = Math.min(28, Math.max(1, Math.ceil(pathLength / spacing)));
+    for (let index = 0; index < count; index += 1) {
+      const distanceAlong = ((travelledAtTime + index * spacing) % pathLength + pathLength) % pathLength;
+      const { point: worldPoint, segment } = pointOnPath(path, distanceAlong);
+      const point = view.toScreen(worldPoint);
+      if (geometry.flashlight.showTrails && segment) {
+        const length = opticalDistance(segment.start, segment.end);
+        if (length > 0) {
+          const trailStart = view.toScreen(pointOnSegment(worldPoint, segment.start, Math.min(0.14, distanceAlong)));
+          const trailEnd = point;
+          context.save(); context.globalAlpha = geometry.flashlight.intensity;
+          line(context, trailStart, trailEnd, color, 2);
+          context.restore();
+        }
       }
+      context.save();
+      context.shadowColor = color;
+      context.shadowBlur = 9 * geometry.flashlight.intensity;
+      context.fillStyle = color;
+      context.globalAlpha = 0.25 + 0.7 * geometry.flashlight.intensity;
+      context.beginPath();
+      context.arc(point.x, point.y, 3.4, 0, 2 * Math.PI);
+      context.fill();
+      context.restore();
     }
   }
+}
+
+function drawHuman(context, base, tip, color, virtual = false) {
+  const height = opticalDistance(base, tip);
+  if (!(height > 0.02)) return;
+  const up = { x: (tip.x - base.x) / height, y: (tip.y - base.y) / height };
+  const side = { x: up.y, y: -up.x };
+  const at = (fraction, lateral = 0) => ({ x: base.x + up.x * height * fraction + side.x * height * lateral, y: base.y + up.y * height * fraction + side.y * height * lateral });
+  const head = at(0.88);
+  const headRadius = Math.max(3.5, Math.min(9, height * 0.065));
+  context.save();
+  context.strokeStyle = color;
+  context.fillStyle = color;
+  context.globalAlpha = virtual ? 0.72 : 1;
+  context.lineWidth = Math.max(2, Math.min(5, height * 0.045));
+  context.lineCap = "round";
+  context.setLineDash(virtual ? [4, 3] : []);
+  const torsoTop = at(0.78);
+  const waist = at(0.43);
+  const shoulderLeft = at(0.69, -0.19);
+  const shoulderRight = at(0.69, 0.19);
+  const handLeft = at(0.50, -0.27);
+  const handRight = at(0.50, 0.27);
+  const footLeft = at(0, -0.13);
+  const footRight = at(0, 0.13);
+  const kneeLeft = at(0.23, -0.09);
+  const kneeRight = at(0.23, 0.09);
+  for (const [a, b] of [[torsoTop, waist], [shoulderLeft, handLeft], [shoulderRight, handRight], [waist, kneeLeft], [kneeLeft, footLeft], [waist, kneeRight], [kneeRight, footRight]]) {
+    context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke();
+  }
+  context.setLineDash([]);
+  context.beginPath(); context.arc(head.x, head.y, headRadius, 0, 2 * Math.PI); context.fill();
+  context.restore();
+}
+
+function drawLantern(context, geometry, view, palette) {
+  const flashlight = geometry.flashlight;
+  if (!flashlight) return;
+  const origin = view.toScreen(flashlight.source);
+  const direction = { x: flashlight.direction.x, y: -flashlight.direction.y };
+  const angle = Math.atan2(direction.y, direction.x);
+  context.save();
+  context.translate(origin.x, origin.y);
+  context.rotate(angle);
+  context.fillStyle = palette.gold;
+  context.strokeStyle = palette.text;
+  context.lineWidth = 1.5;
+  context.globalAlpha = flashlight.intensity;
+  context.beginPath();
+  context.rect(-15, -6, 23, 12);
+  context.fill(); context.stroke();
+  context.beginPath(); context.moveTo(8, -5); context.lineTo(14, -8); context.lineTo(14, 8); context.lineTo(8, 5); context.closePath(); context.fill(); context.stroke();
+  context.restore();
+  const tip = { x: flashlight.source.x + flashlight.direction.x * 0.3, y: flashlight.source.y + flashlight.direction.y * 0.3 };
+  drawArrow(context, origin, view.toScreen(tip), palette.gold, "lanterna", palette.text);
+}
+
+function drawLanternImage(context, geometry, view, palette) {
+  if (!geometry.flashlight?.showImage || !geometry.image) return;
+  const point = view.toScreen(geometry.image);
+  const virtual = geometry.imageType === "virtual";
+  context.save();
+  context.strokeStyle = palette.blue;
+  context.fillStyle = palette.blue;
+  context.globalAlpha = 0.82;
+  context.lineWidth = 2;
+  context.setLineDash(virtual ? [4, 3] : []);
+  context.beginPath(); context.arc(point.x, point.y, 8, 0, 2 * Math.PI); context.stroke();
+  context.setLineDash([]);
+  context.beginPath(); context.arc(point.x, point.y, 3, 0, 2 * Math.PI); context.fill();
+  context.font = "10px system-ui";
+  context.fillText("imagem " + (virtual ? "virtual" : "real") + " da fonte", point.x + 10, point.y - 8);
+  context.restore();
+}
+
+function drawMirrorSurface(context, geometry, view, palette) {
+  const mirrorA = view.toScreen({ x: geometry.center.x - geometry.tangent.x * 1.08, y: geometry.center.y - geometry.tangent.y * 1.08 });
+  const mirrorB = view.toScreen({ x: geometry.center.x + geometry.tangent.x * 1.08, y: geometry.center.y + geometry.tangent.y * 1.08 });
+  line(context, mirrorA, mirrorB, "#dce7f7", 7);
+  line(context, mirrorA, mirrorB, palette.blue, 2);
+}
+
+function drawDistance(context, a, b, label, color, view) {
+  const from = view.toScreen(a);
+  const to = view.toScreen(b);
+  line(context, from, to, color, 1.3, [4, 3]);
+  context.save();
+  context.fillStyle = color;
+  context.font = "10px system-ui";
+  context.textAlign = "center";
+  context.fillText(label, (from.x + to.x) / 2, (from.y + to.y) / 2 - 6);
+  context.restore();
+}
+
+function drawPlaneHuman(context, geometry, values, p, view, palette) {
+  drawMirrorSurface(context, geometry, view, palette);
+  if (p.showReferences !== false) {
+    line(context, view.toScreen({ x: geometry.bounds.xMin, y: geometry.center.y }), view.toScreen({ x: geometry.bounds.xMax, y: geometry.center.y }), palette.muted, 1.1, [5, 4]);
+    for (const ray of geometry.rays) {
+      const points = ray.points.map((point) => view.toScreen(point));
+      const virtual = ray.role.includes("virtual");
+      drawArrow(context, points[0], points[1], virtual ? palette.muted : palette.blue, ray.role, palette.muted);
+    }
+  }
+  drawHuman(context, view.toScreen(geometry.objectBase), view.toScreen(geometry.object), palette.gold);
+  if (geometry.image && p.showImage !== false) drawHuman(context, view.toScreen(geometry.imageBase), view.toScreen(geometry.image), palette.blue, true);
+  if (p.showMeasures !== false) {
+    drawDistance(context, geometry.objectBase, geometry.center, "p = " + values.objectDistance.toFixed(2) + " m", palette.gold, view);
+    drawDistance(context, geometry.center, geometry.imageBase, "p′ = " + values.imageDistance.toFixed(2) + " m", palette.blue, view);
+    drawDistance(context, geometry.objectBase, geometry.imageBase, "objeto ↔ imagem = " + values.objectImageSeparation.toFixed(2) + " m", palette.text, view);
+  }
+  context.fillStyle = palette.text;
+  context.font = "12px system-ui";
+  context.fillText("Espelho plano · imagem virtual, direita e do mesmo tamanho", 12, 20);
+  context.fillStyle = palette.muted;
+  context.font = "11px system-ui";
+  context.fillText("p′ = p · h′ = h · m = 1 · h = " + values.objectHeight.toFixed(2) + " m", 12, 39);
+}
+
+function drawPlaneLantern(context, geometry, values, p, view, palette) {
+  drawMirrorSurface(context, geometry, view, palette);
+  const flashlight = geometry.flashlight;
+  const interaction = flashlight.primaryInteraction;
+  if (flashlight.showRays) {
+    let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false;
+    for (const ray of geometry.rays) {
+      const points = ray.points.map((point) => view.toScreen(point));
+      const virtual = ray.role.includes("virtual");
+      const incident = ray.role.includes("incidente");
+      const label = virtual ? (virtualLabeled ? "" : "prolongamento virtual") : incident ? (incidentLabeled ? "" : "incidente") : (reflectedLabeled ? "" : "refletido");
+      if (virtual) virtualLabeled = true;
+      else if (incident) incidentLabeled = true;
+      else reflectedLabeled = true;
+      context.save(); context.globalAlpha = flashlight.intensity;
+      drawArrow(context, points[0], points[1], virtual ? palette.muted : wavelengthColor(Number(p.wavelengthNm)), label, palette.muted);
+      context.restore();
+    }
+  }
+  if (interaction && flashlight.showNormal) {
+    const end = { x: interaction.hit.x + interaction.normal.x * 0.66, y: interaction.hit.y + interaction.normal.y * 0.66 };
+    const screenEnd = view.toScreen(end);
+    line(context, view.toScreen(interaction.hit), screenEnd, palette.text, 1.3, [5, 4]);
+    context.fillStyle = palette.text; context.font = "10px system-ui";
+    context.fillText("normal local", screenEnd.x + 4, screenEnd.y - 4);
+  }
+  drawParticles(context, geometry, p, values.time, view);
+  drawLantern(context, geometry, view, palette);
+  drawLanternImage(context, geometry, view, palette);
+  context.fillStyle = palette.text; context.font = "12px system-ui";
+  context.fillText("Espelho plano · " + (flashlight.parallel ? "feixe aproximadamente paralelo" : "feixe divergente") + " · " + values.rayCount + " raios válidos", 12, 20);
+  context.fillStyle = palette.muted; context.font = "11px system-ui";
+  if (interaction && flashlight.showAngles) {
+    const hit = view.toScreen(interaction.hit);
+    context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "° · medidos pela normal", hit.x + 8, hit.y - 8);
+  }
+  context.fillText("A reflexão plana conserva o módulo da velocidade; as linhas tracejadas mostram prolongamentos aparentes.", 12, 39);
 }
 
 function drawAxes(context, width, height, bounds, view, palette, concise = false) {
@@ -92,6 +269,8 @@ function drawAxes(context, width, height, bounds, view, palette, concise = false
 }
 
 function drawReflection(context, geometry, values, p, view, palette) {
+  if (geometry.mode === "human") return drawPlaneHuman(context, geometry, values, p, view, palette);
+  if (geometry.mode === "lantern") return drawPlaneLantern(context, geometry, values, p, view, palette);
   const mirrorA = view.toScreen({ x: geometry.center.x - geometry.tangent.x * 1.08, y: geometry.center.y - geometry.tangent.y * 1.08 });
   const mirrorB = view.toScreen({ x: geometry.center.x + geometry.tangent.x * 1.08, y: geometry.center.y + geometry.tangent.y * 1.08 });
   line(context, mirrorA, mirrorB, "#dce7f7", 7);
@@ -156,6 +335,8 @@ function drawRefraction(context, geometry, values, p, view, palette, width) {
 }
 
 function drawSphericalMirror(context, geometry, values, p, view, palette) {
+  if (geometry.mode === "human") return drawSphericalHuman(context, geometry, values, p, view, palette);
+  if (geometry.mode === "lantern") return drawSphericalLantern(context, geometry, values, p, view, palette);
   const axisA = view.toScreen({ x: geometry.bounds.xMin, y: 0 });
   const axisB = view.toScreen({ x: geometry.bounds.xMax, y: 0 });
   line(context, axisA, axisB, palette.muted, 1.2, [5, 4]);
@@ -205,6 +386,104 @@ function drawSphericalMirror(context, geometry, values, p, view, palette) {
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
   context.fillText(`Equação paraxial: p′=${Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞"} m · m=${Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"}`, 12, 39);
+}
+
+function drawSphericalSurface(context, geometry, view, palette) {
+  const axisA = view.toScreen({ x: geometry.bounds.xMin, y: 0 });
+  const axisB = view.toScreen({ x: geometry.bounds.xMax, y: 0 });
+  line(context, axisA, axisB, palette.muted, 1.2, [5, 4]);
+  context.beginPath();
+  geometry.surfacePoints.forEach((point, index) => {
+    const screen = view.toScreen(point);
+    if (index === 0) context.moveTo(screen.x, screen.y); else context.lineTo(screen.x, screen.y);
+  });
+  context.strokeStyle = "#dce7f7"; context.lineWidth = 4; context.stroke();
+  context.strokeStyle = palette.blue; context.lineWidth = 1.5; context.stroke();
+}
+
+function drawSphericalLandmarks(context, geometry, values, view, palette, label) {
+  const center = view.toScreen(geometry.center);
+  const focus = view.toScreen({ x: -geometry.focalLength, y: 0 });
+  const vertex = view.toScreen({ x: 0, y: 0 });
+  for (const [point, text] of [[center, "C"], [focus, "F"], [vertex, "V"]]) {
+    context.fillStyle = palette.text;
+    context.beginPath(); context.arc(point.x, point.y, 3.5, 0, 2 * Math.PI); context.fill();
+    context.font = "10px system-ui"; context.fillText(text, point.x + 5, point.y + 14);
+  }
+  context.fillStyle = palette.text; context.font = "12px system-ui";
+  context.fillText(label + " · f = " + values.focalLength.toFixed(2) + " m · R = " + Math.abs(values.radius).toFixed(2) + " m", 12, 20);
+  context.fillStyle = palette.muted; context.font = "11px system-ui";
+  context.fillText("Equação paraxial: p′ = " + (Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞") + " m · m = " + (Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"), 12, 39);
+}
+
+function drawSphericalHuman(context, geometry, values, p, view, palette) {
+  drawSphericalSurface(context, geometry, view, palette);
+  if (p.showReferences !== false) {
+    let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false;
+    for (const ray of geometry.rays) {
+      const points = ray.points.map((point) => view.toScreen(point));
+      const virtual = ray.role.includes("virtual");
+      const reflected = ray.role.includes("refletido");
+      const label = virtual ? (virtualLabeled ? "" : "prolongamento virtual") : reflected ? (reflectedLabeled ? "" : "raio refletido") : (incidentLabeled ? "" : "raio incidente");
+      if (virtual) virtualLabeled = true;
+      else if (reflected) reflectedLabeled = true;
+      else incidentLabeled = true;
+      drawArrow(context, points[0], points[1], virtual ? palette.muted : wavelengthColor(Number(p.wavelengthNm)), label, palette.muted);
+    }
+  }
+  drawHuman(context, view.toScreen(geometry.objectBase), view.toScreen(geometry.object), palette.gold);
+  if (geometry.image && p.showImage !== false) drawHuman(context, view.toScreen(geometry.imageBase), view.toScreen(geometry.image), palette.blue, geometry.imageType === "virtual");
+  if (p.showMeasures !== false) {
+    drawDistance(context, geometry.objectBase, { x: 0, y: 0 }, "p = " + values.objectDistance.toFixed(2) + " m", palette.gold, view);
+    if (geometry.imageBase) {
+      drawDistance(context, { x: 0, y: 0 }, geometry.imageBase, "|p′| = " + Math.abs(values.imageDistance).toFixed(2) + " m", palette.blue, view);
+      drawDistance(context, geometry.objectBase, geometry.imageBase, "objeto ↔ imagem = " + values.objectImageSeparation.toFixed(2) + " m", palette.text, view);
+    }
+  }
+  drawSphericalLandmarks(context, geometry, values, view, palette, geometry.sign > 0 ? "Côncavo · imagem " + values.image : "Convexo · imagem virtual reduzida");
+  if (geometry.imageDistance !== Infinity && !geometry.image && p.showImage !== false) {
+    context.fillStyle = palette.muted; context.font = "10px system-ui";
+    context.fillText("Imagem calculada fora do limite de escala; aproxime o objeto do foco.", 12, 58);
+  }
+}
+
+function drawSphericalLantern(context, geometry, values, p, view, palette) {
+  drawSphericalSurface(context, geometry, view, palette);
+  const flashlight = geometry.flashlight;
+  if (flashlight.showRays) {
+    let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false;
+    for (const ray of geometry.rays) {
+      const points = ray.points.map((point) => view.toScreen(point));
+      const virtual = ray.role.includes("virtual");
+      const incident = ray.role.includes("incidente");
+      const label = virtual ? (virtualLabeled ? "" : "prolongamento virtual") : incident ? (incidentLabeled ? "" : "raio incidente") : (reflectedLabeled ? "" : "raio refletido");
+      if (virtual) virtualLabeled = true;
+      else if (incident) incidentLabeled = true;
+      else reflectedLabeled = true;
+      context.save(); context.globalAlpha = flashlight.intensity;
+      drawArrow(context, points[0], points[1], virtual ? palette.muted : wavelengthColor(Number(p.wavelengthNm)), label, palette.muted);
+      context.restore();
+    }
+  }
+  drawParticles(context, geometry, p, values.time, view);
+  drawLantern(context, geometry, view, palette);
+  drawLanternImage(context, geometry, view, palette);
+  const interaction = flashlight.primaryInteraction;
+  if (interaction && flashlight.showNormal) {
+    const end = { x: interaction.hit.x + interaction.normal.x * 0.66, y: interaction.hit.y + interaction.normal.y * 0.66 };
+    const hit = view.toScreen(interaction.hit), normalEnd = view.toScreen(end);
+    line(context, hit, normalEnd, palette.text, 1.3, [5, 4]);
+    context.fillStyle = palette.text; context.font = "10px system-ui";
+    context.fillText("normal local", normalEnd.x + 4, normalEnd.y - 4);
+  }
+  if (interaction && flashlight.showAngles) {
+    const hit = view.toScreen(interaction.hit);
+    context.fillStyle = palette.text; context.font = "10px system-ui";
+    context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
+  }
+  drawSphericalLandmarks(context, geometry, values, view, palette, (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "aproximadamente paralelo" : "divergente"));
+  context.fillStyle = palette.muted; context.font = "10px system-ui";
+  context.fillText("A normal local é calculada no ponto em que cada raio encontra a superfície esférica.", 12, 58);
 }
 
 function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {

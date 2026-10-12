@@ -1,9 +1,10 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=loop-long-20261011-2";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=loop-long-20261011-2";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=loop-long-20261011-2";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-labs-20261011-1";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=mirror-labs-20261011-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-labs-20261011-1";
 
 const $ = (selector) => document.querySelector(selector);
+const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
 const requestedId = new URLSearchParams(location.search).get("topico");
 if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
 initializeSpecialExperimentFullscreen();
@@ -245,7 +246,7 @@ function initializeExperimentPage(topicId) {
   const controlsSidebar = $("#workspace-controls-sidebar");
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
-  const state = { id: null, parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null };
+  const state = { id: null, mode: "human", parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null };
   const panelPlayButton = $("#workspace-panel-play");
   const syncPanelPlay = () => { if (panelPlayButton) { const play = $("#workspace-play"); panelPlayButton.textContent = play?.textContent || (state.running ? "Pausar" : "Continuar"); panelPlayButton.setAttribute("aria-pressed", String(state.running)); panelPlayButton.disabled = Boolean(play?.disabled); } };
   panelPlayButton?.addEventListener("click", () => { $("#workspace-play")?.click(); syncPanelPlay(); });
@@ -267,9 +268,23 @@ function initializeExperimentPage(topicId) {
     if (!experiment) return;
     stop();
     state.id = id;
+    state.mode = "human";
     state.time = 0;
     state.records = [];
     state.parameters = initialParameters(experiment);
+    const isMirror = MIRROR_EXPERIMENTS.has(id);
+    if (isMirror) {
+      Object.assign(state.parameters, {
+        experimentMode: "human", showImage: true, showReferences: true, showMeasures: true,
+        showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
+        beamMode: "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
+      });
+      if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
+      else state.parameters.objectHeight = 1.7;
+    }
+    $("#mirror-mode-selector").hidden = !isMirror;
+    syncMirrorModeButtons();
+    $("#workspace-reset").textContent = isMirror ? "Restaurar valores" : "Reiniciar";
     $("#lab-topic-not-found").hidden = true;
     $("#lab-topic-kicker").textContent = `${experiments.findIndex((item) => item.id === id) + 1} · ${experiment.category.toLocaleUpperCase("pt-BR")}`;
     $("#lab-topic-name").textContent = experiment.title;
@@ -305,7 +320,10 @@ function initializeExperimentPage(topicId) {
       "optics-concave-mirror": "Os raios refletem em pontos de uma superfície esférica real. A posição da imagem indicada usa a aproximação paraxial, permitindo observar aberração fora do eixo.",
       "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial."
     };
-    $("#workspace-scene-caption").textContent = sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.";
+    const mirrorCaption = state.mode === "lantern"
+      ? "A fonte luminosa é calculada separadamente do corpo: os raios usam a posição da lanterna e a imagem pontual usa as equações do espelho. Cada raio reflete na normal local; ajuste abertura, emissão e velocidade visual no menu."
+      : "Arraste o corpo para alterar sua distância. A imagem é calculada pelas equações do espelho; as medidas e linhas de referência podem ser ocultadas no menu de parâmetros.";
+    $("#workspace-scene-caption").textContent = MIRROR_EXPERIMENTS.has(state.id) ? mirrorCaption : (sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.");
     canvas.setAttribute("aria-label", `${experiment.title}. ${sceneCaptions[state.id] || "Animação física interativa."}`);
     canvas.style.cursor = state.id === "optics-reflection" ? "grab" : "default";
     $("#workspace-mode").textContent = experiment.mode;
@@ -318,7 +336,7 @@ function initializeExperimentPage(topicId) {
     $("#workspace-assumptions").textContent = experiment.assumptions;
     $("#workspace-hypothesis").value = "";
     $("#workspace-chart").innerHTML = (experiment.charts || []).map((chart) => `<option value="${chart.id}">${chart.label}</option>`).join("");
-    buildControls(experiment);
+    buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
     syncProbeRange();
     updateTimeControls();
     updateRecords();
@@ -336,6 +354,11 @@ function initializeExperimentPage(topicId) {
     for (const control of experiment.controls || []) {
       const range = $(`#control-${control.id}`);
       const numeric = $(`#control-number-${control.id}`);
+      const output = $(`#control-out-${control.id}`);
+      const currentValue = state.parameters[control.id] ?? control.value;
+      if (output) output.textContent = `${formatControlValue(currentValue, control.step)} ${control.unit}`;
+      if (range) range.value = String(currentValue);
+      if (numeric) numeric.value = String(currentValue);
       range.addEventListener("input", () => setParameter(control, range.value));
       numeric.addEventListener("change", () => {
         const value = Number(numeric.value);
@@ -344,6 +367,112 @@ function initializeExperimentPage(topicId) {
       });
     }
   }
+
+  function formatControlValue(value, step) {
+    const decimals = Math.min(4, String(step ?? "").split(".")[1]?.length || 0);
+    return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: decimals });
+  }
+
+  function controlsForExperiment(experiment) {
+    if (!MIRROR_EXPERIMENTS.has(experiment.id)) return experiment.controls || [];
+    const defaults = experiment.controls || [];
+    const plane = experiment.id === "optics-reflection";
+    const bodyControls = [
+      { id: "objectDistance", label: "Distância do corpo ao espelho", unit: "m", min: 0.4, max: 2.5, step: 0.05, value: 1.2 },
+      { id: "objectHeight", label: "Altura do corpo", unit: "m", min: 0.5, max: 2.2, step: 0.05, value: 1.7 }
+    ];
+    const lanternControls = [
+      { id: "flashlightAngle", label: "Orientação da lanterna", unit: "°", min: -50, max: 50, step: 1, value: 0 },
+      { id: "beamOpening", label: "Abertura do feixe", unit: "°", min: 2, max: 50, step: 1, value: 20 },
+      { id: "emissionRate", label: "Frequência visual de emissão", unit: "bolinhas/ns", min: 0.2, max: 1.5, step: 0.05, value: 0.65 },
+      { id: "visualSpeed", label: "Velocidade visual da luz", unit: "× c", min: 0.25, max: 2, step: 0.25, value: 1 },
+      { id: "beamIntensity", label: "Intensidade visual do feixe", unit: "0–1", min: 0.1, max: 1, step: 0.05, value: 0.8 }
+    ];
+    let controls;
+    if (state.mode === "human") {
+      controls = plane
+        ? [...bodyControls, ...defaults.filter((item) => ["mirrorTilt", "mirrorX", "mirrorY"].includes(item.id))]
+        : defaults.filter((item) => ["radius", "objectDistance", "objectHeight"].includes(item.id)).map((item) => ({
+          ...item,
+          label: item.id === "objectDistance" ? "Distância do corpo ao espelho" : item.id === "objectHeight" ? "Altura do corpo" : item.label,
+          min: item.id === "objectHeight" ? 0.5 : item.min,
+          max: item.id === "objectHeight" ? 2.2 : item.max,
+          value: item.id === "objectHeight" ? 1.7 : item.value
+        }));
+    } else if (plane) {
+      const ids = ["incidenceAngle", "sourceDistance", "mirrorTilt", "mirrorX", "mirrorY", "wavelengthNm", "impactOffset"];
+      controls = [
+        ...defaults.filter((item) => ids.includes(item.id)).map((item) => item.id === "sourceDistance" ? { ...item, label: "Distância da lanterna ao espelho" } : item),
+        ...lanternControls
+      ];
+    } else {
+      controls = [
+        ...defaults.filter((item) => ["radius", "objectDistance", "wavelengthNm"].includes(item.id)).map((item) => ({
+          ...item,
+          label: item.id === "objectDistance" ? "Distância da lanterna ao espelho" : item.label
+        })),
+        { id: "flashlightHeight", label: "Altura da lanterna", unit: "m", min: 0.1, max: 2.2, step: 0.05, value: 0.6 },
+        ...lanternControls
+      ];
+    }
+    return controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
+  }
+
+  function syncMirrorModeButtons() {
+    document.querySelectorAll("[data-mirror-mode]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.mirrorMode === state.mode));
+    });
+    const isMirror = MIRROR_EXPERIMENTS.has(state.id);
+    $("#mirror-human-options").hidden = !isMirror || state.mode !== "human";
+    $("#mirror-lantern-options").hidden = !isMirror || state.mode !== "lantern";
+    $("#mirror-mode-description").textContent = state.mode === "lantern"
+      ? "Ajuste a emissão e acompanhe a luz até a superfície e depois da reflexão."
+      : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
+    const bindings = {
+      "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
+      "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
+      "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles"
+    };
+    for (const [elementId, key] of Object.entries(bindings)) {
+      const input = document.getElementById(elementId);
+      if (input && state.parameters[key] !== undefined) input.checked = state.parameters[key] !== false;
+    }
+    const beamMode = $("#mirror-beam-mode");
+    if (beamMode) beamMode.value = state.parameters.beamMode || "divergent";
+  }
+
+  function setMirrorMode(mode) {
+    if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "lantern"].includes(mode)) return;
+    state.mode = mode;
+    state.parameters.experimentMode = mode;
+    syncMirrorModeButtons();
+    const experiment = experimentById.get(state.id);
+    buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    updateTimeControls();
+    try { render(); } catch (error) { showError(error); }
+    $("#workspace-status").textContent = mode === "lantern"
+      ? "Modo lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
+      : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
+  }
+
+  document.querySelectorAll("[data-mirror-mode]").forEach((button) => {
+    button.addEventListener("click", () => setMirrorMode(button.dataset.mirrorMode));
+  });
+  const mirrorOptionBindings = {
+    "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
+    "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
+    "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles"
+  };
+  for (const [elementId, key] of Object.entries(mirrorOptionBindings)) {
+    document.getElementById(elementId)?.addEventListener("change", (event) => {
+      state.parameters[key] = event.currentTarget.checked;
+      try { render(); } catch (error) { showError(error); }
+    });
+  }
+  $("#mirror-beam-mode")?.addEventListener("change", (event) => {
+    state.parameters.beamMode = event.currentTarget.value;
+    try { render(); } catch (error) { showError(error); }
+  });
 
   function setParameter(control, rawValue) {
     const value = Number(rawValue);
@@ -366,8 +495,10 @@ function initializeExperimentPage(topicId) {
     for (const key of [control.id, ...(frictionAdjusted ? [control.id === "muStatic" ? "muKinetic" : "muStatic"] : [])]) {
       const range = $(`#control-${key}`);
       const numeric = $(`#control-number-${key}`);
+      const output = $(`#control-out-${key}`);
       if (range && range.value !== String(state.parameters[key])) range.value = String(state.parameters[key]);
       if (numeric) numeric.value = String(state.parameters[key]);
+      if (output) output.textContent = `${formatControlValue(state.parameters[key], range?.step || control.step)} ${control.unit}`;
     }
     syncProbeRange();
     state.time = 0;
@@ -436,8 +567,23 @@ function initializeExperimentPage(topicId) {
     stop(false); updateTimeControls(); render();
   });
   $("#workspace-reset").addEventListener("click", () => {
-    stop(); state.time = 0; state.records = []; updateRecords(); updateTimeControls();
-    $("#workspace-status").textContent = "Estado inicial restaurado e tabela de medições limpa.";
+    stop();
+    if (MIRROR_EXPERIMENTS.has(state.id)) {
+      const experiment = experimentById.get(state.id);
+      state.mode = "human";
+      state.parameters = initialParameters(experiment);
+      Object.assign(state.parameters, {
+        experimentMode: "human", showImage: true, showReferences: true, showMeasures: true,
+        showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
+        beamMode: "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
+      });
+      if (state.id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
+      else state.parameters.objectHeight = 1.7;
+      syncMirrorModeButtons();
+      buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    }
+    state.time = 0; state.records = []; updateRecords(); updateTimeControls();
+    $("#workspace-status").textContent = "Valores iniciais restaurados e tabela de medições limpa.";
     try { render(); } catch (error) { showError(error); }
   });
 
@@ -885,16 +1031,26 @@ function initializeExperimentPage(topicId) {
     wave: [["y", "Deslocamento no marcador", "m"], ["waveSpeed", "Velocidade da onda", "m/s"], ["wavelength", "Comprimento de onda", "m"], ["frequency", "Frequência", "Hz"]],
     ohm: [["voltage", "Tensão", "V"], ["resistance", "Resistência", "Ω"], ["current", "Corrente", "A"], ["power", "Potência", "W"]],
     lens: [["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["f", "Distância focal", "m"]],
-    "optics-reflection": [["angleIncident", "Ângulo de incidência", "°"], ["angleReflected", "Ângulo refletido", "°"], ["wavelengthVacuumNm", "Comprimento de onda no vácuo", "nm"], ["frequencyTHz", "Frequência da luz", "THz"], ["speed", "Velocidade no meio", "m/s"]],
+    "optics-reflection": [["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem ao espelho", "m"], ["objectImageSeparation", "Corpo ↔ imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["angleIncident", "Ângulo de incidência", "°"], ["angleReflected", "Ângulo refletido", "°"]],
     "optics-refraction": [["angleIncident", "Ângulo no meio 1", "°"], ["angleTransmitted", "Ângulo no meio 2", "°"], ["speed1", "Velocidade no meio 1", "m/s"], ["speed2", "Velocidade no meio 2", "m/s"], ["wavelength1Nm", "Comprimento de onda no meio 1", "nm"], ["wavelength2Nm", "Comprimento de onda no meio 2", "nm"], ["frequencyTHz", "Frequência constante", "THz"], ["criticalAngle", "Ângulo crítico", "°"]],
-    "optics-concave-mirror": [["radius", "Raio assinado", "m"], ["focalLength", "Distância focal", "m"], ["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["image", "Natureza da imagem", ""]],
-    "optics-convex-mirror": [["radius", "Raio assinado", "m"], ["focalLength", "Distância focal", "m"], ["imageDistance", "Distância da imagem", "m"], ["magnification", "Ampliação", "adimensional"], ["image", "Natureza da imagem", ""]],
+    "optics-concave-mirror": [["radius", "Raio de curvatura", "m"], ["focalLength", "Distância focal", "m"], ["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["magnification", "Aumento linear", "adimensional"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["objectImageSeparation", "Corpo ↔ imagem", "m"]],
+    "optics-convex-mirror": [["radius", "Raio de curvatura", "m"], ["focalLength", "Distância focal", "m"], ["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["magnification", "Aumento linear", "adimensional"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["objectImageSeparation", "Corpo ↔ imagem", "m"]],
     calorimetry: [["temperature1", "Temperatura do corpo quente", "°C"], ["temperature2", "Temperatura do corpo frio", "°C"], ["equilibrium", "Equilíbrio previsto", "°C"], ["energyBalance", "Balanço de energia", "J"]],
     field: [["electricField", "Campo elétrico Eₓ", "N/C"], ["xProbe", "Posição do marcador", "m"], ["q1", "Carga 1", "nC"], ["q2", "Carga 2", "nC"]]
   };
 
   function renderReadouts(values) {
-    const definitions = readoutDefinitions[state.id] || [];
+    const definitions = (readoutDefinitions[state.id] || []).map(([key, label, unit]) => [
+      key,
+      MIRROR_EXPERIMENTS.has(state.id) && state.mode === "lantern"
+        ? key === "objectDistance" ? "Distância da fonte"
+          : key === "objectHeight" ? "Altura da fonte"
+            : key === "imageHeight" ? "Altura da imagem da fonte"
+              : key === "objectImageSeparation" ? "Fonte ↔ imagem" : label
+        : MIRROR_EXPERIMENTS.has(state.id) && key === "objectDistance" ? "Distância do corpo"
+          : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo" : label,
+      unit
+    ]);
     $("#workspace-readouts").innerHTML = definitions.map(([key, label, unit]) => `<div><span>${label}</span><b>${fmt(values[key])} ${unit}</b></div>`).join("");
     $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} ${currentTimeUnit()}` : "modelo estático";
   }
@@ -942,7 +1098,7 @@ function initializeExperimentPage(topicId) {
   }
   let opticalDrag = null;
   canvas.addEventListener("pointerdown", (event) => {
-    if (state.id !== "optics-reflection" || event.button !== 0 || event.shiftKey || event.altKey
+    if (!MIRROR_EXPERIMENTS.has(state.id) || event.button !== 0 || event.shiftKey || event.altKey
       || canvas.classList.contains("lab-view-pan-mode") || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
@@ -953,6 +1109,29 @@ function initializeExperimentPage(topicId) {
       const screen = handleScreen(handle);
       return Math.hypot(screen.x - point.x, screen.y - point.y);
     };
+    if (state.mode === "human") {
+      const base = model.geometry.objectBase;
+      const tip = model.geometry.object;
+      if (base && tip) {
+        const nearBase = distanceTo(base) < 28;
+        const nearTip = distanceTo(tip) < 28;
+        const inBody = distanceTo({ x: (base.x + tip.x) / 2, y: (base.y + tip.y) / 2 }) < 25;
+        if (nearBase || nearTip || inBody) {
+          opticalDrag = { kind: nearTip ? "body-height" : "body-position" };
+          event.preventDefault();
+          canvas.setPointerCapture(event.pointerId);
+          canvas.style.cursor = "grabbing";
+          return;
+        }
+      }
+    } else if (state.mode === "lantern" && model.geometry.flashlight?.source && distanceTo(model.geometry.flashlight.source) < 30) {
+      opticalDrag = { kind: "lantern" };
+      event.preventDefault();
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = "grabbing";
+      return;
+    }
+    if (state.id !== "optics-reflection") return;
     if (distanceTo(model.geometry.handles.top) < 24) opticalDrag = { kind: "tilt", endSign: 1 };
     else if (distanceTo(model.geometry.handles.bottom) < 24) opticalDrag = { kind: "tilt", endSign: -1 };
     else if (distanceTo(model.geometry.handles.center) < 24) opticalDrag = { kind: "move" };
@@ -965,23 +1144,52 @@ function initializeExperimentPage(topicId) {
     }
   });
   canvas.addEventListener("pointermove", (event) => {
-    if (!opticalDrag || state.id !== "optics-reflection" || canvas.classList.contains("lab-view-multitouch")) return;
+    if (!opticalDrag || !MIRROR_EXPERIMENTS.has(state.id) || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
     const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
     const world = opticalPointerToWorld(event, canvas, view);
     const center = model.geometry.center;
+    const controls = controlsForExperiment(experimentById.get(state.id));
+    if (opticalDrag.kind === "body-position") {
+      const control = controls.find((item) => item.id === "objectDistance");
+      const distance = state.id === "optics-reflection"
+        ? (world.x - center.x) * model.geometry.normal.x + (world.y - center.y) * model.geometry.normal.y
+        : -world.x;
+      setParameter(control, distance);
+      return;
+    }
+    if (opticalDrag.kind === "body-height") {
+      const control = controls.find((item) => item.id === "objectHeight");
+      const height = state.id === "optics-reflection" ? world.y - model.geometry.objectBase.y : world.y;
+      setParameter(control, height);
+      return;
+    }
+    if (opticalDrag.kind === "lantern") {
+      if (state.id === "optics-reflection") {
+        const hit = model.geometry.flashlight.primaryInteraction?.hit || model.geometry.hit;
+        const dx = hit.x - world.x, dy = hit.y - world.y;
+        const direction = Math.atan2(dy, dx) * 180 / Math.PI;
+        setParameter(controls.find((item) => item.id === "sourceDistance"), Math.hypot(dx, dy));
+        setParameter(controls.find((item) => item.id === "incidenceAngle"), direction);
+        setParameter(controls.find((item) => item.id === "flashlightAngle"), 0);
+      } else {
+        setParameter(controls.find((item) => item.id === "objectDistance"), -world.x);
+        setParameter(controls.find((item) => item.id === "flashlightHeight"), world.y);
+      }
+      return;
+    }
     if (opticalDrag.kind === "source") {
       const hit = model.geometry.hit;
       const towardHit = { x: hit.x - world.x, y: hit.y - world.y };
       const angle = Math.atan2(towardHit.y, towardHit.x) * 180 / Math.PI;
-      const controls = experimentById.get(state.id).controls;
-      setParameter(controls.find((item) => item.id === "incidenceAngle"), angle);
-      setParameter(controls.find((item) => item.id === "sourceDistance"), Math.hypot(towardHit.x, towardHit.y));
+      const planeControls = experimentById.get(state.id).controls;
+      setParameter(planeControls.find((item) => item.id === "incidenceAngle"), angle);
+      setParameter(planeControls.find((item) => item.id === "sourceDistance"), Math.hypot(towardHit.x, towardHit.y));
     } else if (opticalDrag.kind === "move") {
-      const controls = experimentById.get(state.id).controls;
-      setParameter(controls.find((item) => item.id === "mirrorX"), world.x);
-      setParameter(controls.find((item) => item.id === "mirrorY"), world.y);
+      const planeControls = experimentById.get(state.id).controls;
+      setParameter(planeControls.find((item) => item.id === "mirrorX"), world.x);
+      setParameter(planeControls.find((item) => item.id === "mirrorY"), world.y);
     } else if (opticalDrag.kind === "tilt") {
       const dx = (world.x - center.x) * opticalDrag.endSign;
       const dy = (world.y - center.y) * opticalDrag.endSign;
