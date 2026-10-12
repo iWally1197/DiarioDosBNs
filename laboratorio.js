@@ -327,11 +327,8 @@ function projectileTick(timestamp) {
   projectileLastFrame = timestamp;
   const flightTime = projectileMetrics(projectileParameters()).flightTime;
   if (projectileTime >= flightTime) {
-    projectileTime = flightTime;
-    projectileRunning = false;
-    projectilePlay.textContent = "Executar novamente";
-    projectilePlay.setAttribute("aria-pressed", "false");
-    byId("projectile-status").textContent = "Simulação concluída. O modelo prevê que o projétil retorna ao solo neste instante.";
+    projectileTime %= flightTime;
+    byId("projectile-status").textContent = "O projétil aterrissou; um novo lançamento começou.";
   }
   drawProjectile();
   if (projectileRunning) projectileFrame = requestAnimationFrame(projectileTick);
@@ -374,7 +371,7 @@ const pendulumPlay = byId("pendulum-play");
 const pendulumReset = byId("pendulum-reset");
 const fixedStep = 1 / 480;
 const sampleStep = 1 / 30;
-const maxPendulumTime = 12;
+const maxPendulumTime = 30;
 let pendulumState = { theta: 35 * Math.PI / 180, omega: 0 };
 let pendulumTime = 0;
 let pendulumRunning = false;
@@ -651,12 +648,15 @@ function pendulumTick(timestamp) {
   }
   pendulumLastFrame = timestamp;
   if (pendulumTime >= maxPendulumTime) {
-    pendulumTime = maxPendulumTime;
-    pendulumRunning = false;
-    pendulumHistory.push({ time: maxPendulumTime, theta: pendulumState.theta });
-    pendulumPlay.textContent = "Executar novamente";
-    pendulumPlay.setAttribute("aria-pressed", "false");
-    byId("pendulum-status").textContent = "Trecho de 12 segundos concluído. Recomece ou altere os parâmetros para outra observação.";
+    const parameters = pendulumParameters();
+    pendulumTime = 0;
+    pendulumAccumulator = 0;
+    pendulumSampleAccumulator = 0;
+    pendulumState = { theta: parameters.angleDegrees * Math.PI / 180, omega: 0 };
+    initialPendulumEnergy = pendulumEnergyPerMass(pendulumState, parameters.length, parameters.gravity).total;
+    pendulumHistory = [{ time: 0, theta: pendulumState.theta }];
+    pendulumLastFrame = timestamp;
+    byId("pendulum-status").textContent = "Trecho de 30 segundos completo; o movimento começou novamente.";
   }
   drawPendulum();
   if (pendulumRunning) pendulumFrame = requestAnimationFrame(pendulumTick);
@@ -671,7 +671,7 @@ pendulumPlay.addEventListener("click", () => {
     cancelAnimationFrame(pendulumFrame);
     return;
   }
-  if (pendulumTime >= maxPendulumTime) resetPendulum("Reiniciada. A simulação será executada por até 12 segundos.");
+  if (pendulumTime >= maxPendulumTime) resetPendulum("Reiniciada. A simulação será executada por até 30 segundos.");
   pendulumRunning = true;
   pendulumLastFrame = 0;
   pendulumPlay.textContent = "Pausar";

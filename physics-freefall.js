@@ -24,8 +24,8 @@ if (!lab || !sceneContext || !chartContext) {
   const panelToggle = $("#freefall-panel-toggle");
   const panel = $("#freefall-controls");
   const panelPlay = $("#freefall-panel-play");
-  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height" };
-  const initial = { height: 20, gravity: 9.81, massA: 0.2, massB: 2, playback: 1 };
+  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height", loopDelayUntil: 0 };
+  const initial = { height: 20, gravity: 9.81, massA: 0.2, massB: 2, playback: 0.25 };
   const readParameters = () => ({
     height: Number(inputs.height.value),
     gravity: Number(inputs.gravity.value),
@@ -292,7 +292,7 @@ if (!lab || !sceneContext || !chartContext) {
     $('[data-out="gravity"]').textContent = fmt(p.gravity, 2) + " m/s²";
     $('[data-out="massA"]').textContent = fmt(p.massA, 1) + " kg";
     $('[data-out="massB"]').textContent = fmt(p.massB, 1) + " kg";
-    $('[data-out="playback"]').textContent = fmt(p.playback, 1) + "×";
+    $('[data-out="playback"]').textContent = fmt(p.playback, 2) + "×";
     playButton.textContent = state.running ? "Pausar" : (state.started ? (at.time >= at.impactTime ? "Recomeçar" : "Continuar") : "Iniciar");
     playButton.setAttribute("aria-pressed", String(state.running));
     if (panelPlay) { panelPlay.textContent = playButton.textContent; panelPlay.setAttribute("aria-pressed", String(state.running)); panelPlay.disabled = playButton.disabled; }
@@ -308,12 +308,17 @@ if (!lab || !sceneContext || !chartContext) {
   function stopAnimation() {
     state.running = false;
     state.lastFrame = 0;
+    state.loopDelayUntil = 0;
     if (state.frame) cancelAnimationFrame(state.frame);
     state.frame = 0;
     drawAll();
   }
   function animate(timestamp) {
     if (!state.running) return;
+    if (state.loopDelayUntil) {
+      if (timestamp < state.loopDelayUntil) { state.frame = requestAnimationFrame(animate); return; }
+      state.time = 0; state.loopDelayUntil = 0; state.lastFrame = timestamp;
+    }
     if (!state.lastFrame) state.lastFrame = timestamp;
     const delta = Math.min(0.05, Math.max(0, (timestamp - state.lastFrame) / 1000));
     state.lastFrame = timestamp;
@@ -321,9 +326,9 @@ if (!lab || !sceneContext || !chartContext) {
     const impactTime = freeFallImpactTime(readParameters());
     if (state.time >= impactTime) {
       state.time = impactTime;
-      state.running = false;
       state.lastFrame = 0;
-      status.textContent = "Impacto no solo. Os dois objetos chegam juntos no modelo sem resistência do ar.";
+      state.loopDelayUntil = timestamp + 850;
+      status.textContent = "Impacto no solo. Um novo ciclo começa em instantes.";
     }
     drawAll();
     if (state.running) state.frame = requestAnimationFrame(animate);

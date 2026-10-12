@@ -1,7 +1,7 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-optics-20261010-1";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-grid-touch-20261010-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-fullscreen-20261010-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=loop-long-20261011-1";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=loop-long-20261011-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=loop-long-20261011-1";
 
 const $ = (selector) => document.querySelector(selector);
 const requestedId = new URLSearchParams(location.search).get("topico");
@@ -446,7 +446,7 @@ function initializeExperimentPage(topicId) {
     state.lastFrame = 0;
     cancelAnimationFrame(state.frame);
     const play = $("#workspace-play");
-    if (play) { play.textContent = "Iniciar"; play.setAttribute("aria-pressed", "false"); }
+    if (play) { play.textContent = state.time > 0 ? "Continuar" : "Iniciar"; play.setAttribute("aria-pressed", "false"); }
     if (resetButton && state.id) updateTimeControls();
   }
 
@@ -496,10 +496,9 @@ function initializeExperimentPage(topicId) {
     }
     state.lastFrame = timestamp;
     const duration = durationFor(state.id, state.parameters);
-    if (state.time >= duration) {
-      state.time = duration;
-      stop();
-      $("#workspace-status").textContent = "Simulação concluída. O cursor chegou ao fim do intervalo definido.";
+    if (duration > 0 && state.time >= duration) {
+      state.time %= duration;
+      $("#workspace-status").textContent = "Ciclo completo; a animação começou novamente.";
     }
     try { updateTimeControls(); render(); } catch (error) { showError(error); }
     if (state.running) state.frame = requestAnimationFrame(tick);

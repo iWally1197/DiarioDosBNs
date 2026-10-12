@@ -7,14 +7,14 @@ if(shell&&scene&&chart){
   const ctx=scene.getContext("2d");
   const chartCtx=chart.getContext("2d");
   const controls=[...shell.querySelectorAll("[data-param]")];
-  const defaults={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:1};
+  const defaults={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:.25};
   const parameters={...defaults};
   let time=0,playing=false,raf=0,lastFrame=0,mode="2d";
   let yaw=-.42,pitch=-.16,drag=null;
   const format=(value,digits=2)=>Number(value).toLocaleString("pt-BR",{minimumFractionDigits:digits,maximumFractionDigits:digits});
   const numberText=(value,digits=3)=>`${format(value,digits)}`;
   function setControlOutputs(){
-    const labels={turns:String(parameters.turns),magneticField:`${format(parameters.magneticField)} T`,area:`${format(parameters.area,2)} m²`,frequency:`${format(parameters.frequency,2)} Hz`,phaseDegrees:`${Math.round(parameters.phaseDegrees)}°`,speed:`${format(parameters.speed,1)}×`};
+    const labels={turns:String(parameters.turns),magneticField:`${format(parameters.magneticField)} T`,area:`${format(parameters.area,2)} m²`,frequency:`${format(parameters.frequency,2)} Hz`,phaseDegrees:`${Math.round(parameters.phaseDegrees)}°`,speed:`${format(parameters.speed,2)}×`};
     for(const [key,value] of Object.entries(labels)){const output=shell.querySelector(`[data-out="${key}"]`);if(output)output.value=value;}
   }
   function sizeCanvas(canvas,context){
@@ -124,7 +124,7 @@ if(shell&&scene&&chart){
   function draw(){drawScene();}
   function frame(now){
     if(!playing)return;
-    if(lastFrame){const dt=Math.min(.05,(now-lastFrame)/1000);time+=dt*parameters.speed;}
+    if(lastFrame){const dt=Math.min(.05,(now-lastFrame)/1000);time=(time+dt*parameters.speed)%(1/parameters.frequency);}
     lastFrame=now;draw();
     raf=requestAnimationFrame(frame);
   }

@@ -30,15 +30,15 @@ function inclineAcceleration(angleDegrees) {
 export function durationFor(id, p) {
   switch (id) {
     case "mru":
-    case "muv": return 10;
-    case "newton": return 8;
+    case "muv": return 40;
+    case "newton": return 32;
     case "energy": {
       const a = inclineAcceleration(p.angle);
-      return Math.sqrt(2 * positive(p.length, "Comprimento") / a);
+      return 4 * Math.sqrt(2 * positive(p.length, "Comprimento") / a);
     }
-    case "collision": return 4;
-    case "spring": return 8 * 2 * Math.PI * Math.sqrt(positive(p.mass, "Massa") / positive(p.k, "Constante elástica"));
-    case "wave": return 4 / positive(p.frequency, "Frequência");
+    case "collision": return 16;
+    case "spring": return 32 * 2 * Math.PI * Math.sqrt(positive(p.mass, "Massa") / positive(p.k, "Constante elástica"));
+    case "wave": return 16 / positive(p.frequency, "Frequência");
     case "optics-reflection":
     case "optics-refraction":
     case "optics-concave-mirror":
@@ -47,7 +47,7 @@ export function durationFor(id, p) {
       const c1 = positive(p.mass1, "Massa 1") * 4186;
       const c2 = positive(p.mass2, "Massa 2") * 4186;
       const conductance = positive(p.conductance, "Condutância térmica");
-      return 5 / (conductance * (1 / c1 + 1 / c2));
+      return 20 / (conductance * (1 / c1 + 1 / c2));
     }
     case "ohm":
     case "lens":

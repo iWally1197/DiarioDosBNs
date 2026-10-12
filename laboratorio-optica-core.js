@@ -1,6 +1,6 @@
 const C = 299_792_458;
 const C_METERS_PER_NS = C * 1e-9;
-const OPTICS_DURATION_NS = 20;
+const OPTICS_DURATION_NS = 80;
 
 function finite(value, name) {
   const number = Number(value);
