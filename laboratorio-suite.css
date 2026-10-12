@@ -410,3 +410,18 @@ body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
   position:relative;
   flex:0 0 auto;
 }
+
+
+/* Três modos de espelho: feixe paralelo, lanterna divergente e corpo humano. */
+.mirror-mode-selector { flex-wrap:wrap; align-items:flex-start; }
+.mirror-mode-heading { flex:1 1 210px; }
+.mirror-mode-cards { flex:2 1 600px; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.mirror-mode-card { align-items:flex-start; }
+.mirror-mode-card>span:last-child { display:grid; gap:4px; }
+.mirror-mode-card small { line-height:1.4; }
+@media (max-width:900px) { .mirror-mode-cards { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px) {
+  .mirror-mode-selector { display:grid; gap:12px; }
+  .mirror-mode-heading { min-width:0; }
+  .mirror-mode-cards { grid-template-columns:minmax(0,1fr); }
+}

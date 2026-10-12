@@ -343,7 +343,7 @@ function intersectSphericalRay(origin, direction, geometry) {
 }
 
 function flashlightMirror(id, p, geometry) {
-  const focusAligned = geometry.surfaceProfile === "parabolic";
+  const focusAligned = geometry.surfaceProfile === "parabolic" && p.beamMode === "parallel";
   const beamAngle = (focusAligned ? 0 : finite(p.flashlightAngle ?? 0, "Orientação da lanterna")) * Math.PI / 180;
   const opening = finite(p.beamOpening ?? 20, "Abertura do feixe") * Math.PI / 180;
   const emissionRate = positive(p.emissionRate ?? 0.65, "Frequência visual de emissão");
@@ -357,7 +357,7 @@ function flashlightMirror(id, p, geometry) {
 
   // A lanterna do espelho côncavo usa um colimador ideal: raios paralelos
   // refletidos pela parábola atravessam o mesmo foco, inclusive fora do eixo.
-  const parallel = geometry.surfaceProfile === "parabolic" || p.beamMode === "parallel";
+  const parallel = p.beamMode === "parallel";
   const rayCount = 7;
   const baseAngle = geometry.kind === "plane-mirror" ? Math.atan2(geometry.incomingDirection.y, geometry.incomingDirection.x) : 0;
   const centralAngle = baseAngle + beamAngle;
@@ -422,7 +422,7 @@ function flashlightMirror(id, p, geometry) {
   geometry.mode = "lantern";
   geometry.flashlight = {
     source, direction: central, rayCount, actualRayCount: hits.length,
-    parallel, focusAligned: geometry.surfaceProfile === "parabolic", beamAngle, opening, emissionRate, visualSpeed, intensity,
+    parallel, focusAligned, beamAngle, opening, emissionRate, visualSpeed, intensity,
     primaryInteraction: hits[Math.floor(hits.length / 2)] || null,
     showRays: p.showRays !== false,
     showNormal: p.showNormal !== false,

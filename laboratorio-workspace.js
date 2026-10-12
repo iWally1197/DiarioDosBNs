@@ -1,7 +1,7 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-3";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-focus-layout-20261011-1";
 import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=mirror-focus-layout-20261011-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-focus-layout-20261011-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-launch-modes-20261011-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -264,11 +264,17 @@ function initializeExperimentPage(topicId) {
   };
   const currentTimeUnit = () => state.id?.startsWith("optics-") ? "ns" : experimentById.get(state.id)?.timeUnit || "s";
   function mirrorSceneCaption() {
+    if (state.mode === "parallel" && state.id === "optics-concave-mirror") {
+      return "O feixe paralelo incide na parábola côncava; cada raio refletido pela normal local e cada bolinha atravessam o foco F.";
+    }
+    if (state.mode === "parallel") {
+      return "Raios colimados incidem paralelos à superfície e são refletidos pela normal local. O gráfico e as medidas acompanham o mesmo modelo.";
+    }
     if (state.mode === "lantern" && state.id === "optics-concave-mirror") {
-      return "A lanterna colimada é a interação principal. O espelho parabólico reflete cada trajetória pela normal local e faz todas as bolinhas passarem pelo foco F; ajuste posição, abertura, emissão e velocidade visual abaixo.";
+      return "A lanterna emite um feixe divergente a partir de uma fonte finita. Os raios são refletidos pela normal local e, por não chegarem paralelos, não convergem todos para o foco.";
     }
     if (state.mode === "lantern") {
-      return "A fonte luminosa é calculada separadamente do corpo: os raios usam a posição da lanterna e a imagem pontual usa as equações do espelho. Cada raio reflete na normal local; ajuste abertura, emissão e velocidade visual no menu.";
+      return "A fonte luminosa é calculada separadamente do corpo: os raios saem da lanterna e são refletidos pela normal local. Ajuste abertura, emissão e velocidade visual no menu.";
     }
     return "Arraste o corpo humano para alterar sua distância. A imagem é calculada pelas equações paraxiais do espelho; as medidas e linhas de referência podem ser ocultadas no menu de parâmetros.";
   }
@@ -277,7 +283,7 @@ function initializeExperimentPage(topicId) {
     if (!experiment) return;
     stop();
     state.id = id;
-    state.mode = MIRROR_EXPERIMENTS.has(id) ? "lantern" : "human";
+    state.mode = MIRROR_EXPERIMENTS.has(id) ? (id === "optics-concave-mirror" ? "parallel" : "lantern") : "human";
     state.time = 0;
     state.records = [];
     state.parameters = initialParameters(experiment);
@@ -424,7 +430,7 @@ function initializeExperimentPage(topicId) {
       ];
     }
     const normalized = controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
-    return state.id === "optics-concave-mirror" && state.mode === "lantern"
+    return state.id === "optics-concave-mirror" && state.mode === "parallel"
       ? normalized.filter((item) => item.id !== "flashlightAngle")
       : normalized;
   }
@@ -434,18 +440,22 @@ function initializeExperimentPage(topicId) {
       button.setAttribute("aria-pressed", String(button.dataset.mirrorMode === state.mode));
     });
     const isMirror = MIRROR_EXPERIMENTS.has(state.id);
+    const currentMode = state.mode === "human" ? "Corpo humano" : state.mode === "parallel" ? "Lançamento paralelo" : "Lançamento de lanterna";
     if (mirrorModeToggleButton) {
-      const currentMode = state.mode === "lantern" ? "Lanterna" : "Corpo humano";
-      mirrorModeToggleButton.textContent = `Modo: ${currentMode}`;
-      mirrorModeToggleButton.setAttribute("aria-label", `${mirrorModeSelector.hidden ? "Mostrar" : "Ocultar"} opções de modo. Atual: ${currentMode}.`);
+      mirrorModeToggleButton.textContent = state.mode === "human" ? "Modo: Corpo humano" : "Luz: " + (state.mode === "parallel" ? "Paralela" : "Lanterna");
+      mirrorModeToggleButton.setAttribute("aria-label", (mirrorModeSelector.hidden ? "Mostrar" : "Ocultar") + " opções de lançamento. Atual: " + currentMode + ".");
     }
     $("#mirror-human-options").hidden = !isMirror || state.mode !== "human";
-    $("#mirror-lantern-options").hidden = !isMirror || state.mode !== "lantern";
-    $("#mirror-mode-description").textContent = state.mode === "lantern"
+    $("#mirror-lantern-options").hidden = !isMirror || state.mode === "human";
+    $("#mirror-mode-description").textContent = state.mode === "parallel"
       ? state.id === "optics-concave-mirror"
-        ? "A lanterna colimada é o controle principal; todas as bolinhas refletidas cruzam o foco F."
-        : "Ajuste a emissão e acompanhe a luz até a superfície e depois da reflexão."
-      : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
+        ? "Feixe colimado: na parábola côncava, os raios refletidos atravessam o foco F."
+        : "Raios colimados chegam paralelos ao espelho e são refletidos pela normal local."
+      : state.mode === "lantern"
+        ? state.id === "optics-concave-mirror"
+          ? "A lanterna emite um feixe divergente; as trajetórias são calculadas uma a uma e não precisam cruzar todas o foco."
+          : "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
+        : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
     const bindings = {
       "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
       "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
@@ -457,35 +467,40 @@ function initializeExperimentPage(topicId) {
     }
     const beamMode = $("#mirror-beam-mode");
     const beamModeLabel = beamMode?.closest("label");
-    if (beamModeLabel) beamModeLabel.hidden = state.id === "optics-concave-mirror";
-    if (beamMode) beamMode.value = state.id === "optics-concave-mirror" ? "parallel" : state.parameters.beamMode || "divergent";
+    if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human";
+    if (beamMode) beamMode.value = state.parameters.beamMode || (state.mode === "parallel" ? "parallel" : "divergent");
   }
 
   function setMirrorMode(mode) {
-    if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "lantern"].includes(mode)) return;
+    if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "parallel", "lantern"].includes(mode)) return;
     state.mode = mode;
-    state.parameters.experimentMode = mode;
-    if (state.id === "optics-concave-mirror") state.parameters.beamMode = "parallel";
+    state.parameters.experimentMode = mode === "human" ? "human" : "lantern";
+    if (mode === "parallel") state.parameters.beamMode = "parallel";
+    if (mode === "lantern") state.parameters.beamMode = "divergent";
     $("#workspace-scene-caption").textContent = mirrorSceneCaption();
     const experiment = experimentById.get(state.id);
-    canvas.setAttribute("aria-label", `${experiment.title}. ${mirrorSceneCaption()}`);
+    canvas.setAttribute("aria-label", experiment.title + ". " + mirrorSceneCaption());
     syncMirrorModeButtons();
     buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
     updateTimeControls();
     try { render(); } catch (error) { showError(error); }
-    $("#workspace-status").textContent = mode === "lantern"
+    $("#workspace-status").textContent = mode === "parallel"
       ? state.id === "optics-concave-mirror"
-        ? "Modo lanterna colimada: todas as trajetórias refletidas atravessam o foco F."
-        : "Modo lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
-      : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
+        ? "Lançamento paralelo: as trajetórias refletidas atravessam o foco F."
+        : "Lançamento paralelo: raios colimados são refletidos pela superfície."
+      : mode === "lantern"
+        ? state.id === "optics-concave-mirror"
+          ? "Lanterna divergente: cada trajetória é refletida pela normal local."
+          : "Lançamento de lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
+        : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
   }
 
   mirrorModeToggleButton?.addEventListener("click", () => {
     const open = mirrorModeSelector.hidden;
     mirrorModeSelector.hidden = !open;
     mirrorModeToggleButton.setAttribute("aria-expanded", String(open));
-    const currentMode = state.mode === "lantern" ? "Lanterna" : "Corpo humano";
-    mirrorModeToggleButton.setAttribute("aria-label", `${open ? "Ocultar" : "Mostrar"} opções de modo. Atual: ${currentMode}.`);
+    const currentMode = state.mode === "human" ? "Corpo humano" : state.mode === "parallel" ? "Lançamento paralelo" : "Lançamento de lanterna";
+    mirrorModeToggleButton.setAttribute("aria-label", (open ? "Ocultar" : "Mostrar") + " opções de lançamento. Atual: " + currentMode + ".");
   });
   document.querySelectorAll("[data-mirror-mode]").forEach((button) => {
     button.addEventListener("click", () => setMirrorMode(button.dataset.mirrorMode));
@@ -502,8 +517,7 @@ function initializeExperimentPage(topicId) {
     });
   }
   $("#mirror-beam-mode")?.addEventListener("change", (event) => {
-    state.parameters.beamMode = event.currentTarget.value;
-    try { render(); } catch (error) { showError(error); }
+    setMirrorMode(event.currentTarget.value === "parallel" ? "parallel" : "lantern");
   });
 
   function setParameter(control, rawValue) {
@@ -602,7 +616,7 @@ function initializeExperimentPage(topicId) {
     stop();
     if (MIRROR_EXPERIMENTS.has(state.id)) {
       const experiment = experimentById.get(state.id);
-      state.mode = "lantern";
+      state.mode = state.id === "optics-concave-mirror" ? "parallel" : "lantern";
       state.parameters = initialParameters(experiment);
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
@@ -1074,7 +1088,7 @@ function initializeExperimentPage(topicId) {
   function renderReadouts(values) {
     const definitions = (readoutDefinitions[state.id] || []).map(([key, label, unit]) => [
       key,
-      MIRROR_EXPERIMENTS.has(state.id) && state.mode === "lantern"
+      MIRROR_EXPERIMENTS.has(state.id) && state.mode !== "human"
         ? key === "objectDistance" ? "Distância da fonte"
           : key === "objectHeight" ? "Altura da fonte"
             : key === "imageHeight" ? "Altura da imagem da fonte"
@@ -1156,7 +1170,7 @@ function initializeExperimentPage(topicId) {
           return;
         }
       }
-    } else if (state.mode === "lantern" && model.geometry.flashlight?.source && distanceTo(model.geometry.flashlight.source) < 30) {
+    } else if (state.mode !== "human" && model.geometry.flashlight?.source && distanceTo(model.geometry.flashlight.source) < 30) {
       opticalDrag = { kind: "lantern" };
       event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
