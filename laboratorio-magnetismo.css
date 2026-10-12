@@ -149,3 +149,15 @@
   .magnet-scene-actions{gap:8px}
   .magnet-scene-actions .button{font-size:.9rem;padding:.65rem .75rem}
 }
+
+.magnet-toolbar-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;position:relative;z-index:35}
+.magnet-toolbar-actions>#fullscreen-toggle{min-height:44px}
+.magnet-power-status{margin:2px 0 0;padding:9px 10px;border-left:3px solid var(--gold,#e0bd69);border-radius:4px;background:rgba(7,15,29,.72);color:var(--text,#e9edf5);font-size:.84rem;line-height:1.45}
+.magnet-action-menu .button:disabled{opacity:.52;cursor:not-allowed}
+#interaction-motion-toggle[aria-pressed="true"],#electromagnet-power-toggle[aria-pressed="true"]{border-color:#e6bb63;color:#ffe1a0;background:rgba(167,113,35,.2)}
+.magnet-workspace:fullscreen .magnet-toolbar-actions,.magnet-workspace.is-fullscreen .magnet-toolbar-actions{pointer-events:auto}
+.magnet-workspace:fullscreen #fullscreen-toggle,.magnet-workspace.is-fullscreen #fullscreen-toggle{pointer-events:auto}
+@media(max-width:620px){
+  .magnet-toolbar-actions{gap:6px}
+  .magnet-toolbar-actions>#fullscreen-toggle,.magnet-action-menu>#action-menu-toggle{font-size:.82rem;padding:.6rem .7rem}
+}

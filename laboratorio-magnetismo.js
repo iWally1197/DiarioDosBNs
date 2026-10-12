@@ -22,6 +22,7 @@ const systemPrefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion:
 const initial = () => ({
   mode: "permanent", magnet: makeMagnet(), secondMagnet: makeMagnet({ x: 0.2, y: 0.06, angle: Math.PI, polarity: 1 }),
   coil: makeCoil({ x: 0.24, y: -0.13 }), coilEnabled: false, coilVelocity: { x: 0, y: 0, angle: 0 },
+  powerOutletEnabled: false, powerCableEnabled: false, coilConnected: false, coilPowerRequested: false, powerPlug: null,
   metalBalls: [], selectedMetalBall: -1, sensor: { x: 0.18, y: 0.1 }, compasses: [{ x: -0.17, y: 0.11 }], selectedCompass: 0,
   showLines: true, showVectors: false, showHeatmap: false, showCurrent: true, showGrid: true, showInterior: true,
   showNumbers: true, earth: false, showMagnetSource: true, showCoilSource: false, density: 18,
@@ -29,6 +30,27 @@ const initial = () => ({
   interactionVelocity: { x: 0, y: 0, angle: 0 }, interactionForce: null, reduceMotion: systemPrefersReducedMotion
 });
 let state = initial();
+const POWER_OUTLET_POSITION = { x: 0.315, y: 0.17 };
+function plugNearCoil() {
+  const reach = state.coil.length / 2 + state.coil.radius + 0.11;
+  return { x: clamp(state.coil.x - Math.cos(state.coil.angle) * reach, -0.36, 0.36), y: clamp(state.coil.y - Math.sin(state.coil.angle) * reach, -0.22, 0.22) };
+}
+function coilIsEnergized() {
+  return state.coilEnabled && state.powerOutletEnabled && state.powerCableEnabled && state.coilConnected && state.coilPowerRequested;
+}
+function effectiveCoil() {
+  return state.coilEnabled ? { ...state.coil, current: coilIsEnergized() ? state.coil.current : 0 } : null;
+}
+function plugPosition() { return state.coilConnected ? POWER_OUTLET_POSITION : (state.powerPlug || plugNearCoil()); }
+function prepareElectromagnetKit() {
+  const newlyAdded = !state.coilEnabled;
+  state.coilEnabled = true; state.coil.core = true; state.showCoilSource = true; state.powerOutletEnabled = true;
+  if (!state.powerCableEnabled) {
+    state.powerCableEnabled = true; state.coilConnected = false; state.coilPowerRequested = false; state.powerPlug = plugNearCoil();
+  } else if (newlyAdded) {
+    state.coilConnected = false; state.coilPowerRequested = false; state.powerPlug = plugNearCoil();
+  }
+}
 let view = { width: 0, height: 0, scale: 1, dpr: 1 };
 let drag = null;
 let redrawFrame = 0;
@@ -48,14 +70,9 @@ function activeFieldModel(overrides = {}) {
   const magnets = mode === "interaction" ? [state.magnet, state.secondMagnet]
     : mode === "field" ? [state.showMagnetSource ? state.magnet : null]
     : [state.magnet];
-  const useCoil = state.coilEnabled && (mode !== "field" || state.showCoilSource);
-  return makeFieldModel({
-    magnets,
-    coil: state.coilEnabled ? (overrides.coil || state.coil) : null,
-    useCoil,
-    earth: state.earth,
-    ...overrides
-  });
+  const coil = effectiveCoil();
+  const useCoil = Boolean(coil && coilIsEnergized() && (mode !== "field" || state.showCoilSource));
+  return makeFieldModel({ magnets, coil: state.coilEnabled ? (overrides.coil || coil) : null, useCoil, earth: state.earth, ...overrides });
 }
 
 function setRange(id, value, output, text) {
@@ -91,6 +108,23 @@ function updateControlText() {
   byId("interaction-fixed").value = state.interactionFixed;
   byId("coil-toggle").setAttribute("aria-pressed", String(state.coilEnabled));
   byId("coil-toggle").textContent = state.coilEnabled ? "− Retirar bobina" : "＋ Colocar bobina";
+  byId("power-outlet-toggle").setAttribute("aria-pressed", String(state.powerOutletEnabled));
+  byId("power-outlet-toggle").textContent = state.powerOutletEnabled ? "− Retirar tomada" : "＋ Adicionar tomada";
+  byId("power-cable-toggle").setAttribute("aria-pressed", String(state.powerCableEnabled));
+  byId("power-cable-toggle").textContent = state.powerCableEnabled ? "− Retirar cabo e plugue" : "＋ Adicionar cabo e plugue";
+  byId("power-cable-toggle").disabled = !state.coilEnabled;
+  byId("electromagnet-power-toggle").setAttribute("aria-pressed", String(coilIsEnergized()));
+  byId("electromagnet-power-toggle").textContent = state.coilPowerRequested ? "Desativar eletroímã" : "Ativar eletroímã";
+  byId("electromagnet-power-toggle").disabled = !state.coilEnabled || !state.powerOutletEnabled || !state.powerCableEnabled || !state.coilConnected;
+  byId("power-status").textContent = !state.coilEnabled ? "Coloque a bobina para começar a montagem."
+    : !state.powerOutletEnabled ? "Adicione a tomada para fornecer energia."
+    : !state.powerCableEnabled ? "Adicione o cabo com plugue ao eletroímã."
+    : !state.coilConnected ? "Arraste o plugue até a tomada para conectar a energia."
+    : !state.coilPowerRequested ? "Conectado à tomada. Ative o eletroímã para gerar corrente e campo."
+    : "Eletroímã ligado: corrente, polos e campo magnético ativos.";
+  const motionButton = byId("interaction-motion-toggle");
+  motionButton.setAttribute("aria-pressed", String(state.interactionMotion));
+  motionButton.textContent = state.interactionMotion ? "Parar movimento do ímã livre" : "Simular movimento do ímã livre";
   byId("show-coil-source").checked = state.showCoilSource;
   byId("earth-field").checked = state.earth;
   byId("reduce-motion").checked = state.reduceMotion;
@@ -118,8 +152,8 @@ function updateModeUI() {
   byId("add-compass").hidden = false;
   const hasDynamicBodies = state.coilEnabled || state.metalBalls.length > 0 || (state.mode === "interaction" && state.interactionMotion);
   const pauseButton = byId("simulation-pause");
-  pauseButton.disabled = state.reduceMotion;
-  pauseButton.textContent = state.simulationPaused ? "Continuar simulação" : "Pausar simulação";
+  pauseButton.disabled = false;
+  pauseButton.textContent = state.simulationPaused ? "Retomar simulação" : "Pausar simulação";
   pauseButton.setAttribute("aria-pressed", String(state.simulationPaused));
   byId("metal-ball-count").textContent = state.metalBalls.length
     ? `${state.metalBalls.length} de 8 esferas. Arraste uma para reposicioná-la; a selecionada é removida pelo botão acima.`
@@ -127,13 +161,13 @@ function updateModeUI() {
   byId("remove-metal-ball").disabled = state.selectedMetalBall < 0 || !state.metalBalls.length;
   document.body.classList.toggle("magnet-reduced-motion", state.reduceMotion);
   const motionStatus = byId("interaction-motion-status");
-  if (!state.interactionMotion) motionStatus.textContent = "Ative o movimento do ímã livre. A pausa global também congela a bobina e as esferas metálicas.";
-  else if (state.reduceMotion) motionStatus.textContent = "Movimento automático suspenso pela preferência de movimento reduzido. Os objetos ainda podem ser arrastados.";
+  if (!state.interactionMotion) motionStatus.textContent = "Ative o movimento do ímã livre. A pausa global congela o ímã, a bobina e as esferas metálicas.";
   else if (state.simulationPaused) motionStatus.textContent = `Simulação pausada. ${interactionSummary()}`;
+  else if (state.reduceMotion) motionStatus.textContent = "Movimento automático suspenso pela preferência de movimento reduzido. Os objetos ainda podem ser arrastados.";
   else motionStatus.textContent = `O ímã livre responde à força e ao torque entre os prismas. ${interactionSummary()}`;
   const status = byId("simulation-status");
-  if (state.reduceMotion) status.textContent = "A preferência de movimento reduzido suspendeu o movimento automático; arrastar e alterar parâmetros continuam disponíveis.";
-  else if (state.simulationPaused) status.textContent = "Simulação pausada. Clique em “Continuar simulação” para retomar todas as interações.";
+  if (state.simulationPaused) status.textContent = "Simulação pausada: o ímã livre, a bobina e as esferas ficam congelados; o campo permanece estático para consulta.";
+  else if (state.reduceMotion) status.textContent = "A preferência de movimento reduzido suspendeu o movimento automático; arrastar e alterar parâmetros continuam disponíveis.";
   else if (hasDynamicBodies) status.textContent = "Simulação ativa: bobina, esferas e, quando habilitado, ímã livre respondem ao campo magnético.";
   else status.textContent = "Adicione uma bobina ou esferas de metal para iniciar a interação magnética.";
   const fullscreenActive = document.fullscreenElement === byId("magnet-workspace");
@@ -175,8 +209,8 @@ function advanceInteraction(dt) {
 
 function makeDynamicsField(includeCoil = true) {
   const magnets = allActiveMagnets();
-  const useCoil = includeCoil && state.coilEnabled && (state.mode !== "field" || state.showCoilSource);
-  return makeFieldModel({ magnets, coil: useCoil ? state.coil : null, useCoil, earth: false });
+  const useCoil = includeCoil && coilIsEnergized() && (state.mode !== "field" || state.showCoilSource);
+  return makeFieldModel({ magnets, coil: useCoil ? effectiveCoil() : null, useCoil, earth: false });
 }
 
 function limitVelocity(velocity, maxSpeed) {
@@ -185,7 +219,7 @@ function limitVelocity(velocity, maxSpeed) {
 }
 
 function coilForceAndTorque(field) {
-  const coil = state.coil, p = { x: coil.x, y: coil.y }, h = 0.0025;
+  const coil = effectiveCoil() || state.coil, p = { x: coil.x, y: coil.y }, h = 0.0025;
   const b = field.at(p), xp = field.at({ x: p.x + h, y: p.y }), xm = field.at({ x: p.x - h, y: p.y });
   const yp = field.at({ x: p.x, y: p.y + h }), ym = field.at({ x: p.x, y: p.y - h });
   const dBxdx = (xp.x - xm.x) / (2 * h), dBydx = (xp.y - xm.y) / (2 * h);
@@ -453,44 +487,88 @@ function drawMagnet(magnet, index = 0) {
   ctx.fillStyle = "#d8e2f3"; ctx.font = "11px system-ui"; ctx.textAlign = "center"; ctx.fillText(index === 1 ? "Ímã A" : "Ímã B", label.x, label.y);
 }
 
+function drawPowerHardware() {
+  const socket = toScreen(POWER_OUTLET_POSITION);
+  if (state.powerOutletEnabled) {
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.38)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+    ctx.fillStyle = "#dbe4ee"; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(socket.x - 28, socket.y - 39, 56, 78, 10); ctx.fill(); ctx.stroke();
+    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.fillStyle = "#bbc7d6"; ctx.beginPath(); ctx.roundRect(socket.x - 18, socket.y - 27, 36, 51, 17); ctx.fill();
+    ctx.fillStyle = "#29384b";
+    ctx.beginPath(); ctx.roundRect(socket.x - 8, socket.y - 15, 4, 12, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(socket.x + 4, socket.y - 15, 4, 12, 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(socket.x, socket.y + 6, 3, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#58687d"; ctx.font = "700 8px system-ui"; ctx.textAlign = "center"; ctx.fillText("ENERGIA", socket.x, socket.y + 33);
+    ctx.restore();
+  }
+  if (!state.coilEnabled || !state.powerCableEnabled) return;
+  const start = toScreen({
+    x: state.coil.x - Math.cos(state.coil.angle) * (state.coil.length / 2 + .045),
+    y: state.coil.y - Math.sin(state.coil.angle) * (state.coil.length / 2 + .045)
+  });
+  const plug = toScreen(plugPosition()), distance = Math.hypot(plug.x - start.x, plug.y - start.y);
+  const sag = Math.min(50, Math.max(12, distance * .16)), controlY = Math.max(start.y, plug.y) + sag;
+  const energized = coilIsEnergized();
+  ctx.save(); ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(start.x, start.y);
+  ctx.bezierCurveTo(start.x + (plug.x - start.x) * .28, controlY, start.x + (plug.x - start.x) * .72, controlY, plug.x - 17, plug.y);
+  ctx.strokeStyle = "rgba(0,0,0,.42)"; ctx.lineWidth = 9; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(start.x, start.y);
+  ctx.bezierCurveTo(start.x + (plug.x - start.x) * .28, controlY, start.x + (plug.x - start.x) * .72, controlY, plug.x - 17, plug.y);
+  ctx.strokeStyle = energized ? "#c78b45" : "#59687b"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(start.x, start.y - 1);
+  ctx.bezierCurveTo(start.x + (plug.x - start.x) * .28, controlY - 1, start.x + (plug.x - start.x) * .72, controlY - 1, plug.x - 17, plug.y - 1);
+  ctx.strokeStyle = energized ? "#ffe0a0" : "#99a8b9"; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.fillStyle = "#e6b877"; ctx.beginPath(); ctx.arc(start.x, start.y, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#9baabd"; ctx.strokeStyle = "#e7edf5"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect(plug.x - 22, plug.y - 11, 24, 22, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#303d50"; ctx.beginPath(); ctx.roundRect(plug.x - 15, plug.y - 7, 10, 14, 3); ctx.fill();
+  ctx.strokeStyle = "#dfe6ee"; ctx.lineWidth = 2.6;
+  ctx.beginPath(); ctx.moveTo(plug.x - 5, plug.y - 5); ctx.lineTo(plug.x + 5, plug.y - 5);
+  ctx.moveTo(plug.x - 5, plug.y + 5); ctx.lineTo(plug.x + 5, plug.y + 5); ctx.stroke();
+  ctx.fillStyle = "#f2c778"; ctx.beginPath(); ctx.arc(plug.x - 17, plug.y, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
 function drawCoil(model) {
   if (!model.coil) return;
   const coil = model.coil; const center = toScreen(coil); const width = coil.length * view.scale; const radius = coil.radius * view.scale;
+  const energized = coilIsEnergized();
   ctx.save(); ctx.translate(center.x, center.y); ctx.rotate(-coil.angle);
   if (coil.core) {
-    ctx.fillStyle = "#777f8d"; ctx.strokeStyle = "#b3bac4"; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(-width * .48, -Math.max(4, radius * .22), width * .96, Math.max(8, radius * .44), 5); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#e0e5ed"; ctx.font = "10px system-ui"; ctx.textAlign = "center"; ctx.fillText("núcleo · modelo saturável", 0, 4);
+    const metal = ctx.createLinearGradient(0, -Math.max(5, radius * .24), 0, Math.max(5, radius * .24));
+    metal.addColorStop(0, energized ? "#dce6f2" : "#8793a4"); metal.addColorStop(.48, energized ? "#737f90" : "#4f5b6d"); metal.addColorStop(1, energized ? "#b9c6d7" : "#667387");
+    ctx.fillStyle = metal; ctx.strokeStyle = energized ? "#ffe0a0" : "#c0c9d4"; ctx.lineWidth = 1.4;
+    if (energized) { ctx.shadowColor = "rgba(255,190,96,.68)"; ctx.shadowBlur = 18; }
+    ctx.beginPath(); ctx.roundRect(-width * .48, -Math.max(5, radius * .24), width * .96, Math.max(10, radius * .48), 6); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
   }
-  ctx.strokeStyle = "#d8994f"; ctx.lineWidth = 2.1;
-  const turnsToDraw = coil.turns;
-  for (let i = 0; i < turnsToDraw; i++) {
-    const x = -width / 2 + (i / Math.max(1, turnsToDraw - 1)) * width;
-    ctx.beginPath(); ctx.ellipse(x, 0, Math.max(3, width / turnsToDraw * .28), radius, 0, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < coil.turns; i++) {
+    const x = -width / 2 + (i / Math.max(1, coil.turns - 1)) * width;
+    ctx.strokeStyle = i % 2 ? "#ad5e2d" : "#efb464"; ctx.lineWidth = Math.max(2.2, Math.min(4, width / coil.turns * .46));
+    ctx.beginPath(); ctx.ellipse(x, 0, Math.max(3, width / coil.turns * .34), radius, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,235,190,.72)"; ctx.lineWidth = .8;
+    ctx.beginPath(); ctx.ellipse(x - 1, 0, Math.max(2.4, width / coil.turns * .28), radius * .88, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
   }
-  ctx.strokeStyle = "#e8b36d"; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "#ffe0a0"; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(-width / 2, -radius); ctx.lineTo(width / 2, -radius); ctx.moveTo(-width / 2, radius); ctx.lineTo(width / 2, radius); ctx.stroke();
-  const batteryX = -width / 2 - 38;
-  ctx.strokeStyle = "#9cabbf"; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(-width / 2, -radius); ctx.lineTo(-width / 2 - 12, -radius); ctx.lineTo(-width / 2 - 12, -15); ctx.lineTo(batteryX + 18, -15);
-  ctx.moveTo(-width / 2, radius); ctx.lineTo(-width / 2 - 12, radius); ctx.lineTo(-width / 2 - 12, 15); ctx.lineTo(batteryX + 18, 15); ctx.stroke();
-  ctx.fillStyle = "#17263a"; ctx.strokeStyle = "#f0c977"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(batteryX, -20, 22, 40, 4); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#f5e5bb"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText(coil.current >= 0 ? "+" : "−", batteryX + 11, -7); ctx.fillText(coil.current >= 0 ? "−" : "+", batteryX + 11, 13);
-  ctx.fillStyle = "#c9d4e4"; ctx.font = "9px system-ui"; ctx.fillText("CC", batteryX + 11, 31);
-  ctx.fillStyle = "#f5e0bd"; ctx.font = "12px system-ui"; ctx.textAlign = "center"; ctx.fillText(`${coil.turns} espiras · ${formatter(1).format(coil.current)} A`, 0, radius + 23);
-  if (state.showCurrent && Math.abs(coil.current) > 0.02) {
-    // Current markers are conventional-current symbols in the screen projection, not electrons.
-    const sign = Math.sign(coil.current); ctx.font = "bold 14px system-ui"; ctx.textAlign = "center";
-    ctx.fillStyle = sign > 0 ? "#ffd57b" : "#a9c8ff";
+  ctx.fillStyle = energized ? "#ffe0a0" : "#d4deeb"; ctx.font = "700 11px system-ui"; ctx.textAlign = "center";
+  ctx.fillText(energized ? "ELETROÍMÃ · LIGADO" : "BOBINA · DESLIGADA", 0, -radius - 17);
+  ctx.fillStyle = "#f5e0bd"; ctx.font = "12px system-ui";
+  ctx.fillText(`${coil.turns} espiras · ${formatter(1).format(coil.current)} A${energized ? "" : " · sem corrente"}`, 0, radius + 23);
+  if (energized && state.showCurrent && Math.abs(coil.current) > 0.02) {
+    const sign = Math.sign(coil.current); ctx.font = "bold 14px system-ui"; ctx.textAlign = "center"; ctx.fillStyle = sign > 0 ? "#ffd57b" : "#a9c8ff";
     ctx.fillText(sign > 0 ? "⊙" : "⊗", -width / 2 - 9, -radius * .53);
     ctx.fillText(sign > 0 ? "⊗" : "⊙", width / 2 + 9, -radius * .53);
     drawArrow(-width / 2 - 28, 0, -width / 2 - 6, 0, sign > 0 ? "#ffd57b" : "#a9c8ff", 1.7, 5);
   }
   ctx.restore();
-  const plus = toScreen({ x: coil.x + Math.cos(coil.angle) * (coil.length / 2 + .025), y: coil.y + Math.sin(coil.angle) * (coil.length / 2 + .025) });
-  ctx.fillStyle = Math.sign(coil.current) >= 0 ? "#e86161" : "#5d88e8"; ctx.font = "700 13px system-ui"; ctx.textAlign = "center"; ctx.fillText(Math.sign(coil.current) >= 0 ? "N" : "S", plus.x, plus.y);
+  if (energized) {
+    const pole = Math.sign(coil.current) >= 0 ? "N" : "S";
+    const plus = toScreen({ x: coil.x + Math.cos(coil.angle) * (coil.length / 2 + .025), y: coil.y + Math.sin(coil.angle) * (coil.length / 2 + .025) });
+    ctx.fillStyle = pole === "N" ? "#e86161" : "#5d88e8"; ctx.font = "700 13px system-ui"; ctx.textAlign = "center"; ctx.fillText(pole, plus.x, plus.y);
+  }
 }
-
 function drawMetalBalls() {
   state.metalBalls.forEach((ball, index) => {
     const p = toScreen(ball), radius = Math.max(7, ball.radius * view.scale);
@@ -529,6 +607,7 @@ function renderScene(model) {
   if (!canvasSize()) return;
   ctx.fillStyle = "#0a1424"; ctx.fillRect(0, 0, view.width, view.height);
   drawGrid(); drawHeatmap(model); drawFieldLines(model); drawVectors(model);
+  drawPowerHardware();
   drawCoil(model);
   model.magnets.forEach((magnet, index) => drawMagnet(magnet, index + 1));
   drawMetalBalls();
@@ -563,9 +642,10 @@ function allActiveMagnets() {
 function graphData(kind) {
   const points = [];
   const magnets = allActiveMagnets();
+  const graphCoil = effectiveCoil();
   const baseModel = makeFieldModel({
-    magnets, coil: state.coilEnabled ? state.coil : null,
-    useCoil: state.coilEnabled && (state.mode !== "field" || state.showCoilSource), earth: state.earth
+    magnets, coil: state.coilEnabled ? graphCoil : null,
+    useCoil: coilIsEnergized() && (state.mode !== "field" || state.showCoilSource), earth: state.earth
   });
   const add = (x, y) => { if (Number.isFinite(x) && Number.isFinite(y)) points.push({ x, y }); };
   if (kind === "distance" || kind === "components" || kind === "axial") {
@@ -718,12 +798,14 @@ function beginDrag(event) {
   const p = localPointer(event), world = toWorld(p), model = activeFieldModel();
   const items = [{ type: "sensor", point: state.sensor }, ...state.compasses.map((point, index) => ({ type: "compass", index, point })),
     ...state.metalBalls.map((point, index) => ({ type: "metal", index, point })),
-    ...model.magnets.map((point, index) => ({ type: "magnet", index, point })), ...(model.coil ? [{ type: "coil", point: state.coil }] : [])];
+    ...model.magnets.map((point, index) => ({ type: "magnet", index, point })), ...(model.coil ? [{ type: "coil", point: state.coil }] : []),
+    ...(state.coilEnabled && state.powerCableEnabled ? [{ type: "power-plug", point: plugPosition() }] : [])];
   let nearest = null, best = Infinity;
   for (const item of items) {
     const screen = toScreen(item.point); const distance = Math.hypot(screen.x - p.x, screen.y - p.y);
     const radius = item.type === "magnet" ? Math.max(27, state.magnet.length * view.scale * 0.55)
       : item.type === "coil" ? Math.max(34, state.coil.radius * view.scale * 1.2)
+      : item.type === "power-plug" ? 34
       : item.type === "metal" ? Math.max(15, state.metalBalls[item.index].radius * view.scale * 1.8) : 26;
     if (distance < radius && distance < best) { nearest = item; best = distance; }
   }
@@ -753,15 +835,25 @@ function moveDrag(event) {
     if (state.mode === "interaction" && state.interactionMotion && drag.index !== fixedIndex) state.interactionVelocity = { x: 0, y: 0, angle: 0 };
   }
   if (drag.type === "coil") { state.coil.x = x; state.coil.y = y; state.coilVelocity = { x: 0, y: 0, angle: 0 }; }
+  if (drag.type === "power-plug") { state.powerPlug = { x, y }; state.coilConnected = false; state.coilPowerRequested = false; }
   if (drag.type === "metal") { const ball = state.metalBalls[drag.index]; ball.x = x; ball.y = y; ball.vx = 0; ball.vy = 0; }
   queueDraw();
 }
 
-function endDrag() { drag = null; canvas.classList.remove("is-dragging"); }
+function endDrag(event) {
+  if (drag?.type === "power-plug") {
+    const released = event?.type === "pointerup" ? toWorld(localPointer(event)) : null;
+    const closeToOutlet = released && Math.hypot(released.x - POWER_OUTLET_POSITION.x, released.y - POWER_OUTLET_POSITION.y) <= 0.065;
+    state.coilConnected = Boolean(state.powerOutletEnabled && closeToOutlet);
+    state.powerPlug = state.coilConnected ? { ...POWER_OUTLET_POSITION } : (state.powerPlug || plugNearCoil());
+    state.coilPowerRequested = false;
+  }
+  drag = null; canvas.classList.remove("is-dragging"); syncSimulationLoop(); queueDraw();
+}
 
 for (const button of document.querySelectorAll("[data-mode]")) button.addEventListener("click", () => {
   state.mode = button.dataset.mode;
-  if (state.mode === "electromagnet") { state.coilEnabled = true; state.coil.core = true; state.showCoilSource = true; }
+  if (state.mode === "electromagnet") prepareElectromagnetKit();
   if (state.mode === "field") state.showCoilSource = state.coilEnabled;
   updateModeUI(); syncSimulationLoop(); queueDraw();
 });
@@ -779,9 +871,38 @@ byId("coil-angle").addEventListener("input", (e) => { state.coil.angle = Number(
 byId("coil-core").addEventListener("change", (e) => { state.coil.core = e.target.checked; queueDraw(); });
 byId("coil-toggle").addEventListener("click", () => {
   state.coilEnabled = !state.coilEnabled;
-  if (state.coilEnabled && state.mode === "electromagnet") state.coil.core = true;
   state.coilVelocity = { x: 0, y: 0, angle: 0 };
+  if (!state.coilEnabled) {
+    state.coilConnected = false; state.coilPowerRequested = false; state.powerCableEnabled = false;
+  } else {
+    state.powerPlug = plugNearCoil();
+    if (state.mode === "electromagnet") { state.coil.core = true; state.powerOutletEnabled = true; state.powerCableEnabled = true; }
+  }
   if (state.mode === "field") state.showCoilSource = state.coilEnabled;
+  syncSimulationLoop(); queueDraw();
+});
+byId("power-outlet-toggle").addEventListener("click", () => {
+  state.powerOutletEnabled = !state.powerOutletEnabled;
+  if (!state.powerOutletEnabled) { state.coilConnected = false; state.coilPowerRequested = false; }
+  syncSimulationLoop(); queueDraw();
+});
+byId("power-cable-toggle").addEventListener("click", () => {
+  if (!state.coilEnabled) return;
+  state.powerCableEnabled = !state.powerCableEnabled;
+  if (state.powerCableEnabled) { state.powerPlug = plugNearCoil(); state.coilConnected = false; }
+  else { state.coilConnected = false; state.coilPowerRequested = false; }
+  syncSimulationLoop(); queueDraw();
+});
+byId("electromagnet-power-toggle").addEventListener("click", () => {
+  if (!state.coilEnabled || !state.powerOutletEnabled || !state.powerCableEnabled || !state.coilConnected) return;
+  state.coilPowerRequested = !state.coilPowerRequested;
+  syncSimulationLoop(); queueDraw();
+});
+byId("interaction-motion-toggle").addEventListener("click", () => {
+  if (state.mode !== "interaction") { state.mode = "interaction"; state.interactionMotion = true; }
+  else state.interactionMotion = !state.interactionMotion;
+  state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  state.interactionForce = null;
   syncSimulationLoop(); queueDraw();
 });
 byId("add-metal-ball").addEventListener("click", () => {
@@ -817,7 +938,6 @@ byId("interaction-fixed").addEventListener("change", (event) => {
   queueDraw();
 });
 byId("simulation-pause").addEventListener("click", () => {
-  if (state.reduceMotion) return;
   state.simulationPaused = !state.simulationPaused;
   syncSimulationLoop(); queueDraw();
 });

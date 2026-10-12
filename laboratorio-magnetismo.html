@@ -8,11 +8,11 @@
   <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
   <title>Ímãs e Eletroímãs — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-4">
-  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-4">
-  <script src="script.js?v=magnetismo-20261012-4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-5">
+  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-5">
+  <script src="script.js?v=magnetismo-20261012-5" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-4"></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-5"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -44,19 +44,26 @@
       <div class="magnet-scene-column">
         <div class="magnet-scene-toolbar">
           <p id="mode-description" aria-live="polite">Arraste o ímã, a bússola ou o sensor. Gire o ímã pelos controles.</p>
-          <div class="magnet-action-menu">
-            <button type="button" class="button button-outline" id="action-menu-toggle" aria-expanded="false" aria-controls="action-menu-panel">☰ Controles</button>
-            <div class="magnet-scene-actions" id="action-menu-panel" aria-label="Ações da simulação" hidden>
-              <button type="button" class="button button-outline" id="coil-toggle" aria-pressed="false">＋ Bobina</button>
-              <button type="button" class="button button-outline" id="add-metal-ball">＋ Bolinha de metal</button>
-              <button type="button" class="button button-outline" id="remove-metal-ball" disabled>− Bolinha selecionada</button>
-              <button type="button" class="button button-outline" id="add-compass">＋ Bússola</button>
-              <button type="button" class="button button-outline" id="remove-compass">− Bússola selecionada</button>
-              <button type="button" class="button button-outline" id="simulation-pause" aria-pressed="false">Pausar simulação</button>
-              <button type="button" class="button button-outline" id="fullscreen-toggle" aria-pressed="false">Tela cheia</button>
-              <button type="button" class="button button-outline" id="fullscreen-menu-toggle" aria-expanded="false" hidden>Gráficos e parâmetros</button>
-              <button type="button" class="button button-outline" id="reset-lab">Restaurar</button>
-              <p class="magnet-simulation-status" id="simulation-status" role="status" aria-live="polite">Adicione uma bobina ou esferas de metal para iniciar a interação magnética.</p>
+          <div class="magnet-toolbar-actions">
+            <button type="button" class="button button-outline" id="fullscreen-toggle" aria-pressed="false">Tela cheia</button>
+            <div class="magnet-action-menu">
+              <button type="button" class="button button-outline" id="action-menu-toggle" aria-expanded="false" aria-controls="action-menu-panel">☰ Controles</button>
+              <div class="magnet-scene-actions" id="action-menu-panel" aria-label="Ações da simulação" hidden>
+                <button type="button" class="button button-outline" id="coil-toggle" aria-pressed="false">＋ Colocar bobina</button>
+                <button type="button" class="button button-outline" id="power-outlet-toggle" aria-pressed="false">＋ Adicionar tomada</button>
+                <button type="button" class="button button-outline" id="power-cable-toggle" aria-pressed="false" disabled>＋ Adicionar cabo e plugue</button>
+                <button type="button" class="button button-outline" id="electromagnet-power-toggle" aria-pressed="false" disabled>Ativar eletroímã</button>
+                <button type="button" class="button button-outline" id="interaction-motion-toggle" aria-pressed="false">Simular movimento do ímã livre</button>
+                <button type="button" class="button button-outline" id="add-metal-ball">＋ Bolinha de metal</button>
+                <button type="button" class="button button-outline" id="remove-metal-ball" disabled>− Bolinha selecionada</button>
+                <button type="button" class="button button-outline" id="add-compass">＋ Bússola</button>
+                <button type="button" class="button button-outline" id="remove-compass">− Bússola selecionada</button>
+                <button type="button" class="button button-outline" id="simulation-pause" aria-pressed="false">Pausar simulação</button>
+                <button type="button" class="button button-outline" id="fullscreen-menu-toggle" aria-expanded="false" hidden>Gráficos e parâmetros</button>
+                <button type="button" class="button button-outline" id="reset-lab">Restaurar</button>
+                <p class="magnet-power-status" id="power-status" role="status" aria-live="polite">Adicione uma bobina, tomada e cabo para montar o eletroímã.</p>
+                <p class="magnet-simulation-status" id="simulation-status" role="status" aria-live="polite">Adicione uma bobina ou esferas de metal para iniciar a interação magnética.</p>
+              </div>
             </div>
           </div>
         </div>
