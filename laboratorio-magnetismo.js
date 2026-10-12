@@ -867,6 +867,21 @@ chart.addEventListener("pointermove", inspectChart);
 chart.addEventListener("click", inspectChart);
 chart.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); const rect = chart.getBoundingClientRect(); inspectChart({ ...event, type: "click", clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }); } });
 
+
+const actionMenuButton = byId("action-menu-toggle");
+const actionMenuPanel = byId("action-menu-panel");
+function setActionMenuOpen(open) {
+  actionMenuPanel.hidden = !open;
+  actionMenuButton.setAttribute("aria-expanded", String(open));
+  actionMenuButton.textContent = open ? "Fechar controles" : "☰ Controles";
+}
+actionMenuButton.addEventListener("click", () => setActionMenuOpen(actionMenuPanel.hidden));
+document.addEventListener("pointerdown", (event) => {
+  if (!actionMenuPanel.hidden && !event.target.closest(".magnet-action-menu")) setActionMenuOpen(false);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !actionMenuPanel.hidden) setActionMenuOpen(false);
+});
 const workspace = byId("magnet-workspace");
 const controlsPanel = document.querySelector(".magnet-controls");
 const fullscreenPanels = [document.querySelector(".magnet-readings"), byId("magnet-graphs")]
@@ -896,6 +911,7 @@ document.addEventListener("fullscreenchange", () => {
   const active = document.fullscreenElement === workspace;
   workspace.classList.toggle("is-fullscreen", active);
   if (active) workspace.classList.remove("magnet-controls-collapsed");
+  setActionMenuOpen(false);
   placeFullscreenPanels(active);
   updateModeUI(); queueDraw();
 });
