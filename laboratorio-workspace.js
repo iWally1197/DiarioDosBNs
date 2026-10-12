@@ -1,6 +1,6 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-3";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-focus-layout-20261011-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-drag-smooth-20261011-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-lantern-visual-20261011-1";
 import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-launch-modes-20261011-1";
 
 const $ = (selector) => document.querySelector(selector);
@@ -293,7 +293,7 @@ function initializeExperimentPage(topicId) {
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
         showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
-        beamMode: id === "optics-concave-mirror" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
+        beamMode: id === "optics-concave-mirror" ? "parallel" : "divergent", lightMode: state.mode, flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
       });
       if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
       else state.parameters.objectHeight = 1.7;
@@ -484,6 +484,7 @@ function initializeExperimentPage(topicId) {
     mirrorModeSelector.hidden = true;
     mirrorModeToggleButton?.setAttribute("aria-expanded", "false");
     state.parameters.experimentMode = mode === "human" ? "human" : "lantern";
+    state.parameters.lightMode = mode;
     if (mode === "parallel") state.parameters.beamMode = "parallel";
     if (mode === "lantern") state.parameters.beamMode = state.id === "optics-concave-mirror" ? "parallel" : "divergent";
     $("#workspace-scene-caption").textContent = mirrorSceneCaption();
