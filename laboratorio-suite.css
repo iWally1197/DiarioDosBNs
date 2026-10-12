@@ -378,3 +378,35 @@ body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
   .mirror-mode-cards { grid-template-columns:minmax(0,1fr); }
   .lab-workspace-controls .lab-control-row { grid-template-columns:minmax(0,1fr) 72px; }
 }
+
+/* Keep drawer content in normal flow so graph, switches, and sliders never overlap. */
+.lab-workspace:fullscreen .lab-workspace-controls {
+  display:none;
+  flex-direction:column;
+  align-items:stretch;
+}
+.lab-workspace:fullscreen .lab-workspace-controls.is-open { display:flex; }
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-workspace-panel,
+.lab-workspace:fullscreen .lab-workspace-controls > .mirror-option-group,
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-dynamic-controls,
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-status,
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-equation-card,
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-investigation,
+.lab-workspace:fullscreen .lab-workspace-controls > .lab-limitations {
+  position:relative;
+  flex:0 0 auto;
+}
+.lab-experiment:fullscreen .lab-controls {
+  display:none;
+  flex-direction:column;
+  align-items:stretch;
+}
+.lab-experiment:fullscreen .lab-controls.is-open { display:flex; }
+.lab-experiment:fullscreen .lab-controls > .lab-workspace-panel,
+.lab-experiment:fullscreen .lab-controls > fieldset,
+.lab-experiment:fullscreen .lab-controls > label,
+.lab-experiment:fullscreen .lab-controls > .lab-actions,
+.lab-experiment:fullscreen .lab-controls > .lab-status {
+  position:relative;
+  flex:0 0 auto;
+}
