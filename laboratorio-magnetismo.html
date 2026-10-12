@@ -8,11 +8,11 @@
   <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
   <title>Ímãs e Eletroímãs — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-2">
-  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-2">
-  <script src="script.js?v=magnetismo-20261012-2" defer></script>
+  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-3">
+  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-3">
+  <script src="script.js?v=magnetismo-20261012-3" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-2"></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-3"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -40,21 +40,28 @@
       <button type="button" role="tab" data-mode="graphs" aria-selected="false">Experimentos e gráficos</button>
     </nav>
 
-    <section class="magnet-workspace" aria-label="Área de experimentação">
+    <section id="magnet-workspace" class="magnet-workspace" aria-label="Área de experimentação">
       <div class="magnet-scene-column">
         <div class="magnet-scene-toolbar">
           <p id="mode-description" aria-live="polite">Arraste o ímã, a bússola ou o sensor. Gire o ímã pelos controles.</p>
-          <div class="magnet-scene-actions">
+          <div class="magnet-scene-actions" aria-label="Ações da simulação">
+            <button type="button" class="button button-outline" id="coil-toggle" aria-pressed="false">＋ Bobina</button>
+            <button type="button" class="button button-outline" id="add-metal-ball">＋ Bolinha de metal</button>
+            <button type="button" class="button button-outline" id="remove-metal-ball" disabled>− Bolinha selecionada</button>
             <button type="button" class="button button-outline" id="add-compass">＋ Bússola</button>
             <button type="button" class="button button-outline" id="remove-compass">− Bússola selecionada</button>
+            <button type="button" class="button button-outline" id="simulation-pause" aria-pressed="false">Pausar simulação</button>
+            <button type="button" class="button button-outline" id="fullscreen-toggle" aria-pressed="false">Tela cheia</button>
+            <button type="button" class="button button-outline" id="fullscreen-menu-toggle" aria-expanded="false" hidden>Gráficos e parâmetros</button>
             <button type="button" class="button button-outline" id="reset-lab">Restaurar</button>
           </div>
+          <p class="magnet-simulation-status" id="simulation-status" role="status" aria-live="polite">Adicione uma bobina ou esferas de metal para iniciar a interação magnética.</p>
         </div>
         <div class="magnet-canvas-frame">
           <canvas id="magnet-canvas" tabindex="0" aria-label="Cena 2D interativa do campo magnético. Use os controles para mover instrumentos e alterar as fontes."></canvas>
         </div>
         <div class="magnet-legend" aria-label="Legenda"><span><i class="legend-n"></i> Polo norte magnético</span><span><i class="legend-s"></i> Polo sul magnético</span><span><i class="legend-field"></i> Campo: direção e sentido de B</span><span><i class="legend-grid"></i> Grade de coordenadas</span></div>
-        <p class="magnet-scene-help">Use o mouse ou o toque para mover os instrumentos. No teclado, foque a cena e use as setas para mover o sensor; com Shift, mova a bússola destacada em dourado.</p>
+        <p class="magnet-scene-help">Use mouse ou toque para mover ímãs, bobina, esferas, bússolas e sensor. Use “Tela cheia” para ampliar a cena e “Pausar simulação” para congelar juntos os movimentos físicos.</p>
       </div>
 
       <aside class="magnet-controls" aria-label="Controles do experimento">
@@ -72,8 +79,7 @@
         <fieldset class="magnet-control-group" id="interaction-controls" hidden><legend>Movimento dos ímãs</legend>
           <label class="magnet-check"><input type="checkbox" id="interaction-motion"> Simular o movimento do ímã livre</label>
           <label for="interaction-fixed">Manter ímã fixo<select id="interaction-fixed"><option value="first">Primeiro ímã</option><option value="second">Segundo ímã</option></select></label>
-          <button type="button" class="button button-outline" id="pause-interaction" hidden>Pausar movimento</button>
-          <p class="magnet-control-note" id="interaction-motion-status" role="status" aria-live="polite">Ative o movimento para deixar um ímã responder à força e ao torque calculados a partir da interação dos dois prismas.</p>
+          <p class="magnet-control-note" id="interaction-motion-status" role="status" aria-live="polite">Ative o movimento do ímã livre. A pausa global também congela este movimento, a bobina e as esferas metálicas.</p>
         </fieldset>
 
         <fieldset class="magnet-control-group" id="coil-controls" hidden><legend>Bobina e fonte CC</legend>
@@ -81,9 +87,14 @@
           <label for="coil-turns">Número de espiras <output id="coil-turns-value">18</output><input id="coil-turns" type="range" min="1" max="50" step="1" value="18"></label>
           <label for="coil-length">Comprimento <output id="coil-length-value">0,24 m</output><input id="coil-length" type="range" min="0.08" max="0.42" step="0.01" value="0.24"></label>
           <label for="coil-radius">Raio <output id="coil-radius-value">0,06 m</output><input id="coil-radius" type="range" min="0.025" max="0.12" step="0.005" value="0.06"></label>
-          <label for="coil-angle">Orientação da bobina <output id="coil-angle-value">0°</output><input id="coil-angle" type="range" min="-90" max="90" step="1" value="0"></label>
+          <label for="coil-angle">Orientação da bobina <output id="coil-angle-value">0°</output><input id="coil-angle" type="range" min="-180" max="180" step="1" value="0"></label>
           <label class="magnet-check"><input type="checkbox" id="coil-core"> Núcleo ferromagnético didático</label>
-          <p class="magnet-control-note">A inversão da corrente inverte os polos da bobina. Com 0 A, ela não produz campo. O núcleo usa um fator de reforço saturável didático, não uma curva real de material.</p>
+          <p class="magnet-control-note">A inversão da corrente inverte os polos da bobina. Com 0 A, a bobina sem núcleo não produz campo próprio; o núcleo e as forças entre a bobina e os ímãs seguem um modelo didático saturável.</p>
+        </fieldset>
+
+        <fieldset class="magnet-control-group" id="metal-controls"><legend>Esferas de metal</legend>
+          <p class="magnet-control-note" id="metal-ball-count">Nenhuma esfera adicionada. Até oito esferas podem ser atraídas pelo campo resultante.</p>
+          <p class="magnet-control-note">Modelo didático de material ferromagnético: as esferas respondem ao gradiente do campo e colidem com os ímãs; não representa uma liga específica.</p>
         </fieldset>
 
         <fieldset class="magnet-control-group" id="field-controls" hidden><legend>Fontes e visualização</legend>

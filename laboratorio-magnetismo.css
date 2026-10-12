@@ -79,3 +79,43 @@
 @media(prefers-reduced-motion:reduce){.magnet-page *{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 .magnet-reduced-motion *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 
+
+.magnet-scene-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.magnet-simulation-status{flex:1 0 100%;margin:2px 0 0;color:var(--muted,#aab6c9);font-size:.88rem}
+#simulation-pause{border-color:rgba(231,195,111,.62);color:#f4d58e}
+#coil-toggle[aria-pressed="true"]{border-color:rgba(232,176,93,.75);color:#ffd28a}
+#remove-metal-ball:disabled{opacity:.48;cursor:not-allowed}
+.magnet-controls-collapsed .magnet-controls{display:none!important}
+.magnet-workspace:fullscreen,.magnet-workspace.is-fullscreen{
+  position:fixed;inset:0;z-index:9999;width:100vw;height:100dvh;max-width:none;margin:0;padding:12px;
+  background:#08101f;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,370px);gap:12px;overflow:hidden;
+}
+.magnet-workspace:fullscreen .magnet-scene-column,.magnet-workspace.is-fullscreen .magnet-scene-column{
+  min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden
+}
+.magnet-workspace:fullscreen .magnet-canvas-frame,.magnet-workspace.is-fullscreen .magnet-canvas-frame{
+  flex:1;min-height:0;height:auto
+}
+.magnet-workspace:fullscreen .magnet-controls,.magnet-workspace.is-fullscreen .magnet-controls{
+  min-width:0;max-height:calc(100dvh - 24px);overflow:auto;margin:0;padding:14px
+}
+.magnet-workspace:fullscreen .magnet-readings,.magnet-workspace.is-fullscreen .magnet-readings,
+.magnet-workspace:fullscreen .magnet-graphs,.magnet-workspace.is-fullscreen .magnet-graphs{
+  margin:10px 0 0;padding:12px
+}
+.magnet-workspace:fullscreen .magnet-reading-grid,.magnet-workspace.is-fullscreen .magnet-reading-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
+.magnet-workspace:fullscreen.magnet-controls-collapsed,.magnet-workspace.is-fullscreen.magnet-controls-collapsed{
+  grid-template-columns:minmax(0,1fr)
+}
+.magnet-workspace:fullscreen.magnet-controls-collapsed .magnet-controls,.magnet-workspace.is-fullscreen.magnet-controls-collapsed .magnet-controls{display:none}
+.magnet-workspace:fullscreen .magnet-scene-actions .button,.magnet-workspace.is-fullscreen .magnet-scene-actions .button{white-space:nowrap}
+@media(max-width:900px){
+  .magnet-workspace:fullscreen,.magnet-workspace.is-fullscreen{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(260px,1fr) minmax(180px,40dvh);overflow:auto}
+  .magnet-workspace:fullscreen .magnet-controls,.magnet-workspace.is-fullscreen .magnet-controls{max-height:none}
+}
+@media(max-width:620px){
+  .magnet-scene-actions{gap:6px}
+  .magnet-scene-actions .button{font-size:.78rem;padding:.55rem .65rem}
+}
