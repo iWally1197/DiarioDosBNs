@@ -271,7 +271,7 @@ function initializeExperimentPage(topicId) {
       return "Raios colimados incidem paralelos à superfície e são refletidos pela normal local. O gráfico e as medidas acompanham o mesmo modelo.";
     }
     if (state.mode === "lantern" && state.id === "optics-concave-mirror") {
-      return "A lanterna emite um feixe divergente a partir de uma fonte finita. Os raios são refletidos pela normal local e, por não chegarem paralelos, não convergem todos para o foco.";
+      return "A lanterna usa um feixe colimado: a parábola reflete todos os raios e pontos luminosos pelo foco F. Arraste a lanterna para reposicionar o feixe.";
     }
     if (state.mode === "lantern") {
       return "A fonte luminosa é calculada separadamente do corpo: os raios saem da lanterna e são refletidos pela normal local. Ajuste abertura, emissão e velocidade visual no menu.";
@@ -431,7 +431,7 @@ function initializeExperimentPage(topicId) {
       ];
     }
     const normalized = controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
-    return state.id === "optics-concave-mirror" && state.mode === "parallel"
+    return state.id === "optics-concave-mirror" && state.mode !== "human"
       ? normalized.filter((item) => item.id !== "flashlightAngle")
       : normalized;
   }
@@ -454,9 +454,13 @@ function initializeExperimentPage(topicId) {
         : "Raios colimados chegam paralelos ao espelho e são refletidos pela normal local."
       : state.mode === "lantern"
         ? state.id === "optics-concave-mirror"
-          ? "A lanterna emite um feixe divergente; as trajetórias são calculadas uma a uma e não precisam cruzar todas o foco."
+          ? "Lanterna com feixe colimado: todos os raios e pontos luminosos refletidos atravessam o foco F."
           : "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
         : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
+    const lanternCardDescription = document.querySelector('[data-mirror-mode="lantern"] small');
+    if (lanternCardDescription) lanternCardDescription.textContent = state.id === "optics-concave-mirror"
+      ? "Feixe colimado pela lanterna; todos os raios refletidos atravessam o foco F."
+      : "Feixe divergente emitido pela lanterna; ajuste a abertura e a direção.";
     const bindings = {
       "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
       "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
@@ -468,8 +472,9 @@ function initializeExperimentPage(topicId) {
     }
     const beamMode = $("#mirror-beam-mode");
     const beamModeLabel = beamMode?.closest("label");
-    if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human";
-    if (beamMode) beamMode.value = state.parameters.beamMode || (state.mode === "parallel" ? "parallel" : "divergent");
+    const concaveCollimated = state.id === "optics-concave-mirror" && state.mode !== "human";
+    if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human" || concaveCollimated;
+    if (beamMode) beamMode.value = state.parameters.beamMode || (state.mode === "parallel" || concaveCollimated ? "parallel" : "divergent");
   }
 
   function setMirrorMode(mode) {
@@ -480,7 +485,7 @@ function initializeExperimentPage(topicId) {
     mirrorModeToggleButton?.setAttribute("aria-expanded", "false");
     state.parameters.experimentMode = mode === "human" ? "human" : "lantern";
     if (mode === "parallel") state.parameters.beamMode = "parallel";
-    if (mode === "lantern") state.parameters.beamMode = "divergent";
+    if (mode === "lantern") state.parameters.beamMode = state.id === "optics-concave-mirror" ? "parallel" : "divergent";
     $("#workspace-scene-caption").textContent = mirrorSceneCaption();
     const experiment = experimentById.get(state.id);
     canvas.setAttribute("aria-label", experiment.title + ". " + mirrorSceneCaption());
@@ -494,7 +499,7 @@ function initializeExperimentPage(topicId) {
         : "Lançamento paralelo: raios colimados são refletidos pela superfície."
       : mode === "lantern"
         ? state.id === "optics-concave-mirror"
-          ? "Lanterna divergente: cada trajetória é refletida pela normal local."
+          ? "Lanterna colimada: todos os pontos de luz refletidos atravessam o foco F."
           : "Lançamento de lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
         : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
   }
