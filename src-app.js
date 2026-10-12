@@ -440,6 +440,7 @@ function explainAdminLaboratoryError(error) {
   else if(code==='42703'||code==='PGRST204') nextStep='A tabela animations existe, mas falta uma coluna esperada. Confira se todas as migrações do projeto foram aplicadas.';
   else if(code==='42501'||/permission denied|row-level security/i.test(raw)) nextStep='O Supabase recusou a operação. Entre com uma conta que tenha papel admin ativo e confira a migração de permissões de publicação.';
   else if(code==='23505') nextStep='Há slugs duplicados no banco. A validação abaixo identifica quais laboratórios precisam de revisão.';
+  else if(code==='22P02') nextStep='O Supabase recebeu um código de laboratório em uma coluna UUID. Atualize esta versão do painel para que o banco gere o identificador correto.';
   else if(code==='42P10') nextStep='A chave de conflito por slug não está configurada no banco. Recarregue a página com esta versão do painel; ela não depende dessa chave para preparar os registros.';
   else if(/failed to fetch|network|fetch/i.test(raw)) nextStep='Não foi possível alcançar o Supabase. Confira a conexão e as configurações do projeto.';
   return raw+(code?' (código '+code+'). ':' ')+nextStep;
@@ -473,7 +474,11 @@ async function loadAdminLaboratoryRecords(root) {
   const existingSlugs=new Set((existingRows||[]).map((item)=>item.slug));
   const seeds=laboratoryPublicationRecords
     .filter((item)=>!existingSlugs.has(item.slug))
-    .map((item)=>({...item,is_published:true,created_by:authData.user.id}));
+    .map((item)=>{
+      const seed={...item,is_published:false,created_by:authData.user.id};
+      delete seed.id;
+      return seed;
+    });
   if(seeds.length){
     const {error:seedError}=await withDeadline(
       supabase.from('animations').insert(seeds),
@@ -524,7 +529,7 @@ async function loadAdminLaboratoryRecords(root) {
     <section class="account-section">
       <div class="section-kicker">PUBLICAÇÃO DA BIBLIOTECA</div>
       <h2>Escolha quais conteúdos ficam no ar</h2>
-      <p>Este painel controla individualmente os sete laboratórios da aba pública. O primeiro acesso cria no banco os registros de controle que estiverem faltando; cada botão abaixo altera a publicação real no Supabase.</p>
+      <p>Este painel controla individualmente os sete laboratórios da aba pública. O primeiro acesso cria no banco os registros de controle que estiverem faltando, inicialmente fora do ar; use Publicar para exibi-los no catálogo.</p>
       <p>Use “Validar laboratórios” para conferir o acesso de administrador, os registros no banco e se cada página de simulação está acessível.</p>
       <div class="admin-lab-toolbar">
         <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${locked?'disabled':''}></label>
