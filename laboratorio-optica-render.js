@@ -1,6 +1,7 @@
 import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-focus-layout-20261011-1";
 
-const C_METERS_PER_NS = 0.299792458;
+// Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
+const VISUAL_METERS_PER_NS = 0.3;
 
 function line(context, a, b, color, width = 1.5, dash = []) {
   context.save();
@@ -53,18 +54,16 @@ function pointOnPath(path, distanceAlong) {
 function drawParticles(context, geometry, p, time, view) {
   if (geometry.mode !== "lantern" || !geometry.flashlight?.showParticles) return;
   const wavelengthNm = Number(p.wavelengthNm);
-  const lanternFocusColor = geometry.surfaceProfile === "parabolic" && geometry.flashlight?.focusAligned && p.lightMode === "lantern";
-  const color = lanternFocusColor ? "#ffd166" : wavelengthColor(wavelengthNm);
+  const color = wavelengthColor(wavelengthNm);
   const paths = geometry.particlePaths || [geometry.segments];
-  const speed = C_METERS_PER_NS * geometry.flashlight.visualSpeed;
-  const spacing = speed / geometry.flashlight.emissionRate;
+  const speed = VISUAL_METERS_PER_NS * geometry.flashlight.visualSpeed;
   const travelledAtTime = Math.max(0, time) * speed;
   for (const path of paths) {
     const pathLength = path.reduce((sum, segment) => sum + opticalDistance(segment.start, segment.end), 0);
     if (!(pathLength > 0)) continue;
-    const count = Math.min(28, Math.max(1, Math.ceil(pathLength / spacing)));
+    const count = Math.max(1, Math.min(32, Math.round(Number(p.particleCount ?? geometry.flashlight.particleCount ?? 8))));
     for (let index = 0; index < count; index += 1) {
-      const distanceAlong = ((travelledAtTime + index * spacing) % pathLength + pathLength) % pathLength;
+      const distanceAlong = ((travelledAtTime + index * pathLength / count) % pathLength + pathLength) % pathLength;
       const { point: worldPoint, segment } = pointOnPath(path, distanceAlong);
       const point = view.toScreen(worldPoint);
       if (geometry.flashlight.showTrails && segment) {
@@ -200,17 +199,6 @@ function drawLantern(context, geometry, view, palette) {
   context.fillStyle = palette.gold;
   context.beginPath(); context.ellipse(19, 0, 2.5, 7.5, 0, 0, Math.PI * 2); context.fill();
   context.restore();
-  if (flashlight.focusAligned) {
-    context.strokeStyle = "#fff6d6";
-    context.lineWidth = 2;
-    context.beginPath();
-    context.ellipse(18, 0, 2.8, 7.5, 0, 0, Math.PI * 2);
-    context.stroke();
-    context.fillStyle = "#fff6d6";
-    context.font = "700 6px system-ui";
-    context.textAlign = "center";
-    context.fillText("COL", 1, 2);
-  }
   const tip = { x: flashlight.source.x + flashlight.direction.x * 0.3, y: flashlight.source.y + flashlight.direction.y * 0.3 };
   drawArrow(context, origin, view.toScreen(tip), palette.gold, "lanterna", palette.text);
 }
@@ -474,10 +462,13 @@ function drawSphericalSurface(context, geometry, view, palette) {
 
 function drawSphericalLandmarks(context, geometry, values, view, palette, label) {
   const center = view.toScreen(geometry.center);
-  const focus = view.toScreen({ x: -geometry.focalLength, y: 0 });
+  const focusWorld = geometry.flashlight?.idealized && geometry.flashlight.focus
+    ? geometry.flashlight.focus
+    : { x: -geometry.focalLength, y: 0 };
+  const focus = view.toScreen(focusWorld);
   const vertex = view.toScreen({ x: 0, y: 0 });
   const landmarks = geometry.surfaceProfile === "parabolic"
-    ? [[focus, "F", true], [vertex, "V", false]]
+    ? [[focus, geometry.flashlight?.idealized ? "F*" : "F", true], [vertex, "V", false]]
     : [[center, "C", false], [focus, "F", true], [vertex, "V", false]];
   for (const [point, text, isFocus] of landmarks) {
     context.beginPath(); context.arc(point.x, point.y, isFocus ? 7 : 3.5, 0, 2 * Math.PI);
@@ -494,7 +485,9 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
   context.fillStyle = palette.text; context.font = "12px system-ui";
   context.fillText(label + " · f = " + values.focalLength.toFixed(2) + " m · R = " + Math.abs(values.radius).toFixed(2) + " m", 12, 20);
   context.fillStyle = palette.muted; context.font = "11px system-ui";
-  context.fillText("Equação paraxial: p′ = " + (Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞") + " m · m = " + (Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"), 12, 39);
+  context.fillText(geometry.flashlight?.idealized
+    ? "F* = posição do foco didático ajustável."
+    : "Equação paraxial: p′ = " + (Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞") + " m · m = " + (Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"), 12, 39, Math.max(80, context.canvas.width - 24));
 }
 
 function drawSphericalHuman(context, geometry, values, p, view, palette) {
@@ -528,76 +521,36 @@ function drawSphericalHuman(context, geometry, values, p, view, palette) {
   }
 }
 
-function drawCollimatedLanternEnvelope(context, geometry, view, color) {
-  const incident = (geometry.rays || []).filter((ray) => ray.role === "raio incidente");
-  if (incident.length < 2) return;
-  const firstStart = view.toScreen(incident[0].points[0]);
-  const firstHit = view.toScreen(incident[0].points[1]);
-  const lastStart = view.toScreen(incident[incident.length - 1].points[0]);
-  const lastHit = view.toScreen(incident[incident.length - 1].points[1]);
-  context.save();
-  context.globalAlpha = 0.10;
-  context.fillStyle = color;
-  context.beginPath();
-  context.moveTo(firstStart.x, firstStart.y);
-  context.lineTo(firstHit.x, firstHit.y);
-  context.lineTo(lastHit.x, lastHit.y);
-  context.lineTo(lastStart.x, lastStart.y);
-  context.closePath();
-  context.fill();
-  context.globalAlpha = 0.5;
-  context.strokeStyle = color;
-  context.lineWidth = 1.5;
-  context.beginPath();
-  context.moveTo(firstStart.x, firstStart.y);
-  context.lineTo(firstHit.x, firstHit.y);
-  context.moveTo(lastStart.x, lastStart.y);
-  context.lineTo(lastHit.x, lastHit.y);
-  context.stroke();
-  context.restore();
-}
-
-function drawFocusGlow(context, geometry, view, palette) {
-  const point = view.toScreen({ x: -geometry.focalLength, y: 0 });
-  context.save();
-  context.globalAlpha = 0.4;
-  context.shadowColor = palette.gold;
-  context.shadowBlur = 20;
-  context.fillStyle = "#fff2b3";
-  context.beginPath();
-  context.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-  context.fill();
-  context.restore();
-}
-
 function drawSphericalLantern(context, geometry, values, p, view, palette) {
   drawSphericalSurface(context, geometry, view, palette);
   const flashlight = geometry.flashlight;
-  const concaveLantern = geometry.surfaceProfile === "parabolic" && p.lightMode === "lantern" && flashlight.focusAligned;
-  if (concaveLantern) drawCollimatedLanternEnvelope(context, geometry, view, "#ffd166");
+  const idealized = geometry.surfaceProfile === "parabolic" && flashlight.opticsMode === "idealized";
   if (flashlight.showRays) {
     let incidentLabeled = false, reflectedLabeled = false, virtualLabeled = false;
     for (const ray of geometry.rays) {
       const points = ray.points.map((point) => view.toScreen(point));
       const virtual = ray.role.includes("virtual");
+      const idealizedRay = ray.role.includes("idealizada");
+      const afterFocus = ray.role.includes("após F");
       const incident = ray.role.includes("incidente");
-      const label = virtual ? (virtualLabeled ? "" : "prolongamento virtual") : incident ? (incidentLabeled ? "" : "raio incidente") : (reflectedLabeled ? "" : "raio refletido");
+      const label = idealizedRay
+        ? (incidentLabeled ? "" : "trajetória idealizada")
+        : afterFocus
+          ? (reflectedLabeled ? "" : "continuação após F")
+          : virtual ? (virtualLabeled ? "" : "prolongamento virtual")
+            : incident ? (incidentLabeled ? "" : "raio incidente")
+              : (reflectedLabeled ? "" : "raio refletido");
       if (virtual) virtualLabeled = true;
-      else if (incident) incidentLabeled = true;
+      else if (incident || idealizedRay) incidentLabeled = true;
       else reflectedLabeled = true;
       context.save(); context.globalAlpha = flashlight.intensity;
-      const lanternRayColor = concaveLantern ? "#ffd166" : wavelengthColor(Number(p.wavelengthNm));
-      drawArrow(context, points[0], points[1], virtual ? palette.muted : lanternRayColor, label, palette.muted);
+      drawArrow(context, points[0], points[1], virtual ? palette.muted : wavelengthColor(Number(p.wavelengthNm)), label, palette.muted);
       context.restore();
     }
   }
   drawParticles(context, geometry, p, values.time, view);
-  const showPhysicalLantern = geometry.surfaceProfile !== "parabolic" || p.lightMode === "lantern";
-  if (showPhysicalLantern) {
-    drawLantern(context, geometry, view, palette);
-    drawLanternImage(context, geometry, view, palette);
-  }
-  if (concaveLantern) drawFocusGlow(context, geometry, view, palette);
+  drawLantern(context, geometry, view, palette);
+  if (!idealized) drawLanternImage(context, geometry, view, palette);
   const interaction = flashlight.primaryInteraction;
   if (interaction && flashlight.showNormal) {
     const end = { x: interaction.hit.x + interaction.normal.x * 0.66, y: interaction.hit.y + interaction.normal.y * 0.66 };
@@ -611,16 +564,17 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     context.fillStyle = palette.text; context.font = "10px system-ui";
     context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
-  const beamLabel = geometry.surfaceProfile === "parabolic" && flashlight.focusAligned
-    ? (p.lightMode === "lantern"
-      ? "Lanterna com colimador · feixe dourado · todas as bolinhas passam por F"
-      : "Feixe paralelo · todas as bolinhas passam pelo foco F")
-    : (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "paralelo" : "divergente");
+  const beamLabel = idealized
+    ? "Convergência idealizada · todos os pontos atravessam F*"
+    : geometry.surfaceProfile === "parabolic" && flashlight.focusAligned
+      ? "Feixe colimado · reflexão parabólica converge no foco real F"
+      : (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "paralelo" : "divergente");
   drawSphericalLandmarks(context, geometry, values, view, palette, beamLabel);
   context.fillStyle = palette.muted; context.font = "10px system-ui";
-  context.fillText(geometry.surfaceProfile === "parabolic"
-    ? "Superfície parabólica e normal local exata; raios paralelos convergem no foco."
-    : "A normal local é calculada no ponto em que cada raio encontra a superfície esférica.", 12, 58);
+  const explanation = idealized
+    ? "Modo didático: foco ajustável; não aplica a reflexão especular."
+    : "Modo físico: cada raio reflete pela normal local; o foco não é imposto.";
+  context.fillText(explanation, 12, 58, Math.max(80, context.canvas.width - 24));
 }
 
 function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {

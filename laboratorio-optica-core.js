@@ -342,6 +342,87 @@ function intersectSphericalRay(origin, direction, geometry) {
   return null;
 }
 
+function directionToTarget(origin, target, fallback = { x: 1, y: 0 }) {
+  const dx = target.x - origin.x;
+  const dy = target.y - origin.y;
+  const length = Math.hypot(dx, dy);
+  if (!(length > 1e-12)) return fallback;
+  return { x: dx / length, y: dy / length };
+}
+
+function idealizedFocusMirror(p, geometry, source, settings) {
+  const focus = {
+    x: -geometry.focalLength + finite(p.focusOffsetX ?? 0, "Deslocamento horizontal do foco"),
+    y: finite(p.focusOffsetY ?? 0, "Deslocamento vertical do foco")
+  };
+  const padding = 0.7;
+  geometry.bounds = {
+    xMin: Math.min(geometry.bounds.xMin, focus.x - padding),
+    xMax: Math.max(geometry.bounds.xMax, focus.x + padding),
+    yMin: Math.min(geometry.bounds.yMin, focus.y - padding),
+    yMax: Math.max(geometry.bounds.yMax, focus.y + padding)
+  };
+  const centralDirection = directionToTarget(source, focus);
+  const perpendicular = { x: -centralDirection.y, y: centralDirection.x };
+  const sourceSpread = Math.min(
+    geometry.aperture * 0.85,
+    distance(source, focus) * Math.tan(settings.opening / 2)
+  );
+  const rayCount = 7;
+  const rays = [];
+  const particlePaths = [];
+  for (let index = 0; index < rayCount; index += 1) {
+    const fraction = rayCount === 1 ? 0 : (index / (rayCount - 1)) * 2 - 1;
+    const origin = {
+      x: source.x + perpendicular.x * fraction * sourceSpread,
+      y: source.y + perpendicular.y * fraction * sourceSpread
+    };
+    const direction = directionToTarget(origin, focus, centralDirection);
+    const toFocusLength = distance(origin, focus);
+    const path = [];
+    if (toFocusLength > 1e-12) {
+      path.push({ start: origin, end: focus, index: 1 });
+      rays.push({ role: "trajetória idealizada até F", points: [origin, focus], index: 1, color: "beam" });
+    }
+    const afterFocusStart = addScaled(focus, direction, 1e-8);
+    const end = rayToBounds(afterFocusStart, direction, geometry.bounds);
+    path.push({ start: focus, end, index: 1 });
+    rays.push({ role: "continuação após F", points: [focus, end], index: 1, color: "beam" });
+    particlePaths.push(path);
+  }
+  geometry.source = source;
+  geometry.focus = focus;
+  geometry.rays = rays;
+  geometry.particlePaths = particlePaths;
+  geometry.segments = particlePaths[0] || [];
+  geometry.mode = "lantern";
+  geometry.flashlight = {
+    source,
+    focus,
+    direction: centralDirection,
+    rayCount,
+    actualRayCount: particlePaths.length,
+    particleCount: settings.particleCount,
+    parallel: false,
+    focusAligned: true,
+    idealized: true,
+    opticsMode: "idealized",
+    beamAngle: 0,
+    opening: settings.opening,
+    emissionRate: settings.emissionRate,
+    visualSpeed: settings.visualSpeed,
+    intensity: settings.intensity,
+    primaryInteraction: null,
+    showRays: p.showRays !== false,
+    showNormal: p.showNormal !== false,
+    showAngles: p.showAngles !== false,
+    showTrails: p.showTrails !== false,
+    showParticles: p.showParticles !== false,
+    showImage: p.showLanternImage !== false
+  };
+  return geometry;
+}
+
 function flashlightMirror(id, p, geometry) {
   const focusAligned = geometry.surfaceProfile === "parabolic" && p.beamMode === "parallel";
   const beamAngle = (focusAligned ? 0 : finite(p.flashlightAngle ?? 0, "Orientação da lanterna")) * Math.PI / 180;
@@ -354,9 +435,11 @@ function flashlightMirror(id, p, geometry) {
   if (emissionRate < 0.2 || emissionRate > 1.5) throw new RangeError("A frequência visual deve permanecer entre 0,2 e 1,5 bolinhas/ns.");
   if (visualSpeed < 0.25 || visualSpeed > 2) throw new RangeError("A velocidade visual deve permanecer entre 0,25× e 2×.");
   if (intensity < 0.1 || intensity > 1) throw new RangeError("A intensidade visual deve permanecer entre 0,1 e 1.");
+  const particleCount = Math.round(finite(p.particleCount ?? 8, "Quantidade de pontos luminosos"));
+  if (particleCount < 1 || particleCount > 32) throw new RangeError("A quantidade de pontos luminosos deve ficar entre 1 e 32.");
 
-  // A lanterna do espelho côncavo usa um colimador ideal: raios paralelos
-  // refletidos pela parábola atravessam o mesmo foco, inclusive fora do eixo.
+  // A reflexão geométrica real continua sendo calculada pelo traçador abaixo.
+  // A convergência idealizada é uma representação didática independente da lei de reflexão.
   const parallel = p.beamMode === "parallel";
   const rayCount = 7;
   const baseAngle = geometry.kind === "plane-mirror" ? Math.atan2(geometry.incomingDirection.y, geometry.incomingDirection.x) : 0;
@@ -366,6 +449,9 @@ function flashlightMirror(id, p, geometry) {
   const source = geometry.kind === "plane-mirror"
     ? addScaled(geometry.hit, { x: -geometry.incomingDirection.x, y: -geometry.incomingDirection.y }, positive(p.sourceDistance ?? 1.8, "Distância da lanterna"))
     : { x: -positive(p.objectDistance, "Distância da lanterna"), y: finite(p.flashlightHeight ?? 0.6, "Altura da lanterna") };
+  if (geometry.surfaceProfile === "parabolic" && id === "optics-concave-mirror" && p.lanternOpticsMode === "idealized" && p.lightMode !== "parallel") {
+    return idealizedFocusMirror(p, geometry, source, { opening, emissionRate, visualSpeed, intensity, particleCount });
+  }
   if (geometry.kind === "plane-mirror") {
     const image = reflectedPointAcrossPlane(source, geometry.center, geometry.normal);
     const pad = 0.8;
@@ -422,7 +508,8 @@ function flashlightMirror(id, p, geometry) {
   geometry.mode = "lantern";
   geometry.flashlight = {
     source, direction: central, rayCount, actualRayCount: hits.length,
-    parallel, focusAligned, beamAngle, opening, emissionRate, visualSpeed, intensity,
+    parallel, focusAligned, beamAngle, opening, emissionRate, visualSpeed, intensity, particleCount,
+    idealized: false, opticsMode: "realistic", focus: null,
     primaryInteraction: hits[Math.floor(hits.length / 2)] || null,
     showRays: p.showRays !== false,
     showNormal: p.showNormal !== false,

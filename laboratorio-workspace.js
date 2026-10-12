@@ -1,7 +1,7 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-3";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-focus-layout-20261011-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-lantern-visual-20261011-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-launch-modes-20261011-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-focus-models-20261012-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-focus-models-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -271,7 +271,9 @@ function initializeExperimentPage(topicId) {
       return "Raios colimados incidem paralelos à superfície e são refletidos pela normal local. O gráfico e as medidas acompanham o mesmo modelo.";
     }
     if (state.mode === "lantern" && state.id === "optics-concave-mirror") {
-      return "A lanterna usa um feixe colimado: a parábola reflete todos os raios e pontos luminosos pelo foco F. Arraste a lanterna para reposicionar o feixe.";
+      return state.parameters.lanternOpticsMode === "realistic"
+        ? "Lanterna com óptica realista: os raios refletem pela normal local, sem foco imposto. A velocidade dos pontos é didática."
+        : "Lanterna em convergência idealizada: todos os pontos atravessam o foco configurado e continuam depois dele. A velocidade é didática.";
     }
     if (state.mode === "lantern") {
       return "A fonte luminosa é calculada separadamente do corpo: os raios saem da lanterna e são refletidos pela normal local. Ajuste abertura, emissão e velocidade visual no menu.";
@@ -293,7 +295,8 @@ function initializeExperimentPage(topicId) {
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
         showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
-        beamMode: id === "optics-concave-mirror" ? "parallel" : "divergent", lightMode: state.mode, flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
+        lanternOpticsMode: "idealized", focusOffsetX: 0, focusOffsetY: 0, particleCount: 8, lightMode: state.mode,
+        beamMode: state.mode === "parallel" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
       });
       if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
       else state.parameters.objectHeight = 1.7;
@@ -399,8 +402,8 @@ function initializeExperimentPage(topicId) {
     const lanternControls = [
       { id: "flashlightAngle", label: "Orientação da lanterna", unit: "°", min: -50, max: 50, step: 1, value: 0 },
       { id: "beamOpening", label: "Abertura do feixe", unit: "°", min: 2, max: 50, step: 1, value: 20 },
-      { id: "emissionRate", label: "Frequência visual de emissão", unit: "bolinhas/ns", min: 0.2, max: 1.5, step: 0.05, value: 0.65 },
-      { id: "visualSpeed", label: "Velocidade visual da luz", unit: "× c", min: 0.25, max: 2, step: 0.25, value: 1 },
+      { id: "particleCount", label: "Quantidade de pontos luminosos por raio", unit: "pontos", min: 1, max: 24, step: 1, value: 8 },
+      { id: "visualSpeed", label: "Velocidade visual (didática)", unit: "× base visual", min: 0.25, max: 2, step: 0.25, value: 1 },
       { id: "beamIntensity", label: "Intensidade visual do feixe", unit: "0–1", min: 0.1, max: 1, step: 0.05, value: 0.8 }
     ];
     let controls;
@@ -429,6 +432,12 @@ function initializeExperimentPage(topicId) {
         { id: "flashlightHeight", label: "Altura da lanterna", unit: "m", min: 0.1, max: 2.2, step: 0.05, value: 0.6 },
         ...lanternControls
       ];
+      if (state.id === "optics-concave-mirror" && state.mode === "lantern" && state.parameters.lanternOpticsMode === "idealized") {
+        controls.push(
+          { id: "focusOffsetX", label: "Posição horizontal do foco (ajuste relativo a F)", unit: "m", min: -1.5, max: 1.5, step: 0.05, value: 0 },
+          { id: "focusOffsetY", label: "Posição vertical do foco", unit: "m", min: -1.5, max: 1.5, step: 0.05, value: 0 }
+        );
+      }
     }
     const normalized = controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
     return state.id === "optics-concave-mirror" && state.mode !== "human"
@@ -448,18 +457,21 @@ function initializeExperimentPage(topicId) {
     }
     $("#mirror-human-options").hidden = !isMirror || state.mode !== "human";
     $("#mirror-lantern-options").hidden = !isMirror || state.mode === "human";
+    const opticalMode = state.parameters.lanternOpticsMode === "realistic" ? "realistic" : "idealized";
     $("#mirror-mode-description").textContent = state.mode === "parallel"
       ? state.id === "optics-concave-mirror"
-        ? "Feixe colimado: na parábola côncava, os raios refletidos atravessam o foco F."
+        ? "Feixe paralelo refletido pela parábola: as trajetórias físicas convergem no foco real F."
         : "Raios colimados chegam paralelos ao espelho e são refletidos pela normal local."
       : state.mode === "lantern"
         ? state.id === "optics-concave-mirror"
-          ? "Lanterna com feixe colimado: todos os raios e pontos luminosos refletidos atravessam o foco F."
+          ? opticalMode === "idealized"
+            ? "Convergência idealizada: os pontos atravessam o foco didático ajustável; este modo não aplica a reflexão especular."
+            : "Óptica realista: a fonte e a superfície refletem os raios pela normal; o foco não é imposto."
           : "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
         : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
     const lanternCardDescription = document.querySelector('[data-mirror-mode="lantern"] small');
     if (lanternCardDescription) lanternCardDescription.textContent = state.id === "optics-concave-mirror"
-      ? "Feixe colimado pela lanterna; todos os raios refletidos atravessam o foco F."
+      ? "Escolha entre foco didático ajustável e reflexão realista pela superfície."
       : "Feixe divergente emitido pela lanterna; ajuste a abertura e a direção.";
     const bindings = {
       "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
@@ -470,11 +482,21 @@ function initializeExperimentPage(topicId) {
       const input = document.getElementById(elementId);
       if (input && state.parameters[key] !== undefined) input.checked = state.parameters[key] !== false;
     }
+    const opticsMode = $("#mirror-lantern-optics-mode");
+    const opticsModeLabel = opticsMode?.closest("label");
+    const isConcaveLantern = state.id === "optics-concave-mirror" && state.mode === "lantern";
+    if (opticsModeLabel) opticsModeLabel.hidden = !isConcaveLantern;
+    if (opticsMode) opticsMode.value = state.parameters.lanternOpticsMode || "idealized";
+    const idealizedLantern = isConcaveLantern && state.parameters.lanternOpticsMode !== "realistic";
+    for (const elementId of ["mirror-show-lantern-image", "mirror-show-normal", "mirror-show-angles"]) {
+      const option = document.getElementById(elementId)?.closest("label");
+      if (option) option.hidden = idealizedLantern;
+    }
     const beamMode = $("#mirror-beam-mode");
     const beamModeLabel = beamMode?.closest("label");
-    const concaveCollimated = state.id === "optics-concave-mirror" && state.mode !== "human";
-    if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human" || concaveCollimated;
-    if (beamMode) beamMode.value = state.parameters.beamMode || (state.mode === "parallel" || concaveCollimated ? "parallel" : "divergent");
+    const showBeamMode = state.mode === "lantern" && (!isConcaveLantern || state.parameters.lanternOpticsMode === "realistic");
+    if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human" || !showBeamMode;
+    if (beamMode) beamMode.value = state.parameters.beamMode || "divergent";
   }
 
   function setMirrorMode(mode) {
@@ -486,7 +508,10 @@ function initializeExperimentPage(topicId) {
     state.parameters.experimentMode = mode === "human" ? "human" : "lantern";
     state.parameters.lightMode = mode;
     if (mode === "parallel") state.parameters.beamMode = "parallel";
-    if (mode === "lantern") state.parameters.beamMode = state.id === "optics-concave-mirror" ? "parallel" : "divergent";
+    if (mode === "lantern") {
+      state.parameters.beamMode = "divergent";
+      state.parameters.lanternOpticsMode ||= "idealized";
+    }
     $("#workspace-scene-caption").textContent = mirrorSceneCaption();
     const experiment = experimentById.get(state.id);
     canvas.setAttribute("aria-label", experiment.title + ". " + mirrorSceneCaption());
@@ -500,7 +525,9 @@ function initializeExperimentPage(topicId) {
         : "Lançamento paralelo: raios colimados são refletidos pela superfície."
       : mode === "lantern"
         ? state.id === "optics-concave-mirror"
-          ? "Lanterna colimada: todos os pontos de luz refletidos atravessam o foco F."
+          ? state.parameters.lanternOpticsMode === "realistic"
+            ? "Óptica realista selecionada: cada raio é recalculado pela lei da reflexão."
+            : "Convergência idealizada selecionada: todos os pontos atravessam o foco didático."
           : "Lançamento de lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
         : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
   }
@@ -526,7 +553,30 @@ function initializeExperimentPage(topicId) {
       try { render(); } catch (error) { showError(error); }
     });
   }
+  $("#mirror-lantern-optics-mode")?.addEventListener("change", (event) => {
+    if (state.id !== "optics-concave-mirror" || state.mode !== "lantern") return;
+    state.parameters.lanternOpticsMode = event.currentTarget.value === "realistic" ? "realistic" : "idealized";
+    if (state.parameters.lanternOpticsMode === "realistic") state.parameters.beamMode = "divergent";
+    state.time = 0;
+    state.opticalBounds = null;
+    $("#workspace-scene-caption").textContent = mirrorSceneCaption();
+    const experiment = experimentById.get(state.id);
+    canvas.setAttribute("aria-label", experiment.title + ". " + mirrorSceneCaption());
+    buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    syncMirrorModeButtons();
+    updateTimeControls();
+    $("#workspace-status").textContent = state.parameters.lanternOpticsMode === "idealized"
+      ? "Convergência idealizada: os pontos seguem trajetórias atualizadas até o foco didático."
+      : "Óptica realista: cada raio é recalculado pela lei da reflexão na superfície.";
+    try { render(); } catch (error) { showError(error); }
+  });
   $("#mirror-beam-mode")?.addEventListener("change", (event) => {
+    if (state.id === "optics-concave-mirror" && state.mode === "lantern") {
+      state.parameters.beamMode = event.currentTarget.value === "parallel" ? "parallel" : "divergent";
+      state.time = 0;
+      try { render(); } catch (error) { showError(error); }
+      return;
+    }
     setMirrorMode(event.currentTarget.value === "parallel" ? "parallel" : "lantern");
   });
 
