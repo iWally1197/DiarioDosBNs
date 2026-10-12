@@ -339,7 +339,8 @@ function initializeExperimentPage(topicId) {
       "optics-reflection": "Espelho, normal e feixe são calculados pela geometria do raio. Arraste o centro para reposicionar o espelho, uma extremidade para girá-lo ou use os controles para mover o ponto de incidência.",
       "optics-refraction": "A direção do raio atravessando a interface é calculada pela lei de Snell. Se o ângulo crítico for ultrapassado, o modelo mostra reflexão interna total.",
       "optics-concave-mirror": "No modo Lanterna didático, um cone atinge a parábola e cada raio atravessa F* e continua; no modo realista, a reflexão segue a normal local. No modo Corpo humano, a imagem usa as equações paraxiais.",
-      "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial."
+      "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial.",
+      "lens-diverging": "A distância focal é negativa; os raios emergem divergentes e seus prolongamentos localizam uma imagem virtual, direita e menor. O modelo usa a equação das lentes delgadas na aproximação paraxial."
     };
     $("#workspace-scene-caption").textContent = MIRROR_EXPERIMENTS.has(state.id) ? mirrorSceneCaption() : (sceneCaptions[state.id] || "A cena, a animação e o gráfico representam o mesmo modelo físico e compartilham seus parâmetros.");
     canvas.setAttribute("aria-label", `${experiment.title}. ${MIRROR_EXPERIMENTS.has(state.id) ? mirrorSceneCaption() : sceneCaptions[state.id] || "Animação física interativa."}`);
