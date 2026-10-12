@@ -1,10 +1,10 @@
-import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-20261012-1";
+import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-20261012-2";
 import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261012-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
 const allowedExperiments = experiments.filter((item) => laboratoryPublicationByExperimentId.has(item.id));
-export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "laboratorio-magnetismo.html" : id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
+export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "laboratorio-magnetismo.html" : id === "mru" ? "laboratorio-mru.html" : id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
 function initializeCatalog() {
