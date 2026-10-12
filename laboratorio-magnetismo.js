@@ -7,6 +7,9 @@ import {
   makeFieldModel,
   makeMagnet,
   magnetContainsPoint,
+  magnetInteractionForceTorque,
+  magnetPrismsOverlap,
+  stepMagnetInteraction,
   traceFieldLine
 } from "./laboratorio-magnetismo-core.js";
 
@@ -14,18 +17,23 @@ const byId = (id) => document.getElementById(id);
 const canvas = byId("magnet-canvas");
 const ctx = canvas?.getContext("2d");
 if (!canvas || !ctx) throw new Error("Não foi possível iniciar a cena do laboratório de magnetismo.");
+const systemPrefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 const initial = () => ({
   mode: "permanent", magnet: makeMagnet(), secondMagnet: makeMagnet({ x: 0.2, y: 0.06, angle: Math.PI, polarity: 1 }),
   coil: makeCoil(), sensor: { x: 0.18, y: 0.1 }, compasses: [{ x: -0.17, y: 0.11 }], selectedCompass: 0,
   showLines: true, showVectors: false, showHeatmap: false, showCurrent: true, showGrid: true, showInterior: true,
   showNumbers: true, earth: false, showMagnetSource: true, showCoilSource: false, density: 18,
-  advanced: false
+  advanced: false, interactionMotion: false, interactionPaused: false, interactionFixed: "first",
+  interactionVelocity: { x: 0, y: 0, angle: 0 }, interactionForce: null, reduceMotion: systemPrefersReducedMotion
 });
 let state = initial();
 let view = { width: 0, height: 0, scale: 1, dpr: 1 };
 let drag = null;
 let redrawFrame = 0;
+let interactionFrame = 0;
+let lastInteractionTime = 0;
+let lastInteractionRender = 0;
 let graphComparison = null;
 let chartSnapshot = null;
 let chartInspection = "Passe o cursor ou toque em um ponto para inspecionar.";
@@ -74,6 +82,9 @@ function updateControlText() {
   byId("show-magnet-source").checked = state.showMagnetSource;
   byId("show-coil-source").checked = state.showCoilSource;
   byId("earth-field").checked = state.earth;
+  byId("interaction-motion").checked = state.interactionMotion;
+  byId("interaction-fixed").value = state.interactionFixed;
+  byId("reduce-motion").checked = state.reduceMotion;
 }
 
 function updateModeUI() {
@@ -81,6 +92,7 @@ function updateModeUI() {
   byId("permanent-controls").hidden = !["permanent", "interaction", "field"].includes(state.mode);
   byId("coil-controls").hidden = !["electromagnet", "field", "graphs"].includes(state.mode);
   byId("field-controls").hidden = state.mode !== "field";
+  byId("interaction-controls").hidden = state.mode !== "interaction";
   document.querySelectorAll(".magnet-secondary-control").forEach((node) => { node.hidden = state.mode !== "interaction"; });
   document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; });
   byId("magnet-graphs").hidden = state.mode !== "graphs";
@@ -89,15 +101,65 @@ function updateModeUI() {
     permanent: "Arraste o ímã, a bússola ou o sensor. A agulha se orienta pelo campo local calculado.",
     electromagnet: "Altere corrente e geometria. Inverter I inverte a polaridade; com I = 0, o campo da bobina desaparece.",
     field: "Ative ou combine fontes e compare o vetor resultante no sensor. A densidade das linhas só muda a visualização.",
-    interaction: "Arraste os dois ímãs e gire cada um. O campo entre eles é a soma vetorial de suas contribuições.",
+    interaction: "Arraste os ímãs, compare seus polos e, se desejar, ative o movimento calculado de um deles mantendo o outro fixo.",
     graphs: "Os gráficos vêm do mesmo cálculo do cenário. Inspecione pontos ou clique para posicionar o sensor."
   };
   byId("controls-title").textContent = titles[state.mode];
   byId("mode-description").textContent = descriptions[state.mode];
   byId("add-compass").hidden = false;
+  const pauseButton = byId("pause-interaction");
+  pauseButton.hidden = !state.interactionMotion;
+  pauseButton.disabled = state.reduceMotion;
+  pauseButton.textContent = state.interactionPaused ? "Continuar movimento" : "Pausar movimento";
+  document.body.classList.toggle("magnet-reduced-motion", state.reduceMotion);
+  const motionStatus = byId("interaction-motion-status");
+  if (!state.interactionMotion) motionStatus.textContent = "Ative o movimento para deixar um ímã responder à força e ao torque calculados a partir da interação dos dois prismas.";
+  else if (state.reduceMotion) motionStatus.textContent = "Movimento automático suspenso pela opção de reduzir movimentos. Desative essa opção para continuar; arrastar e controles continuam disponíveis.";
+  else if (state.interactionPaused) motionStatus.textContent = `Movimento pausado. ${interactionSummary()}`;
+  else motionStatus.textContent = `Movimento ativo, com integração amortecida. ${interactionSummary()}`;
   if (state.mode === "field") {
     state.showMagnetSource = byId("show-magnet-source").checked;
     state.showCoilSource = byId("show-coil-source").checked;
+  }
+}
+
+function interactionSummary() {
+  const result = state.interactionForce || magnetInteractionForceTorque(
+    state.interactionFixed === "first" ? state.magnet : state.secondMagnet,
+    state.interactionFixed === "first" ? state.secondMagnet : state.magnet
+  );
+  const fx = formatter(3).format(result.force.x), fy = formatter(3).format(result.force.y), torque = formatter(4).format(result.torque);
+  return `Estimativa no ímã livre: Fx ${fx} N, Fy ${fy} N e τz ${torque} N·m.`;
+}
+
+function shouldRunInteraction() {
+  return state.mode === "interaction" && state.interactionMotion && !state.interactionPaused && !state.reduceMotion;
+}
+
+function advanceInteraction(dt) {
+  const fixedIsFirst = state.interactionFixed === "first";
+  const fixed = fixedIsFirst ? state.magnet : state.secondMagnet;
+  const movingKey = fixedIsFirst ? "secondMagnet" : "magnet";
+  const result = stepMagnetInteraction(fixed, state[movingKey], state.interactionVelocity, dt);
+  state[movingKey] = result.magnet;
+  state.interactionVelocity = result.velocity;
+  state.interactionForce = result;
+}
+
+function interactionLoop(timestamp) {
+  if (!shouldRunInteraction()) { interactionFrame = 0; lastInteractionTime = 0; return; }
+  const dt = lastInteractionTime ? Math.min(0.034, Math.max(0, (timestamp - lastInteractionTime) / 1000)) : 0;
+  lastInteractionTime = timestamp;
+  if (dt) advanceInteraction(dt);
+  if (timestamp - lastInteractionRender >= 33) { render(); lastInteractionRender = timestamp; }
+  interactionFrame = requestAnimationFrame(interactionLoop);
+}
+
+function syncInteractionLoop() {
+  if (shouldRunInteraction()) {
+    if (!interactionFrame) { lastInteractionTime = 0; lastInteractionRender = 0; interactionFrame = requestAnimationFrame(interactionLoop); }
+  } else if (interactionFrame) {
+    cancelAnimationFrame(interactionFrame); interactionFrame = 0; lastInteractionTime = 0;
   }
 }
 
@@ -492,6 +554,8 @@ function beginDrag(event) {
     if (distance < radius && distance < best) { nearest = item; best = distance; }
   }
   if (!nearest) return;
+  const fixedIndex = state.interactionFixed === "first" ? 0 : 1;
+  if (state.mode === "interaction" && state.interactionMotion && !state.interactionPaused && !state.reduceMotion && nearest.type === "magnet" && nearest.index === fixedIndex) return;
   if (nearest.type === "compass") state.selectedCompass = nearest.index;
   drag = { ...nearest, dx: nearest.point.x - world.x, dy: nearest.point.y - world.y };
   canvas.classList.add("is-dragging"); canvas.setPointerCapture(event.pointerId); event.preventDefault();
@@ -502,17 +566,27 @@ function moveDrag(event) {
   const world = toWorld(localPointer(event)); const x = clamp(world.x + drag.dx, -0.37, 0.37), y = clamp(world.y + drag.dy, -0.23, 0.23);
   if (drag.type === "sensor") { state.sensor.x = x; state.sensor.y = y; }
   if (drag.type === "compass") { state.compasses[drag.index].x = x; state.compasses[drag.index].y = y; }
-  if (drag.type === "magnet") { const magnet = drag.index === 0 ? state.magnet : state.secondMagnet; magnet.x = x; magnet.y = y; }
+  if (drag.type === "magnet") {
+    const magnet = drag.index === 0 ? state.magnet : state.secondMagnet;
+    if (state.mode === "interaction") {
+      const other = drag.index === 0 ? state.secondMagnet : state.magnet;
+      const candidate = makeMagnet({ ...magnet, x, y });
+      if (magnetPrismsOverlap(other, candidate)) return;
+    }
+    magnet.x = x; magnet.y = y;
+    const fixedIndex = state.interactionFixed === "first" ? 0 : 1;
+    if (state.mode === "interaction" && state.interactionMotion && drag.index !== fixedIndex) state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  }
   if (drag.type === "coil") { state.coil.x = x; state.coil.y = y; }
   queueDraw();
 }
 
 function endDrag() { drag = null; canvas.classList.remove("is-dragging"); }
 
-for (const button of document.querySelectorAll("[data-mode]")) button.addEventListener("click", () => { state.mode = button.dataset.mode; updateModeUI(); queueDraw(); });
-byId("magnet-angle").addEventListener("input", (e) => { state.magnet.angle = Number(e.target.value) * Math.PI / 180; queueDraw(); });
+for (const button of document.querySelectorAll("[data-mode]")) button.addEventListener("click", () => { state.mode = button.dataset.mode; updateModeUI(); syncInteractionLoop(); queueDraw(); });
+byId("magnet-angle").addEventListener("input", (e) => { state.magnet.angle = Number(e.target.value) * Math.PI / 180; if (state.interactionFixed === "second") state.interactionVelocity.angle = 0; queueDraw(); });
 byId("magnet-strength").addEventListener("input", (e) => { state.magnet.magnetization = Number(e.target.value); queueDraw(); });
-byId("second-angle").addEventListener("input", (e) => { state.secondMagnet.angle = Number(e.target.value) * Math.PI / 180; queueDraw(); });
+byId("second-angle").addEventListener("input", (e) => { state.secondMagnet.angle = Number(e.target.value) * Math.PI / 180; if (state.interactionFixed === "first") state.interactionVelocity.angle = 0; queueDraw(); });
 byId("second-strength").addEventListener("input", (e) => { state.secondMagnet.magnetization = Number(e.target.value); queueDraw(); });
 byId("invert-magnet").addEventListener("click", () => { state.magnet.polarity *= -1; queueDraw(); });
 byId("invert-second-magnet").addEventListener("click", () => { state.secondMagnet.polarity *= -1; queueDraw(); });
@@ -525,10 +599,32 @@ byId("coil-core").addEventListener("change", (e) => { state.coil.core = e.target
 byId("sensor-x").addEventListener("input", (e) => { state.sensor.x = Number(e.target.value); queueDraw(); });
 byId("sensor-y").addEventListener("input", (e) => { state.sensor.y = Number(e.target.value); queueDraw(); });
 byId("line-density").addEventListener("input", (e) => { state.density = Number(e.target.value); queueDraw(); });
+byId("interaction-motion").addEventListener("change", (event) => {
+  state.interactionMotion = event.target.checked;
+  state.interactionPaused = false;
+  state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  state.interactionForce = null;
+  syncInteractionLoop(); queueDraw();
+});
+byId("interaction-fixed").addEventListener("change", (event) => {
+  state.interactionFixed = event.target.value;
+  state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  state.interactionForce = null;
+  queueDraw();
+});
+byId("pause-interaction").addEventListener("click", () => {
+  if (state.reduceMotion) return;
+  state.interactionPaused = !state.interactionPaused;
+  syncInteractionLoop(); queueDraw();
+});
+byId("reduce-motion").addEventListener("change", (event) => {
+  state.reduceMotion = event.target.checked;
+  syncInteractionLoop(); queueDraw();
+});
 for (const [id, key] of [["show-lines", "showLines"], ["show-vectors", "showVectors"], ["show-heatmap", "showHeatmap"], ["show-current", "showCurrent"], ["show-grid", "showGrid"], ["show-numbers", "showNumbers"], ["show-interior", "showInterior"], ["earth-compass", "earth"], ["earth-field", "earth"], ["show-magnet-source", "showMagnetSource"], ["show-coil-source", "showCoilSource"]]) byId(id).addEventListener("change", (e) => { state[key] = e.target.checked; queueDraw(); });
 byId("add-compass").addEventListener("click", () => { if (state.compasses.length >= 5) { byId("sensor-status").textContent = "O laboratório permite até cinco bússolas simultâneas."; return; } state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; queueDraw(); });
 byId("remove-compass").addEventListener("click", () => { if (!state.compasses.length) return; state.compasses.splice(state.selectedCompass, 1); state.selectedCompass = Math.max(0, Math.min(state.selectedCompass, state.compasses.length - 1)); queueDraw(); });
-byId("reset-lab").addEventListener("click", () => { state = initial(); graphComparison = null; chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; updateModeUI(); queueDraw(); });
+byId("reset-lab").addEventListener("click", () => { state = initial(); graphComparison = null; chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; updateModeUI(); syncInteractionLoop(); queueDraw(); });
 byId("complexity-toggle").addEventListener("click", (e) => { state.advanced = !state.advanced; e.currentTarget.setAttribute("aria-pressed", String(state.advanced)); e.currentTarget.textContent = state.advanced ? "Modo básico" : "Modo avançado"; document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; }); });
 byId("learning-toggle").addEventListener("click", (e) => { const body = byId("learning-body"), collapsed = !body.classList.contains("is-collapsed"); body.classList.toggle("is-collapsed", collapsed); e.currentTarget.setAttribute("aria-expanded", String(!collapsed)); e.currentTarget.textContent = collapsed ? "Mostrar detalhes" : "Ocultar detalhes"; });
 byId("graph-select").addEventListener("change", () => { chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; renderGraph(); });

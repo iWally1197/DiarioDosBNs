@@ -1,6 +1,8 @@
 export const MU0 = 4 * Math.PI * 1e-7;
 const MU0_OVER_4PI = 1e-7;
 const MAGNET_QUADRATURE = 8;
+const INTERACTION_QUADRATURE = 4;
+const INTERACTION_SOFTENING_M = 0.004;
 const COIL_SEGMENTS_PER_TURN = 24;
 const WIRE_CORE_RADIUS_M = 0.0025;
 
@@ -158,6 +160,103 @@ export function magnetContainsPoint(point, inputMagnet, margin = 0) {
   const magnet = makeMagnet(inputMagnet);
   const local = rotateVectorToLocal(point.x - magnet.x, point.y - magnet.y, magnet.angle);
   return Math.abs(local.x) <= magnet.length / 2 + margin && Math.abs(local.y) <= magnet.height / 2 + margin;
+}
+
+function magnetSurfacePatches(inputMagnet, subdivisions = INTERACTION_QUADRATURE) {
+  const magnet = makeMagnet(inputMagnet);
+  const patchArea = magnet.height * magnet.depth / (subdivisions * subdivisions);
+  const patches = [];
+  for (const end of [-1, 1]) {
+    const charge = end * magnet.polarity * magnet.magnetization * patchArea;
+    const x = end * magnet.length / 2;
+    for (let iy = 0; iy < subdivisions; iy++) {
+      const y = -magnet.height / 2 + (iy + 0.5) * magnet.height / subdivisions;
+      for (let iz = 0; iz < subdivisions; iz++) {
+        const z = -magnet.depth / 2 + (iz + 0.5) * magnet.depth / subdivisions;
+        const position = rotate(x, y, magnet.angle);
+        patches.push({ x: magnet.x + position.x, y: magnet.y + position.y, z, charge });
+      }
+    }
+  }
+  return patches;
+}
+
+/**
+ * Pair energy of two uniformly magnetized finite prisms, using their bound
+ * magnetic surface charges. This is an interaction potential, not a claim
+ * that magnetic monopoles exist. The 4 mm softening regularizes the discrete
+ * quadrature near contact; results there are qualitative.
+ */
+export function magnetInteractionEnergy(firstInput, secondInput) {
+  const first = magnetSurfacePatches(firstInput);
+  const second = magnetSurfacePatches(secondInput);
+  let energy = 0;
+  const soft2 = INTERACTION_SOFTENING_M ** 2;
+  for (const a of first) for (const b of second) {
+    const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+    energy += MU0_OVER_4PI * a.charge * b.charge / Math.sqrt(dx * dx + dy * dy + dz * dz + soft2);
+  }
+  return energy;
+}
+
+/** Force and torque on the second prism from the gradient of finite-body energy. */
+export function magnetInteractionForceTorque(firstInput, secondInput) {
+  const first = makeMagnet(firstInput), second = makeMagnet(secondInput);
+  const positionStep = 0.001;
+  const angleStep = 0.002;
+  const shifted = (dx, dy, da) => ({ ...second, x: second.x + dx, y: second.y + dy, angle: second.angle + da });
+  const energy = magnetInteractionEnergy(first, second);
+  const forceX = -(magnetInteractionEnergy(first, shifted(positionStep, 0, 0)) - magnetInteractionEnergy(first, shifted(-positionStep, 0, 0))) / (2 * positionStep);
+  const forceY = -(magnetInteractionEnergy(first, shifted(0, positionStep, 0)) - magnetInteractionEnergy(first, shifted(0, -positionStep, 0))) / (2 * positionStep);
+  const torque = -(magnetInteractionEnergy(first, shifted(0, 0, angleStep)) - magnetInteractionEnergy(first, shifted(0, 0, -angleStep))) / (2 * angleStep);
+  return { force: { x: forceX, y: forceY }, torque, energy };
+}
+
+/** Two-dimensional oriented-rectangle collision check for the projected scene. */
+export function magnetPrismsOverlap(firstInput, secondInput) {
+  const first = makeMagnet(firstInput), second = makeMagnet(secondInput);
+  const delta = { x: second.x - first.x, y: second.y - first.y };
+  const axes = [first.angle, first.angle + Math.PI / 2, second.angle, second.angle + Math.PI / 2];
+  const radius = (magnet, axis) => {
+    const along = Math.cos(axis - magnet.angle), across = Math.sin(axis - magnet.angle);
+    return Math.abs(along) * magnet.length / 2 + Math.abs(across) * magnet.height / 2;
+  };
+  return axes.every((axis) => Math.abs(delta.x * Math.cos(axis) + delta.y * Math.sin(axis)) < radius(first, axis) + radius(second, axis));
+}
+
+/**
+ * Stable damped 2D step for one moving prism. The assumed magnet density and
+ * damping describe a classroom model; near-contact motion is regularized.
+ */
+export function stepMagnetInteraction(fixedInput, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: 0.37, y: 0.23 }) {
+  let fixed = makeMagnet(fixedInput), moving = makeMagnet(movingInput);
+  const velocity = { x: Number(velocityInput.x) || 0, y: Number(velocityInput.y) || 0, angle: Number(velocityInput.angle) || 0 };
+  const dt = clamp(elapsedSeconds, 0, 0.04);
+  const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+  const h = steps ? dt / steps : 0;
+  const density = 7400; // kg/m³, representative didactic NdFeB density
+  const mass = Math.max(0.05, moving.length * moving.height * moving.depth * density);
+  const inertia = Math.max(1e-5, mass * (moving.length ** 2 + moving.height ** 2) / 12);
+  const linearDamping = 1.4, angularDamping = 0.018;
+  let interaction = magnetInteractionForceTorque(fixed, moving);
+  for (let i = 0; i < steps; i++) {
+    interaction = magnetInteractionForceTorque(fixed, moving);
+    velocity.x = (velocity.x + interaction.force.x / mass * h) * Math.exp(-linearDamping / mass * h);
+    velocity.y = (velocity.y + interaction.force.y / mass * h) * Math.exp(-linearDamping / mass * h);
+    velocity.angle = (velocity.angle + interaction.torque / inertia * h) * Math.exp(-angularDamping / inertia * h);
+    const candidate = makeMagnet({ ...moving, x: moving.x + velocity.x * h, y: moving.y + velocity.y * h, angle: moving.angle + velocity.angle * h });
+    const extentX = Math.abs(Math.cos(candidate.angle)) * candidate.length / 2 + Math.abs(Math.sin(candidate.angle)) * candidate.height / 2;
+    const extentY = Math.abs(Math.sin(candidate.angle)) * candidate.length / 2 + Math.abs(Math.cos(candidate.angle)) * candidate.height / 2;
+    candidate.x = clamp(candidate.x, -bounds.x + extentX, bounds.x - extentX);
+    candidate.y = clamp(candidate.y, -bounds.y + extentY, bounds.y - extentY);
+    if (magnetPrismsOverlap(fixed, candidate)) {
+      velocity.x = 0; velocity.y = 0;
+      candidate.x = moving.x; candidate.y = moving.y;
+      if (magnetPrismsOverlap(fixed, candidate)) { velocity.angle = 0; candidate.angle = moving.angle; }
+    }
+    moving = candidate;
+  }
+  return { magnet: moving, velocity, ...interaction, mass, inertia };
 }
 
 export function coilAxisFieldAnalytic(inputCoil, x = 0, turnsOverride) {

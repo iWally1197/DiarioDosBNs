@@ -8,11 +8,11 @@
   <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
   <title>Ímãs e Eletroímãs — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-1">
-  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-1">
-  <script src="script.js?v=magnetismo-20261012-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-2">
+  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-2">
+  <script src="script.js?v=magnetismo-20261012-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-1"></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-2"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -69,6 +69,13 @@
           <button type="button" class="button button-outline magnet-secondary-control" id="invert-second-magnet">Inverter polos do segundo ímã</button>
         </fieldset>
 
+        <fieldset class="magnet-control-group" id="interaction-controls" hidden><legend>Movimento dos ímãs</legend>
+          <label class="magnet-check"><input type="checkbox" id="interaction-motion"> Simular o movimento do ímã livre</label>
+          <label for="interaction-fixed">Manter ímã fixo<select id="interaction-fixed"><option value="first">Primeiro ímã</option><option value="second">Segundo ímã</option></select></label>
+          <button type="button" class="button button-outline" id="pause-interaction" hidden>Pausar movimento</button>
+          <p class="magnet-control-note" id="interaction-motion-status" role="status" aria-live="polite">Ative o movimento para deixar um ímã responder à força e ao torque calculados a partir da interação dos dois prismas.</p>
+        </fieldset>
+
         <fieldset class="magnet-control-group" id="coil-controls" hidden><legend>Bobina e fonte CC</legend>
           <label for="coil-current">Corrente convencional <output id="coil-current-value">1,5 A</output><input id="coil-current" type="range" min="-5" max="5" step="0.1" value="1.5"></label>
           <label for="coil-turns">Número de espiras <output id="coil-turns-value">18</output><input id="coil-turns" type="range" min="1" max="50" step="1" value="18"></label>
@@ -102,7 +109,12 @@
           <label for="sensor-y">Posição vertical <output id="sensor-y-value">0,10 m</output><input id="sensor-y" type="range" min="-0.24" max="0.24" step="0.01" value="0.10"></label>
         </fieldset>
 
-        <details class="magnet-science-note"><summary>Sobre o modelo físico</summary><p>O ímã é um prisma uniformemente magnetizado. O campo externo é integrado numericamente a partir das cargas magnéticas ligadas nas faces, uma representação matemática da magnetização, não de monopolos reais. A bobina finita é calculada somando contribuições de Biot–Savart de segmentos de fio. No limite de um solenoide longo, B ≈ μ₀NI/L; aqui a geometria finita é mantida. Pela regra da mão direita, os dedos acompanham a corrente convencional e o polegar indica o norte da bobina. A espessura numérica do fio regulariza o campo muito perto do condutor. O plano mostra Bx e By; Bz é zero na simetria usada. Os valores muito próximos das superfícies e do fio são apenas qualitativos. As setas têm comprimento comprimido para facilitar a leitura; não altera os valores calculados.</p><p>O traço interno no ímã fecha o desenho conceitual de B de S para N dentro do material; não entra nas leituras quantitativas.</p></details>
+        <fieldset class="magnet-control-group"><legend>Acessibilidade</legend>
+          <label class="magnet-check"><input type="checkbox" id="reduce-motion"> Reduzir movimentos automáticos</label>
+          <p class="magnet-control-note">Quando ativado, a simulação deixa de mover os ímãs automaticamente. Você ainda pode arrastá-los ou ajustar os controles.</p>
+        </fieldset>
+
+        <details class="magnet-science-note"><summary>Sobre o modelo físico</summary><p>O ímã é um prisma uniformemente magnetizado. O campo externo é integrado numericamente a partir das cargas magnéticas ligadas nas faces, uma representação matemática da magnetização, não de monopolos reais. A bobina finita é calculada somando contribuições de Biot–Savart de segmentos de fio. No limite de um solenoide longo, B ≈ μ₀NI/L; aqui a geometria finita é mantida. Pela regra da mão direita, os dedos acompanham a corrente convencional e o polegar indica o norte da bobina. A espessura numérica do fio regulariza o campo muito perto do condutor. O plano mostra Bx e By; Bz é zero na simetria usada. Os valores muito próximos das superfícies e do fio são apenas qualitativos. As setas têm comprimento comprimido para facilitar a leitura; não altera os valores calculados.</p><p>Para o movimento do segundo ímã, a força e o torque vêm do gradiente numérico da energia de interação entre as faces dos dois prismas. A integração usa amostragem finita suavizada a 4 mm perto do contato. A massa é estimada pela geometria e por uma densidade didática de 7.400 kg/m³; o amortecimento representa um modelo de bancada, não um material ou atrito medidos. Assim, o movimento é qualitativo, sobretudo quando os ímãs quase se tocam.</p><p>O traço interno no ímã fecha o desenho conceitual de B de S para N dentro do material; não entra nas leituras quantitativas.</p></details>
       </aside>
     </section>
 
