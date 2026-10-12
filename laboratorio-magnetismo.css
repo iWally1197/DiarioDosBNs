@@ -161,3 +161,7 @@
   .magnet-toolbar-actions{gap:6px}
   .magnet-toolbar-actions>#fullscreen-toggle,.magnet-action-menu>#action-menu-toggle{font-size:.82rem;padding:.6rem .7rem}
 }
+
+.magnet-energy-control{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:8px 10px;border:1px solid var(--line,rgba(206,218,240,.16));border-radius:8px;color:var(--text,#e9edf5);font-size:.85rem}
+.magnet-energy-control output{color:var(--gold,#e0bd69);font-variant-numeric:tabular-nums}
+.magnet-energy-control input{grid-column:1/-1;width:100%;accent-color:var(--gold,#e0bd69)}

@@ -8,11 +8,11 @@
   <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
   <title>Ímãs e Eletroímãs — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-5">
-  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-5">
-  <script src="script.js?v=magnetismo-20261012-5" defer></script>
+  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-6">
+  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-6">
+  <script src="script.js?v=magnetismo-20261012-6" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-5"></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-6"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -53,6 +53,13 @@
                 <button type="button" class="button button-outline" id="power-outlet-toggle" aria-pressed="false">＋ Adicionar tomada</button>
                 <button type="button" class="button button-outline" id="power-cable-toggle" aria-pressed="false" disabled>＋ Adicionar cabo e plugue</button>
                 <button type="button" class="button button-outline" id="electromagnet-power-toggle" aria-pressed="false" disabled>Ativar eletroímã</button>
+                <button type="button" class="button button-outline" id="energy-meter-toggle" aria-pressed="false" disabled>＋ Adicionar medidor de energia</button>
+                <label class="magnet-energy-control" for="induction-load">Carga de medição <output id="induction-load-value">10 Ω</output>
+                  <input id="induction-load" type="range" min="1" max="100" step="1" value="10">
+                </label>
+                <button type="button" class="button button-outline" id="energy-meter-reset" disabled>Limpar medição</button>
+                <p class="magnet-power-status" id="energy-meter-status" role="status" aria-live="polite">O medidor calcula a energia transferida para a carga quando o ímã move o fluxo na bobina.</p>
+                <p class="magnet-simulation-status">Modelo: ε = −N·ΔΦ/Δt; E = ∫ε²/R dt. É uma estimativa de energia na carga resistiva, sem simular a frenagem elétrica do ímã.</p>
                 <button type="button" class="button button-outline" id="interaction-motion-toggle" aria-pressed="false">Simular movimento do ímã livre</button>
                 <button type="button" class="button button-outline" id="add-metal-ball">＋ Bolinha de metal</button>
                 <button type="button" class="button button-outline" id="remove-metal-ball" disabled>− Bolinha selecionada</button>

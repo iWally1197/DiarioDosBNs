@@ -23,6 +23,8 @@ const initial = () => ({
   mode: "permanent", magnet: makeMagnet(), secondMagnet: makeMagnet({ x: 0.2, y: 0.06, angle: Math.PI, polarity: 1 }),
   coil: makeCoil({ x: 0.24, y: -0.13 }), coilEnabled: false, coilVelocity: { x: 0, y: 0, angle: 0 },
   powerOutletEnabled: false, powerCableEnabled: false, coilConnected: false, coilPowerRequested: false, powerPlug: null,
+  inductionMeterEnabled: false, inductionMeterEnergy: 0, inductionMeterVoltage: 0, inductionMeterPeakVoltage: 0,
+  inductionMeterResistance: 10, inductionLastFlux: null, inductionLastTime: 0,
   metalBalls: [], selectedMetalBall: -1, sensor: { x: 0.18, y: 0.1 }, compasses: [{ x: -0.17, y: 0.11 }], selectedCompass: 0,
   showLines: true, showVectors: false, showHeatmap: false, showCurrent: true, showGrid: true, showInterior: true,
   showNumbers: true, earth: false, showMagnetSource: true, showCoilSource: false, density: 18,
@@ -31,6 +33,49 @@ const initial = () => ({
 });
 let state = initial();
 const POWER_OUTLET_POSITION = { x: 0.315, y: 0.17 };
+function coilFluxPerTurn() {
+  if (!state.coilEnabled) return 0;
+  const coil = state.coil, field = makeFieldModel({ magnets: allActiveMagnets(), coil: null, useCoil: false, earth: false });
+  const axis = { x: Math.cos(coil.angle), y: Math.sin(coil.angle) };
+  const tangent = { x: -axis.y, y: axis.x }, radius = coil.radius * Math.sqrt(2 / 3);
+  const sample = (offset, z = 0) => {
+    const point = { x: coil.x + tangent.x * offset, y: coil.y + tangent.y * offset, z };
+    const b = field.at(point);
+    return b.x * axis.x + b.y * axis.y;
+  };
+  const average = 0.25 * sample(0)
+    + 0.1875 * (sample(radius) + sample(-radius) + sample(0, radius) + sample(0, -radius));
+  return Math.PI * coil.radius * coil.radius * average;
+}
+function resetInductionMeter() {
+  state.inductionMeterEnergy = 0; state.inductionMeterVoltage = 0; state.inductionMeterPeakVoltage = 0;
+  state.inductionLastFlux = null; state.inductionLastTime = 0;
+}
+function updateInductionMeter() {
+  if (!state.inductionMeterEnabled || !state.coilEnabled) return;
+  if (state.simulationPaused) {
+    state.inductionLastFlux = null; state.inductionLastTime = 0; state.inductionMeterVoltage = 0; return;
+  }
+  const now = performance.now(), flux = coilFluxPerTurn();
+  if (state.inductionLastFlux === null || !state.inductionLastTime) {
+    state.inductionLastFlux = flux; state.inductionLastTime = now; state.inductionMeterVoltage = 0; return;
+  }
+  const dt = (now - state.inductionLastTime) / 1000;
+  if (dt > 0.2) {
+    state.inductionLastFlux = flux; state.inductionLastTime = now; state.inductionMeterVoltage = 0; return;
+  }
+  if (dt < 0.005) return;
+  const voltage = -state.coil.turns * (flux - state.inductionLastFlux) / dt;
+  state.inductionMeterVoltage = Math.abs(voltage) < 0.002 ? 0 : voltage;
+  state.inductionMeterPeakVoltage = Math.max(state.inductionMeterPeakVoltage, Math.abs(state.inductionMeterVoltage));
+  state.inductionMeterEnergy += state.inductionMeterVoltage ** 2 / state.inductionMeterResistance * dt;
+  state.inductionLastFlux = flux; state.inductionLastTime = now;
+}
+function inductionEnergyLabel(joules = state.inductionMeterEnergy) {
+  if (joules < 0.001) return `${formatter(2).format(joules * 1e6)} μJ`;
+  if (joules < 1) return `${formatter(2).format(joules * 1e3)} mJ`;
+  return `${formatter(3).format(joules)} J`;
+}
 function plugNearCoil() {
   const reach = state.coil.length / 2 + state.coil.radius + 0.11;
   return { x: clamp(state.coil.x - Math.cos(state.coil.angle) * reach, -0.36, 0.36), y: clamp(state.coil.y - Math.sin(state.coil.angle) * reach, -0.22, 0.22) };
@@ -108,6 +153,15 @@ function updateControlText() {
   byId("interaction-fixed").value = state.interactionFixed;
   byId("coil-toggle").setAttribute("aria-pressed", String(state.coilEnabled));
   byId("coil-toggle").textContent = state.coilEnabled ? "− Retirar bobina" : "＋ Colocar bobina";
+  byId("energy-meter-toggle").setAttribute("aria-pressed", String(state.inductionMeterEnabled));
+  byId("energy-meter-toggle").textContent = state.inductionMeterEnabled ? "− Retirar medidor de energia" : "＋ Adicionar medidor de energia";
+  byId("energy-meter-toggle").disabled = !state.coilEnabled;
+  byId("energy-meter-reset").disabled = !state.inductionMeterEnabled;
+  byId("induction-load").value = String(state.inductionMeterResistance);
+  byId("induction-load-value").textContent = `${state.inductionMeterResistance} Ω`;
+  byId("energy-meter-status").textContent = !state.coilEnabled ? "Coloque uma bobina para iniciar a medição."
+    : !state.inductionMeterEnabled ? "Adicione o medidor e mova o ímã através da bobina."
+    : `Energia na carga: ${inductionEnergyLabel()} · pico de tensão: ${formatter(3).format(state.inductionMeterPeakVoltage)} V.`;
   byId("power-outlet-toggle").setAttribute("aria-pressed", String(state.powerOutletEnabled));
   byId("power-outlet-toggle").textContent = state.powerOutletEnabled ? "− Retirar tomada" : "＋ Adicionar tomada";
   byId("power-cable-toggle").setAttribute("aria-pressed", String(state.powerCableEnabled));
@@ -569,6 +623,33 @@ function drawCoil(model) {
     ctx.fillStyle = pole === "N" ? "#e86161" : "#5d88e8"; ctx.font = "700 13px system-ui"; ctx.textAlign = "center"; ctx.fillText(pole, plus.x, plus.y);
   }
 }
+function drawInductionMeter() {
+  if (!state.inductionMeterEnabled || !state.coilEnabled) return;
+  const width = 188, height = 78, offset = state.coil.length / 2 + .17;
+  const anchor = toScreen({
+    x: state.coil.x - Math.cos(state.coil.angle) * offset,
+    y: state.coil.y - Math.sin(state.coil.angle) * offset - .075
+  });
+  const x = clamp(anchor.x, width / 2 + 12, view.width - width / 2 - 12);
+  const y = clamp(anchor.y, height / 2 + 12, view.height - height / 2 - 12);
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.48)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+  ctx.fillStyle = "#101b2b"; ctx.strokeStyle = "#d8b86b"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(x - width / 2, y - height / 2, width, height, 9); ctx.fill(); ctx.stroke();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.fillStyle = "#07101d"; ctx.beginPath(); ctx.roundRect(x - width / 2 + 8, y - height / 2 + 8, width - 16, height - 16, 5); ctx.fill();
+  ctx.fillStyle = "#9fb0c6"; ctx.font = "700 9px system-ui"; ctx.textAlign = "left";
+  ctx.fillText("MEDIDOR DE ENERGIA INDUZIDA", x - width / 2 + 15, y - height / 2 + 21);
+  const activePulse = Math.abs(state.inductionMeterVoltage) >= 0.002;
+  ctx.fillStyle = activePulse ? "#66e4a3" : "#66758a"; ctx.beginPath(); ctx.arc(x + width / 2 - 17, y - height / 2 + 18, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#8df0b9"; ctx.font = "700 15px ui-monospace,Consolas,monospace";
+  ctx.fillText(`ε ${formatter(3).format(state.inductionMeterVoltage)} V`, x - width / 2 + 15, y + 5);
+  ctx.fillStyle = "#ffd878"; ctx.font = "700 14px ui-monospace,Consolas,monospace";
+  ctx.fillText(`E ${inductionEnergyLabel()}`, x - width / 2 + 15, y + 25);
+  ctx.fillStyle = "#9fb0c6"; ctx.font = "9px system-ui";
+  ctx.fillText(`pico ${formatter(3).format(state.inductionMeterPeakVoltage)} V · carga ${state.inductionMeterResistance} Ω`, x - width / 2 + 15, y + height / 2 - 9);
+  ctx.restore();
+}
+
 function drawMetalBalls() {
   state.metalBalls.forEach((ball, index) => {
     const p = toScreen(ball), radius = Math.max(7, ball.radius * view.scale);
@@ -609,6 +690,7 @@ function renderScene(model) {
   drawGrid(); drawHeatmap(model); drawFieldLines(model); drawVectors(model);
   drawPowerHardware();
   drawCoil(model);
+  drawInductionMeter();
   model.magnets.forEach((magnet, index) => drawMagnet(magnet, index + 1));
   drawMetalBalls();
   state.compasses.forEach((compass, index) => drawCompass(compass, model, index));
@@ -781,6 +863,7 @@ function render() {
   byId("remove-compass").disabled = state.compasses.length === 0;
   byId("remove-metal-ball").disabled = state.metalBalls.length === 0 || state.selectedMetalBall < 0;
   const model = activeFieldModel();
+  updateInductionMeter();
   renderScene(model); updateReadings(model); renderGraph();
 }
 
@@ -853,6 +936,7 @@ function endDrag(event) {
 
 for (const button of document.querySelectorAll("[data-mode]")) button.addEventListener("click", () => {
   state.mode = button.dataset.mode;
+  state.inductionLastFlux = null; state.inductionLastTime = 0; state.inductionMeterVoltage = 0;
   if (state.mode === "electromagnet") prepareElectromagnetKit();
   if (state.mode === "field") state.showCoilSource = state.coilEnabled;
   updateModeUI(); syncSimulationLoop(); queueDraw();
@@ -874,6 +958,7 @@ byId("coil-toggle").addEventListener("click", () => {
   state.coilVelocity = { x: 0, y: 0, angle: 0 };
   if (!state.coilEnabled) {
     state.coilConnected = false; state.coilPowerRequested = false; state.powerCableEnabled = false;
+    state.inductionMeterEnabled = false; resetInductionMeter();
   } else {
     state.powerPlug = plugNearCoil();
     if (state.mode === "electromagnet") { state.coil.core = true; state.powerOutletEnabled = true; state.powerCableEnabled = true; }
@@ -897,6 +982,17 @@ byId("electromagnet-power-toggle").addEventListener("click", () => {
   if (!state.coilEnabled || !state.powerOutletEnabled || !state.powerCableEnabled || !state.coilConnected) return;
   state.coilPowerRequested = !state.coilPowerRequested;
   syncSimulationLoop(); queueDraw();
+});
+byId("energy-meter-toggle").addEventListener("click", () => {
+  if (!state.coilEnabled) return;
+  state.inductionMeterEnabled = !state.inductionMeterEnabled;
+  resetInductionMeter(); queueDraw();
+});
+byId("energy-meter-reset").addEventListener("click", () => { resetInductionMeter(); queueDraw(); });
+byId("induction-load").addEventListener("input", (event) => {
+  state.inductionMeterResistance = Number(event.target.value);
+  byId("induction-load-value").textContent = `${state.inductionMeterResistance} Ω`;
+  queueDraw();
 });
 byId("interaction-motion-toggle").addEventListener("click", () => {
   if (state.mode !== "interaction") { state.mode = "interaction"; state.interactionMotion = true; }
