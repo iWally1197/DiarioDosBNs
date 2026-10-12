@@ -432,6 +432,19 @@ async function renderAdmin(user) {
 }
 
 
+function explainAdminLaboratoryError(error) {
+  const code=String(error?.code||'');
+  const raw=String(error?.message||'Confira sua conexão e tente novamente.');
+  let nextStep='Atualize a página. Se o problema continuar, informe ao administrador o código e a mensagem exibidos.';
+  if(code==='42P01'||code==='PGRST205') nextStep='A tabela public.animations não foi encontrada no Supabase. Aplique as migrações do projeto e atualize o schema cache.';
+  else if(code==='42703'||code==='PGRST204') nextStep='A tabela animations existe, mas falta uma coluna esperada. Confira se todas as migrações do projeto foram aplicadas.';
+  else if(code==='42501'||/permission denied|row-level security/i.test(raw)) nextStep='O Supabase recusou a operação. Entre com uma conta que tenha papel admin ativo e confira a migração de permissões de publicação.';
+  else if(code==='23505') nextStep='Há slugs duplicados no banco. A validação abaixo identifica quais laboratórios precisam de revisão.';
+  else if(code==='42P10') nextStep='A chave de conflito por slug não está configurada no banco. Recarregue a página com esta versão do painel; ela não depende dessa chave para preparar os registros.';
+  else if(/failed to fetch|network|fetch/i.test(raw)) nextStep='Não foi possível alcançar o Supabase. Confira a conexão e as configurações do projeto.';
+  return raw+(code?' (código '+code+'). ':' ')+nextStep;
+}
+
 async function renderAdminLaboratories(user) {
   replaceMain('Gerenciar laboratórios',`${profileHeader(user,{role:'admin'},'Gerenciar laboratórios','Gerencie, um por um, os sete laboratórios da aba pública e sincronize seus cartões com o Supabase.')}
     <div class="account-shortcuts"><a href="/admin/">Voltar ao painel</a><a href="/biblioteca-fisica.html">Ver o mapa dos 480 tópicos</a><a href="/">Ver site</a></div>
@@ -440,7 +453,7 @@ async function renderAdminLaboratories(user) {
   const load=async()=>{
     try { await loadAdminLaboratoryRecords(root); }
     catch(error) {
-      root.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível carregar os registros</strong><p>${safeText(error?.message||'Confira sua conexão e tente novamente.')}</p><button class="button button-outline" type="button" data-retry-admin-labs>Tentar novamente</button></aside>`;
+      root.innerHTML=`<aside class="auth-notice" role="alert"><strong>Não foi possível carregar os registros</strong><p>${safeText(explainAdminLaboratoryError(error))}</p><button class="button button-outline" type="button" data-retry-admin-labs>Tentar novamente</button></aside>`;
       root.querySelector('[data-retry-admin-labs]')?.addEventListener('click',load,{once:true});
     }
   };
@@ -452,21 +465,34 @@ async function loadAdminLaboratoryRecords(root) {
   const {data:authData,error:authError}=await withDeadline(supabase.auth.getUser(),'A validação da conta de administrador demorou demais.');
   if(authError)throw authError;
   if(!authData.user?.id)throw new Error('Entre novamente na conta de administrador para gerenciar os laboratórios.');
-  const seeds=laboratoryPublicationRecords.map((item)=>({...item,is_published:true,created_by:authData.user.id}));
-  const {error:seedError}=await withDeadline(
-    supabase.from('animations').upsert(seeds,{onConflict:'slug',ignoreDuplicates:true}),
-    'Não foi possível preparar os controles dos laboratórios. Tente novamente.'
+  const {data:existingRows,error:existingError}=await withDeadline(
+    supabase.from('animations').select('slug').in('slug',laboratoryPublicationSlugs),
+    'Não foi possível verificar os controles dos laboratórios. Tente novamente.'
   );
-  if(seedError)throw seedError;
+  if(existingError)throw existingError;
+  const existingSlugs=new Set((existingRows||[]).map((item)=>item.slug));
+  const seeds=laboratoryPublicationRecords
+    .filter((item)=>!existingSlugs.has(item.slug))
+    .map((item)=>({...item,is_published:true,created_by:authData.user.id}));
+  if(seeds.length){
+    const {error:seedError}=await withDeadline(
+      supabase.from('animations').insert(seeds),
+      'Não foi possível preparar os controles dos laboratórios. Tente novamente.'
+    );
+    if(seedError&&seedError.code!=='23505')throw seedError;
+  }
   const {data,error}=await withDeadline(
     supabase.from('animations').select('id,title,topic,slug,is_published,created_at').in('slug',laboratoryPublicationSlugs).order('title'),
     'A consulta dos laboratórios demorou demais. Tente novamente.'
   );
   if(error)throw error;
   const records=data||[];
+  const foundSlugs=new Set(records.map((item)=>item.slug));
+  const missingSlugs=laboratoryPublicationSlugs.filter((slug)=>!foundSlugs.has(slug));
+  if(missingSlugs.length)throw new Error('Não foi possível preparar os registros de controle: '+missingSlugs.join(', ')+'. Verifique as permissões de administrador no Supabase.');
   const categories=[...new Set(records.map((item)=>item.topic).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const selected=new Set();
-  let search='',category='',publication='all',busy=false,message='',messageIsError=false;
+  let search='',category='',publication='all',busy=false,validating=false,validationResults=null,message='',messageIsError=false;
   const visibleRecords=()=>records.filter((item)=>{
     const haystack=`${item.title||''} ${item.topic||''} ${item.slug||''}`.toLocaleLowerCase('pt-BR');
     return (!search||haystack.includes(search.toLocaleLowerCase('pt-BR'))) &&
@@ -474,6 +500,7 @@ async function loadAdminLaboratoryRecords(root) {
       (publication==='all'||(publication==='published'?item.is_published:!item.is_published));
   });
   const render=()=>{
+    const locked=busy||validating;
     const focusId=document.activeElement?.id;
     const caret=focusId==='admin-lab-search'?document.activeElement.selectionStart:null;
     const filtered=visibleRecords();
@@ -482,11 +509,11 @@ async function loadAdminLaboratoryRecords(root) {
     const selectedCount=selected.size;
     const options=categories.map((item)=>`<option value="${safeText(item)}" ${category===item?'selected':''}>${safeText(item)}</option>`).join('');
     const rows=filtered.map((item)=>`<tr>
-      <td><input type="checkbox" data-admin-lab-select="${safeText(item.id)}" aria-label="Selecionar ${safeText(item.title)}" ${selected.has(item.id)?'checked':''} ${busy?'disabled':''}></td>
+      <td><input type="checkbox" data-admin-lab-select="${safeText(item.id)}" aria-label="Selecionar ${safeText(item.title)}" ${selected.has(item.id)?'checked':''} ${locked?'disabled':''}></td>
       <td><b>${safeText(item.title||'Sem título')}</b><small class="admin-user-detail">${safeText(item.slug||'')}</small></td>
       <td>${safeText(item.topic||'Sem categoria')}</td>
       <td><span class="admin-lab-state ${item.is_published?'is-published':'is-unpublished'}">${item.is_published?'No ar':'Fora do ar'}</span></td>
-      <td><button class="button button-outline" type="button" data-admin-lab-action="${safeText(item.id)}" ${busy?'disabled':''}>${item.is_published?'Retirar do ar':'Colocar no ar'}</button></td>
+      <td><button class="button button-outline" type="button" data-admin-lab-action="${safeText(item.id)}" ${locked?'disabled':''}>${item.is_published?'Retirar do ar':'Colocar no ar'}</button></td>
     </tr>`).join('');
     root.innerHTML=`<div class="dashboard-cards admin-lab-stats">
       <article><b>${records.length}</b><span>registros cadastrados</span></article>
@@ -498,23 +525,27 @@ async function loadAdminLaboratoryRecords(root) {
       <div class="section-kicker">PUBLICAÇÃO DA BIBLIOTECA</div>
       <h2>Escolha quais conteúdos ficam no ar</h2>
       <p>Este painel controla individualmente os sete laboratórios da aba pública. O primeiro acesso cria no banco os registros de controle que estiverem faltando; cada botão abaixo altera a publicação real no Supabase.</p>
+      <p>Use “Validar laboratórios” para conferir o acesso de administrador, os registros no banco e se cada página de simulação está acessível.</p>
       <div class="admin-lab-toolbar">
-        <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${busy?'disabled':''}></label>
-        <label for="admin-lab-category">Categoria<select id="admin-lab-category" ${busy?'disabled':''}><option value="">Todas as categorias</option>${options}</select></label>
-        <label for="admin-lab-publication">Situação<select id="admin-lab-publication" ${busy?'disabled':''}>
+        <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${locked?'disabled':''}></label>
+        <label for="admin-lab-category">Categoria<select id="admin-lab-category" ${locked?'disabled':''}><option value="">Todas as categorias</option>${options}</select></label>
+        <label for="admin-lab-publication">Situação<select id="admin-lab-publication" ${locked?'disabled':''}>
           <option value="all" ${publication==='all'?'selected':''}>Todas</option>
           <option value="published" ${publication==='published'?'selected':''}>No ar</option>
           <option value="unpublished" ${publication==='unpublished'?'selected':''}>Fora do ar</option>
         </select></label>
       </div>
       <div class="admin-lab-actions">
-        <button class="button button-outline" type="button" data-select-all ${busy||records.length===0?'disabled':''}>Selecionar todos (${records.length})</button>
-        <button class="button button-outline" type="button" data-select-visible ${busy||filtered.length===0?'disabled':''}>Adicionar resultados filtrados (${filtered.length})</button>
-        <button class="button button-outline" type="button" data-clear-selection ${busy||selectedCount===0?'disabled':''}>Desmarcar seleção</button>
-        <button class="button button-primary" type="button" data-set-publication="true" ${busy||selectedCount===0?'disabled':''}>${busy?'Salvando…':'Publicar selecionados'}</button>
-        <button class="button button-outline" type="button" data-set-publication="false" ${busy||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Retirar selecionados do ar'}</button>
+        <button class="button button-outline" type="button" data-select-all ${locked||records.length===0?'disabled':''}>Selecionar todos (${records.length})</button>
+        <button class="button button-outline" type="button" data-select-visible ${locked||filtered.length===0?'disabled':''}>Adicionar resultados filtrados (${filtered.length})</button>
+        <button class="button button-outline" type="button" data-clear-selection ${locked||selectedCount===0?'disabled':''}>Desmarcar seleção</button>
+        <button class="button button-outline" type="button" data-validate-admin-labs ${locked?'disabled':''}>${validating?'Validando…':'Validar laboratórios'}</button>
+        <button class="button button-primary" type="button" data-set-publication="true" ${locked||selectedCount===0?'disabled':''}>${busy?'Salvando…':'Publicar selecionados'}</button>
+        <button class="button button-outline" type="button" data-set-publication="false" ${locked||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Retirar selecionados do ar'}</button>
       </div>
       <p class="admin-lab-feedback" role="status" aria-live="polite" data-error="${messageIsError}">${safeText(message||`Mostrando ${filtered.length} de ${records.length} registros. A seleção atual inclui ${selectedCount}.`)}</p>
+      ${validating?'<p class="admin-lab-validation-progress" role="status">Conferindo o acesso ao Supabase e os endereços das simulações…</p>':''}
+      ${validationResults?'<section class="admin-lab-validation" aria-live="polite"><h3>Resultado da validação</h3><ul>'+validationResults.map((item)=>'<li class="admin-lab-validation__item '+(item.ok?'is-valid':'has-error')+'"><strong>'+(item.ok?'✓':'×')+' '+safeText(item.title)+'</strong><span>'+safeText(item.details)+'</span></li>').join('')+'</ul></section>':''}
       <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum laboratório corresponde aos filtros.</td></tr>'}</tbody></table></div>
       <p class="privacy-note">A autorização também é conferida pelo Supabase. Somente uma sessão com papel de administrador ativo pode alterar o estado de publicação; a interface não é a barreira de segurança.</p>
     </section>`;
@@ -534,12 +565,66 @@ async function loadAdminLaboratoryRecords(root) {
       render();
     }
   });
+  const validateLaboratories=async()=>{
+    if(busy||validating)return;
+    validating=true;validationResults=null;message='';messageIsError=false;render();
+    try{
+      const {data:authData,error:authError}=await withDeadline(supabase.auth.getUser(),'A validação da sessão demorou demais.');
+      if(authError)throw authError;
+      if(!authData.user?.id)throw new Error('Entre novamente na conta de administrador para validar os laboratórios.');
+      const {data:role,error:roleError}=await withDeadline(
+        supabase.from('user_roles').select('role,status').eq('user_id',authData.user.id).maybeSingle(),
+        'A consulta do papel de administrador demorou demais.'
+      );
+      if(roleError)throw roleError;
+      if(role?.role!=='admin'||role.status!=='active')throw new Error('A validação está disponível somente para uma conta de administrador ativa.');
+      const {data:databaseRows,error:databaseError}=await withDeadline(
+        supabase.from('animations').select('id,title,topic,slug,is_published').in('slug',laboratoryPublicationSlugs),
+        'A leitura dos registros demorou demais.'
+      );
+      if(databaseError)throw databaseError;
+      const rows=databaseRows||[];
+      validationResults=await Promise.all(laboratoryPublicationRecords.map(async(expected)=>{
+        const problems=[];
+        const matches=rows.filter((item)=>item.slug===expected.slug);
+        if(matches.length===0)problems.push('Registro de controle ausente no Supabase.');
+        else if(matches.length>1)problems.push('Há '+matches.length+' registros com o mesmo slug; revise as duplicações no banco.');
+        else{
+          if(matches[0].title!==expected.title)problems.push('O título no Supabase difere do catálogo.');
+          if(matches[0].topic!==expected.topic)problems.push('A categoria no Supabase difere do catálogo.');
+        }
+        const path=expected.id==='lab-magnetic-field'
+          ?'laboratorio-magnetismo.html'
+          :'laboratorio-experimento.html?topico='+encodeURIComponent(expected.id);
+        try{
+          const response=await withDeadline(
+            fetch(new URL(path,window.location.href),{method:'HEAD',cache:'no-store',credentials:'same-origin'}),
+            'A página da simulação não respondeu em 8 segundos.',
+            8000
+          );
+          if(!response.ok)problems.push('A página da simulação respondeu HTTP '+response.status+'.');
+        }catch(error){problems.push('Não foi possível acessar a página da simulação: '+(error?.message||'falha de rede')+'.');}
+        const publication=matches.length===1?(matches[0].is_published?'No ar':'Fora do ar'):'Estado de publicação indisponível';
+        const details=problems.concat(['Publicação: '+publication+'.','Página: '+path+'.']).join(' ');
+        return {title:expected.title,ok:problems.length===0,details};
+      }));
+      const passed=validationResults.filter((item)=>item.ok).length;
+      message=passed+' de '+validationResults.length+' laboratórios passaram na validação.';
+      messageIsError=passed!==validationResults.length;
+    }catch(error){
+      validationResults=[{title:'Validação interrompida',ok:false,details:explainAdminLaboratoryError(error)}];
+      message='Não foi possível concluir a validação.';
+      messageIsError=true;
+    }finally{
+      validating=false;render();
+    }
+  };
   const setPublication=async(publish,requestedIds=null)=>{
-    const ids=requestedIds||[...selected];if(!ids.length||busy)return;
+    const ids=requestedIds||[...selected];if(!ids.length||busy||validating)return;
     const action=publish?'colocar no ar':'retirar do ar';
     const subject=requestedIds?.length===1?records.find((item)=>item.id===requestedIds[0])?.title||'este laboratório':`${ids.length} laboratório(s) selecionado(s)`;
     if(!window.confirm(`Confirma ${action} ${subject}?`))return;
-    busy=true;message='';messageIsError=false;render();
+    busy=true;validationResults=null;message='';messageIsError=false;render();
     let completed=0,failure=null;
     for(let offset=0;offset<ids.length;offset+=50){
       const batch=ids.slice(offset,offset+50);
@@ -570,14 +655,15 @@ async function loadAdminLaboratoryRecords(root) {
     }
     busy=false;
     if(failure){
-      message=`${completed} alteração(ões) confirmada(s) antes da falha. ${refreshed?'Os estados foram recarregados do banco.':'Não foi possível confirmar o estado final; recarregue a página antes de tentar novamente.'} ${failure.message||''}`;
+      message=`${completed} alteração(ões) confirmada(s) antes da falha. ${refreshed?'Os estados foram recarregados do banco.':'Não foi possível confirmar o estado final; recarregue a página antes de tentar novamente.'} ${explainAdminLaboratoryError(failure)}`;
       messageIsError=true;
     }else{message=`${completed} registro(s) ${publish?'publicados':'retirados do ar'} com sucesso.`;messageIsError=false;}
     render();
   };
   root.addEventListener('click',(event)=>{
     const button=event.target.closest('button');if(!button)return;
-    if(button.matches('[data-select-all]')){for(const item of records)selected.add(item.id);render();}
+    if(button.matches('[data-validate-admin-labs]'))void validateLaboratories();
+    else if(button.matches('[data-select-all]')){for(const item of records)selected.add(item.id);render();}
     else if(button.matches('[data-select-visible]')){for(const item of visibleRecords())selected.add(item.id);render();}
     else if(button.matches('[data-clear-selection]')){selected.clear();render();}
     else if(button.matches('[data-set-publication]'))void setPublication(button.dataset.setPublication==='true');
