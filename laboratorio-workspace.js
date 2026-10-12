@@ -63,7 +63,8 @@ function initializeCanvasViewControls() {
     wrapper.append(controls, hint);
 
     const apply = () => {
-      canvas.style.transform = `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
+      if (camera.zoom === 1 && camera.x === 0 && camera.y === 0) canvas.style.removeProperty("transform");
+      else canvas.style.transform = `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
       zoomValue.textContent = `${Math.round(camera.zoom * 100)}%`;
     };
     const zoomBy = (factor) => {
