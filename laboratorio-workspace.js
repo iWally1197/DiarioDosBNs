@@ -1,4 +1,4 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-optics-20261010-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-optics-20261010-1";
 import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=lab-grid-touch-20261010-1";
 import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-optics-fullscreen-20261010-1";
@@ -209,7 +209,7 @@ function initializeSpecialExperimentFullscreen() {
     controlsToggleButton.addEventListener("click", () => {
       const open = controlsSidebar.classList.toggle("is-open");
       controlsToggleButton.setAttribute("aria-expanded", String(open));
-      controlsToggleButton.textContent = open ? "Fechar menu" : "Gráfico e parâmetros";
+      controlsToggleButton.textContent = open ? "Fechar menu" : "Gráficos e parâmetros";
       requestAnimationFrame(refreshCanvas);
     });
     document.addEventListener("fullscreenchange", () => {
@@ -221,13 +221,13 @@ function initializeSpecialExperimentFullscreen() {
         controlsSidebar.classList.remove("is-open");
         controlsToggleButton.hidden = false;
         controlsToggleButton.setAttribute("aria-expanded", "false");
-        controlsToggleButton.textContent = "Gráfico e parâmetros";
+        controlsToggleButton.textContent = "Gráficos e parâmetros";
       } else {
         if (graphPanel.parentElement !== graphHome) graphHome.append(graphPanel);
         controlsSidebar.classList.remove("is-open");
         controlsToggleButton.hidden = true;
         controlsToggleButton.setAttribute("aria-expanded", "false");
-        controlsToggleButton.textContent = "Gráfico e parâmetros";
+        controlsToggleButton.textContent = "Gráficos e parâmetros";
       }
       requestAnimationFrame(refreshCanvas);
     });
@@ -246,6 +246,9 @@ function initializeExperimentPage(topicId) {
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
   const state = { id: null, parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null };
+  const panelPlayButton = $("#workspace-panel-play");
+  const syncPanelPlay = () => { if (panelPlayButton) { const play = $("#workspace-play"); panelPlayButton.textContent = play?.textContent || (state.running ? "Pausar" : "Continuar"); panelPlayButton.setAttribute("aria-pressed", String(state.running)); panelPlayButton.disabled = Boolean(play?.disabled); } };
+  panelPlayButton?.addEventListener("click", () => { $("#workspace-play")?.click(); syncPanelPlay(); });
   const palette = () => {
     const css = getComputedStyle(document.documentElement);
     const read = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
@@ -286,7 +289,7 @@ function initializeExperimentPage(topicId) {
     controlsToggleButton.hidden = true;
     controlsSidebar.classList.remove("is-open");
     controlsToggleButton.setAttribute("aria-expanded", "false");
-    controlsToggleButton.textContent = "Gráfico e parâmetros";
+    controlsToggleButton.textContent = "Gráficos e parâmetros";
     $("#workspace-title").textContent = experiment.title;
     $("#workspace-description").textContent = experiment.description;
     const sceneCaptions = {
@@ -403,6 +406,7 @@ function initializeExperimentPage(topicId) {
     $("#workspace-speed").disabled = duration === 0;
     $("#workspace-time-out").textContent = duration === 0 ? "sem evolução temporal" : `${fmt(state.time)} ${currentTimeUnit()}`;
     $("#workspace-speed-out").textContent = `${fmt($("#workspace-speed").value, 2).replace(/,00$/, "")}×`;
+    syncPanelPlay();
   }
 
   $("#workspace-chart").addEventListener("change", () => { try { render(); } catch (error) { showError(error); } });
@@ -458,7 +462,7 @@ function initializeExperimentPage(topicId) {
   controlsToggleButton.addEventListener("click", () => {
     const open = controlsSidebar.classList.toggle("is-open");
     controlsToggleButton.setAttribute("aria-expanded", String(open));
-    controlsToggleButton.textContent = open ? "Fechar menu" : "Gráfico e parâmetros";
+    controlsToggleButton.textContent = open ? "Fechar menu" : "Gráficos e parâmetros";
     requestAnimationFrame(() => { try { render(); } catch (error) { showError(error); } });
   });
 
@@ -469,15 +473,17 @@ function initializeExperimentPage(topicId) {
     if (isFullscreen) {
       if (graphPanel && graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.firstElementChild);
       controlsToggleButton.hidden = false;
+      if (panelPlayButton) panelPlayButton.hidden = false;
       controlsSidebar.classList.remove("is-open");
       controlsToggleButton.setAttribute("aria-expanded", "false");
-      controlsToggleButton.textContent = "Gráfico e parâmetros";
+      controlsToggleButton.textContent = "Gráficos e parâmetros";
     } else {
       if (graphPanel && animationPanels && graphPanel.parentElement !== animationPanels) animationPanels.append(graphPanel);
       controlsToggleButton.hidden = true;
+      if (panelPlayButton) panelPlayButton.hidden = true;
       controlsSidebar.classList.remove("is-open");
       controlsToggleButton.setAttribute("aria-expanded", "false");
-      controlsToggleButton.textContent = "Gráfico e parâmetros";
+      controlsToggleButton.textContent = "Gráficos e parâmetros";
     }
     if (state.id && !workspace.hidden) requestAnimationFrame(() => { try { render(); } catch (error) { showError(error); } });
   });

@@ -128,8 +128,8 @@ if(shell&&scene&&chart){
     lastFrame=now;draw();
     raf=requestAnimationFrame(frame);
   }
-  function start(){if(playing)return;playing=true;lastFrame=0;shell.querySelector("[data-play]").textContent="Pausar";raf=requestAnimationFrame(frame);}
-  function pause(){playing=false;lastFrame=0;cancelAnimationFrame(raf);shell.querySelector("[data-play]").textContent="Continuar";}
+  function start(){if(playing)return;playing=true;lastFrame=0;shell.querySelector("[data-play]").textContent="Pausar";syncPanelPlay();raf=requestAnimationFrame(frame);}
+  function pause(){playing=false;lastFrame=0;cancelAnimationFrame(raf);shell.querySelector("[data-play]").textContent="Continuar";syncPanelPlay();}
   controls.forEach((input)=>{
     input.addEventListener("input",()=>{
       const key=input.dataset.param;parameters[key]=Number(input.value);
@@ -138,6 +138,8 @@ if(shell&&scene&&chart){
     });
   });
   shell.querySelector("[data-play]").addEventListener("click",()=>playing?pause():start());
+  panelPlay?.addEventListener("click",()=>shell.querySelector("[data-play]").click());
+  panelToggle?.addEventListener("click",()=>{const open=panel.classList.toggle("is-open");panelToggle.setAttribute("aria-expanded",String(open));});
   shell.querySelectorAll("[data-step]").forEach((button)=>button.addEventListener("click",()=>{pause();time=Math.max(0,time+Number(button.dataset.step));draw();}));
   shell.querySelector("[data-reset]").addEventListener("click",()=>{pause();time=0;Object.assign(parameters,defaults);for(const input of controls)input.value=String(parameters[input.dataset.param]);yaw=-.42;pitch=-.16;setControlOutputs();draw();});
   shell.querySelectorAll("[data-mode]").forEach((button)=>button.addEventListener("click",()=>{
@@ -146,11 +148,15 @@ if(shell&&scene&&chart){
     draw();
   }));
   const fullscreen=shell.querySelector("[data-fullscreen]");
+  const panelToggle=shell.querySelector("#faraday-panel-toggle");
+  const panel=shell.querySelector("#faraday-controls");
+  const panelPlay=shell.querySelector("#faraday-panel-play");
+  const syncPanelPlay=()=>{if(panelPlay){panelPlay.textContent=shell.querySelector("[data-play]").textContent;panelPlay.setAttribute("aria-pressed",String(playing));}};
   fullscreen.addEventListener("click",async()=>{
     try{if(!document.fullscreenElement)await shell.requestFullscreen();else await document.exitFullscreen();}
     catch{shell.querySelector("#faraday-help").textContent="A tela cheia não está disponível neste navegador. A simulação continua funcionando nesta página.";}
   });
-  document.addEventListener("fullscreenchange",()=>fullscreen.setAttribute("aria-pressed",String(document.fullscreenElement===shell)));
+  document.addEventListener("fullscreenchange",()=>{const full=document.fullscreenElement===shell;fullscreen.setAttribute("aria-pressed",String(full));if(panelToggle){panelToggle.hidden=!full;if(!full)panel.classList.remove("is-open");panelToggle.setAttribute("aria-expanded",String(panel.classList.contains("is-open")));}if(panelPlay)panelPlay.hidden=!full;syncPanelPlay();});
   scene.addEventListener("pointerdown",(event)=>{if(mode!=="3d")return;drag={x:event.clientX,y:event.clientY};scene.setPointerCapture(event.pointerId);});
   scene.addEventListener("pointermove",(event)=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag={x:event.clientX,y:event.clientY};yaw+=dx*.008;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.008));draw();});
   scene.addEventListener("pointerup",()=>{drag=null;});

@@ -1,6 +1,7 @@
-import { experiments } from "./laboratorio-catalogo.js?v=lab-catalog-25-20261011-1";
+import { experiments } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
+const visibleExperiments = experiments.filter((item) => !item.hiddenFromCatalog);
 export const experimentPageUrl = (id) => id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
@@ -42,26 +43,22 @@ function initializeCatalog() {
   const svgFor = (id) => `<svg viewBox="0 0 86 76" aria-hidden="true">${diagrams[id] || ""}</svg>`;
 
   for (const [select, values] of [
-    [category, [...new Set(experiments.map((item) => item.category))]],
-    [level, [...new Set(experiments.map((item) => item.level))]],
-    [mode, [...new Set(experiments.map((item) => item.mode))]]
+    [category, [...new Set(visibleExperiments.map((item) => item.category))]],
+    [level, [...new Set(visibleExperiments.map((item) => item.level))]],
+    [mode, [...new Set(visibleExperiments.map((item) => item.mode))]]
   ]) {
     for (const value of values) select.add(new Option(value, value));
   }
 
   function drawCards() {
     const query = search.value.trim().toLocaleLowerCase("pt-BR");
-    const filtered = experiments.filter((item) => {
+    const filtered = visibleExperiments.filter((item) => {
       const haystack = `${item.title} ${item.category} ${item.level} ${item.description} ${item.objective || ""}`.toLocaleLowerCase("pt-BR");
       return haystack.includes(query) && (!category.value || item.category === category.value) && (!level.value || item.level === level.value) && (!mode.value || item.mode === mode.value);
     });
     catalog.innerHTML = filtered.map((item) => {
       const cardBody = `<span class="lab-card-art">${svgFor(item.id)}</span><span class="lab-card-body"><span class="lab-card-title">${item.title}<small>${item.status}</small></span><span class="lab-card-meta">${item.category} · ${item.level} · ${item.mode}</span><span class="lab-card-meta">${item.description}</span>`;
-      if (item.links?.length) {
-        const links = item.links.map((link) => `<a class="lab-card-link" href="laboratorio-experimento.html?topico=${encodeURIComponent(link.id)}">${link.label} →</a>`).join("");
-        return `<article class="lab-card lab-card-multiple" aria-label="Experimento: ${item.title}">${cardBody}<span class="lab-card-links">${links}</span></span></article>`;
-      }
-      const href = experimentPageUrl(item.id);
+      const href = item.destination || experimentPageUrl(item.id);
       return `<a class="lab-card" href="${href}" aria-label="Abrir simulação: ${item.title}">${cardBody}<span class="lab-card-cta">Abrir experimento →</span></span></a>`;
     }).join("");
     count.textContent = `${filtered.length} ${filtered.length === 1 ? "experimento" : "experimentos"} disponíveis.`;

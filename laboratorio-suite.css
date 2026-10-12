@@ -179,3 +179,5 @@
 .lab-card-links { display:flex; flex-wrap:wrap; gap:6px; }
 .lab-card-link { display:inline-flex; align-items:center; min-height:30px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; color:var(--gold); font-size:10px; font-weight:700; text-decoration:none; }
 .lab-card-link:hover { border-color:var(--gold); background:var(--surface-2); }
+
+.workspace-panel-play{width:100%;margin:0 0 12px}.lab-workspace:fullscreen .workspace-panel-play{display:block}.lab-workspace:not(:fullscreen) .workspace-panel-play{display:none!important}

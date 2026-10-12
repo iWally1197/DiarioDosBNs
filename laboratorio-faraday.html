@@ -9,10 +9,10 @@
   <title>Indução eletromagnética — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=physics-lab-pilot-20261011">
-  <link rel="stylesheet" href="physics-faraday.css?v=physics-lab-pilot-20261011">
+  <link rel="stylesheet" href="physics-faraday.css?v=fullscreen-menu-20261011&previous=physics-lab-pilot-20261011">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <script type="module" src="physics-faraday.js?v=physics-lab-pilot-20261011"></script>
+  <script type="module" src="physics-faraday.js?v=fullscreen-menu-20261011&previous=physics-lab-pilot-20261011"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -42,7 +42,7 @@
             <button class="button button-outline" type="button" data-step="-0.1" aria-label="Voltar 0,1 segundo">− 0,1 s</button>
             <button class="button button-outline" type="button" data-step="0.1" aria-label="Avançar 0,1 segundo">+ 0,1 s</button>
             <button class="button button-outline" type="button" data-reset>Restaurar início e parâmetros</button>
-            <button class="button button-outline" type="button" data-fullscreen aria-pressed="false">Tela cheia</button>
+            <button class="button button-outline" type="button" id="faraday-panel-toggle" aria-controls="faraday-controls" aria-expanded="false" hidden>Gráficos e parâmetros</button><button class="button button-outline" type="button" data-fullscreen aria-pressed="false">Tela cheia</button>
           </div>
         </div>
         <p class="faraday-help" id="faraday-help">Vista 2D: projeção da espira e direção do campo. Selecione Vista 3D para girar a perspectiva com o mouse ou toque.</p>
@@ -57,8 +57,8 @@
         <div class="faraday-chart-heading"><strong>Fluxo concatenado e força eletromotriz no tempo</strong><span>Curvas analíticas do modelo</span></div>
         <canvas id="faraday-chart" role="img" aria-label="Gráficos de fluxo magnético concatenado e força eletromotriz em função do tempo"></canvas>
       </div>
-      <aside class="faraday-controls" aria-label="Parâmetros do modelo">
-        <h2>Parâmetros</h2>
+      <aside class="faraday-controls" id="faraday-controls" aria-label="Gráficos e parâmetros do modelo">
+        <h2>Gráficos e parâmetros</h2><button class="button button-primary faraday-panel-play" id="faraday-panel-play" type="button" hidden>Pausar</button>
         <label for="faraday-turns">Número de espiras <output data-out="turns">20</output><input id="faraday-turns" data-param="turns" type="range" min="1" max="100" step="1" value="20"></label>
         <label for="faraday-field">Campo magnético B <output data-out="magneticField">0,30 T</output><input id="faraday-field" data-param="magneticField" type="range" min="0" max="1.5" step="0.05" value="0.3"></label>
         <label for="faraday-area">Área da espira A <output data-out="area">0,25 m²</output><input id="faraday-area" data-param="area" type="range" min="0.02" max="1" step="0.01" value="0.25"></label>

@@ -12,14 +12,14 @@
   <link rel="stylesheet" href="laboratorio-suite.css?v=lab-grid-touch-20261010-2">
   <script src="script.js?v=laboratorio-fisica-20261009-2" defer></script>
   <script src="quick-menu.js?v=quick-access-20261008" defer></script>
-  <link rel="stylesheet" href="physics-topic-labs.css?v=unified-labs-20261011-1">
+  <link rel="stylesheet" href="physics-topic-labs.css?v=lab-menu-play-20261011&previous=unified-labs-20261011-1">
   <script type="module">
     const topic = new URLSearchParams(location.search).get("topico") || "";
     if (topic.startsWith("lab-")) {
-      import("./physics-topic-labs.js?v=unified-labs-20261011-1");
+      import("./physics-topic-labs.js?v=lab-menu-play-20261011");
     } else {
       import("./laboratorio.js?v=lab-grid-touch-20261010-2");
-      import("./laboratorio-workspace.js?v=lab-grid-touch-20261010-2");
+      import("./laboratorio-workspace.js?v=lab-menu-play-20261011&previous=lab-grid-touch-20261010-2");
     }
   </script>
   <script type="module" src="src-app.js?v=laboratorio-fisica-20261009-2"></script>
@@ -62,7 +62,7 @@
           <div class="lab-workspace-transport"><button id="workspace-play" class="button button-primary" type="button">Iniciar</button><button id="workspace-step" class="button button-outline" type="button">Avançar 0,1 s</button><button id="workspace-reset" class="button button-outline" type="button">Reiniciar</button><label>Reprodução <output id="workspace-speed-out">1×</output><input id="workspace-speed" type="range" min="0.25" max="2" step="0.25" value="1"></label><label for="workspace-time" class="lab-time-control">Instante <output id="workspace-time-out">0,00 s</output><input id="workspace-time" type="range" min="0" max="10" step="0.01" value="0"></label></div>
           <div class="lab-measurements"><div class="lab-measurement-heading"><div><h3>Medições</h3><p>Registre estados calculados pelo modelo ou exporte a tabela em CSV.</p></div><div><button id="workspace-record" class="button button-outline" type="button">Registrar medição</button><button id="workspace-export" class="button button-outline" type="button" disabled>Exportar CSV</button></div></div><div class="lab-table-scroll"><table><caption id="workspace-table-caption">Medições simuladas; não são observações de um experimento real.</caption><thead id="workspace-table-head"></thead><tbody id="workspace-table-body"></tbody></table></div></div>
         </div>
-        <aside id="workspace-controls-sidebar" class="lab-workspace-controls"><h3>Parâmetros</h3><div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
+        <aside id="workspace-controls-sidebar" class="lab-workspace-controls"><h3>Gráficos e parâmetros</h3><button id="workspace-panel-play" class="button button-primary workspace-panel-play" type="button" hidden>Pausar</button><div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
       </div>
     </section>
 
@@ -107,7 +107,7 @@
         <header class="priority-header">
           <a class="priority-back" href="laboratorio.html">← Voltar ao laboratório</a>
           <div class="priority-header-actions">
-            <button class="priority-button priority-quiet" id="panel-toggle" type="button" aria-expanded="true" aria-controls="priority-panel">Ocultar painel</button>
+            <button class="priority-button priority-quiet" id="panel-toggle" type="button" aria-expanded="true" aria-controls="priority-panel">Gráficos e parâmetros</button>
             <button class="priority-button" id="fullscreen-toggle" type="button" aria-pressed="false">Tela cheia</button>
           </div>
         </header>
@@ -131,7 +131,7 @@
             <p class="priority-status" id="lab-status" role="status" aria-live="polite">Ajuste os parâmetros e inicie a simulação.</p>
             <div class="priority-readouts" id="lab-readouts" aria-live="polite"></div>
           </div>
-          <aside class="priority-panel" id="priority-panel" aria-label="Parâmetros e gráfico">
+          <aside class="priority-panel" id="priority-panel" aria-label="Gráficos e parâmetros"><button class="priority-button priority-primary priority-panel-play" id="panel-play-toggle" type="button" hidden>Pausar</button>
             <section class="priority-panel-section">
               <div class="priority-section-heading"><div><p class="priority-kicker">CONTROLES</p><h2>Parâmetros</h2></div><button class="priority-reset-link" id="parameters-reset" type="button">Restaurar</button></div>
               <div class="priority-controls" id="lab-controls"></div>

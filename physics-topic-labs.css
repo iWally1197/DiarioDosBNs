@@ -5,3 +5,7 @@
 body.lab-virtual-topic main#conteudo { width:100%; max-width:none; margin:0; padding:0; }
 body.lab-virtual-topic main#conteudo > :not(#priority-lab) { display:none !important; }
 body.lab-virtual-topic main#conteudo > #priority-lab { display:block; }
+
+.priority-panel-play { grid-column:1/-1; width:100%; }
+.priority-lab:fullscreen .priority-panel-play { display:block; }
+.priority-lab:not(:fullscreen) .priority-panel-play { display:none !important; }

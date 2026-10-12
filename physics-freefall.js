@@ -21,6 +21,9 @@ if (!lab || !sceneContext || !chartContext) {
   const playButton = $("[data-play]");
   const resetButton = $("[data-reset]");
   const fullButton = $("[data-fullscreen]");
+  const panelToggle = $("#freefall-panel-toggle");
+  const panel = $("#freefall-controls");
+  const panelPlay = $("#freefall-panel-play");
   const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height" };
   const initial = { height: 20, gravity: 9.81, massA: 0.2, massB: 2, playback: 1 };
   const readParameters = () => ({
@@ -292,6 +295,7 @@ if (!lab || !sceneContext || !chartContext) {
     $('[data-out="playback"]').textContent = fmt(p.playback, 1) + "×";
     playButton.textContent = state.running ? "Pausar" : (state.started ? (at.time >= at.impactTime ? "Recomeçar" : "Continuar") : "Iniciar");
     playButton.setAttribute("aria-pressed", String(state.running));
+    if (panelPlay) { panelPlay.textContent = playButton.textContent; panelPlay.setAttribute("aria-pressed", String(state.running)); panelPlay.disabled = playButton.disabled; }
     fullButton.textContent = document.fullscreenElement === lab ? "Fechar tela cheia" : "Tela cheia";
     fullButton.setAttribute("aria-pressed", String(document.fullscreenElement === lab));
   }
@@ -398,6 +402,8 @@ if (!lab || !sceneContext || !chartContext) {
       seek(freeFallImpactTime(readParameters()));
     }
   });
+  panelPlay?.addEventListener("click", () => playButton.click());
+  panelToggle?.addEventListener("click", () => { const open = panel.classList.toggle("is-open"); panelToggle.setAttribute("aria-expanded", String(open)); });
   fullButton.addEventListener("click", async () => {
     try {
       if (document.fullscreenElement === lab) await document.exitFullscreen();
@@ -406,7 +412,7 @@ if (!lab || !sceneContext || !chartContext) {
       status.textContent = "A tela cheia não está disponível neste navegador.";
     }
   });
-  document.addEventListener("fullscreenchange", drawAll);
+  document.addEventListener("fullscreenchange", () => { const full = document.fullscreenElement === lab; panelToggle.hidden = !full; panelPlay.hidden = !full; if (!full) panel.classList.remove("is-open"); panelToggle.setAttribute("aria-expanded", String(panel.classList.contains("is-open"))); drawAll(); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && state.running) {
       stopAnimation();
