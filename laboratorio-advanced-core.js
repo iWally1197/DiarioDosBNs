@@ -1,4 +1,4 @@
-import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=mirror-labs-20261011-1";
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=mirror-focus-layout-20261011-1";
 
 const G = 9.81;
 const COULOMB = 8.9875517923e9;

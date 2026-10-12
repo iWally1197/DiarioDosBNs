@@ -55,22 +55,16 @@ test("equação de espelhos esféricos usa f=R/2 com sinais coerentes", () => {
   assert.equal(convex.image, "virtual");
 });
 
-test("raios em espelho esférico refletem na superfície com ângulos iguais", () => {
+test("raios no espelho côncavo parabólico refletem pela normal local", () => {
   const geometry = stateAt("optics-concave-mirror", { radius: 2, objectDistance: 3, objectHeight: 0.6, wavelengthNm: 550 }, 0).geometry;
-  const incident = geometry.rays[0].points;
-  const reflected = geometry.rays[1].points;
-  const hit = incident.at(-1);
-  const incoming = { x: hit.x - incident[0].x, y: hit.y - incident[0].y };
-  const incomingLength = Math.hypot(incoming.x, incoming.y);
-  incoming.x /= incomingLength; incoming.y /= incomingLength;
-  const outgoing = { x: reflected.at(-1).x - hit.x, y: reflected.at(-1).y - hit.y };
-  const outgoingLength = Math.hypot(outgoing.x, outgoing.y);
-  outgoing.x /= outgoingLength; outgoing.y /= outgoingLength;
-  const normal = { x: hit.x - geometry.center.x, y: hit.y - geometry.center.y };
-  const normalLength = Math.hypot(normal.x, normal.y);
-  normal.x /= normalLength; normal.y /= normalLength;
-  const tangent = { x: -normal.y, y: normal.x };
-  closeTo(incoming.x * tangent.x + incoming.y * tangent.y, outgoing.x * tangent.x + outgoing.y * tangent.y, 1e-10);
+  assert.equal(geometry.surfaceProfile, "parabolic");
+  const reflectedRays = geometry.rays.filter((ray) => ray.role === "refletido");
+  assert.equal(reflectedRays.length, 4);
+  for (const ray of reflectedRays) {
+    const { incomingDirection: incoming, reflectedDirection: outgoing, normal } = ray.interaction;
+    const tangent = { x: -normal.y, y: normal.x };
+    closeTo(incoming.x * tangent.x + incoming.y * tangent.y, outgoing.x * tangent.x + outgoing.y * tangent.y, 1e-10);
+  }
 });
 
 test("comprimento de onda visível fora dos limites e índices inválidos são rejeitados", () => {
@@ -148,11 +142,36 @@ test("feixe colimado mantém direções paralelas e modo divergente parte da lan
   }
   assert.equal(parallel.flashlight.parallel, true);
 
-  const divergent = stateAt("optics-concave-mirror", { ...base, beamMode: "divergent" }).geometry;
+  const divergent = stateAt("optics-convex-mirror", { ...base, beamMode: "divergent" }).geometry;
   const incidentDivergent = divergent.rays.filter((ray) => ray.role === "raio incidente");
   assert.ok(incidentDivergent.length >= 3);
   assert.ok(incidentDivergent.some((ray) => Math.abs(ray.interaction.incomingDirection.y - incidentDivergent[0].interaction.incomingDirection.y) > 1e-3));
   assert.equal(divergent.flashlight.parallel, false);
+});
+
+test("todas as bolinhas do côncavo parabólico atravessam o foco mesmo se pedirem feixe divergente", () => {
+  const geometry = stateAt("optics-concave-mirror", {
+    radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", objectHeight: 0.6,
+    wavelengthNm: 550, flashlightAngle: 37, beamOpening: 48, emissionRate: 0.65, visualSpeed: 1,
+    beamMode: "divergent", showParticles: true, beamIntensity: 0.8
+  }, 0).geometry;
+  const focus = { x: -geometry.focalLength, y: 0 };
+  const reflected = geometry.rays.filter((ray) => ray.role === "raio refletido");
+  assert.equal(geometry.flashlight.focusAligned, true);
+  assert.equal(geometry.flashlight.parallel, true);
+  assert.equal(reflected.length, 7);
+  assert.equal(geometry.particlePaths.length, reflected.length);
+  for (const ray of reflected) {
+    const { hit, reflectedDirection } = ray.interaction;
+    closeTo(ray.interaction.incomingDirection.y, 0, 1e-10);
+    const toFocus = { x: focus.x - hit.x, y: focus.y - hit.y };
+    const crossTrack = Math.abs(toFocus.x * reflectedDirection.y - toFocus.y * reflectedDirection.x);
+    closeTo(crossTrack, 0, 1e-8);
+    const distanceAlongRay = toFocus.x * reflectedDirection.x + toFocus.y * reflectedDirection.y;
+    assert.ok(distanceAlongRay > 0, "o foco deve ficar à frente do raio refletido");
+    const segmentLength = Math.hypot(ray.points[1].x - ray.points[0].x, ray.points[1].y - ray.points[0].y);
+    assert.ok(distanceAlongRay < segmentLength, "a bolinha precisa cruzar o foco no trecho refletido");
+  }
 });
 
 test("página expõe seletor de modos e controles para luz e corpo", () => {
@@ -168,5 +187,8 @@ test("página expõe seletor de modos e controles para luz e corpo", () => {
   assert.match(workspace, /beamIntensity/);
   assert.match(workspace, /body-height/);
   assert.match(workspace, /function setParameter/);
+  assert.match(workspace, /state\.mode = MIRROR_EXPERIMENTS\.has\(id\) \? "lantern"/);
+  const suite = readFileSync(new URL("./laboratorio-suite.css", import.meta.url), "utf8");
+  assert.match(suite, /lab-workspace-panels,.lab-existing-panels\s*\{\s*grid-template-columns:minmax\(0,1fr\)/);
 });
 

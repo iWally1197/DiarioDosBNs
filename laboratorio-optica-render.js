@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-labs-20261011-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-focus-layout-20261011-1";
 
 const C_METERS_PER_NS = 0.299792458;
 
@@ -95,30 +95,84 @@ function drawHuman(context, base, tip, color, virtual = false) {
   const up = { x: (tip.x - base.x) / height, y: (tip.y - base.y) / height };
   const side = { x: up.y, y: -up.x };
   const at = (fraction, lateral = 0) => ({ x: base.x + up.x * height * fraction + side.x * height * lateral, y: base.y + up.y * height * fraction + side.y * height * lateral });
-  const head = at(0.88);
-  const headRadius = Math.max(3.5, Math.min(9, height * 0.065));
+  const shape = (points, fill, stroke = "rgba(8, 16, 31, .72)") => {
+    context.beginPath();
+    points.forEach((point, index) => {
+      const screen = at(point[0], point[1]);
+      if (index === 0) context.moveTo(screen.x, screen.y); else context.lineTo(screen.x, screen.y);
+    });
+    context.closePath();
+    context.fillStyle = fill;
+    context.fill();
+    context.strokeStyle = stroke;
+    context.lineWidth = Math.max(0.8, height * 0.006);
+    context.stroke();
+  };
+  const line = (points, width, color) => {
+    context.beginPath();
+    points.forEach((point, index) => {
+      const screen = at(point[0], point[1]);
+      if (index === 0) context.moveTo(screen.x, screen.y); else context.lineTo(screen.x, screen.y);
+    });
+    context.strokeStyle = color;
+    context.lineWidth = Math.max(1.5, height * width);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.stroke();
+  };
+  const dot = (fraction, lateral, radius, color) => {
+    const point = at(fraction, lateral);
+    context.beginPath();
+    context.arc(point.x, point.y, Math.max(1.2, height * radius), 0, 2 * Math.PI);
+    context.fillStyle = color;
+    context.fill();
+  };
+  const skin = "#e8b992";
+  const skinShade = "#c98c68";
+  const hair = "#263047";
+  const pants = virtual ? "#536b91" : "#344765";
+  const shirt = color;
+  const shirtShade = virtual ? "#6389bb" : "#bb9651";
+  const outline = "rgba(8, 16, 31, .72)";
+  const foot = "#202b3d";
+  const headCenter = at(0.91, 0.005);
+  const headRadius = Math.max(4.2, Math.min(11.5, height * 0.057));
   context.save();
-  context.strokeStyle = color;
-  context.fillStyle = color;
-  context.globalAlpha = virtual ? 0.72 : 1;
-  context.lineWidth = Math.max(2, Math.min(5, height * 0.045));
-  context.lineCap = "round";
-  context.setLineDash(virtual ? [4, 3] : []);
-  const torsoTop = at(0.78);
-  const waist = at(0.43);
-  const shoulderLeft = at(0.69, -0.19);
-  const shoulderRight = at(0.69, 0.19);
-  const handLeft = at(0.50, -0.27);
-  const handRight = at(0.50, 0.27);
-  const footLeft = at(0, -0.13);
-  const footRight = at(0, 0.13);
-  const kneeLeft = at(0.23, -0.09);
-  const kneeRight = at(0.23, 0.09);
-  for (const [a, b] of [[torsoTop, waist], [shoulderLeft, handLeft], [shoulderRight, handRight], [waist, kneeLeft], [kneeLeft, footLeft], [waist, kneeRight], [kneeRight, footRight]]) {
-    context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke();
-  }
-  context.setLineDash([]);
-  context.beginPath(); context.arc(head.x, head.y, headRadius, 0, 2 * Math.PI); context.fill();
+  context.globalAlpha = virtual ? 0.76 : 1;
+  context.shadowColor = virtual ? "transparent" : "rgba(0, 0, 0, .23)";
+  context.shadowBlur = height * 0.018;
+  // Calças, pernas e sapatos: volumes preenchidos deixam a figura legível mesmo pequena.
+  shape([[0.48,-0.085],[0.43,-0.012],[0.25,-0.015],[0.10,-0.082],[0.055,-0.078],[0.045,-0.018],[0.10,0.005],[0.30,0.055],[0.47,0.018]], pants);
+  shape([[0.48,0.085],[0.43,0.012],[0.25,0.015],[0.10,0.082],[0.055,0.078],[0.045,0.018],[0.10,-0.005],[0.30,-0.055],[0.47,-0.018]], pants);
+  shape([[0.055,-0.078],[0.025,-0.11],[0.012,-0.035],[0.04,0.015],[0.08,0.006]], foot, outline);
+  shape([[0.055,0.078],[0.025,0.11],[0.012,0.035],[0.04,-0.015],[0.08,-0.006]], foot, outline);
+  // Braços ao lado do tronco, com mangas, antebraços e mãos.
+  line([[0.73,-0.105],[0.61,-0.15],[0.48,-0.16]], 0.075, shirtShade);
+  line([[0.48,-0.16],[0.34,-0.18]], 0.045, skin);
+  line([[0.73,0.105],[0.61,0.15],[0.48,0.16]], 0.075, shirtShade);
+  line([[0.48,0.16],[0.34,0.18]], 0.045, skin);
+  dot(0.33,-0.18,0.022,skinShade); dot(0.33,0.18,0.022,skinShade);
+  // Tronco com ombros e cintura definidos.
+  shape([[0.81,-0.045],[0.78,-0.09],[0.72,-0.13],[0.63,-0.12],[0.49,-0.075],[0.46,0],[0.49,0.075],[0.63,0.12],[0.72,0.13],[0.78,0.09],[0.81,0.045]], shirt, outline);
+  shape([[0.78,-0.045],[0.75,0],[0.78,0.045],[0.81,0.02],[0.81,-0.02]], shirtShade, "transparent");
+  // Pescoço e cabeça com cabelo, rosto, olho e nariz orientados para a frente.
+  shape([[0.82,-0.027],[0.87,-0.024],[0.88,0.024],[0.82,0.027]], skin);
+  context.save();
+  context.translate(headCenter.x, headCenter.y);
+  context.rotate(Math.atan2(up.y, up.x) + Math.PI / 2);
+  context.fillStyle = skin;
+  context.strokeStyle = outline;
+  context.lineWidth = Math.max(0.8, height * 0.006);
+  context.beginPath(); context.ellipse(0, 0, headRadius * 0.78, headRadius, 0, 0, 2 * Math.PI); context.fill(); context.stroke();
+  context.fillStyle = hair;
+  context.beginPath(); context.ellipse(-headRadius * 0.08, -headRadius * 0.38, headRadius * 0.76, headRadius * 0.58, 0, Math.PI, 2 * Math.PI); context.fill();
+  context.beginPath(); context.ellipse(-headRadius * 0.48, headRadius * 0.05, headRadius * 0.25, headRadius * 0.52, 0, Math.PI * 0.6, Math.PI * 1.6); context.fill();
+  context.fillStyle = outline;
+  context.beginPath(); context.arc(headRadius * 0.27, -headRadius * 0.02, Math.max(0.8, headRadius * 0.065), 0, 2 * Math.PI); context.fill();
+  context.beginPath(); context.moveTo(headRadius * 0.56, headRadius * 0.08); context.lineTo(headRadius * 0.72, headRadius * 0.15); context.lineTo(headRadius * 0.54, headRadius * 0.2); context.stroke();
+  context.beginPath(); context.arc(headRadius * 0.39, headRadius * 0.38, headRadius * 0.16, 0.1 * Math.PI, 0.55 * Math.PI); context.stroke();
+  context.restore();
+  line([[0.79,-0.026],[0.75,0],[0.79,0.026]], 0.009, virtual ? "rgba(255,255,255,.82)" : "rgba(255,255,255,.68)");
   context.restore();
 }
 
@@ -135,10 +189,15 @@ function drawLantern(context, geometry, view, palette) {
   context.strokeStyle = palette.text;
   context.lineWidth = 1.5;
   context.globalAlpha = flashlight.intensity;
-  context.beginPath();
-  context.rect(-15, -6, 23, 12);
-  context.fill(); context.stroke();
-  context.beginPath(); context.moveTo(8, -5); context.lineTo(14, -8); context.lineTo(14, 8); context.lineTo(8, 5); context.closePath(); context.fill(); context.stroke();
+  context.shadowColor = palette.gold;
+  context.shadowBlur = 12;
+  context.beginPath(); context.roundRect(-23, -7, 34, 14, 4); context.fill(); context.stroke();
+  context.beginPath(); context.moveTo(-8, 6); context.lineTo(2, 6); context.lineTo(7, 16); context.lineTo(-6, 16); context.closePath(); context.fill(); context.stroke();
+  context.shadowBlur = 0;
+  context.fillStyle = palette.text;
+  context.beginPath(); context.moveTo(10, -6); context.lineTo(19, -10); context.lineTo(19, 10); context.lineTo(10, 6); context.closePath(); context.fill(); context.stroke();
+  context.fillStyle = palette.gold;
+  context.beginPath(); context.ellipse(19, 0, 2.5, 7.5, 0, 0, Math.PI * 2); context.fill();
   context.restore();
   const tip = { x: flashlight.source.x + flashlight.direction.x * 0.3, y: flashlight.source.y + flashlight.direction.y * 0.3 };
   drawArrow(context, origin, view.toScreen(tip), palette.gold, "lanterna", palette.text);
@@ -405,10 +464,20 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
   const center = view.toScreen(geometry.center);
   const focus = view.toScreen({ x: -geometry.focalLength, y: 0 });
   const vertex = view.toScreen({ x: 0, y: 0 });
-  for (const [point, text] of [[center, "C"], [focus, "F"], [vertex, "V"]]) {
-    context.fillStyle = palette.text;
-    context.beginPath(); context.arc(point.x, point.y, 3.5, 0, 2 * Math.PI); context.fill();
-    context.font = "10px system-ui"; context.fillText(text, point.x + 5, point.y + 14);
+  const landmarks = geometry.surfaceProfile === "parabolic"
+    ? [[focus, "F", true], [vertex, "V", false]]
+    : [[center, "C", false], [focus, "F", true], [vertex, "V", false]];
+  for (const [point, text, isFocus] of landmarks) {
+    context.beginPath(); context.arc(point.x, point.y, isFocus ? 7 : 3.5, 0, 2 * Math.PI);
+    if (isFocus) {
+      context.strokeStyle = palette.gold; context.lineWidth = 2; context.stroke();
+      context.fillStyle = palette.gold; context.beginPath(); context.arc(point.x, point.y, 2.4, 0, 2 * Math.PI); context.fill();
+    } else {
+      context.fillStyle = palette.text; context.fill();
+    }
+    context.fillStyle = isFocus ? palette.gold : palette.text;
+    context.font = isFocus ? "700 12px system-ui" : "10px system-ui";
+    context.fillText(text, point.x + 7, point.y + 14);
   }
   context.fillStyle = palette.text; context.font = "12px system-ui";
   context.fillText(label + " · f = " + values.focalLength.toFixed(2) + " m · R = " + Math.abs(values.radius).toFixed(2) + " m", 12, 20);
@@ -481,9 +550,14 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     context.fillStyle = palette.text; context.font = "10px system-ui";
     context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
-  drawSphericalLandmarks(context, geometry, values, view, palette, (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "aproximadamente paralelo" : "divergente"));
+  const beamLabel = geometry.surfaceProfile === "parabolic" && flashlight.focusAligned
+    ? "Côncavo parabólico · colimado · todas as bolinhas passam por F"
+    : (geometry.sign > 0 ? "Côncavo" : "Convexo") + " · feixe " + (flashlight.parallel ? "paralelo" : "divergente");
+  drawSphericalLandmarks(context, geometry, values, view, palette, beamLabel);
   context.fillStyle = palette.muted; context.font = "10px system-ui";
-  context.fillText("A normal local é calculada no ponto em que cada raio encontra a superfície esférica.", 12, 58);
+  context.fillText(geometry.surfaceProfile === "parabolic"
+    ? "Superfície parabólica e normal local exata; raios paralelos convergem no foco."
+    : "A normal local é calculada no ponto em que cada raio encontra a superfície esférica.", 12, 58);
 }
 
 function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {

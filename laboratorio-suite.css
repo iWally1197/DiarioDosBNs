@@ -206,3 +206,35 @@
   .mirror-mode-cards { grid-template-columns:1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .mirror-mode-card { transition:none; } }
+
+/* Labs use the available page width; animation first, then charts and controls. */
+main.physics-lab { width:min(1560px,calc(100% - 48px)); }
+.lab-workspace { width:100%; padding:clamp(14px,1.7vw,24px); }
+.lab-workspace-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
+.lab-workspace-panels,.lab-existing-panels { grid-template-columns:minmax(0,1fr); gap:14px; }
+.lab-workspace-canvas-wrap:not(.lab-graph-canvas-wrap) { height:clamp(390px,72vh,820px); min-height:340px; }
+.lab-workspace-canvas-wrap.lab-graph-canvas-wrap { height:clamp(260px,38vh,420px); min-height:240px; }
+.lab-existing-panels .lab-canvas-wrap:not(.pendulum-chart-wrap) { height:clamp(390px,72vh,820px); min-height:340px; }
+.lab-existing-panels .pendulum-chart-wrap { height:clamp(260px,38vh,420px); min-height:240px; }
+.lab-existing-panels .lab-chart-wrap canvas { min-height:0; }
+.lab-workspace-controls { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+.lab-workspace-controls > h3,.lab-workspace-controls > .workspace-panel-play,
+.lab-workspace-controls > .lab-dynamic-controls,.lab-workspace-controls > .lab-status,
+.lab-workspace-controls > .lab-equation-card,.lab-workspace-controls > .lab-investigation,
+.lab-workspace-controls > .lab-limitations { grid-column:1/-1; }
+.lab-workspace-controls > .lab-dynamic-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+body.lab-virtual-topic .priority-workspace { grid-template-columns:minmax(0,1fr); min-height:0; }
+body.lab-virtual-topic .priority-panel { grid-template-columns:minmax(0,1fr); gap:14px; border-top:1px solid var(--pl-line); border-left:0; }
+body.lab-virtual-topic .priority-graph-section { order:-1; }
+body.lab-virtual-topic #lab-scene { height:clamp(390px,72vh,820px); min-height:340px; }
+body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
+@media(max-width:720px) {
+  main.physics-lab { width:calc(100% - 24px); }
+  .lab-workspace-canvas-wrap:not(.lab-graph-canvas-wrap),
+  .lab-existing-panels .lab-canvas-wrap:not(.pendulum-chart-wrap),
+  body.lab-virtual-topic #lab-scene { height:clamp(340px,62vh,640px); min-height:320px; }
+  .lab-workspace-canvas-wrap.lab-graph-canvas-wrap,
+  .lab-existing-panels .pendulum-chart-wrap,
+  body.lab-virtual-topic #lab-graph { height:clamp(240px,36vh,360px); min-height:220px; }
+  .lab-workspace-controls,.lab-workspace-controls > .lab-dynamic-controls { grid-template-columns:minmax(0,1fr); }
+}
