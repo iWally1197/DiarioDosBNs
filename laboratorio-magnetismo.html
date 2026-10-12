@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
+  <title>Ímãs e Eletroímãs — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-1">
+  <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-1">
+  <script src="script.js?v=magnetismo-20261012-1" defer></script>
+  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-1"></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Diário dos BNs, início"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="downloads.html">Downloads</a><a href="blender.html">Aprenda Blender</a><a href="laboratorio.html" aria-current="page">Laboratório</a></nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+
+  <main id="conteudo" class="magnet-page">
+    <nav class="breadcrumbs" aria-label="Você está em"><a href="index.html">Início</a><span aria-hidden="true">/</span><a href="laboratorio.html">Laboratórios Digitais</a><span aria-hidden="true">/</span><span>Ímãs e Eletroímãs</span></nav>
+    <section class="magnet-intro">
+      <div class="section-kicker">ELETROMAGNETISMO · ENSINO MÉDIO</div>
+      <h1>Ímãs e Eletroímãs</h1>
+      <p>Explore como correntes, ímãs e a geometria das fontes determinam o campo magnético em cada ponto.</p>
+      <p class="magnet-model-note"><strong>Modelo 2D:</strong> os valores são calculados pelo mesmo modelo que desenha o campo. A visualização usa projeção no plano e indica suas aproximações.</p>
+    </section>
+
+    <nav class="magnet-modes" role="tablist" aria-label="Modos do laboratório">
+      <button type="button" role="tab" data-mode="permanent" aria-selected="true">Ímã permanente</button>
+      <button type="button" role="tab" data-mode="electromagnet" aria-selected="false">Eletroímã</button>
+      <button type="button" role="tab" data-mode="field" aria-selected="false">Campo magnético</button>
+      <button type="button" role="tab" data-mode="interaction" aria-selected="false">Interação entre ímãs</button>
+      <button type="button" role="tab" data-mode="graphs" aria-selected="false">Experimentos e gráficos</button>
+    </nav>
+
+    <section class="magnet-workspace" aria-label="Área de experimentação">
+      <div class="magnet-scene-column">
+        <div class="magnet-scene-toolbar">
+          <p id="mode-description" aria-live="polite">Arraste o ímã, a bússola ou o sensor. Gire o ímã pelos controles.</p>
+          <div class="magnet-scene-actions">
+            <button type="button" class="button button-outline" id="add-compass">＋ Bússola</button>
+            <button type="button" class="button button-outline" id="remove-compass">− Bússola selecionada</button>
+            <button type="button" class="button button-outline" id="reset-lab">Restaurar</button>
+          </div>
+        </div>
+        <div class="magnet-canvas-frame">
+          <canvas id="magnet-canvas" tabindex="0" aria-label="Cena 2D interativa do campo magnético. Use os controles para mover instrumentos e alterar as fontes."></canvas>
+        </div>
+        <div class="magnet-legend" aria-label="Legenda"><span><i class="legend-n"></i> Polo norte magnético</span><span><i class="legend-s"></i> Polo sul magnético</span><span><i class="legend-field"></i> Campo: direção e sentido de B</span><span><i class="legend-grid"></i> Grade de coordenadas</span></div>
+        <p class="magnet-scene-help">Use o mouse ou o toque para mover os instrumentos. No teclado, foque a cena e use as setas para mover o sensor; com Shift, mova a bússola destacada em dourado.</p>
+      </div>
+
+      <aside class="magnet-controls" aria-label="Controles do experimento">
+        <div class="magnet-control-header"><div><span class="section-kicker">CONTROLES</span><h2 id="controls-title">Ímã permanente</h2></div><button type="button" class="button button-outline" id="complexity-toggle" aria-pressed="false">Modo avançado</button></div>
+
+        <fieldset class="magnet-control-group" id="permanent-controls"><legend>Ímã de barra</legend>
+          <label for="magnet-angle">Orientação <output id="magnet-angle-value">0°</output><input id="magnet-angle" type="range" min="-180" max="180" step="1" value="0"></label>
+          <label for="magnet-strength">Magnetização <output id="magnet-strength-value">250 kA/m</output><input id="magnet-strength" type="range" min="50000" max="600000" step="10000" value="250000"></label>
+          <button type="button" class="button button-outline" id="invert-magnet">Inverter polos N / S</button>
+          <label class="magnet-secondary-control" for="second-angle">Orientação do segundo ímã <output id="second-angle-value">0°</output><input id="second-angle" type="range" min="-180" max="180" step="1" value="0"></label>
+          <label class="magnet-secondary-control" for="second-strength">Magnetização do segundo ímã <output id="second-strength-value">250 kA/m</output><input id="second-strength" type="range" min="50000" max="600000" step="10000" value="250000"></label>
+          <button type="button" class="button button-outline magnet-secondary-control" id="invert-second-magnet">Inverter polos do segundo ímã</button>
+        </fieldset>
+
+        <fieldset class="magnet-control-group" id="coil-controls" hidden><legend>Bobina e fonte CC</legend>
+          <label for="coil-current">Corrente convencional <output id="coil-current-value">1,5 A</output><input id="coil-current" type="range" min="-5" max="5" step="0.1" value="1.5"></label>
+          <label for="coil-turns">Número de espiras <output id="coil-turns-value">18</output><input id="coil-turns" type="range" min="1" max="50" step="1" value="18"></label>
+          <label for="coil-length">Comprimento <output id="coil-length-value">0,24 m</output><input id="coil-length" type="range" min="0.08" max="0.42" step="0.01" value="0.24"></label>
+          <label for="coil-radius">Raio <output id="coil-radius-value">0,06 m</output><input id="coil-radius" type="range" min="0.025" max="0.12" step="0.005" value="0.06"></label>
+          <label for="coil-angle">Orientação da bobina <output id="coil-angle-value">0°</output><input id="coil-angle" type="range" min="-90" max="90" step="1" value="0"></label>
+          <label class="magnet-check"><input type="checkbox" id="coil-core"> Núcleo ferromagnético didático</label>
+          <p class="magnet-control-note">A inversão da corrente inverte os polos da bobina. Com 0 A, ela não produz campo. O núcleo usa um fator de reforço saturável didático, não uma curva real de material.</p>
+        </fieldset>
+
+        <fieldset class="magnet-control-group" id="field-controls" hidden><legend>Fontes e visualização</legend>
+          <label class="magnet-check"><input type="checkbox" id="show-magnet-source" checked> Campo do ímã</label>
+          <label class="magnet-check"><input type="checkbox" id="show-coil-source"> Campo da bobina</label>
+          <label class="magnet-check"><input type="checkbox" id="earth-field"> Campo terrestre simplificado</label>
+        </fieldset>
+
+        <fieldset class="magnet-control-group"><legend>Campo e instrumentos</legend>
+          <label class="magnet-check"><input type="checkbox" id="show-lines" checked> Linhas de campo</label>
+          <label class="magnet-check"><input type="checkbox" id="show-vectors"> Vetores B</label>
+          <label class="magnet-check"><input type="checkbox" id="show-heatmap"> Mapa de intensidade</label>
+          <label class="magnet-check"><input type="checkbox" id="show-interior" checked> Retorno interno esquemático no ímã</label>
+          <label class="magnet-check"><input type="checkbox" id="show-current" checked> Sentido da corrente</label>
+          <label class="magnet-check"><input type="checkbox" id="show-grid" checked> Grade de coordenadas</label>
+          <label for="line-density">Densidade gráfica <output id="line-density-value">18</output><input id="line-density" type="range" min="8" max="34" step="2" value="18"></label>
+          <label class="magnet-check magnet-advanced"><input type="checkbox" id="show-numbers" checked> Mostrar leituras numéricas</label>
+        </fieldset>
+
+        <fieldset class="magnet-control-group"><legend>Sensor digital</legend>
+          <label class="magnet-check"><input type="checkbox" id="earth-compass"> Incluir campo terrestre simplificado</label>
+          <label for="sensor-x">Posição horizontal <output id="sensor-x-value">0,18 m</output><input id="sensor-x" type="range" min="-0.38" max="0.38" step="0.01" value="0.18"></label>
+          <label for="sensor-y">Posição vertical <output id="sensor-y-value">0,10 m</output><input id="sensor-y" type="range" min="-0.24" max="0.24" step="0.01" value="0.10"></label>
+        </fieldset>
+
+        <details class="magnet-science-note"><summary>Sobre o modelo físico</summary><p>O ímã é um prisma uniformemente magnetizado. O campo externo é integrado numericamente a partir das cargas magnéticas ligadas nas faces, uma representação matemática da magnetização, não de monopolos reais. A bobina finita é calculada somando contribuições de Biot–Savart de segmentos de fio. No limite de um solenoide longo, B ≈ μ₀NI/L; aqui a geometria finita é mantida. Pela regra da mão direita, os dedos acompanham a corrente convencional e o polegar indica o norte da bobina. A espessura numérica do fio regulariza o campo muito perto do condutor. O plano mostra Bx e By; Bz é zero na simetria usada. Os valores muito próximos das superfícies e do fio são apenas qualitativos. As setas têm comprimento comprimido para facilitar a leitura; não altera os valores calculados.</p><p>O traço interno no ímã fecha o desenho conceitual de B de S para N dentro do material; não entra nas leituras quantitativas.</p></details>
+      </aside>
+    </section>
+
+    <section class="magnet-readings" aria-label="Leituras do magnetômetro">
+      <div class="magnet-reading-heading"><div><span class="section-kicker">MAGNETÔMETRO</span><h2>Campo no sensor</h2></div><p id="sensor-status" role="status" aria-live="polite">Leitura calculada do modelo.</p></div>
+      <div class="magnet-reading-grid">
+        <article><span>Intensidade |B|</span><strong id="reading-magnitude">—</strong></article>
+        <article><span>Componente Bx</span><strong id="reading-bx">—</strong></article>
+        <article><span>Componente By</span><strong id="reading-by">—</strong></article>
+        <article><span>Componente Bz</span><strong id="reading-bz">0 μT</strong></article>
+        <article><span>Ângulo da agulha</span><strong id="reading-angle">—</strong></article>
+      </div>
+    </section>
+
+    <section id="magnet-graphs" class="magnet-graphs" hidden>
+      <div class="magnet-graph-header"><div><span class="section-kicker">DADOS DO MODELO</span><h2>Experimentos e gráficos</h2><p>O cursor acompanha o sensor. Clique no gráfico para mover o sensor ao longo do eixo de análise.</p></div>
+        <div class="magnet-graph-actions"><label for="graph-select">Gráfico<select id="graph-select"><option value="distance">Campo × distância</option><option value="current">Campo × corrente</option><option value="turns">Campo × número de espiras</option><option value="components">Componentes Bx e By × posição</option><option value="axial">Campo axial da bobina finita</option></select></label><label for="graph-scale">Escala<select id="graph-scale"><option value="auto">Automática</option><option value="2">2×</option><option value="4">4×</option></select></label>
+          <button class="button button-outline" id="compare-config" type="button">Comparar configuração</button><button class="button button-outline" id="export-csv" type="button">Exportar CSV</button><button class="button button-outline" id="reset-graph" type="button">Restaurar gráfico</button>
+        </div>
+      </div>
+      <div class="magnet-chart-wrap"><svg id="magnet-chart" role="img" aria-label="Gráfico atualizado a partir dos cálculos da simulação"></svg><p id="chart-inspection" role="status" aria-live="polite">Passe o cursor ou toque em um ponto para inspecionar.</p></div>
+    </section>
+
+    <section class="magnet-learning">
+      <div class="magnet-learning-heading"><span class="section-kicker">INVESTIGAÇÃO</span><h2>Explore e faça previsões</h2><button class="button button-outline" id="learning-toggle" aria-expanded="true" type="button">Ocultar detalhes</button></div>
+      <div class="magnet-learning-body" id="learning-body">
+        <div class="magnet-concepts"><article><h3>Campo magnético</h3><p>O vetor B descreve a intensidade e a orientação da influência magnética em cada ponto. O valor do sensor é calculado pela soma vetorial das fontes ativas.</p></article><article><h3>Ímã e eletroímã</h3><p>Um ímã permanente é modelado pela sua magnetização. Na bobina, o sentido convencional da corrente determina a polaridade; mais espiras geralmente elevam o campo no eixo.</p></article><article><h3>Bússola</h3><p>A extremidade norte da agulha se orienta com o campo local resultante. Se o campo for quase nulo, ela não recebe uma direção artificial.</p></article><article><h3>Linhas e vetores</h3><p>Linhas mostram uma direção contínua do campo; setas indicam o vetor em pontos escolhidos. Nenhum dos dois representa fios ou trajetórias de partículas.</p></article></div>
+        <div class="magnet-challenges"><h3>Desafios de investigação</h3><ol><li>Preveja como a agulha muda ao inverter a corrente da bobina e teste a previsão.</li><li>Compare a leitura no centro da bobina com a leitura mais distante, mantendo corrente e espiras fixas.</li><li>Observe duas barras: como a orientação relativa altera o campo entre elas?</li></ol><label for="prediction-choice">Minha previsão: a inversão da corrente...</label><select id="prediction-choice"><option value="">Escolha antes de testar</option><option value="invert">inverte a orientação do campo da bobina</option><option value="same">mantém a orientação do campo</option><option value="zero">faz o campo da bobina aumentar</option></select><button class="button button-outline" id="check-prediction" type="button">Testar previsão</button><p id="prediction-feedback" role="status" aria-live="polite"></p></div>
+      </div>
+    </section>
+    <p class="magnet-back-link"><a href="laboratorio.html">← Voltar aos Laboratórios Digitais</a></p>
+  </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Modelos físicos interativos para investigar.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Valores gerados por modelos didáticos documentados.</span><a href="index.html">Início ↗</a><a href="laboratorio.html">Laboratórios ↗</a></div></footer>
+</body>
+</html>
+

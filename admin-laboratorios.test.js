@@ -2,12 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [app,migration,page]=await Promise.all([
+const [app,migration,page,ui]=await Promise.all([
   readFile(new URL("./src-app.js",import.meta.url),"utf8"),
   readFile(new URL("./supabase/migrations/20261011031216_admin_only_animation_publication.sql",import.meta.url),"utf8"),
-  readFile(new URL("./admin-laboratorios.html",import.meta.url),"utf8")
+  readFile(new URL("./admin-laboratorios.html",import.meta.url),"utf8"),
+  readFile(new URL("./laboratorio-catalogo-ui.js",import.meta.url),"utf8")
 ]);
 const panel=app.slice(app.indexOf("async function loadAdminLaboratoryRecords"),app.indexOf("async function loadAdminTools"));
+const {laboratoryPublicationRecords}=await import("./laboratorio-publicacao.js");
+const {experiments}=await import("./laboratorio-catalogo.js");
 
 test("painel possui rota estática protegida para administradores",()=>{
   assert.match(app,/'admin-laboratorios':'\/admin\/laboratorios'/);
@@ -39,4 +42,12 @@ test("banco impede alteração direta por quem não é administrador",()=>{
   assert.match(migration,/not public\.is_admin\(\)/i);
   assert.match(migration,/using errcode = '42501'/i);
   assert.match(migration,/security invoker/i);
+});
+
+test("aba Laboratórios publica apenas os sete temas selecionados e sincroniza com o Supabase",()=>{
+  assert.deepEqual(laboratoryPublicationRecords.map((item)=>item.id),["mru","muv","projectile","optics-reflection","optics-convex-mirror","lens-diverging","lab-magnetic-field"]);
+  assert.deepEqual(experiments.filter((item)=>laboratoryPublicationRecords.some((record)=>record.id===item.id)).map((item)=>item.id),laboratoryPublicationRecords.map((item)=>item.id));
+  assert.match(ui,/from\("animations"\)\.select\("slug"\)\.in\("slug", laboratoryPublicationSlugs\)/);
+  assert.match(panel,/upsert\(seeds,\{onConflict:'slug',ignoreDuplicates:true\}\)/);
+  assert.match(panel,/data-admin-lab-action/);
 });

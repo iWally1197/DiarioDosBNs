@@ -433,7 +433,7 @@ async function renderAdmin(user) {
 
 
 async function renderAdminLaboratories(user) {
-  replaceMain('Gerenciar laboratórios',`${profileHeader(user,{role:'admin'},'Gerenciar laboratórios','Controle quais animações e tópicos já cadastrados ficam disponíveis na biblioteca pública.')}
+  replaceMain('Gerenciar laboratórios',`${profileHeader(user,{role:'admin'},'Gerenciar laboratórios','Gerencie, um por um, os sete laboratórios da aba pública e sincronize seus cartões com o Supabase.')}
     <div class="account-shortcuts"><a href="/admin/">Voltar ao painel</a><a href="/biblioteca-fisica.html">Ver o mapa dos 480 tópicos</a><a href="/">Ver site</a></div>
     <div id="admin-laboratory-tools" class="staff-workspace"><p role="status">Carregando laboratórios cadastrados…</p></div>`);wireLogout();
   const root=document.querySelector('#admin-laboratory-tools');
@@ -448,8 +448,18 @@ async function renderAdminLaboratories(user) {
 }
 
 async function loadAdminLaboratoryRecords(root) {
+  const {laboratoryPublicationRecords,laboratoryPublicationSlugs}=await import('./laboratorio-publicacao.js?v=lab-publication-20261012-1');
+  const {data:authData,error:authError}=await withDeadline(supabase.auth.getUser(),'A validação da conta de administrador demorou demais.');
+  if(authError)throw authError;
+  if(!authData.user?.id)throw new Error('Entre novamente na conta de administrador para gerenciar os laboratórios.');
+  const seeds=laboratoryPublicationRecords.map((item)=>({...item,is_published:true,created_by:authData.user.id}));
+  const {error:seedError}=await withDeadline(
+    supabase.from('animations').upsert(seeds,{onConflict:'slug',ignoreDuplicates:true}),
+    'Não foi possível preparar os controles dos laboratórios. Tente novamente.'
+  );
+  if(seedError)throw seedError;
   const {data,error}=await withDeadline(
-    supabase.from('animations').select('id,title,topic,slug,is_published,created_at').order('topic').order('title'),
+    supabase.from('animations').select('id,title,topic,slug,is_published,created_at').in('slug',laboratoryPublicationSlugs).order('title'),
     'A consulta dos laboratórios demorou demais. Tente novamente.'
   );
   if(error)throw error;
@@ -476,6 +486,7 @@ async function loadAdminLaboratoryRecords(root) {
       <td><b>${safeText(item.title||'Sem título')}</b><small class="admin-user-detail">${safeText(item.slug||'')}</small></td>
       <td>${safeText(item.topic||'Sem categoria')}</td>
       <td><span class="admin-lab-state ${item.is_published?'is-published':'is-unpublished'}">${item.is_published?'No ar':'Fora do ar'}</span></td>
+      <td><button class="button button-outline" type="button" data-admin-lab-action="${safeText(item.id)}" ${busy?'disabled':''}>${item.is_published?'Retirar do ar':'Colocar no ar'}</button></td>
     </tr>`).join('');
     root.innerHTML=`<div class="dashboard-cards admin-lab-stats">
       <article><b>${records.length}</b><span>registros cadastrados</span></article>
@@ -486,7 +497,7 @@ async function loadAdminLaboratoryRecords(root) {
     <section class="account-section">
       <div class="section-kicker">PUBLICAÇÃO DA BIBLIOTECA</div>
       <h2>Escolha quais conteúdos ficam no ar</h2>
-      <p>Este painel lista todos os registros existentes no banco. A busca e os filtros afetam a tabela; a seleção fica preservada enquanto você pesquisa. Publicar um registro não cria uma página ou simulação que ainda não exista.</p>
+      <p>Este painel controla individualmente os sete laboratórios da aba pública. O primeiro acesso cria no banco os registros de controle que estiverem faltando; cada botão abaixo altera a publicação real no Supabase.</p>
       <div class="admin-lab-toolbar">
         <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${busy?'disabled':''}></label>
         <label for="admin-lab-category">Categoria<select id="admin-lab-category" ${busy?'disabled':''}><option value="">Todas as categorias</option>${options}</select></label>
@@ -504,7 +515,7 @@ async function loadAdminLaboratoryRecords(root) {
         <button class="button button-outline" type="button" data-set-publication="false" ${busy||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Retirar selecionados do ar'}</button>
       </div>
       <p class="admin-lab-feedback" role="status" aria-live="polite" data-error="${messageIsError}">${safeText(message||`Mostrando ${filtered.length} de ${records.length} registros. A seleção atual inclui ${selectedCount}.`)}</p>
-      <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Situação</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nenhum resultado corresponde aos filtros.</td></tr>'}</tbody></table></div>
+      <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum laboratório corresponde aos filtros.</td></tr>'}</tbody></table></div>
       <p class="privacy-note">A autorização também é conferida pelo Supabase. Somente uma sessão com papel de administrador ativo pode alterar o estado de publicação; a interface não é a barreira de segurança.</p>
     </section>`;
     if(focusId==='admin-lab-search'){
@@ -523,10 +534,11 @@ async function loadAdminLaboratoryRecords(root) {
       render();
     }
   });
-  const setPublication=async(publish)=>{
-    const ids=[...selected];if(!ids.length||busy)return;
-    const action=publish?'publicar':'retirar do ar';
-    if(!window.confirm(`Confirma ${action} ${ids.length} registro(s) selecionado(s)?`))return;
+  const setPublication=async(publish,requestedIds=null)=>{
+    const ids=requestedIds||[...selected];if(!ids.length||busy)return;
+    const action=publish?'colocar no ar':'retirar do ar';
+    const subject=requestedIds?.length===1?records.find((item)=>item.id===requestedIds[0])?.title||'este laboratório':`${ids.length} laboratório(s) selecionado(s)`;
+    if(!window.confirm(`Confirma ${action} ${subject}?`))return;
     busy=true;message='';messageIsError=false;render();
     let completed=0,failure=null;
     for(let offset=0;offset<ids.length;offset+=50){
@@ -549,7 +561,7 @@ async function loadAdminLaboratoryRecords(root) {
     if(failure){
       try{
         const latest=await withDeadline(
-          supabase.from('animations').select('id,title,topic,slug,is_published,created_at').order('topic').order('title'),
+          supabase.from('animations').select('id,title,topic,slug,is_published,created_at').in('slug',laboratoryPublicationSlugs).order('title'),
           'A atualização do estado atual demorou demais. Tente recarregar a página.',
           12000
         );
@@ -569,6 +581,7 @@ async function loadAdminLaboratoryRecords(root) {
     else if(button.matches('[data-select-visible]')){for(const item of visibleRecords())selected.add(item.id);render();}
     else if(button.matches('[data-clear-selection]')){selected.clear();render();}
     else if(button.matches('[data-set-publication]'))void setPublication(button.dataset.setPublication==='true');
+    else if(button.matches('[data-admin-lab-action]')){const item=records.find((record)=>record.id===button.dataset.adminLabAction);if(item)void setPublication(!item.is_published,[item.id]);}
   });
   render();
 }

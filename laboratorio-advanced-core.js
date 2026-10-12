@@ -51,6 +51,7 @@ export function durationFor(id, p) {
     }
     case "ohm":
     case "lens":
+    case "lens-diverging":
     case "field": return 24;
     default: throw new RangeError(`Experimento desconhecido: ${id}.`);
   }
@@ -160,8 +161,9 @@ export function stateAt(id, p, time = 0) {
       const current = voltage / resistance;
       return { time: 0, duration, values: { voltage, resistance, current, power: voltage * current } };
     }
-    case "lens": {
-      const f = positive(p.focalLength, "Distância focal");
+    case "lens":
+    case "lens-diverging": {
+      const f = id === "lens-diverging" ? -positive(p.focalLengthAbs, "Distância focal") : positive(p.focalLength, "Distância focal");
       const doDistance = positive(p.objectDistance, "Distância do objeto");
       if (Math.abs(1 / f - 1 / doDistance) < 1e-10) {
         return { time: 0, duration, values: { f, objectDistance: doDistance, imageDistance: Infinity, magnification: -Infinity, image: "no infinito" } };
@@ -255,17 +257,18 @@ export function graphFor(id, p, time = 0, chart = "") {
     });
     return { xLabel: "Tensão (V)", yLabel: "Corrente (A)", xMin: 0, xMax: maxVoltage, series: [{ label: `I=V/R · R=${resistance} Ω`, points, cursor: { x: voltage, y: voltage / resistance } }] };
   }
-  if (id === "lens") {
-    const f = finite(p.focalLength, "Distância focal");
+  if (id === "lens" || id === "lens-diverging") {
+    const f = id === "lens-diverging" ? -positive(p.focalLengthAbs, "Distância focal") : positive(p.focalLength, "Distância focal");
     const doDistance = finite(p.objectDistance, "Distância do objeto");
-    const lo = Math.max(0.05, Math.min(0.25 * f, doDistance));
-    const hi = Math.max(lo + 0.1, 3 * f, doDistance);
+    const focalMagnitude = Math.abs(f);
+    const lo = Math.max(0.05, Math.min(0.25 * focalMagnitude, doDistance));
+    const hi = Math.max(lo + 0.1, 3 * focalMagnitude, doDistance);
     const points = Array.from({ length: 241 }, (_, i) => {
       const x = lo + (hi - lo) * i / 240;
       const denominator = 1 / f - 1 / x;
       if (Math.abs(denominator) < 0.035 / f) return null;
       const y = 1 / denominator;
-      return Number.isFinite(y) && Math.abs(y) <= 12 * f ? { x, y } : null;
+      return Number.isFinite(y) && Math.abs(y) <= 12 * focalMagnitude ? { x, y } : null;
     });
     const state = stateAt(id, p).values;
     return { xLabel: "Distância do objeto (m)", yLabel: "Distância da imagem (m)", xMin: lo, xMax: hi, series: [{ label: "Equação das lentes delgadas", points, cursor: Number.isFinite(state.imageDistance) ? { x: doDistance, y: state.imageDistance } : null }] };

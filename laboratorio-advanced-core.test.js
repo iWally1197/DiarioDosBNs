@@ -94,6 +94,16 @@ test("lente delgada identifica imagem real, virtual e foco singular", () => {
   assert.throws(() => stateAt("lens", { focalLength: 0.5, objectDistance: 0 }), /Distância do objeto/);
 });
 
+test("lente divergente forma imagem virtual, direita e reduzida", () => {
+  const p = params("lens-diverging");
+  const values = stateAt("lens-diverging", p).values;
+  assert.ok(values.f < 0);
+  assert.ok(values.imageDistance < 0);
+  assert.ok(values.magnification > 0 && values.magnification < 1);
+  const graph = graphFor("lens-diverging", p, 0, "conjugate");
+  assert.ok(graph.series[0].points.some((point) => point && Number.isFinite(point.y)));
+});
+
 test("calorimetria conserva energia e converge para a temperatura de equilíbrio", () => {
   const p = { temperature1: 80, temperature2: 20, mass1: 0.2, mass2: 0.3, conductance: 50 };
   const initial = stateAt("calorimetry", p, 0).values;

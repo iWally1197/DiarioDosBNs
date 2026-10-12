@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-cone-reflection-20261012-2";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-cone-reflection-20261012-2";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-cone-reflection-20261012-2";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-diverging-lens-20261012-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lab-diverging-lens-20261012-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lab-diverging-lens-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lab-diverging-lens-20261012-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -1032,10 +1032,15 @@ function initializeExperimentPage(topicId) {
         else { travel -= bottom - top; point = { x: right - travel, y: top }; }
         ctx.fillStyle = c.gold; ctx.beginPath(); ctx.arc(point.x, point.y, 4, 0, Math.PI * 2); ctx.fill();
       }
-    } else if (id === "lens") {
-      const center = width * 0.54; const axisY = height * 0.67; const scale = Math.min(60, (width * 0.42) / Math.max(p.objectDistance, Math.abs(Number.isFinite(values.imageDistance) ? values.imageDistance : 0), p.focalLength, 0.5));
+    } else if (id === "lens" || id === "lens-diverging") {
+      const center = width * 0.54; const axisY = height * 0.67; const scale = Math.min(60, (width * 0.42) / Math.max(p.objectDistance, Math.abs(Number.isFinite(values.imageDistance) ? values.imageDistance : 0), Math.abs(values.f), 0.5));
       lineTo(ctx, { x: 12, y: axisY }, { x: width - 12, y: axisY }, c.muted, 1.5);
-      ctx.strokeStyle = c.blue; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(center, axisY - 42, 9, 52, 0, 0, 2 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = c.blue; ctx.lineWidth = 3; ctx.beginPath();
+      if (id === "lens-diverging") {
+        ctx.moveTo(center - 8, axisY - 52); ctx.quadraticCurveTo(center - 2, axisY, center - 8, axisY + 52);
+        ctx.moveTo(center + 8, axisY - 52); ctx.quadraticCurveTo(center + 2, axisY, center + 8, axisY + 52);
+      } else ctx.ellipse(center, axisY - 42, 9, 52, 0, 0, 2 * Math.PI);
+      ctx.stroke();
       const objectX = center - p.objectDistance * scale; const objectH = 43; arrow(ctx, objectX, axisY, objectX, axisY - objectH, c.gold, "objeto");
       if (Number.isFinite(values.imageDistance) && Math.abs(values.imageDistance) < 30) {
         const imageX = center + values.imageDistance * scale; const imageH = objectH * values.magnification; const imageTop = axisY - imageH; const objectTop = axisY - objectH; const rightEdge = width - 10; const lensPoint = { x: center, y: objectTop };
@@ -1053,9 +1058,9 @@ function initializeExperimentPage(topicId) {
           lineTo(ctx, { x: imageX, y: imageTop }, lensPoint, c.blue, 1.2, [4, 4]);
         }
         arrow(ctx, imageX, axisY, imageX, imageTop, c.blue, `imagem ${values.image}`);
-        const f = p.focalLength * scale; ctx.fillStyle = c.muted; ctx.fillText("F", center - f - 3, axisY + 17); ctx.fillText("F", center + f - 3, axisY + 17);
+        const f = values.f * scale; ctx.fillStyle = c.muted; ctx.fillText("F", center - f - 3, axisY + 17); ctx.fillText("F", center + f - 3, axisY + 17);
       } else { ctx.fillStyle = c.blue; ctx.fillText("Imagem no infinito (objeto no foco)", center + 12, 25); }
-      ctx.fillStyle = c.muted; ctx.fillText(`f=${fmt(p.focalLength)} m · dᵢ=${fmt(values.imageDistance)} m · m=${fmt(values.magnification)}`, 12, 24);
+      ctx.fillStyle = c.muted; ctx.fillText(`f=${fmt(values.f)} m · dᵢ=${fmt(values.imageDistance)} m · m=${fmt(values.magnification)}`, 12, 24);
       const rayStart = { x: objectX, y: axisY - objectH };
       const rayEnd = { x: center, y: axisY - objectH };
       const rayPhase = (state.time % 24) / 24;

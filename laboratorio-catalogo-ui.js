@@ -1,8 +1,10 @@
-import { experiments } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
+import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-20261012-1";
+import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261012-1";
+import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
-const visibleExperiments = experiments.filter((item) => !item.hiddenFromCatalog);
-export const experimentPageUrl = (id) => id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
+const allowedExperiments = experiments.filter((item) => laboratoryPublicationByExperimentId.has(item.id));
+export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "laboratorio-magnetismo.html" : id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
 function initializeCatalog() {
@@ -12,60 +14,78 @@ function initializeCatalog() {
   const mode = document.querySelector("#lab-mode");
   const count = document.querySelector("#lab-result-count");
   const empty = document.querySelector("#lab-empty");
+  const status = document.querySelector("#lab-publication-status");
 
   const diagrams = {
-    "optics-mirrors": '<path d="M35 12v50"/><path d="M45 14q-18 24 0 48"/><path d="M54 14q18 24 0 48"/><path class="secondary" d="M9 38h23m0 0-6-5m6 5-6 5"/>',
-    "lab-friction-incline": '<path d="M12 61h62L25 20z"/><rect x="33" y="35" width="15" height="13" rx="2" transform="rotate(-34 40 41)"/><path class="secondary" d="M17 55h18"/>',
-    "lab-circular-motion": '<circle cx="42" cy="40" r="22"/><circle cx="64" cy="40" r="4"/><path class="secondary" d="m58 22 9 1-2 9"/>',
-    "lab-hydrostatics": '<path d="M24 15v47h38V15M25 34h36"/><path class="secondary" d="M33 39v17m0 0-4-5m4 5 4-5m10-12v12m0 0-4-5m4 5 4-5"/>',
-    "lab-gas-thermodynamics": '<rect x="20" y="18" width="44" height="42" rx="4"/><path class="secondary" d="M27 49h30M42 14v12m0 0-4-5m4 5 4-5"/><circle cx="31" cy="34" r="2"/><circle cx="50" cy="40" r="2"/>',
-    "lab-sound-resonance": '<path d="M18 14v48m50-48v48M20 38c8-23 16 23 24 0s16 23 24 0"/><path class="secondary" d="M25 67h36"/>',
-    "lab-doppler-effect": '<path d="M12 43h27l12-12v30L39 49H12z"/><path class="secondary" d="M57 30q13 13 0 26m5-34q21 21 0 42"/>',
-    "lab-interference-diffraction": '<path d="M18 17v46M38 31v7m0 6v7m0 6v7M64 18v44"/><path class="secondary" d="M18 35h19m4 0h22m-45 9h19m4 0h22"/>',
-    "lab-magnetic-field": '<path d="M25 19v31a17 17 0 0 0 34 0V19"/><path class="secondary" d="M18 24c8-12 40-12 48 0M18 54c8 12 40 12 48 0"/><path d="M25 19h8m18 0h8"/>',
-    "lab-radioactivity": '<circle cx="42" cy="39" r="7"/><path d="M39 31 31 17a25 25 0 0 0-13 11l16 6M48 37l16-6a25 25 0 0 0-8-13L43 32m-1 15 1 18a25 25 0 0 0 16-6l-10-13"/>',
-    "faraday-induction": '<path d="M25 20v31a17 17 0 0 0 34 0V20"/><path class="secondary" d="M10 36h13m0 0-5-5m5 5-5 5m43-8h9m0 0-5-5m5 5-5 5"/><path d="m43 26-8 15h8l-4 12 11-17h-8z"/>',
+    "lab-magnetic-field": '<path d="M23 30h38v18H23z"/><path class="secondary" d="M42 30v18M12 31c6-19 55-25 62 0M12 47c6 19 55 25 62 0M31 36h5m12 6h5"/>',
+    "optics-reflection": '<path d="M51 12v52"/><path class="secondary" d="M12 39h36m0 0-7-6m7 6-7 6M51 21l21 18-21 18"/>',
+    "optics-convex-mirror": '<path d="M48 12q-19 26 0 52"/><path class="secondary" d="M14 39h30m0 0-6-6m6 6-6 6M52 25l20 14-20 14"/>',
+    "lens-diverging": '<path d="M36 13q7 25 0 50m12-50q-7 25 0 50"/><path class="secondary" d="M10 39h25m0 0-6-6m6 6-6 6M49 39h25m-25-12-11-8m11 32-11 8"/>',
     projectile: '<path d="M12 56 Q39 4 72 37"/><circle cx="12" cy="56" r="3"/><circle class="secondary" cx="72" cy="37" r="4"/><path class="secondary" d="M16 57h62M16 59v-8"/>',
     mru: '<path d="M9 48h64"/><path d="m60 38 13 10-13 10"/><circle cx="24" cy="48" r="7"/><circle class="secondary" cx="49" cy="48" r="7"/>',
-    muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>',
-    freefall: '<path d="M42 12v38m0 0-7-9m7 9 7-9"/><path class="secondary" d="M12 62h60"/><circle cx="42" cy="27" r="7"/>',
-    newton: '<rect x="30" y="31" width="24" height="21" rx="3"/><path d="M9 42h19m0 0-6-5m6 5-6 5"/><path class="secondary" d="M35 26v-8m14 8v-8M22 54v7m40-7v7"/>',
-    energy: '<path d="M8 17 69 56H8z"/><circle cx="24" cy="26" r="5"/><path class="secondary" d="m26 25 22 20m0 0-8-1m8 1-1-8"/>',
-    collision: '<rect x="11" y="36" width="22" height="14" rx="3"/><rect x="54" y="36" width="20" height="14" rx="3"/><path d="M17 55a3 3 0 1 0 0 .1M28 55a3 3 0 1 0 0 .1M60 55a3 3 0 1 0 0 .1M69 55a3 3 0 1 0 0 .1"/><path class="secondary" d="M34 27h17m0 0-5-5m5 5-5 5"/>',
-    spring: '<path d="M9 20v38m8-19h7l5-10 7 20 7-20 7 20 5-10h7"/><rect x="62" y="31" width="14" height="16" rx="2"/>',
-    wave: '<path d="M7 38c8-30 16 30 24 0s16-30 24 0 16 30 24 0"/><path class="secondary" d="M7 57h72"/>',
-    ohm: '<path d="M13 22v34h54V22H13zM13 39h13l6-9 10 18 8-9h17"/><path class="secondary" d="M30 13h20m0 0-5-5m5 5-5 5"/>',
-    lens: '<path d="M45 12 Q31 38 45 64M51 12Q65 38 51 64"/><path class="secondary" d="M11 53V27m-5 5 5-5 5 5M17 40h58M75 53V27m-5 5 5-5 5 5"/>',
-    calorimetry: '<path d="M18 15v31a10 10 0 1 0 15 0V15a7 7 0 1 0-15 0zM49 15v31a10 10 0 1 0 15 0V15a7 7 0 1 0-15 0z"/><path class="secondary" d="M25 31v21m31-14v14"/>',
-    field: '<circle cx="24" cy="38" r="9"/><circle class="secondary" cx="62" cy="38" r="9"/><path d="M20 38h8m-4-4v8m34 0h8"/><path class="secondary" d="M34 22c8-8 14-8 20 0M34 54c8 8 14 8 20 0"/>',
-    pendulum: '<path d="M41 10v10m0 0-18 35m18-35 18 35"/><circle cx="23" cy="55" r="7"/><circle class="secondary" cx="59" cy="55" r="7"/><path class="secondary" d="M26 13a25 25 0 0 1 29 5"/>'
+    muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>'
   };
   const svgFor = (id) => `<svg viewBox="0 0 86 76" aria-hidden="true">${diagrams[id] || ""}</svg>`;
+  let visibleExperiments = [];
+  let isSyncing = true;
 
-  for (const [select, values] of [
-    [category, [...new Set(visibleExperiments.map((item) => item.category))]],
-    [level, [...new Set(visibleExperiments.map((item) => item.level))]],
-    [mode, [...new Set(visibleExperiments.map((item) => item.mode))]]
-  ]) {
+  function populateOptions(select, values, label) {
+    const previous = select.value;
+    select.replaceChildren(new Option(label, ""));
     for (const value of values) select.add(new Option(value, value));
+    if (values.includes(previous)) select.value = previous;
+  }
+
+  function populateFilters() {
+    populateOptions(category, [...new Set(visibleExperiments.map((item) => item.category))], "Todas as categorias");
+    populateOptions(level, [...new Set(visibleExperiments.map((item) => item.level))], "Todos os níveis");
+    populateOptions(mode, [...new Set(visibleExperiments.map((item) => item.mode))], "Todas");
   }
 
   function drawCards() {
+    if (isSyncing) {
+      catalog.replaceChildren();
+      count.textContent = "Sincronizando a publicação dos laboratórios…";
+      empty.hidden = true;
+      return;
+    }
     const query = search.value.trim().toLocaleLowerCase("pt-BR");
     const filtered = visibleExperiments.filter((item) => {
       const haystack = `${item.title} ${item.category} ${item.level} ${item.description} ${item.objective || ""}`.toLocaleLowerCase("pt-BR");
       return haystack.includes(query) && (!category.value || item.category === category.value) && (!level.value || item.level === level.value) && (!mode.value || item.mode === mode.value);
     });
     catalog.innerHTML = filtered.map((item) => {
-      const cardBody = `<span class="lab-card-art">${svgFor(item.id)}</span><span class="lab-card-body"><span class="lab-card-title">${item.title}<small>${item.status}</small></span><span class="lab-card-meta">${item.category} · ${item.level} · ${item.mode}</span><span class="lab-card-meta">${item.description}</span>`;
+      const cardBody = `<span class="lab-card-art">${svgFor(item.id)}</span><span class="lab-card-body"><span class="lab-card-title">${item.title}<small>${item.status}</small></span><span class="lab-card-meta">${item.category} · ${item.level} · ${item.mode}</span><span class="lab-card-meta">${item.description}</span></span>`;
       const href = item.destination || experimentPageUrl(item.id);
-      return `<a class="lab-card" href="${href}" aria-label="Abrir simulação: ${item.title}">${cardBody}<span class="lab-card-cta">Abrir experimento →</span></span></a>`;
+      return `<a class="lab-card" href="${href}" aria-label="Abrir simulação: ${item.title}">${cardBody}<span class="lab-card-cta">Abrir experimento →</span></a>`;
     }).join("");
-    count.textContent = `${filtered.length} ${filtered.length === 1 ? "experimento" : "experimentos"} disponíveis.`;
+    count.textContent = `${filtered.length} ${filtered.length === 1 ? "laboratório disponível" : "laboratórios disponíveis"}.`;
     empty.hidden = filtered.length !== 0;
   }
 
-  [search, category, level, mode].forEach((element) => element.addEventListener(element === search ? "input" : "change", drawCards));
-  drawCards();
-}
+  async function syncPublication() {
+    try {
+      const client = await supabasePromise;
+      if (!client) throw new Error("Supabase indisponível");
+      const { data, error } = await client.from("animations").select("slug").in("slug", laboratoryPublicationSlugs);
+      if (error) throw error;
+      const published = new Set((data || []).map((row) => row.slug));
+      visibleExperiments = allowedExperiments.filter((item) => published.has(laboratoryPublicationByExperimentId.get(item.id)?.slug));
+      status.textContent = visibleExperiments.length
+        ? "Esta lista acompanha os laboratórios marcados como “No ar” no painel administrativo."
+        : "Nenhum laboratório está no ar no momento. Ative os que deseja exibir no painel administrativo.";
+    } catch {
+      visibleExperiments = [...allowedExperiments];
+      status.textContent = "Não foi possível consultar a publicação agora. A lista permitida continua disponível; tente atualizar a página.";
+    }
+    isSyncing = false;
+    populateFilters();
+    drawCards();
+  }
 
+  populateFilters();
+  count.textContent = "Sincronizando a publicação dos laboratórios…";
+  drawCards();
+  [search, category, level, mode].forEach((element) => element.addEventListener(element === search ? "input" : "change", drawCards));
+  void syncPublication();
+}
