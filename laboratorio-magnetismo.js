@@ -176,6 +176,10 @@ function updateControlText() {
     : !state.coilConnected ? "Arraste o plugue até a tomada para conectar a energia."
     : !state.coilPowerRequested ? "Conectado à tomada. Ative o eletroímã para gerar corrente e campo."
     : "Eletroímã ligado: corrente, polos e campo magnético ativos.";
+  const secondMagnetButton = byId("second-magnet-toggle");
+  const secondMagnetEnabled = state.mode === "interaction";
+  secondMagnetButton.setAttribute("aria-pressed", String(secondMagnetEnabled));
+  secondMagnetButton.textContent = secondMagnetEnabled ? "− Retirar segundo ímã" : "＋ Adicionar segundo ímã";
   const motionButton = byId("interaction-motion-toggle");
   motionButton.setAttribute("aria-pressed", String(state.interactionMotion));
   motionButton.textContent = state.interactionMotion ? "Parar movimento do ímã livre" : "Simular movimento do ímã livre";
@@ -1000,6 +1004,15 @@ byId("interaction-motion-toggle").addEventListener("click", () => {
   state.interactionVelocity = { x: 0, y: 0, angle: 0 };
   state.interactionForce = null;
   syncSimulationLoop(); queueDraw();
+});
+byId("second-magnet-toggle").addEventListener("click", () => {
+  const adding = state.mode !== "interaction";
+  state.mode = adding ? "interaction" : "permanent";
+  state.interactionMotion = false;
+  state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  state.interactionForce = null;
+  state.inductionLastFlux = null; state.inductionLastTime = 0; state.inductionMeterVoltage = 0;
+  updateModeUI(); syncSimulationLoop(); queueDraw();
 });
 byId("add-metal-ball").addEventListener("click", () => {
   if (state.metalBalls.length >= 8) { byId("sensor-status").textContent = "O laboratório permite até oito esferas metálicas."; return; }
