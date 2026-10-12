@@ -216,7 +216,7 @@ function initializeSpecialExperimentFullscreen() {
       fullscreenButton.textContent = isFullscreen ? "Sair da tela cheia" : "Tela cheia";
       fullscreenButton.setAttribute("aria-label", isFullscreen ? "Sair da tela cheia" : "Abrir o experimento em tela cheia");
       if (isFullscreen) {
-        if (graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.firstElementChild);
+        if (graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.children[1] || null);
         controlsSidebar.classList.remove("is-open");
         controlsToggleButton.hidden = false;
         controlsToggleButton.setAttribute("aria-expanded", "false");
@@ -241,6 +241,8 @@ function initializeExperimentPage(topicId) {
   const animationPanels = graphPanel?.parentElement;
   const fullscreenButton = $("#workspace-fullscreen");
   const controlsToggleButton = $("#workspace-controls-toggle");
+  const mirrorModeToggleButton = $("#mirror-mode-toggle");
+  const mirrorModeSelector = $("#mirror-mode-selector");
   const controlsSidebar = $("#workspace-controls-sidebar");
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
@@ -289,7 +291,9 @@ function initializeExperimentPage(topicId) {
       if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
       else state.parameters.objectHeight = 1.7;
     }
-    $("#mirror-mode-selector").hidden = !isMirror;
+    mirrorModeSelector.hidden = true;
+    mirrorModeToggleButton.hidden = !isMirror;
+    mirrorModeToggleButton.setAttribute("aria-expanded", "false");
     syncMirrorModeButtons();
     $("#workspace-reset").textContent = isMirror ? "Restaurar valores" : "Reiniciar";
     $("#lab-topic-not-found").hidden = true;
@@ -430,6 +434,11 @@ function initializeExperimentPage(topicId) {
       button.setAttribute("aria-pressed", String(button.dataset.mirrorMode === state.mode));
     });
     const isMirror = MIRROR_EXPERIMENTS.has(state.id);
+    if (mirrorModeToggleButton) {
+      const currentMode = state.mode === "lantern" ? "Lanterna" : "Corpo humano";
+      mirrorModeToggleButton.textContent = `Modo: ${currentMode}`;
+      mirrorModeToggleButton.setAttribute("aria-label", `${mirrorModeSelector.hidden ? "Mostrar" : "Ocultar"} opções de modo. Atual: ${currentMode}.`);
+    }
     $("#mirror-human-options").hidden = !isMirror || state.mode !== "human";
     $("#mirror-lantern-options").hidden = !isMirror || state.mode !== "lantern";
     $("#mirror-mode-description").textContent = state.mode === "lantern"
@@ -471,6 +480,13 @@ function initializeExperimentPage(topicId) {
       : "Modo corpo humano: a posição e a escala da imagem vêm das equações do espelho.";
   }
 
+  mirrorModeToggleButton?.addEventListener("click", () => {
+    const open = mirrorModeSelector.hidden;
+    mirrorModeSelector.hidden = !open;
+    mirrorModeToggleButton.setAttribute("aria-expanded", String(open));
+    const currentMode = state.mode === "lantern" ? "Lanterna" : "Corpo humano";
+    mirrorModeToggleButton.setAttribute("aria-label", `${open ? "Ocultar" : "Mostrar"} opções de modo. Atual: ${currentMode}.`);
+  });
   document.querySelectorAll("[data-mirror-mode]").forEach((button) => {
     button.addEventListener("click", () => setMirrorMode(button.dataset.mirrorMode));
   });
@@ -633,7 +649,7 @@ function initializeExperimentPage(topicId) {
     fullscreenButton.textContent = isFullscreen ? "Sair da tela cheia" : "Tela cheia";
     fullscreenButton.setAttribute("aria-label", isFullscreen ? "Sair da tela cheia" : "Abrir a simulação em tela cheia");
     if (isFullscreen) {
-      if (graphPanel && graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, controlsSidebar.firstElementChild);
+      if (graphPanel && graphPanel.parentElement !== controlsSidebar) controlsSidebar.insertBefore(graphPanel, panelPlayButton?.nextElementSibling || controlsSidebar.children[1] || null);
       controlsToggleButton.hidden = false;
       if (panelPlayButton) panelPlayButton.hidden = false;
       controlsSidebar.classList.remove("is-open");
