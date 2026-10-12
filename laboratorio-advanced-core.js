@@ -51,7 +51,7 @@ export function durationFor(id, p) {
     }
     case "ohm":
     case "lens":
-    case "field": return 0;
+    case "field": return 24;
     default: throw new RangeError(`Experimento desconhecido: ${id}.`);
   }
 }

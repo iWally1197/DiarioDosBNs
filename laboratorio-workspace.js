@@ -1,7 +1,7 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-2";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=loop-long-20261011-1";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=loop-long-20261011-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=loop-long-20261011-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=loop-long-20261011-2";
+import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=loop-long-20261011-2";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=loop-long-20261011-2";
 
 const $ = (selector) => document.querySelector(selector);
 const requestedId = new URLSearchParams(location.search).get("topico");
@@ -764,6 +764,17 @@ function initializeExperimentPage(topicId) {
       ctx.fillStyle = c.gold; ctx.fillRect(left - 5, height / 2 - 18, 10, 36); ctx.strokeStyle = c.bg; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(left - 7, height / 2 - 8); ctx.lineTo(left + 7, height / 2 - 8); ctx.moveTo(left - 4, height / 2 + 6); ctx.lineTo(left + 4, height / 2 + 6); ctx.stroke();
       ctx.strokeStyle = c.blue; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(width * 0.52, height / 2 - 18); ctx.lineTo(width * 0.65, height / 2 - 18); ctx.lineTo(width * 0.69, height / 2 - 27); ctx.lineTo(width * 0.75, height / 2 - 9); ctx.lineTo(width * 0.81, height / 2 - 27); ctx.lineTo(width * 0.87, height / 2 - 9); ctx.lineTo(width * 0.91, height / 2 - 18); ctx.stroke();
       ctx.fillStyle = c.text; ctx.font = "13px system-ui"; ctx.fillText("+", left - 4, height / 2 - 25); ctx.fillText("−", left - 4, height / 2 + 29); ctx.fillStyle = c.muted; ctx.fillText(`V=${fmt(values.voltage, 1)} V`, width * 0.54, height / 2 + 12); ctx.fillText(`R=${fmt(values.resistance, 1)} Ω`, width * 0.71, height / 2 + 13); ctx.fillText(`I=${fmt(values.current, 3)} A · P=${fmt(values.power, 2)} W`, 14, 24);
+      const loopLength = 2 * (right - left) + 2 * (bottom - top);
+      const loopPhase = (state.time % 24) / 24;
+      for (let index = 0; index < 4; index += 1) {
+        let travel = ((loopPhase + index / 4) % 1) * loopLength;
+        let point;
+        if (travel < bottom - top) point = { x: left, y: top + travel };
+        else if ((travel -= bottom - top) < right - left) point = { x: left + travel, y: bottom };
+        else if ((travel -= right - left) < bottom - top) point = { x: right, y: bottom - travel };
+        else { travel -= bottom - top; point = { x: right - travel, y: top }; }
+        ctx.fillStyle = c.gold; ctx.beginPath(); ctx.arc(point.x, point.y, 4, 0, Math.PI * 2); ctx.fill();
+      }
     } else if (id === "lens") {
       const center = width * 0.54; const axisY = height * 0.67; const scale = Math.min(60, (width * 0.42) / Math.max(p.objectDistance, Math.abs(Number.isFinite(values.imageDistance) ? values.imageDistance : 0), p.focalLength, 0.5));
       lineTo(ctx, { x: 12, y: axisY }, { x: width - 12, y: axisY }, c.muted, 1.5);
@@ -788,6 +799,13 @@ function initializeExperimentPage(topicId) {
         const f = p.focalLength * scale; ctx.fillStyle = c.muted; ctx.fillText("F", center - f - 3, axisY + 17); ctx.fillText("F", center + f - 3, axisY + 17);
       } else { ctx.fillStyle = c.blue; ctx.fillText("Imagem no infinito (objeto no foco)", center + 12, 25); }
       ctx.fillStyle = c.muted; ctx.fillText(`f=${fmt(p.focalLength)} m · dᵢ=${fmt(values.imageDistance)} m · m=${fmt(values.magnification)}`, 12, 24);
+      const rayStart = { x: objectX, y: axisY - objectH };
+      const rayEnd = { x: center, y: axisY - objectH };
+      const rayPhase = (state.time % 24) / 24;
+      for (let index = 0; index < 3; index += 1) {
+        const progress = (rayPhase + index / 3) % 1;
+        ctx.fillStyle = c.gold; ctx.beginPath(); ctx.arc(rayStart.x + (rayEnd.x - rayStart.x) * progress, rayStart.y + (rayEnd.y - rayStart.y) * progress, 4, 0, Math.PI * 2); ctx.fill();
+      }
     } else if (id === "calorimetry") {
       const valuesRange = [0, 100]; const lefts = [width * 0.28, width * 0.68]; const temps = [values.temperature1, values.temperature2];
       for (let i = 0; i < 2; i += 1) {
@@ -802,6 +820,9 @@ function initializeExperimentPage(topicId) {
       if (Number.isFinite(values.electricField)) arrow(ctx, probeX, y - 35, probeX + Math.sign(values.electricField) * Math.min(75, 16 + Math.log10(1 + Math.abs(values.electricField)) * 12), y - 35, c.blue, `Eₓ=${fmt(values.electricField, 1)} N/C`);
       else { ctx.fillStyle = c.text; ctx.fillText("Campo singular na posição da carga ideal", 14, 24); }
       ctx.fillStyle = c.muted; ctx.fillText(`q₁=${fmt(p.q1, 2)} nC · q₂=${fmt(p.q2, 2)} nC`, 12, height - 10);
+      const movingProbeX = center + Math.sin(2 * Math.PI * (state.time % 24) / 24) * separation * 0.4 * scale;
+      ctx.fillStyle = c.gold; ctx.beginPath(); ctx.arc(movingProbeX, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = c.gold; ctx.font = "10px system-ui"; ctx.fillText("sonda móvel", movingProbeX + 8, y - 11);
     }
   }
 
