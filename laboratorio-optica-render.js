@@ -576,9 +576,9 @@ function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) 
   context.restore();
 }
 
-export function drawOpticalScene(context, width, height, id, parameters, model, palette) {
+export function drawOpticalScene(context, width, height, id, parameters, model, palette, viewOverride = null) {
   const geometry = model.geometry;
-  const view = opticalViewFor(geometry.bounds, width, height);
+  const view = viewOverride?.toScreen ? viewOverride : opticalViewFor(viewOverride || geometry.bounds, width, height);
   geometry.view = view;
   context.save();
   context.fillStyle = palette.bg;

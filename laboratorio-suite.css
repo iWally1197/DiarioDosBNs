@@ -241,6 +241,7 @@ body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
 
 /* The interaction selector stays compact until the user opens it. */
 .mirror-mode-toggle[hidden] { display:none !important; }
+.mirror-mode-selector[hidden] { display:none !important; }
 .mirror-mode-toggle[aria-expanded="true"] { border-color:var(--gold); color:var(--gold); }
 .mirror-mode-selector {
   display:flex;

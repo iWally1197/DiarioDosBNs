@@ -1,6 +1,6 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-3";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-focus-layout-20261011-1";
-import { drawOpticalScene, opticalPointerToWorld } from "./laboratorio-optica-render.js?v=mirror-focus-layout-20261011-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-drag-smooth-20261011-1";
 import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-launch-modes-20261011-1";
 
 const $ = (selector) => document.querySelector(selector);
@@ -246,7 +246,7 @@ function initializeExperimentPage(topicId) {
   const controlsSidebar = $("#workspace-controls-sidebar");
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
-  const state = { id: null, mode: "human", parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null };
+  const state = { id: null, mode: "human", parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null, opticalBounds: null };
   const panelPlayButton = $("#workspace-panel-play");
   const syncPanelPlay = () => { if (panelPlayButton) { const play = $("#workspace-play"); panelPlayButton.textContent = play?.textContent || (state.running ? "Pausar" : "Continuar"); panelPlayButton.setAttribute("aria-pressed", String(state.running)); panelPlayButton.disabled = Boolean(play?.disabled); } };
   panelPlayButton?.addEventListener("click", () => { $("#workspace-play")?.click(); syncPanelPlay(); });
@@ -283,6 +283,7 @@ function initializeExperimentPage(topicId) {
     if (!experiment) return;
     stop();
     state.id = id;
+    state.opticalBounds = null;
     state.mode = MIRROR_EXPERIMENTS.has(id) ? (id === "optics-concave-mirror" ? "parallel" : "lantern") : "human";
     state.time = 0;
     state.records = [];
@@ -474,6 +475,9 @@ function initializeExperimentPage(topicId) {
   function setMirrorMode(mode) {
     if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "parallel", "lantern"].includes(mode)) return;
     state.mode = mode;
+    state.opticalBounds = null;
+    mirrorModeSelector.hidden = true;
+    mirrorModeToggleButton?.setAttribute("aria-expanded", "false");
     state.parameters.experimentMode = mode === "human" ? "human" : "lantern";
     if (mode === "parallel") state.parameters.beamMode = "parallel";
     if (mode === "lantern") state.parameters.beamMode = "divergent";
@@ -530,6 +534,7 @@ function initializeExperimentPage(topicId) {
     const bounded = Math.max(minimum, Math.min(maximum, value));
     const snapped = Math.max(minimum, Math.min(maximum, minimum + Math.round((bounded - minimum) / step) * step));
     state.parameters[control.id] = snapped;
+    state.opticalBounds = null;
     let frictionAdjusted = false;
     if (state.id === "newton" && control.id === "muStatic" && state.parameters.muStatic < state.parameters.muKinetic) {
       state.parameters.muKinetic = state.parameters.muStatic;
@@ -904,7 +909,7 @@ function initializeExperimentPage(topicId) {
     const baseline = height * 0.72;
     const values = model.values;
     if (id.startsWith("optics-")) {
-      drawOpticalScene(ctx, width, height, id, p, model, c);
+      drawOpticalScene(ctx, width, height, id, p, model, c, opticalDrag?.view || state.opticalBounds);
       return;
     }
     if (["mru", "muv", "newton"].includes(id)) {
@@ -1101,12 +1106,12 @@ function initializeExperimentPage(topicId) {
     $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} ${currentTimeUnit()}` : "modelo estático";
   }
 
-  function render() {
+  function render(options = {}) {
     const model = stateAt(state.id, state.parameters, state.time);
     drawScene(state.id, state.parameters, model);
-    drawGraph(state.id, state.parameters, state.time);
-    renderReadouts(model.values);
-    updateTimeControls();
+    if (!options.skipGraph) drawGraph(state.id, state.parameters, state.time);
+    if (!options.skipReadouts) renderReadouts(model.values);
+    if (!options.skipTimeControls) updateTimeControls();
   }
 
   function showError(error) {
@@ -1143,120 +1148,210 @@ function initializeExperimentPage(topicId) {
     try { render(); } catch (error) { showError(error); }
   }
   let opticalDrag = null;
+  let opticalDragFrame = 0;
+  let opticalDragWasRunning = false;
+
+  function pointerCanvasPoint(event, view) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) * view.width / Math.max(1, rect.width),
+      y: (event.clientY - rect.top) * view.height / Math.max(1, rect.height)
+    };
+  }
+
+  function pointerWorldPoint(event, view) {
+    return view.toWorld(pointerCanvasPoint(event, view));
+  }
+
+  function beginOpticalDrag(kind, event, model, view, extra = {}) {
+    const pointer = pointerWorldPoint(event, view);
+    const controls = controlsForExperiment(experimentById.get(state.id));
+    opticalDrag = {
+      kind, pointerId: event.pointerId, view, controls, geometry: model.geometry,
+      grabOffset: extra.anchor ? { x: extra.anchor.x - pointer.x, y: extra.anchor.y - pointer.y } : { x: 0, y: 0 },
+      hit: extra.hit || model.geometry.flashlight?.primaryInteraction?.hit || model.geometry.hit,
+      endSign: extra.endSign || 1,
+      lastPointer: { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY }
+    };
+    opticalDragWasRunning = state.running;
+    if (state.running) stop(false);
+    state.time = 0;
+    event.preventDefault();
+    try { canvas.setPointerCapture(event.pointerId); } catch {}
+    canvas.style.cursor = "grabbing";
+    $("#workspace-status").textContent = kind === "lantern"
+      ? "Arraste a lanterna para reposicionar a fonte luminosa."
+      : "Arraste o elemento para ajustar sua posição.";
+  }
+
+  function setOpticalDragParameters(updates) {
+    if (!opticalDrag) return false;
+    const experiment = experimentById.get(state.id);
+    const controls = new Map([
+      ...(experiment?.controls || []),
+      ...opticalDrag.controls
+    ].map((control) => [control.id, control]));
+    let changed = false;
+    for (const [id, rawValue] of updates) {
+      const control = controls.get(id);
+      if (!control) continue;
+      const range = $(`#control-${id}`);
+      const minimum = Number(range?.min ?? control.min);
+      const maximum = Number(range?.max ?? control.max);
+      if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) continue;
+      const value = Math.max(minimum, Math.min(maximum, Number(rawValue)));
+      if (!Number.isFinite(value)) continue;
+      const smoothValue = Math.round(value * 10000) / 10000;
+      if (Math.abs((Number(state.parameters[id]) || 0) - smoothValue) < 0.00005) continue;
+      state.parameters[id] = smoothValue;
+      const numeric = $(`#control-number-${id}`);
+      const output = $(`#control-out-${id}`);
+      if (range) range.value = String(smoothValue);
+      if (numeric) numeric.value = String(smoothValue);
+      if (output) output.textContent = `${formatControlValue(smoothValue, range?.step || control.step)} ${control.unit}`;
+      changed = true;
+    }
+    if (changed) state.time = 0;
+    return changed;
+  }
+
+  function updateOpticalDrag(pointer) {
+    if (!opticalDrag || !pointer || pointer.pointerId !== opticalDrag.pointerId) return;
+    if (canvas.classList.contains("lab-view-multitouch")) {
+      finishOpticalDrag(null, false);
+      return;
+    }
+    const drag = opticalDrag;
+    const model = stateAt(state.id, state.parameters, 0);
+    const point = pointerWorldPoint(pointer, drag.view);
+    const world = { x: point.x + drag.grabOffset.x, y: point.y + drag.grabOffset.y };
+    const geometry = model.geometry;
+    const center = geometry.center;
+    let updates = [];
+
+    if (drag.kind === "body-position") {
+      const distance = state.id === "optics-reflection"
+        ? (world.x - center.x) * geometry.normal.x + (world.y - center.y) * geometry.normal.y
+        : -world.x;
+      updates = [["objectDistance", distance]];
+    } else if (drag.kind === "body-height") {
+      updates = [["objectHeight", world.y - geometry.objectBase.y]];
+    } else if (drag.kind === "lantern") {
+      if (state.id === "optics-reflection") {
+        const hit = drag.hit || geometry.hit;
+        const dx = hit.x - world.x;
+        const dy = hit.y - world.y;
+        updates = [
+          ["sourceDistance", Math.hypot(dx, dy)],
+          ["incidenceAngle", Math.atan2(dy, dx) * 180 / Math.PI],
+          ["flashlightAngle", 0]
+        ];
+      } else {
+        updates = [["objectDistance", -world.x], ["flashlightHeight", world.y]];
+      }
+    } else if (drag.kind === "source") {
+      const hit = drag.hit || geometry.hit;
+      const towardHit = { x: hit.x - world.x, y: hit.y - world.y };
+      updates = [
+        ["incidenceAngle", Math.atan2(towardHit.y, towardHit.x) * 180 / Math.PI],
+        ["sourceDistance", Math.hypot(towardHit.x, towardHit.y)]
+      ];
+    } else if (drag.kind === "move") {
+      updates = [["mirrorX", world.x], ["mirrorY", world.y]];
+    } else if (drag.kind === "tilt") {
+      const dx = (world.x - center.x) * drag.endSign;
+      const dy = (world.y - center.y) * drag.endSign;
+      updates = [["mirrorTilt", Math.atan2(-dx, dy) * 180 / Math.PI]];
+    } else if (drag.kind === "impact") {
+      const tangent = geometry.tangent;
+      updates = [["impactOffset", (world.x - center.x) * tangent.x + (world.y - center.y) * tangent.y]];
+    }
+
+    if (setOpticalDragParameters(updates)) {
+      try { render({ skipGraph: true, skipReadouts: true, skipTimeControls: true }); }
+      catch (error) { showError(error); }
+    }
+  }
+
+  function queueOpticalDrag(event) {
+    if (!opticalDrag || event.pointerId !== opticalDrag.pointerId) return;
+    opticalDrag.lastPointer = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY };
+    if (opticalDragFrame) return;
+    opticalDragFrame = requestAnimationFrame(() => {
+      opticalDragFrame = 0;
+      const drag = opticalDrag;
+      if (drag) updateOpticalDrag(drag.lastPointer);
+    });
+  }
+
+  function finishOpticalDrag(event, resume = true) {
+    if (!opticalDrag) return;
+    if (event && event.pointerId === opticalDrag.pointerId) {
+      opticalDrag.lastPointer = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY };
+    }
+    if (opticalDragFrame) {
+      cancelAnimationFrame(opticalDragFrame);
+      opticalDragFrame = 0;
+    }
+    const drag = opticalDrag;
+    if (drag.lastPointer) updateOpticalDrag(drag.lastPointer);
+    if (opticalDrag) {
+      state.opticalBounds = drag.view.bounds;
+      opticalDrag = null;
+    }
+    canvas.style.cursor = "grab";
+    try { if (canvas.hasPointerCapture(drag.pointerId)) canvas.releasePointerCapture(drag.pointerId); } catch {}
+    try { render(); } catch (error) { showError(error); }
+    if (resume && opticalDragWasRunning) {
+      opticalDragWasRunning = false;
+      $("#workspace-play")?.click();
+    } else {
+      opticalDragWasRunning = false;
+    }
+  }
+
   canvas.addEventListener("pointerdown", (event) => {
     if (!MIRROR_EXPERIMENTS.has(state.id) || event.button !== 0 || event.shiftKey || event.altKey
       || canvas.classList.contains("lab-view-pan-mode") || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
-    const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
-    const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    const handleScreen = (handle) => view.toScreen(handle);
-    const distanceTo = (handle) => {
-      const screen = handleScreen(handle);
-      return Math.hypot(screen.x - point.x, screen.y - point.y);
+    const view = opticalViewFor(model.geometry.bounds, canvas.clientWidth || rect.width, canvas.clientHeight || rect.height);
+    const point = pointerCanvasPoint(event, view);
+    const near = (handle, tolerance = 30) => {
+      if (!handle) return false;
+      const screen = view.toScreen(handle);
+      return Math.hypot(screen.x - point.x, screen.y - point.y) < tolerance;
     };
+
     if (state.mode === "human") {
       const base = model.geometry.objectBase;
       const tip = model.geometry.object;
       if (base && tip) {
-        const nearBase = distanceTo(base) < 28;
-        const nearTip = distanceTo(tip) < 28;
-        const inBody = distanceTo({ x: (base.x + tip.x) / 2, y: (base.y + tip.y) / 2 }) < 25;
-        if (nearBase || nearTip || inBody) {
-          opticalDrag = { kind: nearTip ? "body-height" : "body-position" };
-          event.preventDefault();
-          canvas.setPointerCapture(event.pointerId);
-          canvas.style.cursor = "grabbing";
-          return;
-        }
+        if (near(tip, 32)) beginOpticalDrag("body-height", event, model, view, { anchor: tip });
+        else if (near(base, 32) || near({ x: (base.x + tip.x) / 2, y: (base.y + tip.y) / 2 }, 28)) {
+          beginOpticalDrag("body-position", event, model, view, { anchor: base });
+        } else return;
+        return;
       }
-    } else if (state.mode !== "human" && model.geometry.flashlight?.source && distanceTo(model.geometry.flashlight.source) < 30) {
-      opticalDrag = { kind: "lantern" };
-      event.preventDefault();
-      canvas.setPointerCapture(event.pointerId);
-      canvas.style.cursor = "grabbing";
+    } else if (model.geometry.flashlight?.source && near(model.geometry.flashlight.source, 36)) {
+      beginOpticalDrag("lantern", event, model, view, { anchor: model.geometry.flashlight.source });
       return;
     }
+
     if (state.id !== "optics-reflection") return;
-    if (distanceTo(model.geometry.handles.top) < 24) opticalDrag = { kind: "tilt", endSign: 1 };
-    else if (distanceTo(model.geometry.handles.bottom) < 24) opticalDrag = { kind: "tilt", endSign: -1 };
-    else if (distanceTo(model.geometry.handles.center) < 24) opticalDrag = { kind: "move" };
-    else if (distanceTo(model.geometry.handles.hit) < 24) opticalDrag = { kind: "impact" };
-    else if (distanceTo(model.geometry.handles.source) < 24) opticalDrag = { kind: "source" };
-    if (opticalDrag) {
-      event.preventDefault();
-      canvas.setPointerCapture(event.pointerId);
-      canvas.style.cursor = "grabbing";
-    }
+    const handles = model.geometry.handles || {};
+    if (near(handles.top, 26)) beginOpticalDrag("tilt", event, model, view, { anchor: handles.top, endSign: 1 });
+    else if (near(handles.bottom, 26)) beginOpticalDrag("tilt", event, model, view, { anchor: handles.bottom, endSign: -1 });
+    else if (near(handles.center, 26)) beginOpticalDrag("move", event, model, view, { anchor: handles.center });
+    else if (near(handles.hit, 26)) beginOpticalDrag("impact", event, model, view, { anchor: handles.hit });
+    else if (near(handles.source, 32)) beginOpticalDrag("source", event, model, view, { anchor: handles.source });
   });
-  canvas.addEventListener("pointermove", (event) => {
-    if (!opticalDrag || !MIRROR_EXPERIMENTS.has(state.id) || canvas.classList.contains("lab-view-multitouch")) return;
-    const model = stateAt(state.id, state.parameters, state.time);
-    const rect = canvas.getBoundingClientRect();
-    const view = opticalViewFor(model.geometry.bounds, rect.width, rect.height);
-    const world = opticalPointerToWorld(event, canvas, view);
-    const center = model.geometry.center;
-    const controls = controlsForExperiment(experimentById.get(state.id));
-    if (opticalDrag.kind === "body-position") {
-      const control = controls.find((item) => item.id === "objectDistance");
-      const distance = state.id === "optics-reflection"
-        ? (world.x - center.x) * model.geometry.normal.x + (world.y - center.y) * model.geometry.normal.y
-        : -world.x;
-      setParameter(control, distance);
-      return;
-    }
-    if (opticalDrag.kind === "body-height") {
-      const control = controls.find((item) => item.id === "objectHeight");
-      const height = state.id === "optics-reflection" ? world.y - model.geometry.objectBase.y : world.y;
-      setParameter(control, height);
-      return;
-    }
-    if (opticalDrag.kind === "lantern") {
-      if (state.id === "optics-reflection") {
-        const hit = model.geometry.flashlight.primaryInteraction?.hit || model.geometry.hit;
-        const dx = hit.x - world.x, dy = hit.y - world.y;
-        const direction = Math.atan2(dy, dx) * 180 / Math.PI;
-        setParameter(controls.find((item) => item.id === "sourceDistance"), Math.hypot(dx, dy));
-        setParameter(controls.find((item) => item.id === "incidenceAngle"), direction);
-        setParameter(controls.find((item) => item.id === "flashlightAngle"), 0);
-      } else {
-        setParameter(controls.find((item) => item.id === "objectDistance"), -world.x);
-        setParameter(controls.find((item) => item.id === "flashlightHeight"), world.y);
-      }
-      return;
-    }
-    if (opticalDrag.kind === "source") {
-      const hit = model.geometry.hit;
-      const towardHit = { x: hit.x - world.x, y: hit.y - world.y };
-      const angle = Math.atan2(towardHit.y, towardHit.x) * 180 / Math.PI;
-      const planeControls = experimentById.get(state.id).controls;
-      setParameter(planeControls.find((item) => item.id === "incidenceAngle"), angle);
-      setParameter(planeControls.find((item) => item.id === "sourceDistance"), Math.hypot(towardHit.x, towardHit.y));
-    } else if (opticalDrag.kind === "move") {
-      const planeControls = experimentById.get(state.id).controls;
-      setParameter(planeControls.find((item) => item.id === "mirrorX"), world.x);
-      setParameter(planeControls.find((item) => item.id === "mirrorY"), world.y);
-    } else if (opticalDrag.kind === "tilt") {
-      const dx = (world.x - center.x) * opticalDrag.endSign;
-      const dy = (world.y - center.y) * opticalDrag.endSign;
-      const angle = Math.atan2(-dx, dy) * 180 / Math.PI;
-      const control = experimentById.get(state.id).controls.find((item) => item.id === "mirrorTilt");
-      setParameter(control, angle);
-    } else {
-      const tangent = model.geometry.tangent;
-      const offset = (world.x - center.x) * tangent.x + (world.y - center.y) * tangent.y;
-      const control = experimentById.get(state.id).controls.find((item) => item.id === "impactOffset");
-      setParameter(control, offset);
-    }
-  });
-  const stopOpticalDrag = (event) => {
-    if (!opticalDrag) return;
-    opticalDrag = null;
-    canvas.style.cursor = "grab";
-    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-  };
-  canvas.addEventListener("pointerup", stopOpticalDrag);
-  canvas.addEventListener("pointercancel", stopOpticalDrag);
+
+  canvas.addEventListener("pointermove", queueOpticalDrag);
+  canvas.addEventListener("pointerup", (event) => finishOpticalDrag(event));
+  canvas.addEventListener("pointercancel", (event) => finishOpticalDrag(event));
+  canvas.addEventListener("lostpointercapture", () => finishOpticalDrag(null));
+
   graphCanvas.addEventListener("click", (event) => {
     if (!state.plot) return;
     const rect = graphCanvas.getBoundingClientRect();
