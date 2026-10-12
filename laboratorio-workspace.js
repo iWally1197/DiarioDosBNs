@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lab-catalog-mirrors-20261011-3";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-focus-models-20261012-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=lantern-focus-models-20261012-2";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=lantern-focus-models-20261012-2";
 import { drawOpticalScene } from "./laboratorio-optica-render.js?v=lantern-focus-models-20261012-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-2";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
@@ -488,6 +488,10 @@ function initializeExperimentPage(topicId) {
     if (opticsModeLabel) opticsModeLabel.hidden = !isConcaveLantern;
     if (opticsMode) opticsMode.value = state.parameters.lanternOpticsMode || "idealized";
     const idealizedLantern = isConcaveLantern && state.parameters.lanternOpticsMode !== "realistic";
+    const imageChartOption = $("#workspace-chart")?.querySelector('option[value="image"]');
+    if (imageChartOption) imageChartOption.textContent = state.mode === "human"
+      ? "Distância da imagem × objeto"
+      : "Imagem paraxial do espelho × fonte";
     for (const elementId of ["mirror-show-lantern-image", "mirror-show-normal", "mirror-show-angles"]) {
       const option = document.getElementById(elementId)?.closest("label");
       if (option) option.hidden = idealizedLantern;
@@ -1147,17 +1151,28 @@ function initializeExperimentPage(topicId) {
   };
 
   function renderReadouts(values) {
-    const definitions = (readoutDefinitions[state.id] || []).map(([key, label, unit]) => [
-      key,
-      MIRROR_EXPERIMENTS.has(state.id) && state.mode !== "human"
-        ? key === "objectDistance" ? "Distância da fonte"
-          : key === "objectHeight" ? "Altura da fonte"
-            : key === "imageHeight" ? "Altura da imagem da fonte"
-              : key === "objectImageSeparation" ? "Fonte ↔ imagem" : label
-        : MIRROR_EXPERIMENTS.has(state.id) && key === "objectDistance" ? "Distância do corpo"
-          : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo" : label,
-      unit
-    ]);
+    const idealizedLantern = state.id === "optics-concave-mirror" && state.mode === "lantern"
+      && state.parameters.lanternOpticsMode === "idealized";
+    const definitions = idealizedLantern
+      ? [
+        ["radius", "Raio de curvatura", "m"],
+        ["focalLength", "Distância focal física", "m"],
+        ["objectDistance", "Distância da fonte", "m"],
+        ["objectHeight", "Altura da fonte", "m"],
+        ["focusX", "Posição horizontal de F*", "m"],
+        ["focusY", "Posição vertical de F*", "m"]
+      ]
+      : (readoutDefinitions[state.id] || []).map(([key, label, unit]) => [
+        key,
+        MIRROR_EXPERIMENTS.has(state.id) && state.mode !== "human"
+          ? key === "objectDistance" ? "Distância da fonte"
+            : key === "objectHeight" ? "Altura da fonte"
+              : key === "imageHeight" ? "Altura da imagem da fonte"
+                : key === "objectImageSeparation" ? "Fonte ↔ imagem" : label
+          : MIRROR_EXPERIMENTS.has(state.id) && key === "objectDistance" ? "Distância do corpo"
+            : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo" : label,
+        unit
+      ]);
     $("#workspace-readouts").innerHTML = definitions.map(([key, label, unit]) => `<div><span>${label}</span><b>${fmt(values[key])} ${unit}</b></div>`).join("");
     $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} ${currentTimeUnit()}` : "modelo estático";
   }

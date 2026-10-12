@@ -597,7 +597,10 @@ export function opticalModelFor(id, parameters, time = 0) {
     values = {
       time: t, radius: geometry.signedRadius, focalLength: geometry.focalLength, objectDistance: Number(parameters.objectDistance),
       imageDistance: geometry.imageDistance, magnification: geometry.magnification, image: geometry.imageType, angleIncident: incidentAngle, angleReflected: reflectedAngle,
-      objectHeight, imageHeight, imageNature: geometry.imageType,
+      objectHeight, imageHeight,
+      focusX: geometry.flashlight?.idealized ? geometry.flashlight.focus.x : null,
+      focusY: geometry.flashlight?.idealized ? geometry.flashlight.focus.y : null,
+      imageNature: geometry.imageType,
       orientation: geometry.magnification >= 0 ? "direita" : "invertida",
       imageScale: imageClassification(geometry.magnification),
       objectImageSeparation: Number.isFinite(geometry.imageDistance) ? Math.abs(geometry.imageDistance - objectDistance) : Infinity,

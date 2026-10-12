@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { stateAt } from "./laboratorio-advanced-core.js";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-focus-models-20261012-2";
 
 const degrees = (radians) => radians * 180 / Math.PI;
 const closeTo = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} deve estar próximo de ${expected}`);
@@ -162,6 +162,8 @@ test("convergência idealizada passa todos os raios pelo foco ajustado e continu
   assert.equal(geometry.flashlight.opticsMode, "idealized");
   assert.equal(geometry.flashlight.actualRayCount, 7);
   assert.equal(geometry.flashlight.particleCount, 12);
+  closeTo(geometry.flashlight.focus.x, focus.x, 1e-12);
+  closeTo(geometry.flashlight.focus.y, focus.y, 1e-12);
   assert.equal(geometry.particlePaths.length, 7);
   for (const path of geometry.particlePaths) {
     assert.equal(path.length, 2);
@@ -260,6 +262,11 @@ test("página expõe seletor de modos e controles para luz e corpo", () => {
   assert.match(workspace, /Velocidade visual \(didática\)/);
   assert.match(workspace, /body-height/);
   assert.match(workspace, /function setParameter/);
+  assert.match(workspace, /Posição horizontal de F\*/);
+  assert.match(workspace, /Imagem paraxial do espelho × fonte/);
+  const catalog = readFileSync(new URL("./laboratorio-catalogo.js", import.meta.url), "utf8");
+  assert.match(catalog, /Convergência idealizada é um recurso didático/);
+  assert.doesNotMatch(catalog, /lanterna colimada produz raios refletidos/);
   assert.match(workspace, /state\.mode = MIRROR_EXPERIMENTS\.has\(id\) \? \(id === "optics-concave-mirror" \? "parallel" : "lantern"\)/);
   const suite = readFileSync(new URL("./laboratorio-suite.css", import.meta.url), "utf8");
   assert.match(suite, /lab-workspace-panels,.lab-existing-panels\s*\{\s*grid-template-columns:minmax\(0,1fr\)/);
