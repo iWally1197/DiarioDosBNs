@@ -187,7 +187,7 @@ function renderMessages(animateLatest = false) {
     const title = document.createElement('strong');
     title.textContent = 'Oi! Eu sou o BNzinho.';
     const description = document.createElement('p');
-    description.textContent = 'Posso ajudar com Física, com as animações dos laboratórios e com a navegação pelo Diário dos BNs. Qual é a sua dúvida?';
+    description.textContent = 'Pode me perguntar sobre qualquer assunto ou pedir ajuda para criar, entender, revisar ou resolver algo. O que você precisa?';
     copy.append(title, description);
     welcome.append(mascot, copy);
     messagesBox.append(welcome);
@@ -559,3 +559,4 @@ for (const button of suggestionButtons) {
 }
 
 void initialize();
+
