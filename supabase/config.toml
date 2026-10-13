@@ -6,3 +6,6 @@ sql_paths = ["./seed.sql"]
 
 [auth]
 enable_signup = false
+
+[functions.physics-assistant]
+verify_jwt = true

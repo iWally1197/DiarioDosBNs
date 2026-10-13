@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base href="./">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Converse com o mascote do Diário dos BNs para aprender Física e explorar as animações do site.">
+  <title>Assistente de Física — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=physics-ai-20261013-1">
+  <script defer src="script.js?v=physics-ai-20261013-1"></script>
+  <script defer src="quick-menu.js?v=accessibility-20261013-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
+  <script type="module" src="physics-ai.js?v=physics-ai-20261013-1"></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Diário dos BNs, página inicial">
+      <img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt="">
+      <span>Diário dos <b>BNs</b></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Abrir menu">
+      <span></span><span></span>
+    </button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="index.html">Início</a>
+      <a href="biblioteca-fisica.html">Biblioteca</a>
+      <a href="laboratorio.html">Laboratórios</a>
+      <a href="ia.html" aria-current="page">Assistente de Física</a>
+      <a class="nav-account" href="login.html?next=ia" id="physics-ai-account-link">Entrar</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro">
+      <span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span>
+    </button>
+  </header>
+
+  <main id="conteudo" class="physics-ai-page">
+    <section class="physics-ai-intro section-wrap" aria-labelledby="physics-ai-title">
+      <img class="physics-ai-mascot" src="assets/mascote-ia-fisica.png" alt="Mascote oficial do Diário dos BNs, um pequeno roedor cinza com óculos, lápis e livro de Física">
+      <div class="physics-ai-intro-copy">
+        <div class="section-kicker">MASCOTE OFICIAL · ASSISTENTE DE FÍSICA</div>
+        <h1 id="physics-ai-title">Aprenda Física conversando.</h1>
+        <p>O mascote do Diário dos BNs ajuda a entender conceitos, resolver dúvidas e explorar os laboratórios e as animações do site, passo a passo.</p>
+        <p class="physics-ai-privacy">Entre na sua conta para enviar perguntas e manter o histórico salvo. As mensagens ficam associadas à sua conta; evite compartilhar dados pessoais ou senhas.</p>
+      </div>
+    </section>
+
+    <section class="physics-ai-workspace section-wrap" aria-label="Chat com o assistente de Física">
+      <aside class="physics-ai-history" aria-label="Histórico de conversas">
+        <div class="physics-ai-history-heading">
+          <div><span class="section-kicker">SEU ESPAÇO</span><h2>Conversas</h2></div>
+          <button class="button button-outline physics-ai-new-chat" id="physics-ai-new-chat" type="button" disabled>Nova conversa</button>
+        </div>
+        <div class="physics-ai-conversation-list" id="physics-ai-conversation-list" aria-live="polite">
+          <p class="physics-ai-history-empty">Entre na sua conta para ver suas conversas salvas.</p>
+        </div>
+        <div class="physics-ai-history-note">Seu histórico é privado e fica vinculado à sua conta.</div>
+      </aside>
+
+      <section class="physics-ai-chat-panel" aria-label="Conversa atual">
+        <header class="physics-ai-chat-header">
+          <img src="assets/mascote-ia-fisica.png" alt="" aria-hidden="true">
+          <div><strong>BNzinho</strong><span>Mascote e guia de Física</span></div>
+          <span class="physics-ai-online"><i aria-hidden="true"></i> Pronto para conversar</span>
+        </header>
+
+        <div class="physics-ai-login-gate" id="physics-ai-login-gate">
+          <strong>Entre para conversar</strong>
+          <p>As perguntas só podem ser enviadas com login. Depois de entrar, você volta para este chat e suas conversas serão salvas.</p>
+          <a class="button button-primary" href="login.html?next=ia">Entrar na conta</a>
+        </div>
+        <p class="physics-ai-status" id="physics-ai-status" role="status" aria-live="polite"></p>
+
+        <div class="physics-ai-messages" id="physics-ai-messages" role="log" aria-live="polite" aria-relevant="additions text">
+          <div class="physics-ai-welcome">
+            <img src="assets/mascote-ia-fisica.png" alt="" aria-hidden="true">
+            <div><strong>Oi! Eu sou o BNzinho.</strong><p>Posso ajudar com Física, com as animações dos laboratórios e com a navegação pelo Diário dos BNs. Qual é a sua dúvida?</p></div>
+          </div>
+        </div>
+
+        <div class="physics-ai-suggestions" aria-label="Sugestões de perguntas">
+          <button type="button" data-physics-ai-prompt="Explique a diferença entre MRU e MRUV com um exemplo simples." disabled>MRU e MRUV</button>
+          <button type="button" data-physics-ai-prompt="Como encontro a imagem formada por um espelho côncavo?" disabled>Espelho côncavo</button>
+          <button type="button" data-physics-ai-prompt="Como usar os gráficos e os vetores no laboratório?" disabled>Usar um laboratório</button>
+        </div>
+
+        <form class="physics-ai-composer" id="physics-ai-form">
+          <label class="sr-only" for="physics-ai-input">Escreva sua pergunta</label>
+          <textarea id="physics-ai-input" name="message" rows="2" maxlength="2000" placeholder="Escreva sua pergunta sobre Física, os laboratórios ou o site…" required disabled></textarea>
+          <button class="button button-primary" type="submit" id="physics-ai-send" disabled>Enviar</button>
+        </form>
+        <p class="physics-ai-footnote">A IA pode cometer erros. Confira resultados e fórmulas com o material didático.</p>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-top"><a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Física que ganha forma.</p></div>
+    <div class="footer-bottom"><span>Assistente de Física do Diário dos BNs</span><a href="privacidade.html">Privacidade</a></div>
+  </footer>
+</body>
+</html>

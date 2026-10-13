@@ -166,7 +166,8 @@
         throw new Error('Esta conta está indisponível. Fale com o responsável pelo site.');
       }
       status(notice, 'Entrada realizada. Abrindo suas turmas…', 'success');
-      go(destinationFor(role));
+      const requestedNext = new URLSearchParams(window.location.search).get('next');
+      go(requestedNext === 'ia' ? 'ia.html' : destinationFor(role));
     });
   }
 
