@@ -49,3 +49,8 @@
 @media (max-width: 520px) { .hero-account-actions { display: grid; grid-template-columns: 1fr 1fr; } .hero-account-actions .button { min-width: 0; padding-inline: .55rem; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 @media (max-width: 36rem) { .account-page { width: min(100% - 1rem, 54rem); margin-top: .75rem; } .account-panel { padding: 1rem; } }
+
+.account-resend-panel { margin-top: 1rem; padding: 1rem; border: 1px solid var(--line, #263247); border-left: 3px solid var(--gold, #e6c477); border-radius: .7rem; background: rgba(5, 12, 24, .45); }
+.account-resend-panel h2 { margin: 0 0 .5rem; font-size: 1.15rem; }
+.account-resend-panel p { overflow-wrap: anywhere; }
+.account-resend-panel [hidden] { display: none !important; }

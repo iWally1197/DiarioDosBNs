@@ -49,6 +49,13 @@
       <button class="account-button account-button-primary" type="submit">Criar conta</button>
       <p class="account-message" data-status aria-live="polite"></p>
     </form>
+    <section id="signup-confirmation" class="account-resend-panel" aria-labelledby="signup-confirmation-title" hidden>
+      <h2 id="signup-confirmation-title">Confirme seu e-mail</h2>
+      <p>Enviamos o link de verificação para <strong id="signup-confirmation-email"></strong>. Confira também a pasta de spam.</p>
+      <p id="signup-resend-countdown" class="account-muted" role="status" aria-live="polite"></p>
+      <button id="signup-resend-link" class="account-button account-button-primary" type="button" disabled>Reenviar link de verificação</button>
+      <p id="signup-resend-status" class="account-message" role="status" aria-live="polite"></p>
+    </section>
     <p>Já tem conta? <a href="login.html">Entrar</a></p>
   </section></main>
 </body>

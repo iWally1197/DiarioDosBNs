@@ -12,6 +12,10 @@
   const setText = (node, value) => { if (node) node.textContent = String(value ?? ''); };
   const show = (node, visible = true) => { if (node) node.hidden = !visible; };
   const pageUrl = (file) => new URL(file, document.baseURI);
+  const pendingSignupStorageKey = 'diario-bns-pending-signup';
+  function clearPendingSignupConfirmation() {
+    try { window.sessionStorage.removeItem(pendingSignupStorageKey); } catch {}
+  }
   const go = (file) => window.location.assign(pageUrl(file).href);
   const roleName = (role) => ({ aluno: 'Aluno', professor: 'Professor', admin: 'Administrador' }[role] || 'Conta');
   const destinationFor = (role) => ({ admin: 'admin.html', professor: 'professor.html', aluno: 'aluno.html' }[role?.role] || 'minha-area.html');
@@ -167,6 +171,100 @@
   }
 
   function initSignup() {
+    const confirmationPanel = byId('signup-confirmation');
+    const confirmationEmail = byId('signup-confirmation-email');
+    const resendButton = byId('signup-resend-link');
+    const countdown = byId('signup-resend-countdown');
+    const resendStatus = byId('signup-resend-status');
+    const resendCooldownMs = 60_000;
+    let pendingSignup = null;
+    let resendBusy = false;
+    let countdownTimer = 0;
+
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(pendingSignupStorageKey) || 'null');
+      if (saved && typeof saved.email === 'string' && saved.email.trim()) pendingSignup = saved;
+    } catch {}
+
+    const savePendingSignup = (email, allowedAt) => {
+      pendingSignup = { email, allowedAt };
+      try { window.sessionStorage.setItem(pendingSignupStorageKey, JSON.stringify(pendingSignup)); } catch {}
+    };
+    const clearPendingSignup = () => {
+      pendingSignup = null;
+      if (countdownTimer) window.clearInterval(countdownTimer);
+      countdownTimer = 0;
+      clearPendingSignupConfirmation();
+      show(confirmationPanel, false);
+    };
+    const updateCountdown = () => {
+      if (!pendingSignup) return;
+      const remaining = Math.max(0, Number(pendingSignup.allowedAt) - Date.now());
+      const seconds = Math.ceil(remaining / 1000);
+      if (remaining <= 0) {
+        setText(countdown, 'Você já pode solicitar outro link.');
+        if (resendButton) resendButton.disabled = resendBusy;
+        if (countdownTimer) window.clearInterval(countdownTimer);
+        countdownTimer = 0;
+        return;
+      }
+      const minutesLabel = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secondsLabel = String(seconds % 60).padStart(2, '0');
+      setText(countdown, `Você poderá pedir outro link em ${minutesLabel}:${secondsLabel}.`);
+      if (resendButton) resendButton.disabled = true;
+    };
+    const startCountdown = () => {
+      if (countdownTimer) window.clearInterval(countdownTimer);
+      countdownTimer = 0;
+      updateCountdown();
+      if (pendingSignup && Number(pendingSignup.allowedAt) > Date.now()) {
+        countdownTimer = window.setInterval(updateCountdown, 1000);
+      }
+    };
+    const showConfirmation = (email, allowedAt) => {
+      savePendingSignup(email, allowedAt);
+      setText(confirmationEmail, email);
+      show(confirmationPanel, true);
+      startCountdown();
+    };
+
+    if (pendingSignup?.email) {
+      setText(confirmationEmail, pendingSignup.email);
+      show(confirmationPanel, true);
+      startCountdown();
+    }
+    resendButton?.addEventListener('click', async () => {
+      if (!pendingSignup || resendBusy) return;
+      if (Number(pendingSignup.allowedAt) > Date.now()) {
+        startCountdown();
+        return;
+      }
+      resendBusy = true;
+      savePendingSignup(pendingSignup.email, Date.now() + resendCooldownMs);
+      startCountdown();
+      status(resendStatus, 'Enviando outro link de verificação…', 'busy');
+      try {
+        const client = await getClient();
+        const callback = pageUrl('auth-callback.html').href;
+        const { error } = await withDeadline(
+          client.auth.resend({
+            type: 'signup',
+            email: pendingSignup.email,
+            options: { emailRedirectTo: callback }
+          }),
+          'O reenvio demorou para responder. Aguarde o contador e tente novamente.',
+          22000
+        );
+        if (error) throw error;
+        status(resendStatus, 'Novo link enviado. Confira sua caixa de entrada e a pasta de spam.', 'success');
+      } catch (error) {
+        status(resendStatus, messageFor(error), 'error');
+      } finally {
+        resendBusy = false;
+        updateCountdown();
+      }
+    });
+
     const form = byId('signup-form');
     const role = byId('signup-role');
     const studentFields = byId('student-fields');
@@ -193,12 +291,13 @@
       const confirm = String(values.get('confirm') || '');
       if (password.length < 10) throw new Error('A senha precisa ter pelo menos 10 caracteres.');
       if (password !== confirm) throw new Error('As senhas digitadas não são iguais.');
+      const signupEmail = String(values.get('email') || '').trim();
       const requestedRole = String(values.get('role'));
       const teacher = requestedRole === 'professor';
       const callback = pageUrl('auth-callback.html').href;
       const { data, error } = await withDeadline(
         client.auth.signUp({
-        email: String(values.get('email') || '').trim(),
+        email: signupEmail,
         password,
         options: {
           emailRedirectTo: callback,
@@ -222,12 +321,14 @@
       );
       if (error) throw error;
       if (data.session) {
+        clearPendingSignup();
         const userRole = await readRole(client, data.user.id);
         status(notice, teacher ? 'Conta criada. A conta de professor precisa ser aprovada.' : 'Conta criada com sucesso.', 'success');
         go(destinationFor(userRole));
         return;
       }
       status(notice, 'Cadastro iniciado. Abra o e-mail de confirmação para ativar a conta. Se a mensagem não chegar, confira o spam.', 'success');
+      showConfirmation(signupEmail, Date.now() + resendCooldownMs);
     });
   }
 
@@ -271,6 +372,7 @@
         show(byId('callback-links'), true);
         return;
       }
+      clearPendingSignupConfirmation();
       status(notice, 'E-mail confirmado. Abrindo sua conta…', 'success');
       getClient().then((client) => readRole(client, session.user.id)).then((role) => {
         window.setTimeout(() => go(destinationFor(role)), 700);
