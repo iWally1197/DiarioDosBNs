@@ -4,6 +4,21 @@ const allowedOrigins = new Set([
   'https://iwally1197.github.io'
 ]);
 
+const localRequestWindows = new Map();
+
+function consumeLocalRequest(userId) {
+  if (!userId) return false;
+  const now = Date.now();
+  const current = localRequestWindows.get(userId);
+  if (!current || now - current.startedAt >= 60_000) {
+    localRequestWindows.set(userId, { startedAt: now, count: 1 });
+    return true;
+  }
+  if (current.count >= 12) return false;
+  current.count += 1;
+  return true;
+}
+
 const systemInstructions = [
   'Você é o BNzinho, mascote oficial e tutor de Física do Diário dos BNs.',
   'Responda em português do Brasil, com acolhimento, clareza e precisão para estudantes do ensino médio.',
@@ -101,6 +116,7 @@ Deno.serve(async (request) => {
     if (!authResponse.ok) {
       return jsonResponse(request, 401, { error: 'Sua sessão expirou. Entre novamente para continuar.' });
     }
+    const authenticatedUser = await authResponse.json().catch(() => null);
 
     const quotaResponse = await fetch(supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/consume_physics_ai_request', {
       method: 'POST',
@@ -111,11 +127,14 @@ Deno.serve(async (request) => {
       },
       body: '{}'
     });
-    if (!quotaResponse.ok) {
-      console.error('Quota check unavailable:', quotaResponse.status);
-      return jsonResponse(request, 503, { error: 'O histórico do chat ainda não foi ativado no Supabase.' });
+    let requestAllowed = false;
+    if (quotaResponse.ok) {
+      requestAllowed = (await quotaResponse.json().catch(() => null)) === true;
+    } else {
+      console.warn('SQL rate limit unavailable; using an in-memory limit:', quotaResponse.status);
+      requestAllowed = consumeLocalRequest(authenticatedUser?.id);
     }
-    if (await quotaResponse.json() !== true) {
+    if (!requestAllowed) {
       return jsonResponse(request, 429, { error: 'Você atingiu o limite temporário de perguntas. Aguarde um minuto e tente novamente.' });
     }
 
