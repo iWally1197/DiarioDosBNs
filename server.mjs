@@ -7,10 +7,13 @@ const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const configuredPort = Number(process.env.PORT || 4173);
 const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : 4173;
 const host = process.env.HOST || '127.0.0.1';
-const retiredPaths = new Set([
-  '/login', '/cadastro', '/acessar-conta', '/criar-perfil', '/recuperar-senha',
-  '/auth/callback', '/auth', '/conta', '/perfil', '/aluno', '/professor', '/admin',
-  '/turma', '/turmas'
+const routePages = new Map([
+  ['/login','login.html'], ['/cadastro','cadastro.html'], ['/acessar-conta','acessar-conta.html'],
+  ['/criar-perfil','criar-perfil.html'], ['/recuperar-senha','recuperar-senha.html'],
+  ['/auth/callback','auth-callback.html'], ['/auth','auth.html'], ['/conta','perfil.html'],
+  ['/perfil','perfil.html'], ['/aluno','aluno.html'], ['/professor','professor.html'],
+  ['/admin','admin.html'], ['/admin/laboratorios','admin-laboratorios.html'],
+  ['/turma','turma.html'], ['/turmas','turmas.html']
 ]);
 const mime = {
   '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8',
@@ -26,7 +29,7 @@ function send(res, status, contentType, body, extra = {}) {
     'Referrer-Policy':'strict-origin-when-cross-origin',
     'X-Frame-Options':'SAMEORIGIN',
     'Permissions-Policy':'camera=(), microphone=(), geolocation=()',
-    'Content-Security-Policy':"default-src 'self'; script-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com https://www.youtube.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'",
+    'Content-Security-Policy':"default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com https://www.youtube.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'",
     ...extra
   });
   res.end(body);
@@ -37,15 +40,16 @@ const server = createServer((req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return send(res, 405, 'text/plain; charset=utf-8', 'Método não permitido.', { Allow: 'GET, HEAD' });
   }
-  const aliasPath = url.pathname.length > 1 ? url.pathname.replace(/\/$/, '') : url.pathname;
-  if (retiredPaths.has(aliasPath.toLowerCase())) {
-    res.writeHead(308, { Location: '/index.html', 'Cache-Control': 'no-store' });
-    return res.end();
-  }
-  if (url.pathname === '/healthz') return send(res, 200, 'application/json; charset=utf-8', req.method === 'HEAD' ? '' : '{"ok":true}');
   let pathname;
   try { pathname = decodeURIComponent(url.pathname); } catch { return send(res, 400, 'text/plain; charset=utf-8', 'Endereço inválido.'); }
+  if (pathname === '/healthz') return send(res, 200, 'application/json; charset=utf-8', req.method === 'HEAD' ? '' : '{"ok":true}');
   if (pathname.split('/').some((part) => part.startsWith('.') && part !== '.well-known')) return send(res, 404, 'text/plain; charset=utf-8', 'Não encontrado.');
+  const aliasPath = pathname.length > 1 ? pathname.replace(/\/+$/, '').toLowerCase() : pathname;
+  const page = routePages.get(aliasPath);
+  if (page) {
+    res.writeHead(308, { Location: `/${page}${url.search}`, 'Cache-Control': 'no-store' });
+    return res.end();
+  }
   if (pathname === '/server.mjs' || pathname === '/package.json') return send(res, 404, 'text/plain; charset=utf-8', 'Não encontrado.');
 
   let relative = pathname === '/' ? 'index.html' : normalize(pathname.replace(/^[/\\]+/, ''));
@@ -60,7 +64,7 @@ const server = createServer((req, res) => {
     'Referrer-Policy':'strict-origin-when-cross-origin',
     'X-Frame-Options':'SAMEORIGIN',
     'Permissions-Policy':'camera=(), microphone=(), geolocation=()',
-    'Content-Security-Policy':"default-src 'self'; script-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com https://www.youtube.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    'Content-Security-Policy':"default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://www.youtube-nocookie.com https://www.youtube.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'"
   });
   if (req.method === 'HEAD') return res.end();
   createReadStream(file).pipe(res);
