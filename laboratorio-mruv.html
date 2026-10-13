@@ -9,10 +9,10 @@
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-wheel-modal-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-foldout-sections-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mruv.js?v=motion-wheel-modal-20261013-1"></script>
+  <script type="module" src="laboratorio-mruv.js?v=motion-foldout-sections-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -84,8 +84,11 @@
 
         </section>
 
-        <section class="mruv-card mruv-playback-card" aria-labelledby="mruv-playback-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mruv-playback-heading">Controle do experimento</h2></div><output class="mruv-time-readout" id="mruv-time-readout" aria-live="off">t = 0,00 s</output></div>
+        <details class="mruv-card mruv-playback-card mruv-foldout-card" aria-labelledby="mruv-playback-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">RELÓGIO VIRTUAL</span><span id="mruv-playback-heading" class="mruv-foldout-title">Controle do experimento</span></span><output class="mruv-time-readout" id="mruv-time-readout" aria-live="off">t = 0,00 s</output><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+
+          
           <div class="mruv-transport" role="group" aria-label="Controles de reprodução">
             <button id="mruv-step-back" data-advanced-only class="button button-outline" type="button" aria-label="Voltar um passo">− Passo</button><button id="mruv-play" class="button button-primary" type="button" aria-pressed="false">Iniciar</button><button id="mruv-step-forward" data-advanced-only class="button button-outline" type="button">+ Passo</button><button id="mruv-reset" class="button button-outline" type="button">Reiniciar</button>
             <label for="mruv-playback-rate">Reprodução<select id="mruv-playback-rate"><option data-advanced-only value="0.25">0,25×</option><option data-advanced-only value="0.5">0,5×</option><option data-advanced-only value="1" selected>1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label>
@@ -96,15 +99,22 @@
           <input id="mruv-timeline" class="mruv-timeline" type="range" min="0" max="12" step="0.01" value="0" aria-label="Instante atual do experimento">
           <div class="mruv-playback-settings"><label for="mruv-duration">Duração<input id="mruv-duration" type="number" min="0.1" max="3600" step="0.5" value="12"><small>s</small></label><label for="mruv-sample-interval">Intervalo entre medições<input id="mruv-sample-interval" type="number" min="0.01" max="12" step="0.1" value="1"><small>s</small></label><label class="mruv-check"><input id="mruv-loop" type="checkbox" checked> Repetir ao terminar</label><label class="mruv-check"><input id="mruv-braking-mode" type="checkbox"> Frenagem controlada até parar</label><button id="mruv-return-start" class="button button-outline" type="button">Voltar ao início</button></div>
           <p id="mruv-status" class="mruv-status" role="status" aria-live="polite">Pronto para iniciar. A posição segue a equação do MRUV.</p>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mruv-card mruv-results-card" aria-labelledby="mruv-results-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">LEITURAS DO MODELO</span><h2 id="mruv-results-heading">Estado do carrinho selecionado</h2></div><span id="mruv-direction-pill" class="mruv-direction-pill">Repouso</span></div>
+        <details class="mruv-card mruv-results-card mruv-foldout-card" aria-labelledby="mruv-results-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">LEITURAS DO MODELO</span><span id="mruv-results-heading" class="mruv-foldout-title">Estado do carrinho selecionado</span></span><span id="mruv-direction-pill" class="mruv-direction-pill">Repouso</span><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+
+          
           <div id="mruv-readouts" class="mruv-readouts" aria-live="off"></div>
           <p id="mruv-displacement-note" class="mruv-explain-note">O deslocamento tem sinal; a distância percorrida é sempre positiva.</p>
           <div class="mruv-meeting-note" id="mruv-meeting-note" role="status"></div>
           <div class="mruv-meeting-note" id="mruv-stop-comparison" role="status"></div>
-        </section>
+        
+</div>
+</details>
 
         <section id="mruv-math-card" class="mruv-card" aria-labelledby="mruv-math-heading">
           <details class="mruv-detail" open><summary id="mruv-math-heading">Matemática do movimento</summary>
@@ -117,21 +127,31 @@
           </details>
         </section>
 
-        <section id="mruv-graphs-card" class="mruv-card mruv-graphs-card" aria-labelledby="mruv-graphs-heading">
-          <div class="mruv-card-heading"><div><span class="section-kicker">GRÁFICOS SINCRONIZADOS</span><h2 id="mruv-graphs-heading">Previsão e movimento</h2><p>Os três gráficos usam a mesma equação e o mesmo relógio do carrinho. Clique em um gráfico para inspecionar um instante.</p></div><div class="mruv-button-row"><label class="mruv-graph-zoom-label" for="mruv-graph-zoom">Zoom vertical<select id="mruv-graph-zoom"><option data-advanced-only value="1">1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label><button id="mruv-export-graphs" class="button button-outline" type="button">Exportar gráficos</button><button id="mruv-graphs-fullscreen" data-advanced-only class="button button-outline" type="button">Gráficos em tela cheia</button></div></div>
+        <details class="mruv-card mruv-graphs-card mruv-foldout-card" id="mruv-graphs-card" aria-labelledby="mruv-graphs-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">GRÁFICOS SINCRONIZADOS</span><span id="mruv-graphs-heading" class="mruv-foldout-title">Previsão e movimento</span></span><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+<div class="mruv-card-heading mruv-foldout-tools"><p>Os três gráficos usam a mesma equação e o mesmo relógio do carrinho. Clique em um gráfico para inspecionar um instante.</p><div class="mruv-button-row"><label class="mruv-graph-zoom-label" for="mruv-graph-zoom">Zoom vertical<select id="mruv-graph-zoom"><option data-advanced-only value="1">1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label><button id="mruv-export-graphs" class="button button-outline" type="button">Exportar gráficos</button><button id="mruv-graphs-fullscreen" data-advanced-only class="button button-outline" type="button">Gráficos em tela cheia</button></div></div>
+          
           <div id="mruv-chart-grid" class="mruv-chart-grid">
             <figure class="mruv-chart"><figcaption><strong>Posição × tempo</strong><span>x(t) = x₀ + v₀t + ½at²</span></figcaption><canvas id="mruv-chart-position" role="img" tabindex="0" aria-label="Gráfico posição por tempo"></canvas><div class="mruv-chart-legend" id="mruv-chart-position-legend" aria-label="Selecionar carrinhos neste gráfico"></div><p class="mruv-chart-description" id="mruv-chart-position-desc">A curva quadrática tem inclinação instantânea igual a v(t).</p></figure>
             <figure class="mruv-chart"><figcaption><strong>Velocidade × tempo</strong><span>v(t) = v₀ + at</span></figcaption><canvas id="mruv-chart-velocity" role="img" tabindex="0" aria-label="Gráfico velocidade por tempo"></canvas><div class="mruv-chart-legend" id="mruv-chart-velocity-legend" aria-label="Selecionar carrinhos neste gráfico"></div><p class="mruv-chart-description" id="mruv-chart-velocity-desc">A inclinação da reta é a aceleração; a área algébrica representa Δx.</p></figure>
             <figure class="mruv-chart"><figcaption><strong>Aceleração × tempo</strong><span>a(t) = constante</span></figcaption><canvas id="mruv-chart-acceleration" role="img" tabindex="0" aria-label="Gráfico aceleração por tempo"></canvas><div class="mruv-chart-legend" id="mruv-chart-acceleration-legend" aria-label="Selecionar carrinhos neste gráfico"></div><p class="mruv-chart-description" id="mruv-chart-acceleration-desc">A área algébrica representa Δv.</p></figure>
           </div>
           <p class="mruv-graph-inspection" id="mruv-graph-inspection" aria-live="polite">Ponto de inspeção: mova o cursor ou selecione um instante no gráfico.</p>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mruv-card mruv-table-card" aria-labelledby="mruv-table-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">DADOS EXPERIMENTAIS IDEAIS</span><h2 id="mruv-table-heading">Tabela de medições</h2><p>Valores calculados nos intervalos escolhidos. Os sensores registram os mesmos instantes do modelo.</p></div><div class="mruv-button-row"><button id="mruv-export-csv" class="button button-outline" type="button">Baixar CSV</button><button id="mruv-export-json" class="button button-outline" type="button">Baixar JSON</button></div></div>
+        <details class="mruv-card mruv-table-card mruv-foldout-card" aria-labelledby="mruv-table-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">DADOS EXPERIMENTAIS IDEAIS</span><span id="mruv-table-heading" class="mruv-foldout-title">Tabela de medições</span></span><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+<div class="mruv-card-heading mruv-foldout-tools"><p>Valores calculados nos intervalos escolhidos. Os sensores registram os mesmos instantes do modelo.</p><div class="mruv-button-row"><button id="mruv-export-csv" class="button button-outline" type="button">Baixar CSV</button><button id="mruv-export-json" class="button button-outline" type="button">Baixar JSON</button></div></div>
+          
           <div class="mruv-table-wrap"><table><caption class="sr-only">Tempo, posição, velocidade, aceleração, deslocamento, distância percorrida e variação de velocidade por carrinho</caption><thead><tr><th scope="col">Tempo (s)</th><th scope="col">Carrinho</th><th scope="col">Posição x (m)</th><th scope="col">Velocidade v (m/s)</th><th scope="col">Aceleração a (m/s²)</th><th scope="col">Deslocamento Δx (m)</th><th scope="col">Distância (m)</th><th scope="col">Δv (m/s)</th></tr></thead><tbody id="mruv-data-table"></tbody></table></div>
           <p id="mruv-table-status" class="mruv-muted" aria-live="polite"></p>
-        </section>
+        
+</div>
+</details>
       </div>
 
       <aside class="mruv-sidebar" aria-label="Editor do experimento">
@@ -146,20 +166,30 @@
         </div></details>
 </section>
 
-        <section class="mruv-card mruv-instruments-card" aria-labelledby="mruv-instruments-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">INSTRUMENTOS</span><h2 id="mruv-instruments-heading">Sensores e referências</h2></div></div>
+        <details class="mruv-card mruv-instruments-card mruv-foldout-card" aria-labelledby="mruv-instruments-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">INSTRUMENTOS</span><span id="mruv-instruments-heading" class="mruv-foldout-title">Sensores e referências</span></span><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+
+          
           <p class="mruv-muted">Fotocélulas registram o cruzamento do ponto de referência do carrinho. Os instrumentos não alteram sua velocidade.</p>
           <div id="mruv-instrument-readings" class="mruv-instrument-readings" aria-live="off"></div>
           <div class="mruv-ruler-tool"><h3>Régua de deslocamento</h3><div class="mruv-two-inputs"><label for="mruv-ruler-a">Ponto A<input id="mruv-ruler-a" type="number" step="0.1" value="0"><small>m</small></label><label for="mruv-ruler-b">Ponto B<input id="mruv-ruler-b" type="number" step="0.1" value="5"><small>m</small></label></div><output id="mruv-ruler-result">Δx = 5,00 m · distância = 5,00 m</output></div>
           <div class="mruv-event-log"><h3>Eventos das fotocélulas</h3><ol id="mruv-events"><li>Nenhum cruzamento registrado nesta execução.</li></ol></div>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mruv-card mruv-persistence-card" aria-labelledby="mruv-save-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mruv-save-heading">Salvar e exportar</h2></div></div>
+        <details class="mruv-card mruv-persistence-card mruv-foldout-card" aria-labelledby="mruv-save-heading">
+<summary class="mruv-card-heading compact mruv-foldout-summary"><span class="mruv-foldout-copy"><span class="section-kicker">SEU EXPERIMENTO</span><span id="mruv-save-heading" class="mruv-foldout-title">Salvar e exportar</span></span><span class="mruv-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mruv-foldout-content">
+
+          
           <label class="mruv-saved-select" for="mruv-saved-experiments">Experimentos salvos neste dispositivo<select id="mruv-saved-experiments"><option value="">Selecione um experimento salvo</option></select></label>
           <div class="mruv-button-grid"><button id="mruv-save" class="button button-outline" type="button">Salvar alterações / novo</button><button id="mruv-load" class="button button-outline" type="button" disabled>Carregar</button><button id="mruv-duplicate-saved" data-advanced-only class="button button-outline" type="button" disabled>Duplicar salvo</button><button id="mruv-rename-saved" data-advanced-only class="button button-outline" type="button" disabled>Renomear salvo</button><button id="mruv-delete-saved" data-advanced-only class="button button-outline" type="button" disabled>Apagar salvo</button><button id="mruv-share" data-advanced-only class="button button-outline" type="button">Copiar link da configuração</button><button id="mruv-export-scene" data-advanced-only class="button button-outline" type="button">Baixar pista SVG</button><button id="mruv-reset-config" data-advanced-only class="button button-outline" type="button">Restaurar padrão</button><label data-advanced-only class="button button-outline mruv-file-label" for="mruv-import-file">Abrir configuração JSON<input id="mruv-import-file" type="file" accept="application/json,.json"></label></div>
           <p id="mruv-save-status" class="mruv-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
-        </section>
+        
+</div>
+</details>
 
         <section class="mruv-card mruv-investigation-card" data-advanced-only id="mruv-investigation" aria-labelledby="mruv-investigation-heading">
           <div class="mruv-card-heading compact"><div><span class="section-kicker">PREVER · OBSERVAR · EXPLICAR</span><h2 id="mruv-investigation-heading">Desafio de movimento</h2></div></div>

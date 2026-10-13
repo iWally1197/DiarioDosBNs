@@ -9,10 +9,10 @@
   <title>Laboratório de MRU — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-wheel-modal-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-foldout-sections-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mru.js?v=motion-wheel-modal-20261013-1"></script>
+  <script type="module" src="laboratorio-mru.js?v=motion-foldout-sections-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -84,8 +84,11 @@
 
         </section>
 
-        <section class="mru-card mru-playback-card" aria-labelledby="mru-playback-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mru-playback-heading">Controle do experimento</h2></div><output class="mru-time-readout" id="mru-time-readout" aria-live="off">t = 0,00 s</output></div>
+        <details class="mru-card mru-playback-card mru-foldout-card" aria-labelledby="mru-playback-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">RELÓGIO VIRTUAL</span><span id="mru-playback-heading" class="mru-foldout-title">Controle do experimento</span></span><output class="mru-time-readout" id="mru-time-readout" aria-live="off">t = 0,00 s</output><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
           <div class="mru-transport" role="group" aria-label="Controles de reprodução">
             <button id="mru-step-back" data-advanced-only class="button button-outline" type="button" aria-label="Voltar um passo">− Passo</button><button id="mru-play" class="button button-primary" type="button" aria-pressed="false">Iniciar</button><button id="mru-step-forward" data-advanced-only class="button button-outline" type="button">+ Passo</button><button id="mru-reset" class="button button-outline" type="button">Reiniciar</button>
             <label for="mru-playback-rate">Reprodução<select id="mru-playback-rate"><option data-advanced-only value="0.25">0,25×</option><option data-advanced-only value="0.5">0,5×</option><option data-advanced-only value="1" selected>1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label>
@@ -95,30 +98,47 @@
           <input id="mru-timeline" class="mru-timeline" type="range" min="0" max="12" step="0.01" value="0" aria-label="Instante atual do experimento">
           <div class="mru-playback-settings" data-advanced-only><label for="mru-duration">Duração<input id="mru-duration" type="number" min="0.1" max="3600" step="0.5" value="12"><small>s</small></label><label for="mru-sample-interval">Intervalo entre medições<input id="mru-sample-interval" type="number" min="0.01" max="12" step="0.1" value="1"><small>s</small></label><label class="mru-check"><input id="mru-loop" type="checkbox" checked> Repetir ao terminar</label><button id="mru-return-start" class="button button-outline" type="button">Voltar ao início</button></div>
           <p id="mru-status" class="mru-status" role="status" aria-live="polite">Pronto para iniciar. A posição segue a equação do MRU.</p>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mru-card mru-results-card" aria-labelledby="mru-results-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">LEITURAS DO MODELO</span><h2 id="mru-results-heading">Estado do carrinho selecionado</h2></div><span id="mru-direction-pill" class="mru-direction-pill">Repouso</span></div>
+        <details class="mru-card mru-results-card mru-foldout-card" aria-labelledby="mru-results-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">LEITURAS DO MODELO</span><span id="mru-results-heading" class="mru-foldout-title">Estado do carrinho selecionado</span></span><span id="mru-direction-pill" class="mru-direction-pill">Repouso</span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
           <div id="mru-readouts" class="mru-readouts" aria-live="off"></div>
           <p id="mru-displacement-note" class="mru-explain-note">O deslocamento tem sinal; a distância percorrida é sempre positiva.</p>
           <div class="mru-meeting-note" id="mru-meeting-note" role="status"></div>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mru-card mru-graphs-card" aria-labelledby="mru-graphs-heading">
-          <div class="mru-card-heading"><div><span class="section-kicker">GRÁFICOS SINCRONIZADOS</span><h2 id="mru-graphs-heading">Previsão e movimento</h2><p>Os três gráficos usam a mesma equação e o mesmo relógio do carrinho. Clique em um gráfico para inspecionar um instante.</p></div><div class="mru-button-row"><label class="mru-graph-zoom-label" for="mru-graph-zoom">Zoom vertical<select id="mru-graph-zoom"><option data-advanced-only value="1">1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label><button id="mru-export-graphs" class="button button-outline" type="button">Exportar gráficos</button></div></div>
+        <details class="mru-card mru-graphs-card mru-foldout-card" aria-labelledby="mru-graphs-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">GRÁFICOS SINCRONIZADOS</span><span id="mru-graphs-heading" class="mru-foldout-title">Previsão e movimento</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+<div class="mru-card-heading mru-foldout-tools"><p>Os três gráficos usam a mesma equação e o mesmo relógio do carrinho. Clique em um gráfico para inspecionar um instante.</p><div class="mru-button-row"><label class="mru-graph-zoom-label" for="mru-graph-zoom">Zoom vertical<select id="mru-graph-zoom"><option data-advanced-only value="1">1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label><button id="mru-export-graphs" class="button button-outline" type="button">Exportar gráficos</button></div></div>
+          
           <div class="mru-chart-grid">
             <figure class="mru-chart"><figcaption><strong>Posição × tempo</strong><span>x(t) = x₀ + vt</span></figcaption><canvas id="mru-chart-position" role="img" tabindex="0" aria-label="Gráfico posição por tempo"></canvas><p class="mru-chart-description" id="mru-chart-position-desc">Reta cuja inclinação é a velocidade do carrinho.</p></figure>
             <figure class="mru-chart"><figcaption><strong>Velocidade × tempo</strong><span>v(t) = constante</span></figcaption><canvas id="mru-chart-velocity" role="img" tabindex="0" aria-label="Gráfico velocidade por tempo"></canvas><p class="mru-chart-description" id="mru-chart-velocity-desc">Linha horizontal no valor de velocidade selecionado.</p></figure>
             <figure class="mru-chart"><figcaption><strong>Aceleração × tempo</strong><span>a(t) = 0</span></figcaption><canvas id="mru-chart-acceleration" role="img" tabindex="0" aria-label="Gráfico aceleração por tempo"></canvas><p class="mru-chart-description" id="mru-chart-acceleration-desc">Linha sobre a origem, pois a velocidade não varia.</p></figure>
           </div>
           <p class="mru-graph-inspection" id="mru-graph-inspection" aria-live="polite">Ponto de inspeção: mova o cursor ou selecione um instante no gráfico.</p>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mru-card mru-table-card" aria-labelledby="mru-table-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">DADOS EXPERIMENTAIS IDEAIS</span><h2 id="mru-table-heading">Tabela de medições</h2><p>Valores calculados nos intervalos escolhidos. Os sensores registram os mesmos instantes do modelo.</p></div><div class="mru-button-row"><button id="mru-export-csv" class="button button-outline" type="button">Baixar CSV</button><button id="mru-export-json" class="button button-outline" type="button">Baixar JSON</button></div></div>
+        <details class="mru-card mru-table-card mru-foldout-card" aria-labelledby="mru-table-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">DADOS EXPERIMENTAIS IDEAIS</span><span id="mru-table-heading" class="mru-foldout-title">Tabela de medições</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+<div class="mru-card-heading mru-foldout-tools"><p>Valores calculados nos intervalos escolhidos. Os sensores registram os mesmos instantes do modelo.</p><div class="mru-button-row"><button id="mru-export-csv" class="button button-outline" type="button">Baixar CSV</button><button id="mru-export-json" class="button button-outline" type="button">Baixar JSON</button></div></div>
+          
           <div class="mru-table-wrap"><table><caption class="sr-only">Tempo, posição, velocidade, aceleração e deslocamento para cada carrinho</caption><thead><tr><th scope="col">Tempo (s)</th><th scope="col">Carrinho</th><th scope="col">Posição x (m)</th><th scope="col">Velocidade v (m/s)</th><th scope="col">Aceleração a (m/s²)</th><th scope="col">Deslocamento Δx (m)</th></tr></thead><tbody id="mru-data-table"></tbody></table></div>
           <p id="mru-table-status" class="mru-muted" aria-live="polite"></p>
-        </section>
+        
+</div>
+</details>
       </div>
 
       <aside class="mru-sidebar" aria-label="Editor do experimento">
@@ -132,19 +152,29 @@
         </div></details>
 </section>
 
-        <section class="mru-card mru-instruments-card" aria-labelledby="mru-instruments-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">INSTRUMENTOS</span><h2 id="mru-instruments-heading">Sensores e referências</h2></div></div>
+        <details class="mru-card mru-instruments-card mru-foldout-card" aria-labelledby="mru-instruments-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">INSTRUMENTOS</span><span id="mru-instruments-heading" class="mru-foldout-title">Sensores e referências</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
           <p class="mru-muted">Fotocélulas registram o cruzamento do ponto de referência do carrinho. Os instrumentos não alteram sua velocidade.</p>
           <div id="mru-instrument-readings" class="mru-instrument-readings" aria-live="off"></div>
           <div class="mru-ruler-tool"><h3>Régua de deslocamento</h3><div class="mru-two-inputs"><label for="mru-ruler-a">Ponto A<input id="mru-ruler-a" type="number" step="0.1" value="0"><small>m</small></label><label for="mru-ruler-b">Ponto B<input id="mru-ruler-b" type="number" step="0.1" value="5"><small>m</small></label></div><output id="mru-ruler-result">Δx = 5,00 m · distância = 5,00 m</output></div>
           <div class="mru-event-log"><h3>Eventos das fotocélulas</h3><ol id="mru-events"><li>Nenhum cruzamento registrado nesta execução.</li></ol></div>
-        </section>
+        
+</div>
+</details>
 
-        <section class="mru-card mru-persistence-card" aria-labelledby="mru-save-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mru-save-heading">Salvar e exportar</h2></div></div>
+        <details class="mru-card mru-persistence-card mru-foldout-card" aria-labelledby="mru-save-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">SEU EXPERIMENTO</span><span id="mru-save-heading" class="mru-foldout-title">Salvar e exportar</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
           <div class="mru-button-grid"><button id="mru-save" class="button button-outline" type="button">Salvar neste dispositivo</button><button id="mru-load" class="button button-outline" type="button">Carregar salvo</button><button id="mru-share" data-advanced-only class="button button-outline" type="button">Copiar link da configuração</button><button id="mru-export-scene" data-advanced-only class="button button-outline" type="button">Baixar pista SVG</button><button id="mru-reset-config" data-advanced-only class="button button-outline" type="button">Restaurar padrão</button><label data-advanced-only class="button button-outline mru-file-label" for="mru-import-file">Abrir configuração JSON<input id="mru-import-file" type="file" accept="application/json,.json"></label></div>
           <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
-        </section>
+        
+</div>
+</details>
 
         <section class="mru-card mru-investigation-card" data-advanced-only id="mru-investigation" aria-labelledby="mru-investigation-heading">
           <div class="mru-card-heading compact"><div><span class="section-kicker">PREVER · OBSERVAR · EXPLICAR</span><h2 id="mru-investigation-heading">Desafio de movimento</h2></div></div>

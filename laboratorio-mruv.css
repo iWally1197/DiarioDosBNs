@@ -276,3 +276,23 @@ body.mruv-has-pending-save::before{content:"";position:fixed;inset:0;z-index:100
 .mruv-pending-save-actions .button{min-height:46px}
 @media(max-width:520px){.mruv-pending-save-actions{display:grid;grid-template-columns:1fr}.mruv-pending-save-actions .button{width:100%}}
 .mruv-stage:fullscreen .mruv-pending-save{z-index:101}
+
+
+/* Painéis de informações recolhíveis, no mesmo padrão dos vetores */
+.mruv-foldout-card{padding:0;overflow:hidden}
+.mruv-foldout-summary{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:0;padding:1rem clamp(1rem,2vw,1.35rem);cursor:pointer;list-style:none}
+.mruv-foldout-summary::-webkit-details-marker{display:none}
+.mruv-foldout-summary::marker{content:""}
+.mruv-foldout-summary:focus-visible{outline:3px solid var(--gold,#f0c66e);outline-offset:-3px;border-radius:16px}
+.mruv-foldout-copy{display:grid;gap:.2rem;min-width:0;flex:1}
+.mruv-foldout-title{display:block;font-size:1.12rem;font-weight:700;line-height:1.3;color:var(--text)}
+.mruv-foldout-chevron{flex:0 0 auto;color:var(--gold-bright,var(--gold,#f0c66e));font-size:1.2rem;line-height:1;transition:transform .18s ease}
+.mruv-foldout-card[open]>.mruv-foldout-summary .mruv-foldout-chevron{transform:rotate(180deg)}
+.mruv-foldout-content{display:grid;gap:.8rem;padding:0 clamp(1rem,2vw,1.35rem) clamp(1rem,2vw,1.35rem)}
+.mruv-foldout-tools{align-items:center;justify-content:space-between;gap:1rem;margin:0 0 .25rem}
+.mruv-foldout-tools p{max-width:650px;margin:0;color:var(--muted);font-size:.85rem;line-height:1.55}
+.mruv-foldout-tools .mruv-button-row{flex:0 0 auto}
+@media(max-width:640px){.mruv-foldout-summary{flex-wrap:wrap}.mruv-foldout-summary>.mruv-time-readout, .mruv-foldout-summary>.mruv-direction-pill{margin-left:auto}.mruv-foldout-tools{align-items:flex-start;flex-direction:column}}
+
+.mruv-card-heading.compact.mruv-foldout-summary{margin:0}
+.mruv-foldout-title{color:var(--text,#f5f7fb)}
