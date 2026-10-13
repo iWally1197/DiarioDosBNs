@@ -4,20 +4,23 @@ import { readFile } from "node:fs/promises";
 import { experiments } from "./laboratorio-catalogo.js";
 import { experimentPageUrl } from "./laboratorio-catalogo-ui.js";
 
-const [catalogHtml, detailHtml, catalogScript, detailScript, physicsScript, mruHtml, mruScript] = await Promise.all([
+const [catalogHtml, detailHtml, catalogScript, detailScript, physicsScript, mruHtml, mruScript, mruvHtml, mruvScript] = await Promise.all([
   readFile(new URL("./laboratorio.html", import.meta.url), "utf8"),
   readFile(new URL("./laboratorio-experimento.html", import.meta.url), "utf8"),
   readFile(new URL("./laboratorio-catalogo-ui.js", import.meta.url), "utf8"),
   readFile(new URL("./laboratorio-workspace.js", import.meta.url), "utf8"),
   readFile(new URL("./laboratorio.js", import.meta.url), "utf8"),
   readFile(new URL("./laboratorio-mru.html", import.meta.url), "utf8"),
-  readFile(new URL("./laboratorio-mru.js", import.meta.url), "utf8")
+  readFile(new URL("./laboratorio-mru.js", import.meta.url), "utf8"),
+  readFile(new URL("./laboratorio-mruv.html", import.meta.url), "utf8"),
+  readFile(new URL("./laboratorio-mruv.js", import.meta.url), "utf8")
 ]);
 
 test("catálogo lista links para páginas individuais e não hospeda animações", () => {
   assert.match(catalogHtml, /laboratorio-catalogo-ui\.js/);
   assert.doesNotMatch(catalogHtml, /workspace-canvas|projectile-canvas|pendulum-canvas/);
   assert.match(catalogScript, /laboratorio-mru\.html/);
+  assert.match(catalogScript, /laboratorio-mruv\.html/);
   assert.match(catalogScript, /laboratorio-experimento\.html\?topico=/);
   assert.match(catalogScript, /<a class="lab-card" href=/);
 });
@@ -29,11 +32,13 @@ test("cada tópico do catálogo possui rota de página individual reconhecida pe
   assert.match(detailScript, /experimentById\.has\(topicId\)/);
   const urls = experiments.map((experiment) => experimentPageUrl(experiment.id));
   assert.equal(new Set(urls).size, experiments.length);
-  const dedicatedRoutes = new Map([["mru", "laboratorio-mru.html"], ["lab-magnetic-field", "laboratorio-magnetismo.html"], ["freefall", "laboratorio-queda-livre.html"], ["faraday-induction", "laboratorio-faraday.html"]]);
+  const dedicatedRoutes = new Map([["mru", "laboratorio-mru.html"], ["muv", "laboratorio-mruv.html"], ["lab-magnetic-field", "laboratorio-magnetismo.html"], ["freefall", "laboratorio-queda-livre.html"], ["faraday-induction", "laboratorio-faraday.html"]]);
   experiments.forEach((experiment, index) => assert.equal(urls[index], dedicatedRoutes.get(experiment.id) || `laboratorio-experimento.html?topico=${encodeURIComponent(experiment.id)}`));
   assert.match(mruHtml, /Movimento retilíneo uniforme/);
   assert.match(mruHtml, /mru-chart-position/);
   assert.match(mruScript, /mruAt/);
+  assert.match(mruvHtml, /Movimento Retilíneo Uniformemente Variado/);
+  assert.match(mruvScript, /mruvAt/);
 });
 
 test("páginas individuais mostram as simulações legadas só quando o tópico corresponde", () => {

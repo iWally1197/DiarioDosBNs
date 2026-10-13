@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { crossingTimes, meetEvents, mruvAt, mruvMetrics, sampleTimes, torricelli, validateExperiment } from "./laboratorio-mruv-core.js";
+const near = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} ≠ ${expected}`);
+
+test("A: partida do repouso", () => { const s=mruvAt({x0:0,v0:0,a:2},4); near(s.x,16); near(s.v,8); });
+test("B: velocidade inicial não nula", () => { const s=mruvAt({x0:0,v0:2,a:1},3); near(s.x,10.5); near(s.v,5); });
+test("C: parada instantânea", () => { const s=mruvAt({x0:0,v0:10,a:-2},5); near(s.x,25); near(s.v,0); });
+test("D: MRUV estrito inverte o sentido após parar", () => { const s=mruvAt({x0:0,v0:10,a:-2},6); near(s.x,24); near(s.v,-2); assert.equal(s.direction,"sentido negativo"); });
+test("E: aceleração zero reproduz MRU", () => { const s=mruvAt({x0:-3,v0:2.5,a:0},4); near(s.x,7); near(s.v,2.5); near(s.a,0); });
+test("velocidade e aceleração negativas são assinadas", () => { const s=mruvAt({x0:4,v0:-2,a:-1},2); near(s.x,-2); near(s.v,-4); assert.equal(s.behavior,"aumentando a rapidez"); });
+test("distância total separa deslocamento quando o carrinho inverte", () => { const s=mruvAt({x0:0,v0:10,a:-2},7); near(s.x,21); near(s.displacement,21); near(s.distance,29); });
+test("modo Frenagem até parar interrompe a aceleração no repouso", () => { const s=mruvAt({x0:0,v0:10,a:-2},7,{brakingMode:true}); near(s.x,25); near(s.v,0); near(s.a,0); });
+test("a fotocélula registra o instante em que o carrinho para exatamente no sensor", () => { assert.deepEqual(crossingTimes({x0:0,v0:10,a:-2},25,8,{brakingMode:true}),[5]); });
+test("Torricelli preserva a relação quadrática sem impor sinal à velocidade", () => { near(torricelli({x0:0,v0:10,a:-2},25).finalVelocitySquared,0); near(torricelli({x0:0,v0:10,a:-2},30).finalVelocitySquared,-20); });
+test("fotocélula detecta passagens antes e depois da inversão", () => { assert.deepEqual(crossingTimes({x0:0,v0:10,a:-2},20,8),[2.7639320225,7.2360679775]); });
+test("encontro pode ter duas soluções temporais", () => { const e=meetEvents([{id:"a",x0:0,v0:10,a:-2},{id:"b",x0:20,v0:0,a:0}],8); assert.equal(e.length,2); near(e[0].time,2.7639320225); near(e[1].time,7.2360679775); });
+test("encontro com frenagem por trechos", () => { const e=meetEvents([{id:"a",x0:0,v0:10,a:-2},{id:"b",x0:25,v0:0,a:0}],8,{brakingMode:true}); assert.ok(e.some(x=>x.type==="meeting"&&Math.abs(x.time-5)<1e-9)); });
+test("métricas e amostras", () => { const m=mruvMetrics({x0:0,v0:10,a:-2},0,7); near(m.averageVelocity,3); near(m.averageSpeed,29/7); assert.deepEqual(sampleTimes(5,2),[0,2,4,5]); });
+test("o estado depende do instante físico, não da ordem nem da frequência das atualizações", () => { const cart={x0:-3,v0:2.5,a:1.25};const times=[0,.25,.5,1,2,3.75,6];const forward=times.map(t=>mruvAt(cart,t));times.slice().reverse().forEach(t=>mruvAt(cart,t));const backward=times.map(t=>mruvAt(cart,t));assert.deepEqual(backward,forward); });
+test("configuração valida de 1 a 5 carrinhos e rejeita valores inválidos", () => { assert.equal(validateExperiment({duration:12,sampleInterval:1,carts:[{id:"a",x0:0,v0:1,a:0}]}).carts.length,1); assert.throws(()=>validateExperiment({duration:3,sampleInterval:1,carts:[{id:"a",x0:0,v0:1,a:0},{id:"a",x0:1,v0:1,a:0}]}),/único/); assert.throws(()=>validateExperiment({duration:3,sampleInterval:1,carts:[{id:"a",x0:0,v0:101,a:0}]}),/velocidade inicial/); });
