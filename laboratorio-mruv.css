@@ -214,3 +214,15 @@
   .mruv-stage:fullscreen>.mruv-fullscreen-drawer{top:62px;right:8px;bottom:8px;width:min(430px,calc(100vw - 16px));padding:10px}
 }
 .mruv-fullscreen-active #mruv-graphs-fullscreen{display:none!important}
+
+.mruv-navigation-surface { touch-action:none; overscroll-behavior:contain; cursor:grab; }
+.mruv-navigation-surface.is-camera-moving { cursor:grabbing; }
+.mruv-pan-hint { flex:1 1 100%; color:var(--muted); font-size:.76rem; }
+.mruv-pending-save { display:grid; gap:.7rem; margin:.8rem 0; padding:.9rem; border:1px solid var(--gold); border-left-width:4px; border-radius:10px; background:var(--surface-2); }
+.mruv-pending-save[hidden] { display:none!important; }
+.mruv-pending-save p { margin:0; color:var(--text); line-height:1.55; font-size:.87rem; }
+.mruv-pending-save>div { display:flex; flex-wrap:wrap; gap:.55rem; }
+.mruv-pending-save .button { min-height:44px; }
+.mruv-camera-controls { align-items:center; }
+.mruv-camera-controls button { min-height:44px; }
+@media(max-width:720px) { .mruv-pending-save>div { display:grid; grid-template-columns:1fr; } .mruv-camera-controls { align-items:stretch; } .mruv-pan-hint { flex-basis:100%; } }

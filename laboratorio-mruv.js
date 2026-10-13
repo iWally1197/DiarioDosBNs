@@ -16,7 +16,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   const names = { "scientific-cart":"Carrinho científico","sport-cart":"Carrinho esportivo","minimal-cart":"Carrinho minimalista","position-sensor":"Sensor de posição","velocity-sensor":"Sensor de velocidade","acceleration-marker":"Marcador de aceleração",photogate:"Fotocélula",stopwatch:"Cronômetro",ruler:"Régua","position-marker":"Marcador de posição","time-marker":"Marcadores temporais","start-line":"Linha de partida","finish-line":"Linha de chegada","distance-sign":"Placa de distância",cone:"Cone de sinalização",tree:"Árvore de referência",post:"Poste de referência",flag:"Bandeira","point-observer":"Ponto de observação","vector-indicator":"Indicador vetorial","data-label":"Etiqueta de dados","track-alternate":"Trilho visual alternativo","stop-marker":"Marcador de parada","turn-marker":"Marcador de inversão","study-region":"Região de estudo" };
   const newCart = (i = 0) => ({ id:uid("cart"),kind:i===1?"sport-cart":"scientific-cart",name:"Carrinho "+String.fromCharCode(65+i),x0:i?5:0,v0:i?-2:2,a:i?-.5:1,color:colorSet[i%colorSet.length],wheelColor:"#202935",size:1,wheelRadius:.03,opacity:1,details:true,vector:true,vectorA:true,vectorD:true,trail:true,chartVisible:true,visible:true,locked:false });
   const newFixtures = () => [{id:uid("sensor"),kind:"position-sensor",name:"Sensor de posição",x:3,color:"#f0c66e",visible:true,locked:false},{id:uid("gate"),kind:"photogate",name:"Fotocélula 1",x:8,color:"#79a8ff",visible:true,locked:false}];
-  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,follow:true,showGrid:true,brakingMode:false,highContrast:false,simpleMode:false,reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
+  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,cameraOffsetY:0,follow:true,showGrid:true,brakingMode:false,highContrast:false,simpleMode:false,reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
   const state = Object.assign(initialConfig(),{time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
   const undoStack=[],redoStack=[];
   let raf=0,lastFrame=0,lastChart=0,dragBefore=null,dragRenderFrame=0,lastVisualFrame=0;
@@ -38,7 +38,14 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   function mruvMetrics(cart,start,end){return metrics(cart,start,end);}
   function crossingTime(cart,pos){return crossing(cart,pos);}
   function meetEvents(carts,duration){return meetings(carts,duration);}
-  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,follow:state.follow,showGrid:state.showGrid,brakingMode:state.brakingMode,highContrast:state.highContrast,simpleMode:state.simpleMode,reduceMotion:state.reduceMotion});}
+  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraOffsetY:state.cameraOffsetY,follow:state.follow,showGrid:state.showGrid,brakingMode:state.brakingMode,highContrast:state.highContrast,simpleMode:state.simpleMode,reduceMotion:state.reduceMotion});}
+  let savedConfigSnapshot=capture();
+  let savedConfigSignature=JSON.stringify(savedConfigSnapshot);
+  function hasPendingConfigChanges(){return JSON.stringify(capture())!==savedConfigSignature;}
+  function updatePendingSave(){const panel=$("mruv-pending-save");if(panel)panel.hidden=!hasPendingConfigChanges();}
+  function markSavedConfig(){savedConfigSnapshot=capture();savedConfigSignature=JSON.stringify(savedConfigSnapshot);updatePendingSave();}
+  function discardPendingConfig(){if(!hasPendingConfigChanges())return;pause();applyConfig(clone(savedConfigSnapshot));status("Alterações descartadas; a última configuração salva foi restaurada.");}
+  window.addEventListener("beforeunload",event=>{if(!hasPendingConfigChanges())return;event.preventDefault();event.returnValue="";});
   function historyPush(snapshot=capture()){undoStack.push(clone(snapshot));if(undoStack.length>30)undoStack.shift();redoStack.length=0;syncHistoryButtons();}
   function syncHistoryButtons(){$("mruv-undo").disabled=!undoStack.length;$("mruv-redo").disabled=!redoStack.length;}
   function status(message,kind="info"){$("mruv-status").textContent=message;$("mruv-status").dataset.kind=kind;}
@@ -48,7 +55,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     state.carts=config.carts.map((car,i)=>({id:String(car.id),kind:["sport-cart","minimal-cart"].includes(car.kind)?car.kind:"scientific-cart",name:String(car.name||("Carrinho "+String.fromCharCode(65+i))).trim().slice(0,42)||"Carrinho",x0:Number(car.x0),v0:Number(car.v0??car.v??0),a:Number(car.a??0),color:validColor(car.color,colorSet[i%colorSet.length]),wheelColor:validColor(car.wheelColor,"#202935"),size:clamp(Number(car.size)||1,.55,1.7),wheelRadius:clamp(Number(car.wheelRadius)||.03,.01,.15),opacity:clamp(Number(car.opacity??1),.2,1),details:car.details!==false,vector:car.vector!==false,vectorA:car.vectorA!==false,vectorD:car.vectorD!==false,trail:car.trail!==false,chartVisible:car.chartVisible!==false,visible:car.visible!==false,locked:car.locked===true}));
     state.fixtures=Array.isArray(config.fixtures)?config.fixtures.slice(0,50).filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
     state.playbackRate=[.25,.5,1,2,4].includes(Number(config.playbackRate))?Number(config.playbackRate):1;state.loop=config.loop!==false;state.brakingMode=config.brakingMode===true;
-    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.follow=config.follow!==false;state.showGrid=config.showGrid!==false;state.highContrast=config.highContrast===true;state.simpleMode=config.simpleMode===true;state.reduceMotion=config.reduceMotion===true;
+    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-180,180);state.showGrid=config.showGrid!==false;state.highContrast=config.highContrast===true;state.simpleMode=config.simpleMode===true;state.reduceMotion=config.reduceMotion===true;
     if(!state.carts.some((car)=>car.id===state.selectedId))state.selectedId=state.carts[0]?.id||null;
     state.selectedIds=state.selectedIds.filter((id)=>entity(id));if(state.selectedId&&!state.selectedIds.includes(state.selectedId))state.selectedIds=[state.selectedId];
     if(resetTime)state.time=0;state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;
@@ -98,6 +105,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     return '<g class="mruv-fixture-group" data-entity-id="'+esc(item.id)+'">'+art+hit+'</g>';
   }
   function drawScene(){
+    $("mruv-camera-world").setAttribute("transform","translate(0 "+state.cameraOffsetY.toFixed(2)+")");
     const min=cameraMin(),max=min+state.viewSpan,xOf=(x)=>100+(x-min)/state.viewSpan*900,grid=[],ticks=niceStep(state.viewSpan/10);
     let value=Math.ceil(min/ticks)*ticks;
     for(let i=0;i<70&&value<=max+1e-8;i++,value+=ticks){
@@ -171,59 +179,62 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
     html+='<label class="mruv-inline-check full"><input class="mruv-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mruv-inline-check full"><input class="mruv-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    const actionMarkup='<div class="mruv-edit-actions" id="mruv-edit-actions" hidden><p>As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.</p><div class="mruv-edit-buttons"><button id="mruv-prop-apply" class="button" type="button" disabled>Aplicar alterações</button><button id="mruv-prop-discard" class="button button-outline" type="button">Descartar</button></div><span id="mruv-edit-feedback" class="mruv-edit-feedback" role="status" aria-live="polite"></span></div>';
+    const actionMarkup='<div class="mruv-edit-actions" id="mruv-edit-actions" hidden><p>Pré-visualização aplicada em tempo real. As alterações aparecem na pista, nas leituras e nos gráficos.</p><button id="mruv-prop-discard" class="button button-outline" type="button">Descartar edição deste objeto</button><span id="mruv-edit-feedback" class="mruv-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mruv-properties").innerHTML=html+actionMarkup;
-    const editingId=item.id, fields=[...$("mruv-properties").querySelectorAll(".mruv-prop")], actionBox=$("mruv-edit-actions"), applyButton=$("mruv-prop-apply"), feedback=$("mruv-edit-feedback");
-    const original=clone(item);let draft=clone(item),invalid=false,dirty=false;
-    function normalize(key,value,field){
-      if(typeof value==="number"){
-        if(field.type==="range")value=clamp(value,Number(field.min),Number(field.max));
-        else if(key==="x"||key==="x0")value=clamp(value,-1000000,1000000);
-        else if(key==="v"||key==="v0")value=clamp(value,-100,100);
-        else if(key==="a")value=clamp(value,-20,20);
-        else if(key==="size")value=clamp(value,.55,1.7);
-        else if(key==="opacity")value=clamp(value,.2,1);
-        else if(key==="wheelRadius")value=clamp(value,.01,.15);
-        else if(key==="interval")value=clamp(value,.1,60);
-      }
-      if(key==="name")return String(value).trim().slice(0,42);
-      if(key==="color")return validColor(value,"#4f88df");
-      if(key==="wheelColor")return validColor(value,"#202935");
-      if(key==="kind"&&isCart(item))return ["sport-cart","minimal-cart"].includes(value)?value:"scientific-cart";
-      return value;
-    }
+    const editingId=item.id, fields=[...$("mruv-properties").querySelectorAll(".mruv-prop")], actionBox=$("mruv-edit-actions"), feedback=$("mruv-edit-feedback");
+    const original=clone(item),editBefore=capture();let draft=clone(item),editHistoryPushed=false,wasDirty=false,lastFeedback="";
     function updateDraft(field){
-      const key=field.dataset.prop;if(!key)return;
+      const key=field.dataset.prop;if(!key)return false;
       let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
-      if((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(value))){invalid=true;dirty=true;return;}
+      if((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(value)))return false;
       value=normalize(key,value,field);
-      if(key==="name"&&!value){invalid=true;dirty=true;return;}
+      if(key==="name"&&!value)return false;
       draft[key]=value;
-      if(["x0","v0","a"].includes(key)){
+      if(["x0","v0","v","a"].includes(key)){
         for(const peer of fields.filter(node=>node!==field&&node.dataset.prop===key)){
           if(peer.type==="range")peer.value=String(clamp(value,Number(peer.min),Number(peer.max)));
           else peer.value=String(value);
         }
       }
+      return true;
     }
-    function refreshActions(){
-      invalid=fields.some(field=>((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))||(field.dataset.prop==="name"&&!String(field.value).trim()));
-      const changed=Object.keys(draft).some(key=>draft[key]!==original[key]);
-      dirty=dirty||changed;
-      actionBox.hidden=!dirty;
-      applyButton.disabled=invalid||!changed;
-      feedback.textContent=invalid?"Preencha os campos obrigatórios com valores válidos.":changed?"Confira os valores e clique em “Aplicar alterações” para confirmar.":"Nenhuma alteração pendente.";
+    function changedDraft(){return Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(original[key]));}
+    function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
+    function preview(){
+      const target=entity(editingId);if(!target)return;
+      const changed=changedDraft(),physicalChanged=["x0","v0","a"].some(key=>target[key]!==draft[key]);
+      if(changed){
+        if(!editHistoryPushed){historyPush(editBefore);editHistoryPushed=true;}
+        Object.assign(target,clone(draft));
+        if(physicalChanged)state.time=0;
+        changedParameter();
+        actionBox.hidden=false;
+        if(!wasDirty){showFeedback(physicalChanged?"Condição inicial atualizada; o relógio voltou a t = 0 para manter o movimento consistente.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
+        renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+      }else{
+        const targetChanged=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));
+        if(targetChanged){
+          const physicalRestore=["x0","v0","a"].some(key=>target[key]!==original[key]);
+          Object.assign(target,clone(original));if(physicalRestore)state.time=0;changedParameter();
+          renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+        }
+        actionBox.hidden=true;wasDirty=false;showFeedback("Nenhuma alteração pendente neste objeto.");
+      }
     }
     fields.forEach(field=>{
-      const handle=()=>{dirty=true;actionBox.querySelector("p").textContent="As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.";actionBox.querySelector(".mruv-edit-buttons").hidden=false;updateDraft(field);refreshActions();};
+      const handle=()=>{
+        const valid=updateDraft(field);
+        const invalid=fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
+        if(!valid||invalid){actionBox.hidden=false;showFeedback("Pré-visualização pausada até que os campos obrigatórios tenham valores válidos.");return;}
+        preview();
+      };
       field.addEventListener("input",handle);field.addEventListener("change",handle);
     });
-    applyButton.addEventListener("click",()=>{
-      refreshActions();if(applyButton.disabled){feedback.textContent="Corrija os campos destacados antes de aplicar.";const bad=fields.find(field=>(field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value)))||(field.dataset.prop==="name"&&!String(field.value).trim()));bad?.focus();return;}
-      const target=entity(editingId);if(!target){status("O objeto selecionado não está mais disponível.","error");renderProperties();return;}
-      const before=capture();Object.assign(target,clone(draft));historyPush(before);changedParameter();renderAll();status("Alteração aplicada ao objeto. A pista e os gráficos foram atualizados sem recarregar a página.");const notice=$("mruv-edit-actions");notice.hidden=false;notice.querySelector("p").textContent="Alteração aplicada com sucesso.";notice.querySelector(".mruv-edit-buttons").hidden=true;$("mruv-edit-feedback").textContent="Simulação, leituras e gráficos atualizados sem recarregar o site.";
+    $("mruv-prop-discard").addEventListener("click",()=>{
+      draft=clone(original);
+      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v0","a"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));if(physicalChanged)state.time=0;changedParameter();renderAll();}}
+      status("Edição do objeto descartada.");renderProperties();
     });
-    $("mruv-prop-discard").addEventListener("click",()=>{renderProperties();status("Alterações descartadas.");});
   }
   function renderDataTable(){
     const times=sampleTimes(state.duration,state.sampleInterval,80),rows=[];
@@ -287,7 +298,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   }
   function clearMeasurementRun(){state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;}
   function changedParameter(){
-    if(state.running)pause("Parâmetro alterado. Simulação pausada; volte ao início para usar a nova condição.");
+    if(state.running)pause("Parâmetro alterado. Simulação pausada e recalculada.");
     clearMeasurementRun();if($("mruv-preset").value!=="custom")$("mruv-preset").value="custom";
   }
   function logCrossings(from,to){
@@ -386,7 +397,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   }
   function setupFullscreenDock(){
     const stage=$("mruv-stage"),tools=$("mruv-fullscreen-tools"),drawer=$("mruv-fullscreen-drawer"),content=drawer.querySelector(".mruv-fullscreen-drawer-content");
-    const selectors=[".mruv-mode-bar",".mruv-playback-card",".mruv-results-card","#mruv-math-card","#mruv-graphs-card",".mruv-table-card",".mruv-sidebar",".mruv-investigation-card"];
+    const selectors=[".mruv-mode-bar",".mruv-camera-controls",".mruv-playback-card",".mruv-results-card","#mruv-math-card","#mruv-graphs-card",".mruv-table-card",".mruv-sidebar",".mruv-investigation-card"];
     const relocated=[];
     function movePanelsIntoDock(){
       for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
@@ -422,8 +433,102 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   function renderAll(){
     renderInputs();renderMode();renderObjects();renderProperties();drawScene();renderReadouts();renderInstruments();renderDataTable();drawCharts();renderSavedExperiments();syncHistoryButtons();
     $("mruv-timeline").max=state.duration;$("mruv-timeline").step=Math.min(.05,state.duration/100);document.body.classList.toggle("mruv-reduced-motion",state.reduceMotion);document.body.classList.toggle("mruv-high-contrast",state.highContrast);document.body.classList.toggle("mruv-simple-mode",state.simpleMode);
+    updatePendingSave();
   }
   function pointerWorld(event){const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const pos=point.matrixTransform(svg.getScreenCTM().inverse());return cameraMin()+(pos.x-100)/900*state.viewSpan;}
+  function installCameraNavigation(){
+    const pointers=new Map();let gesture=null,renderFrame=0,lastTap={time:0,x:0,y:0};
+    const pointAt=(event)=>{const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;return point.matrixTransform(svg.getScreenCTM().inverse());};
+    const intercept=(event)=>{event.preventDefault();event.stopImmediatePropagation();};
+    const scheduleRender=()=>{if(renderFrame)return;renderFrame=requestAnimationFrame(()=>{renderFrame=0;drawScene();updatePendingSave();});};
+    const resetCamera=()=>{state.viewSpan=24;state.cameraCenter=0;state.follow=true;state.cameraOffsetY=0;drawScene();updatePendingSave();};
+    const centerCamera=()=>{const car=currentCart();state.follow=false;if(car)state.cameraCenter=at(car,state.time).x;state.cameraOffsetY=0;drawScene();updatePendingSave();};
+    const fitExperiment=()=>{
+      const xs=state.carts.filter(item=>item.visible!==false).map(car=>at(car,state.time).x).concat(state.fixtures.filter(item=>item.visible!==false).map(item=>item.x));
+      if(!xs.length){resetCamera();return;}
+      const min=Math.min(...xs),max=Math.max(...xs),margin=Math.max(2,(max-min)*.15);
+      state.viewSpan=clamp(max-min+margin*2,8,80);state.cameraCenter=(min+max)/2;state.follow=false;state.cameraOffsetY=0;drawScene();updatePendingSave();
+    };
+    const zoomAt=(point,factor)=>{
+      const ratio=clamp((point.x-100)/900,0,1),world=cameraMin()+ratio*state.viewSpan;
+      state.viewSpan=clamp(state.viewSpan*factor,8,80);state.follow=false;
+      state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();
+    };
+    const centerPoint=()=>({x:550,y:250});
+    $("mruv-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.2));
+    $("mruv-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.2));
+    $("mruv-zoom-reset").addEventListener("click",()=>{state.viewSpan=24;drawScene();updatePendingSave();});
+    $("mruv-center-camera").addEventListener("click",centerCamera);
+    $("mruv-fit-camera").addEventListener("click",fitExperiment);
+    svg.addEventListener("pointerdown",event=>{
+      const target=event.target instanceof Element?event.target:null;
+      const onObject=Boolean(target?.closest("[data-entity-id]"));
+      const touch=event.pointerType==="touch";
+      const point=pointAt(event);
+      if(touch&&!onObject){
+        const now=performance.now();
+        if(now-lastTap.time<330&&Math.hypot(point.x-lastTap.x,point.y-lastTap.y)<28){
+          lastTap={time:0,x:0,y:0};resetCamera();intercept(event);return;
+        }
+        lastTap={time:now,x:point.x,y:point.y};
+      }
+      if(touch||(!onObject&&event.pointerType==="mouse"))pointers.set(event.pointerId,{point,pointerType:event.pointerType});
+      const touchPointers=[...pointers.entries()].filter(([,value])=>value.pointerType==="touch");
+      if(touch&&touchPointers.length>=2){
+        if(state.drag)stopDrag({pointerId:state.drag.pointer});
+        const pair=touchPointers.slice(-2),a=pair[0][1].point,b=pair[1][1].point,mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+        const ratio=clamp((mid.x-100)/900,0,1);
+        gesture={type:"pinch",ids:pair.map(([id])=>id),distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),span:state.viewSpan,anchorWorld:cameraMin()+ratio*state.viewSpan,ratio,centerY:mid.y,offsetY:state.cameraOffsetY};
+        state.follow=false;
+        for(const [id] of pair){try{svg.setPointerCapture(id);}catch{}}
+        svg.classList.add("is-camera-moving");intercept(event);return;
+      }
+      if(!onObject&&!gesture&&(touch||event.pointerType==="mouse")){
+        gesture={type:"pan",id:event.pointerId,last:point};
+        try{svg.setPointerCapture(event.pointerId);}catch{}
+        svg.classList.add("is-camera-moving");intercept(event);
+      }
+    },true);
+    svg.addEventListener("pointermove",event=>{
+      if(pointers.has(event.pointerId))pointers.get(event.pointerId).point=pointAt(event);
+      if(gesture?.type==="pan"&&gesture.id===event.pointerId){
+        const point=pointAt(event),dx=point.x-gesture.last.x,dy=point.y-gesture.last.y;gesture.last=point;
+        state.follow=false;state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-180,180);scheduleRender();intercept(event);return;
+      }
+      if(gesture?.type==="pinch"&&gesture.ids.includes(event.pointerId)){
+        const a=pointers.get(gesture.ids[0])?.point,b=pointers.get(gesture.ids[1])?.point;
+        if(!a||!b)return;
+        const distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),midY=(a.y+b.y)/2;
+        state.viewSpan=clamp(gesture.span*gesture.distance/distance,8,80);
+        state.cameraCenter=gesture.anchorWorld-(gesture.ratio-.5)*state.viewSpan;
+        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-180,180);state.follow=false;scheduleRender();intercept(event);
+      }
+    },true);
+    const endPointer=event=>{
+      if(!pointers.has(event.pointerId))return;
+      const activeGesture=gesture;if(!activeGesture){pointers.delete(event.pointerId);return;}intercept(event);pointers.delete(event.pointerId);
+      if(activeGesture?.type==="pinch"){
+        const remaining=[...pointers.entries()].filter(([,value])=>value.pointerType==="touch");
+        if(remaining.length){const [id,value]=remaining[0];gesture={type:"pan",id,last:value.point};}
+        else gesture=null;
+      }else if(activeGesture?.type==="pan"&&activeGesture.id===event.pointerId)gesture=null;
+      if(!gesture)svg.classList.remove("is-camera-moving");
+      scheduleRender();
+    };
+    svg.addEventListener("pointerup",endPointer,true);svg.addEventListener("pointercancel",endPointer,true);
+    svg.addEventListener("dblclick",event=>{const target=event.target instanceof Element?event.target:null;if(!target?.closest("[data-entity-id]")){event.preventDefault();resetCamera();}},true);
+    svg.addEventListener("wheel",event=>{
+      const point=pointAt(event),rect=svg.getBoundingClientRect(),factor=event.deltaMode===1?16:event.deltaMode===2?rect.height:1;
+      if(event.ctrlKey||event.metaKey){zoomAt(point,Math.exp(event.deltaY*factor*.0012));}
+      else{
+        state.follow=false;
+        state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
+        state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-180,180);
+        drawScene();updatePendingSave();
+      }
+      event.preventDefault();
+    },{passive:false});
+  }
   function download(name,content,type){
     const url=URL.createObjectURL(new Blob([content],{type})),link=document.createElement("a");link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -453,11 +558,11 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     try{const list=savedExperiments(),select=$("mruv-saved-experiments"),id=select.value;let item=list.find(entry=>entry.id===id);
       if(!item){const name=prompt("Nome para este experimento:","Meu experimento MRUV");if(name===null)return;const clean=String(name).trim().slice(0,48);if(!clean){$("mruv-save-status").textContent="Digite um nome para salvar o experimento.";return;}if(list.length>=50){$("mruv-save-status").textContent="O limite local é de 50 experimentos. Apague um salvo antes de criar outro.";return;}item={id:uid("experiment"),name:clean,config:capture(),updatedAt:new Date().toISOString()};list.push(item);}
       else{item.config=capture();item.updatedAt=new Date().toISOString();}
-      localStorage.setItem(experimentStorageKey,JSON.stringify(list));renderSavedExperiments();select.value=item.id;renderSavedExperiments();$("mruv-save-status").textContent="“"+item.name+"” salvo neste dispositivo.";
+      localStorage.setItem(experimentStorageKey,JSON.stringify(list));renderSavedExperiments();select.value=item.id;renderSavedExperiments();markSavedConfig();$("mruv-save-status").textContent="“"+item.name+"” salvo neste dispositivo.";
     }catch{$("mruv-save-status").textContent="Não foi possível salvar. Baixe a configuração JSON.";}
   }
   function loadLocal(){
-    try{const item=savedExperiments().find(entry=>entry.id===$("mruv-saved-experiments").value);if(!item){$("mruv-save-status").textContent="Selecione um experimento salvo para carregar.";return;}historyPush(capture());importConfig(item.config);$("mruv-save-status").textContent="“"+item.name+"” carregado.";}
+    try{const item=savedExperiments().find(entry=>entry.id===$("mruv-saved-experiments").value);if(!item){$("mruv-save-status").textContent="Selecione um experimento salvo para carregar.";return;}historyPush(capture());importConfig(item.config);markSavedConfig();$("mruv-save-status").textContent="“"+item.name+"” carregado.";}
     catch(error){$("mruv-save-status").textContent="O experimento salvo não passou pela validação: "+error.message;}
   }
   function duplicateSaved(){
@@ -534,7 +639,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     if(!state.drag||state.drag.pointer!==event.pointerId)return;
     if(dragRenderFrame){cancelAnimationFrame(dragRenderFrame);dragRenderFrame=0;}
     if(state.drag.moved){historyPush(dragBefore);changedParameter();renderObjects();renderProperties();refreshFrame(true);renderDataTable();drawCharts();}
-    state.drag=null;dragBefore=null;
+    state.drag=null;dragBefore=null;updatePendingSave();
   }
 
   $("mruv-object-list").addEventListener("click",event=>{const button=event.target.closest("[data-select-id]");if(button)select(button.dataset.selectId,event.shiftKey);});
@@ -550,25 +655,25 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   $("mruv-timeline").addEventListener("input",event=>setTime(Number(event.target.value)));
   $("mruv-duration").addEventListener("change",event=>setDuration(Number(event.target.value)));
   $("mruv-sample-interval").addEventListener("change",event=>setSampleInterval(Number(event.target.value)));
-  $("mruv-playback-rate").addEventListener("change",event=>{state.playbackRate=Number(event.target.value);});
+  $("mruv-playback-rate").addEventListener("change",event=>{state.playbackRate=Number(event.target.value);updatePendingSave();});
   $("mruv-load-preset").addEventListener("click",()=>loadPreset());
   $("mruv-braking-mode").addEventListener("change",event=>{const before=capture();state.brakingMode=event.target.checked;historyPush(before);changedParameter();renderAll();status(state.brakingMode?"Frenagem por trechos ativada: a aceleração para quando v = 0.":"MRUV estrito ativado: a aceleração continua após a inversão.");});
   $("mruv-step-size").addEventListener("change",event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<=0||n>10){event.target.value=".5";status("O passo temporal deve ficar entre 0,01 e 10 s.","error");}});
-  $("mruv-loop").addEventListener("change",event=>{state.loop=event.target.checked;});
-  $("mruv-view-span").addEventListener("input",event=>{state.viewSpan=clamp(Number(event.target.value),8,80);$("mruv-view-span-value").textContent=fmt(state.viewSpan,0)+" m";drawScene();});
-  $("mruv-pan-left").addEventListener("click",()=>{state.follow=false;state.cameraCenter-=state.viewSpan*.2;drawScene();});
-  $("mruv-pan-right").addEventListener("click",()=>{state.follow=false;state.cameraCenter+=state.viewSpan*.2;drawScene();});
-  $("mruv-follow-toggle").addEventListener("click",()=>{state.follow=!state.follow;if(!state.follow&&currentCart())state.cameraCenter=mruvAt(currentCart(),state.time).x;drawScene();});
-  $("mruv-recenter").addEventListener("click",()=>{state.follow=true;drawScene();});
-  $("mruv-show-grid").addEventListener("change",event=>{state.showGrid=event.target.checked;drawScene();});
-  $("mruv-reduce-motion").addEventListener("change",event=>{state.reduceMotion=event.target.checked;document.body.classList.toggle("mruv-reduced-motion",state.reduceMotion);drawScene();});
-  $("mruv-high-contrast").addEventListener("change",event=>{state.highContrast=event.target.checked;document.body.classList.toggle("mruv-high-contrast",state.highContrast);});
-  $("mruv-simple-mode").addEventListener("change",event=>{state.simpleMode=event.target.checked;document.body.classList.toggle("mruv-simple-mode",state.simpleMode);});
+  $("mruv-loop").addEventListener("change",event=>{state.loop=event.target.checked;updatePendingSave();});
+  $("mruv-view-span").addEventListener("input",event=>{state.viewSpan=clamp(Number(event.target.value),8,80);$("mruv-view-span-value").textContent=fmt(state.viewSpan,0)+" m";drawScene();updatePendingSave();});
+  $("mruv-pan-left").addEventListener("click",()=>{state.follow=false;state.cameraCenter-=state.viewSpan*.2;drawScene();updatePendingSave();});
+  $("mruv-pan-right").addEventListener("click",()=>{state.follow=false;state.cameraCenter+=state.viewSpan*.2;drawScene();updatePendingSave();});
+  $("mruv-follow-toggle").addEventListener("click",()=>{state.follow=!state.follow;if(!state.follow&&currentCart())state.cameraCenter=mruvAt(currentCart(),state.time).x;state.cameraOffsetY=0;drawScene();updatePendingSave();});
+  $("mruv-recenter").addEventListener("click",()=>{state.follow=true;state.cameraOffsetY=0;drawScene();updatePendingSave();});
+  $("mruv-show-grid").addEventListener("change",event=>{state.showGrid=event.target.checked;drawScene();updatePendingSave();});
+  $("mruv-reduce-motion").addEventListener("change",event=>{state.reduceMotion=event.target.checked;document.body.classList.toggle("mruv-reduced-motion",state.reduceMotion);drawScene();updatePendingSave();});
+  $("mruv-high-contrast").addEventListener("change",event=>{state.highContrast=event.target.checked;document.body.classList.toggle("mruv-high-contrast",state.highContrast);updatePendingSave();});
+  $("mruv-simple-mode").addEventListener("change",event=>{state.simpleMode=event.target.checked;document.body.classList.toggle("mruv-simple-mode",state.simpleMode);updatePendingSave();});
   $("mruv-text-size").addEventListener("input",event=>{const size=Number(event.target.value);document.documentElement.style.fontSize=size+"%";$("mruv-text-size-value").textContent=size+"%";});
   $("mruv-graph-zoom").addEventListener("change",event=>{graphZoom=Number(event.target.value)||1;drawCharts();});
   $("mruv-ruler-a").addEventListener("input",renderInstruments);$("mruv-ruler-b").addEventListener("input",renderInstruments);
   $("mruv-saved-experiments").addEventListener("change",renderSavedExperiments);$("mruv-duplicate-saved").addEventListener("click",duplicateSaved);$("mruv-rename-saved").addEventListener("click",renameSaved);$("mruv-delete-saved").addEventListener("click",deleteSaved);
-  $("mruv-save").addEventListener("click",saveLocal);$("mruv-load").addEventListener("click",loadLocal);$("mruv-share").addEventListener("click",shareConfig);
+  $("mruv-save").addEventListener("click",saveLocal);$("mruv-save-pending").addEventListener("click",saveLocal);$("mruv-discard-pending").addEventListener("click",discardPendingConfig);$("mruv-load").addEventListener("click",loadLocal);$("mruv-share").addEventListener("click",shareConfig);
   $("mruv-export-csv").addEventListener("click",exportCsv);$("mruv-export-json").addEventListener("click",exportJson);$("mruv-export-scene").addEventListener("click",exportScene);$("mruv-export-graphs").addEventListener("click",exportCharts);
   $("mruv-import-file").addEventListener("change",async event=>{
     const file=event.target.files?.[0];if(!file)return;
@@ -583,10 +688,15 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   $("mruv-teacher-reveal").addEventListener("click",()=>{state.teacherReveal=!state.teacherReveal;renderMode();});
   document.querySelectorAll("[data-mruv-mode]").forEach(button=>button.addEventListener("click",()=>{state.mode=button.dataset.mruvMode;state.teacherReveal=false;renderMode();}));
   svg.addEventListener("pointerdown",startDrag);svg.addEventListener("pointermove",moveDrag);svg.addEventListener("pointerup",stopDrag);svg.addEventListener("pointercancel",stopDrag);
+  installCameraNavigation();
   svg.addEventListener("keydown",event=>{
+    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();state.follow=false;const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-180,180);drawScene();updatePendingSave();return;}
+    if(event.key==="+"||event.key==="="){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan/1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
+    if(event.key==="-"){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan*1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
+    if(event.key==="0"){event.preventDefault();state.viewSpan=24;state.cameraCenter=0;state.cameraOffsetY=0;state.follow=true;drawScene();updatePendingSave();return;}
     if(event.code==="Space"){event.preventDefault();state.running?pause():play();return;}
     if(!["ArrowLeft","ArrowRight"].includes(event.key))return;const item=entity();if(!item||item.locked)return;
-    event.preventDefault();const before=capture(),delta=(event.key==="ArrowRight"?1:-1)*(event.shiftKey?1:.1);if(isCart(item))item.x0+=delta;else item.x+=delta;
+    event.preventDefault();const before=capture(),delta=(event.key==="ArrowRight"?1:-1)*(event.shiftKey?1:.1);if(isCart(item)){item.x0+=delta;state.time=0;}else item.x+=delta;
     historyPush(before);changedParameter();renderAll();
   });
   document.addEventListener("keydown",event=>{
@@ -594,7 +704,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     event.preventDefault();state.running?pause("Simulação pausada pelo teclado."):play();
   });
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.running)lastFrame=0;});
-  $("mruv-chart-grid").addEventListener("click",event=>{const button=event.target.closest("[data-chart-cart]");if(!button)return;const car=state.carts.find(item=>item.id===button.dataset.chartCart);if(!car)return;const before=capture();car.chartVisible=car.chartVisible===false;historyPush(before);renderProperties();drawCharts();});
+  $("mruv-chart-grid").addEventListener("click",event=>{const button=event.target.closest("[data-chart-cart]");if(!button)return;const car=state.carts.find(item=>item.id===button.dataset.chartCart);if(!car)return;const before=capture();car.chartVisible=car.chartVisible===false;historyPush(before);renderProperties();drawCharts();updatePendingSave();});
   $("mruv-fullscreen").addEventListener("click",async()=>{
     try{if(document.fullscreenElement)await document.exitFullscreen();else await $("mruv-stage").requestFullscreen();}
     catch{status("Tela cheia indisponível neste navegador.","error");}

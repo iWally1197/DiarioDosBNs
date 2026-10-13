@@ -9,10 +9,10 @@
   <title>Laboratório de MRU — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-controls-20261013-3">
+  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-camera-save-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mru.js?v=motion-controls-20261013-3"></script>
+  <script type="module" src="laboratorio-mru.js?v=motion-camera-save-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -49,7 +49,7 @@
             <div class="mru-scene-actions"><button id="mru-follow-toggle" class="button button-outline" type="button" aria-pressed="true">Câmera: acompanhar</button><button id="mru-fullscreen" class="button button-outline" type="button">Tela cheia</button></div>
           </div>
           <div class="mru-stage" id="mru-stage">
-            <svg id="mru-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mru-svg-title mru-svg-desc" aria-describedby="mru-scene-summary mru-readouts" tabindex="0">
+            <svg id="mru-scene" class="mru-navigation-surface" viewBox="0 0 1100 500" role="img" aria-labelledby="mru-svg-title mru-svg-desc" aria-describedby="mru-scene-summary mru-readouts" tabindex="0">
               <title id="mru-svg-title">Pista de MRU com carrinhos</title><desc id="mru-svg-desc">Pista horizontal com escala em metros, origem, sentido positivo e carrinhos de laboratório.</desc>
               <defs>
                 <linearGradient id="mru-track-shade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#25364c"/><stop offset="1" stop-color="#101a2b"/></linearGradient>
@@ -59,7 +59,7 @@
                 <marker id="mru-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker>
               </defs>
               <rect class="mru-scene-bg" width="1100" height="500" rx="16"/>
-              <g id="mru-scene-grid"></g><g id="mru-scene-track"></g><g id="mru-scene-markers"></g><g id="mru-scene-objects"></g><g id="mru-scene-carts"></g><g id="mru-scene-overlay"></g>
+              <g id="mru-camera-world"><g id="mru-scene-grid"></g><g id="mru-scene-track"></g><g id="mru-scene-markers"></g><g id="mru-scene-objects"></g><g id="mru-scene-carts"></g><g id="mru-scene-overlay"></g></g>
             </svg>
             <div id="mru-live-description" class="sr-only" aria-live="polite"></div>
             <div class="mru-fullscreen-tools" id="mru-fullscreen-tools" hidden>
@@ -72,8 +72,8 @@
               <div class="mru-fullscreen-drawer-content"></div>
             </aside>
           </div>
-          <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="off"></span></div>
-          <div class="mru-camera-controls" role="group" aria-label="Ajustar enquadramento"><label for="mru-view-span">Escala visível <output id="mru-view-span-value">24 m</output></label><input id="mru-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mru-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mru-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mru-recenter" class="button button-outline" type="button">Recentrar pista</button><label class="mru-check"><input id="mru-show-grid" type="checkbox" checked> Grade</label><label class="mru-check"><input id="mru-reduce-motion" type="checkbox"> Menos movimento</label><label class="mru-check"><input id="mru-high-contrast" type="checkbox"> Alto contraste</label><label for="mru-text-size">Texto <input id="mru-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mru-text-size-value">100%</output></label></div>
+          <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="off"></span><span class="mru-pan-hint">Arraste um espaço vazio para mover; use pinça ou Ctrl + roda para zoom.</span></div>
+<div class="mru-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label for="mru-view-span">Escala visível <output id="mru-view-span-value">24 m</output></label><input id="mru-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mru-zoom-in" class="button button-outline" type="button">+ Aproximar</button><button id="mru-zoom-out" class="button button-outline" type="button">− Afastar</button><button id="mru-zoom-reset" class="button button-outline" type="button">Restaurar zoom</button><button id="mru-center-camera" class="button button-outline" type="button">Centralizar</button><button id="mru-fit-camera" class="button button-outline" type="button">Enquadrar experimento</button><button id="mru-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mru-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mru-recenter" class="button button-outline" type="button">Acompanhar carrinho</button><label class="mru-check"><input id="mru-show-grid" type="checkbox" checked> Grade</label><label class="mru-check"><input id="mru-reduce-motion" type="checkbox"> Menos movimento</label><label class="mru-check"><input id="mru-high-contrast" type="checkbox"> Alto contraste</label><label for="mru-text-size">Texto <input id="mru-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mru-text-size-value">100%</output></label></div>
         </section>
 
         <section class="mru-card mru-playback-card" aria-labelledby="mru-playback-heading">
@@ -134,7 +134,8 @@
         <section class="mru-card mru-persistence-card" aria-labelledby="mru-save-heading">
           <div class="mru-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mru-save-heading">Salvar e exportar</h2></div></div>
           <div class="mru-button-grid"><button id="mru-save" class="button button-outline" type="button">Salvar neste dispositivo</button><button id="mru-load" class="button button-outline" type="button">Carregar salvo</button><button id="mru-share" class="button button-outline" type="button">Copiar link da configuração</button><button id="mru-export-scene" class="button button-outline" type="button">Baixar pista SVG</button><button id="mru-reset-config" class="button button-outline" type="button">Restaurar padrão</button><label class="button button-outline mru-file-label" for="mru-import-file">Abrir configuração JSON<input id="mru-import-file" type="file" accept="application/json,.json"></label></div>
-          <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
+          <div id="mru-pending-save" class="mru-pending-save" hidden aria-live="off"><p><strong>Pré-visualização ativa.</strong> As mudanças já aparecem no laboratório. Salve para restaurá-las depois ou descarte para voltar à última configuração salva.</p><div><button id="mru-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mru-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div></div>
+           <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
         </section>
 
         <section class="mru-card mru-investigation-card" id="mru-investigation" aria-labelledby="mru-investigation-heading">

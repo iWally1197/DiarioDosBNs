@@ -199,3 +199,15 @@
   .mru-stage:fullscreen>.mru-fullscreen-tools .button{min-height:38px;padding:.48rem .58rem;font-size:.77rem}
   .mru-stage:fullscreen>.mru-fullscreen-drawer{top:62px;right:8px;bottom:8px;width:min(430px,calc(100vw - 16px));padding:10px}
 }
+
+.mru-navigation-surface { touch-action:none; overscroll-behavior:contain; cursor:grab; }
+.mru-navigation-surface.is-camera-moving { cursor:grabbing; }
+.mru-pan-hint { flex:1 1 100%; color:var(--muted); font-size:.76rem; }
+.mru-pending-save { display:grid; gap:.7rem; margin:.8rem 0; padding:.9rem; border:1px solid var(--gold); border-left-width:4px; border-radius:10px; background:var(--surface-2); }
+.mru-pending-save[hidden] { display:none!important; }
+.mru-pending-save p { margin:0; color:var(--text); line-height:1.55; font-size:.87rem; }
+.mru-pending-save>div { display:flex; flex-wrap:wrap; gap:.55rem; }
+.mru-pending-save .button { min-height:44px; }
+.mru-camera-controls { align-items:center; }
+.mru-camera-controls button { min-height:44px; }
+@media(max-width:720px) { .mru-pending-save>div { display:grid; grid-template-columns:1fr; } .mru-camera-controls { align-items:stretch; } .mru-pan-hint { flex-basis:100%; } }

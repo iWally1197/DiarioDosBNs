@@ -9,10 +9,10 @@
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-controls-20261013-3">
+  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-camera-save-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mruv.js?v=motion-controls-20261013-3"></script>
+  <script type="module" src="laboratorio-mruv.js?v=motion-camera-save-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -49,7 +49,7 @@
             <div class="mruv-scene-actions"><button id="mruv-follow-toggle" class="button button-outline" type="button" aria-pressed="true">Câmera: acompanhar</button><button id="mruv-fullscreen" class="button button-outline" type="button">Tela cheia</button></div>
           </div>
           <div class="mruv-stage" id="mruv-stage">
-            <svg id="mruv-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mruv-svg-title mruv-svg-desc" aria-describedby="mruv-scene-summary mruv-readouts" tabindex="0">
+            <svg id="mruv-scene" class="mruv-navigation-surface" viewBox="0 0 1100 500" role="img" aria-labelledby="mruv-svg-title mruv-svg-desc" aria-describedby="mruv-scene-summary mruv-readouts" tabindex="0">
               <title id="mruv-svg-title">Pista de MRUV com carrinhos</title><desc id="mruv-svg-desc">Pista horizontal com escala em metros, origem, sentido positivo e carrinhos de laboratório.</desc>
               <defs>
                 <linearGradient id="mruv-track-shade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#25364c"/><stop offset="1" stop-color="#101a2b"/></linearGradient>
@@ -59,7 +59,7 @@
                 <marker id="mruv-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker>
               </defs>
               <rect class="mruv-scene-bg" width="1100" height="500" rx="16"/>
-              <g id="mruv-scene-grid"></g><g id="mruv-scene-track"></g><g id="mruv-scene-markers"></g><g id="mruv-scene-objects"></g><g id="mruv-scene-carts"></g><g id="mruv-scene-overlay"></g>
+              <g id="mruv-camera-world"><g id="mruv-scene-grid"></g><g id="mruv-scene-track"></g><g id="mruv-scene-markers"></g><g id="mruv-scene-objects"></g><g id="mruv-scene-carts"></g><g id="mruv-scene-overlay"></g></g>
             </svg>
             <div id="mruv-live-description" class="sr-only" aria-live="polite"></div>
             <div class="mruv-fullscreen-tools" id="mruv-fullscreen-tools" hidden>
@@ -72,8 +72,8 @@
               <div class="mruv-fullscreen-drawer-content"></div>
             </aside>
           </div>
-          <div class="mruv-stage-footer"><span id="mruv-reference-label">Referencial: pista · origem x = 0 m</span><span id="mruv-scene-summary" aria-live="off"></span></div><p class="mruv-muted">As setas de velocidade e aceleração têm escala visual ampliada para facilitar a leitura; os valores numéricos usam as unidades SI.</p>
-          <div class="mruv-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label for="mruv-view-span">Escala visível <output id="mruv-view-span-value">24 m</output></label><input id="mruv-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mruv-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mruv-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mruv-recenter" class="button button-outline" type="button">Recentrar pista</button><label class="mruv-check"><input id="mruv-show-grid" type="checkbox" checked> Grade</label><label class="mruv-check"><input id="mruv-reduce-motion" type="checkbox"> Reduzir efeitos visuais</label><label class="mruv-check"><input id="mruv-high-contrast" type="checkbox"> Alto contraste</label><label class="mruv-check"><input id="mruv-simple-mode" type="checkbox"> Modo simplificado</label><label for="mruv-text-size">Texto <input id="mruv-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mruv-text-size-value">100%</output></label></div>
+          <div class="mruv-stage-footer"><span id="mruv-reference-label">Referencial: pista · origem x = 0 m</span><span id="mruv-scene-summary" aria-live="off"></span><span class="mruv-pan-hint">Arraste um espaço vazio para mover; use pinça ou Ctrl + roda para zoom.</span></div><p class="mruv-muted">As setas de velocidade e aceleração têm escala visual ampliada para facilitar a leitura; os valores numéricos usam as unidades SI.</p>
+<div class="mruv-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label for="mruv-view-span">Escala visível <output id="mruv-view-span-value">24 m</output></label><input id="mruv-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mruv-zoom-in" class="button button-outline" type="button">+ Aproximar</button><button id="mruv-zoom-out" class="button button-outline" type="button">− Afastar</button><button id="mruv-zoom-reset" class="button button-outline" type="button">Restaurar zoom</button><button id="mruv-center-camera" class="button button-outline" type="button">Centralizar</button><button id="mruv-fit-camera" class="button button-outline" type="button">Enquadrar experimento</button><button id="mruv-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mruv-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mruv-recenter" class="button button-outline" type="button">Acompanhar carrinho</button><label class="mruv-check"><input id="mruv-show-grid" type="checkbox" checked> Grade</label><label class="mruv-check"><input id="mruv-reduce-motion" type="checkbox"> Reduzir efeitos visuais</label><label class="mruv-check"><input id="mruv-high-contrast" type="checkbox"> Alto contraste</label><label class="mruv-check"><input id="mruv-simple-mode" type="checkbox"> Modo simplificado</label><label for="mruv-text-size">Texto <input id="mruv-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mruv-text-size-value">100%</output></label></div>
         </section>
 
         <section class="mruv-card mruv-playback-card" aria-labelledby="mruv-playback-heading">
@@ -149,7 +149,8 @@
           <div class="mruv-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mruv-save-heading">Salvar e exportar</h2></div></div>
           <label class="mruv-saved-select" for="mruv-saved-experiments">Experimentos salvos neste dispositivo<select id="mruv-saved-experiments"><option value="">Selecione um experimento salvo</option></select></label>
           <div class="mruv-button-grid"><button id="mruv-save" class="button button-outline" type="button">Salvar alterações / novo</button><button id="mruv-load" class="button button-outline" type="button" disabled>Carregar</button><button id="mruv-duplicate-saved" class="button button-outline" type="button" disabled>Duplicar salvo</button><button id="mruv-rename-saved" class="button button-outline" type="button" disabled>Renomear salvo</button><button id="mruv-delete-saved" class="button button-outline" type="button" disabled>Apagar salvo</button><button id="mruv-share" class="button button-outline" type="button">Copiar link da configuração</button><button id="mruv-export-scene" class="button button-outline" type="button">Baixar pista SVG</button><button id="mruv-reset-config" class="button button-outline" type="button">Restaurar padrão</button><label class="button button-outline mruv-file-label" for="mruv-import-file">Abrir configuração JSON<input id="mruv-import-file" type="file" accept="application/json,.json"></label></div>
-          <p id="mruv-save-status" class="mruv-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
+          <div id="mruv-pending-save" class="mruv-pending-save" hidden aria-live="off"><p><strong>Pré-visualização ativa.</strong> As mudanças já aparecem no laboratório. Salve para restaurá-las depois ou descarte para voltar à última configuração salva.</p><div><button id="mruv-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mruv-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div></div>
+           <p id="mruv-save-status" class="mruv-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
         </section>
 
         <section class="mruv-card mruv-investigation-card" id="mruv-investigation" aria-labelledby="mruv-investigation-heading">
