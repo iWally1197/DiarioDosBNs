@@ -19,7 +19,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,follow:true,showGrid:true,reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
   const state = Object.assign(initialConfig(),{time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
   const undoStack=[],redoStack=[];
-  let raf=0,lastFrame=0,lastChart=0,dragBefore=null;
+  let raf=0,lastFrame=0,lastChart=0,dragBefore=null,dragRenderFrame=0;
   let graphZoom=1;
   const chartSpecs=[
     {id:"mru-chart-position",key:"position",unit:"m",value:(car,t)=>mruAt(car,t).x,desc:"mru-chart-position-desc"},
@@ -107,10 +107,14 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-follow-toggle").textContent=state.follow?"Câmera: acompanhar":"Câmera: fixa";$("mru-follow-toggle").setAttribute("aria-pressed",String(state.follow));
     $("mru-show-grid").checked=state.showGrid;$("mru-reduce-motion").checked=state.reduceMotion;
   }
+  function syncPlaybackButtons(){
+    const label=state.running?"Pausar":state.time>=state.duration&&!state.loop?"Recomeçar":"Continuar";
+    for(const id of ["mru-play","mru-fullscreen-play"]){const button=$(id);if(button){button.textContent=label;button.setAttribute("aria-pressed",String(state.running));}}
+  }
   function renderReadouts(){
     const car=currentCart();$("mru-time-readout").textContent="t = "+fmt(state.time)+" s";
     $("mru-timeline").max=state.duration;$("mru-timeline").value=state.time;$("mru-timeline-value").textContent=fmt(state.time)+" s";
-    $("mru-play").textContent=state.running?"Pausar":state.time>=state.duration&&!state.loop?"Recomeçar":"Continuar";$("mru-play").setAttribute("aria-pressed",String(state.running));
+    syncPlaybackButtons();
     if(!car){$("mru-readouts").innerHTML="<p class=\"mru-muted\">Adicione um carrinho para ver as leituras.</p>";return;}
     const p=mruAt(car,state.time),m=mruMetrics(car,0,state.time);
     const rows=[["Posição atual x(t)",fmt(p.x)+" m"],["Posição inicial x₀",fmt(p.x0)+" m"],["Velocidade constante v",fmt(p.v)+" m/s"],["Aceleração a","0,00 m/s²"],["Deslocamento Δx",fmt(m.displacement)+" m"],["Distância percorrida",fmt(m.distance)+" m"],["Tempo decorrido",fmt(state.time)+" s"],["Velocidade média",fmt(m.averageVelocity)+" m/s"],["Rapidez média",fmt(m.averageSpeed)+" m/s"]];
@@ -142,28 +146,59 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
     html+='<label class="mru-inline-check full"><input class="mru-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mru-inline-check full"><input class="mru-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    $("mru-properties").innerHTML=html;
-    $("mru-properties").querySelectorAll(".mru-prop").forEach(field=>{
-      let before=null;
-      field.addEventListener("input",()=>{
-        if(!before)before=capture();
-        const target=entity(),key=field.dataset.prop;if(!target)return;
-        let value=field.type==="checkbox"?field.checked:field.type==="number"||field.type==="range"?Number(field.value):field.value;
-        if(typeof value==="number"&&!Number.isFinite(value))return;
-        if(key==="name")target.name=String(value).trim().slice(0,42)||names[target.kind];
-        else if(["x","x0","v"].includes(key))target[key]=value;
-        else if(key==="size")target.size=clamp(value,.55,1.7);
-        else if(key==="opacity")target.opacity=clamp(value,.2,1);
-        else if(key==="wheelRadius")target.wheelRadius=clamp(value,.01,.15);
-        else if(key==="interval")target.interval=clamp(value,.1,60);
-        else if(key==="color")target.color=validColor(value,"#4f88df");
-        else if(key==="wheelColor")target.wheelColor=validColor(value,"#202935");
-        else if(key==="kind"&&isCart(target))target.kind=value==="sport-cart"?"sport-cart":"scientific-cart";
-        else if(["details","vector","trail","visible","locked"].includes(key))target[key]=value;
-        parameterChanged();renderObjects();refreshFrame(true);
-      });
-      field.addEventListener("change",()=>{if(before)historyPush(before);before=null;renderDataTable();drawCharts();});
+    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.</p><div class="mru-edit-buttons"><button id="mru-prop-apply" class="button" type="button" disabled>Aplicar alterações</button><button id="mru-prop-discard" class="button button-outline" type="button">Descartar</button></div><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
+    $("mru-properties").innerHTML=html+actionMarkup;
+    const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], actionBox=$("mru-edit-actions"), applyButton=$("mru-prop-apply"), feedback=$("mru-edit-feedback");
+    const original=clone(item);let draft=clone(item),invalid=false,dirty=false;
+    function normalize(key,value,field){
+      if(typeof value==="number"){
+        if(field.type==="range")value=clamp(value,Number(field.min),Number(field.max));
+        else if(key==="x"||key==="x0")value=clamp(value,-1000000,1000000);
+        else if(key==="v"||key==="v0")value=clamp(value,-100,100);
+        else if(key==="a")value=clamp(value,-20,20);
+        else if(key==="size")value=clamp(value,.55,1.7);
+        else if(key==="opacity")value=clamp(value,.2,1);
+        else if(key==="wheelRadius")value=clamp(value,.01,.15);
+        else if(key==="interval")value=clamp(value,.1,60);
+      }
+      if(key==="name")return String(value).trim().slice(0,42);
+      if(key==="color")return validColor(value,"#4f88df");
+      if(key==="wheelColor")return validColor(value,"#202935");
+      if(key==="kind"&&isCart(item))return value==="sport-cart"?"sport-cart":"scientific-cart";
+      return value;
+    }
+    function updateDraft(field){
+      const key=field.dataset.prop;if(!key)return;
+      let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
+      if((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(value))){invalid=true;dirty=true;return;}
+      value=normalize(key,value,field);
+      if(key==="name"&&!value){invalid=true;dirty=true;return;}
+      draft[key]=value;
+      if(["x0","v0","a"].includes(key)){
+        for(const peer of fields.filter(node=>node!==field&&node.dataset.prop===key)){
+          if(peer.type==="range")peer.value=String(clamp(value,Number(peer.min),Number(peer.max)));
+          else peer.value=String(value);
+        }
+      }
+    }
+    function refreshActions(){
+      invalid=fields.some(field=>((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))||(field.dataset.prop==="name"&&!String(field.value).trim()));
+      const changed=Object.keys(draft).some(key=>draft[key]!==original[key]);
+      dirty=dirty||changed;
+      actionBox.hidden=!dirty;
+      applyButton.disabled=invalid||!changed;
+      feedback.textContent=invalid?"Preencha os campos obrigatórios com valores válidos.":changed?"Confira os valores e clique em “Aplicar alterações” para confirmar.":"Nenhuma alteração pendente.";
+    }
+    fields.forEach(field=>{
+      const handle=()=>{dirty=true;actionBox.querySelector("p").textContent="As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.";actionBox.querySelector(".mru-edit-buttons").hidden=false;updateDraft(field);refreshActions();};
+      field.addEventListener("input",handle);field.addEventListener("change",handle);
     });
+    applyButton.addEventListener("click",()=>{
+      refreshActions();if(applyButton.disabled){feedback.textContent="Corrija os campos destacados antes de aplicar.";const bad=fields.find(field=>(field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value)))||(field.dataset.prop==="name"&&!String(field.value).trim()));bad?.focus();return;}
+      const target=entity(editingId);if(!target){status("O objeto selecionado não está mais disponível.","error");renderProperties();return;}
+      const before=capture();Object.assign(target,clone(draft));historyPush(before);changedParameter();renderAll();status("Alteração aplicada ao objeto. A pista e os gráficos foram atualizados sem recarregar a página.");const notice=$("mru-edit-actions");notice.hidden=false;notice.querySelector("p").textContent="Alteração aplicada com sucesso.";notice.querySelector(".mru-edit-buttons").hidden=true;$("mru-edit-feedback").textContent="Simulação, leituras e gráficos atualizados sem recarregar o site.";
+    });
+    $("mru-prop-discard").addEventListener("click",()=>{renderProperties();status("Alterações descartadas.");});
   }
   function renderDataTable(){
     const times=sampleTimes(state.duration,state.sampleInterval,80),rows=[];
@@ -211,6 +246,40 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-results-heading").closest(".mru-results-card").hidden=hidden;$("mru-graphs-heading").closest(".mru-graphs-card").hidden=hidden;$("mru-table-heading").closest(".mru-table-card").hidden=hidden;
     $("mru-teacher-reveal").textContent=state.teacherReveal?"Ocultar resultados":"Mostrar resultados";
   }
+  function setupFullscreenDock(){
+    const stage=$("mru-stage"),tools=$("mru-fullscreen-tools"),drawer=$("mru-fullscreen-drawer"),content=drawer.querySelector(".mru-fullscreen-drawer-content");
+    const selectors=[".mru-mode-bar",".mru-playback-card",".mru-results-card",".mru-graphs-card",".mru-table-card",".mru-sidebar",".mru-investigation-card"];
+    const relocated=[];
+    function movePanelsIntoDock(){
+      for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
+    }
+    function restorePanels(){
+      for(const {node,marker} of relocated){if(marker.parentNode)marker.parentNode.replaceChild(node,marker);}
+      relocated.length=0;
+    }
+    $("mru-fullscreen-menu").addEventListener("click",()=>{
+      drawer.hidden=!drawer.hidden;stage.classList.toggle("mru-drawer-collapsed",drawer.hidden);
+      $("mru-fullscreen-menu").setAttribute("aria-expanded",String(!drawer.hidden));
+      $("mru-fullscreen-menu").textContent=drawer.hidden?"Mostrar painel":"Ocultar painel";
+      requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
+    });
+    $("mru-fullscreen-play").addEventListener("click",()=>state.running?pause("Simulação pausada."):play());
+    $("mru-fullscreen-exit").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();});
+    document.addEventListener("fullscreenchange",()=>{
+      const active=document.fullscreenElement===stage;
+      if(active){
+        movePanelsIntoDock();tools.hidden=false;drawer.hidden=false;stage.classList.remove("mru-drawer-collapsed");
+        $("mru-fullscreen-menu").setAttribute("aria-expanded","true");$("mru-fullscreen-menu").textContent="Ocultar painel";
+        document.body.classList.add("mru-fullscreen-active");syncPlaybackButtons();
+        requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
+      }else{
+        restorePanels();tools.hidden=true;drawer.hidden=true;stage.classList.remove("mru-drawer-collapsed");
+        document.body.classList.remove("mru-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);
+      }
+      $("mru-fullscreen").textContent=active?"Sair da tela cheia":"Tela cheia";
+      
+    });
+  }
   function renderAll(){
     $("mru-duration").value=state.duration;$("mru-sample-interval").value=state.sampleInterval;$("mru-playback-rate").value=state.playbackRate;$("mru-loop").checked=state.loop;
     $("mru-timeline").max=state.duration;$("mru-timeline").step=Math.min(.05,state.duration/100);
@@ -227,7 +296,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   }
   function pause(message=""){
     state.running=false;if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;
-    $("mru-play").textContent="Continuar";$("mru-play").setAttribute("aria-pressed","false");if(message)status(message);
+    syncPlaybackButtons();if(message)status(message);
   }
   function clearMeasurementRun(){state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;}
   function changedParameter(){
@@ -258,12 +327,12 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       }
     }
     lastFrame=time;
-    if(!state.reduceMotion||time-lastVisualFrame>=350){refreshFrame(false,time);lastVisualFrame=time;}
-    if(state.running)raf=requestAnimationFrame(animationFrame);else{raf=0;lastFrame=0;$("mru-play").setAttribute("aria-pressed","false");}
+    if(time-lastVisualFrame>=(state.reduceMotion?180:33)){refreshFrame(false,time);lastVisualFrame=time;}
+    if(state.running)raf=requestAnimationFrame(animationFrame);else{raf=0;lastFrame=0;syncPlaybackButtons();}
   }
   function play(){
     if(state.time>=state.duration)state.time=0;
-    state.running=true;lastFrame=0;$("mru-play").textContent="Pausar";$("mru-play").setAttribute("aria-pressed","true");
+    state.running=true;lastFrame=0;syncPlaybackButtons();
     status("Simulação em andamento · x(t) = x₀ + vt.");raf=requestAnimationFrame(animationFrame);
   }
   function setTime(time,source="timeline"){
@@ -396,11 +465,12 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   function moveDrag(event){
     if(!state.drag||state.drag.pointer!==event.pointerId)return;const item=entity(state.drag.id);if(!item)return;
     const x=pointerWorld(event);if(isCart(item))item.x0=x-item.v*state.time;else item.x=x;state.drag.moved=true;if(state.follow&&isCart(item))state.follow=false;
-    renderObjects();renderProperties();refreshFrame(true);
+    if(!dragRenderFrame)dragRenderFrame=requestAnimationFrame(()=>{dragRenderFrame=0;refreshFrame(false,performance.now());});
   }
   function stopDrag(event){
     if(!state.drag||state.drag.pointer!==event.pointerId)return;
-    if(state.drag.moved){historyPush(dragBefore);changedParameter();renderDataTable();drawCharts();}
+    if(dragRenderFrame){cancelAnimationFrame(dragRenderFrame);dragRenderFrame=0;}
+    if(state.drag.moved){historyPush(dragBefore);changedParameter();renderObjects();renderProperties();refreshFrame(true);renderDataTable();drawCharts();}
     state.drag=null;dragBefore=null;
   }
 
@@ -440,7 +510,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   });
   $("mru-reset-config").addEventListener("click",()=>{
     if(!confirm("Restaurar a cena inicial? As alterações feitas nesta página serão substituídas."))return;
-    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();status("Configuração inicial restaurada.");
+    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();status("Configuração inicial restaurada.");
   });
   $("mru-check-prediction").addEventListener("click",checkPrediction);
   $("mru-teacher-reveal").addEventListener("click",()=>{state.teacherReveal=!state.teacherReveal;renderMode();});
@@ -457,7 +527,6 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     event.preventDefault();state.running?pause("Simulação pausada pelo teclado."):play();
   });
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.running)lastFrame=0;});
-  document.addEventListener("fullscreenchange",()=>{$("mru-fullscreen").textContent=document.fullscreenElement=== $("mru-stage")?"Sair da tela cheia":"Tela cheia";setTimeout(drawCharts,100);});
   $("mru-fullscreen").addEventListener("click",async()=>{
     try{if(document.fullscreenElement)await document.exitFullscreen();else await $("mru-stage").requestFullscreen();}
     catch{status("Tela cheia indisponível neste navegador.","error");}

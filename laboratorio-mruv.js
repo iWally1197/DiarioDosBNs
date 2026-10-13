@@ -19,7 +19,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,follow:true,showGrid:true,brakingMode:false,highContrast:false,simpleMode:false,reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
   const state = Object.assign(initialConfig(),{time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
   const undoStack=[],redoStack=[];
-  let raf=0,lastFrame=0,lastChart=0,dragBefore=null;
+  let raf=0,lastFrame=0,lastChart=0,dragBefore=null,dragRenderFrame=0,lastVisualFrame=0;
   let graphZoom=1;
   const at=(cart,time)=>mruvAtCalc(cart,time,{brakingMode:state.brakingMode});
   const metrics=(cart,start,end)=>mruvMetricsCalc(cart,start,end,{brakingMode:state.brakingMode});
@@ -126,10 +126,14 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     $("mruv-follow-toggle").textContent=state.follow?"Câmera: acompanhar":"Câmera: fixa";$("mruv-follow-toggle").setAttribute("aria-pressed",String(state.follow));
     $("mruv-show-grid").checked=state.showGrid;$("mruv-reduce-motion").checked=state.reduceMotion;$("mruv-high-contrast").checked=state.highContrast;$("mruv-simple-mode").checked=state.simpleMode;
   }
+  function syncPlaybackButtons(){
+    const label=state.running?"Pausar":state.time>=state.duration&&!state.loop?"Recomeçar":"Continuar";
+    for(const id of ["mruv-play","mruv-fullscreen-play"]){const button=$(id);if(button){button.textContent=label;button.setAttribute("aria-pressed",String(state.running));}}
+  }
   function renderReadouts(){
     const car=currentCart();$("mruv-time-readout").textContent="t = "+fmt(state.time)+" s";
     $("mruv-timeline").max=state.duration;$("mruv-timeline").value=state.time;$("mruv-timeline-value").textContent=fmt(state.time)+" s";
-    $("mruv-play").textContent=state.running?"Pausar":state.time>=state.duration&&!state.loop?"Recomeçar":"Continuar";$("mruv-play").setAttribute("aria-pressed",String(state.running));
+    syncPlaybackButtons();
     if(!car){$("mruv-readouts").innerHTML="<p class=\"mruv-muted\">Adicione um carrinho para ver as leituras.</p>";return;}
     const p=mruvAt(car,state.time),m=mruvMetrics(car,0,state.time);
     const rows=[["Posição atual x(t)",fmt(p.x)+" m"],["Posição inicial x₀",fmt(p.x0)+" m"],["Velocidade inicial v₀",fmt(p.v0)+" m/s"],["Velocidade instantânea v(t)",fmt(p.v)+" m/s"],["Aceleração atual a(t)",fmt(p.a)+" m/s²"],["Deslocamento Δx",fmt(m.displacement)+" m"],["Distância percorrida",fmt(m.distance)+" m"],["Tempo decorrido",fmt(state.time)+" s"],["Velocidade média",fmt(m.averageVelocity)+" m/s"],["Rapidez média",fmt(m.averageSpeed)+" m/s"],["Variação de velocidade Δv",fmt(p.v-p.v0)+" m/s"]];
@@ -167,31 +171,59 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
     html+='<label class="mruv-inline-check full"><input class="mruv-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mruv-inline-check full"><input class="mruv-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    $("mruv-properties").innerHTML=html;
-    $("mruv-properties").querySelectorAll(".mruv-prop").forEach(field=>{
-      let before=null;
-      field.addEventListener("input",()=>{
-        if(!before)before=capture();
-        const target=entity(),key=field.dataset.prop;if(!target)return;
-        let value=field.type==="checkbox"?field.checked:field.type==="number"||field.type==="range"?Number(field.value):field.value;
-        if((field.type==="number"||field.type==="range")&&field.value.trim()==="")return;
-        if(typeof value==="number"&&!Number.isFinite(value))return;
-        if(key==="name")target.name=String(value).trim().slice(0,42)||names[target.kind];
-        else if(["x","x0","v0","a"].includes(key)){const lower=Number(field.min),upper=Number(field.max);target[key]=clamp(value,Number.isFinite(lower)?lower:-1e6,Number.isFinite(upper)?upper:1e6);field.value=String(target[key]);}
-        else if(key==="size")target.size=clamp(value,.55,1.7);
-        else if(key==="opacity")target.opacity=clamp(value,.2,1);
-        else if(key==="wheelRadius")target.wheelRadius=clamp(value,.01,.15);
-        else if(key==="interval")target.interval=clamp(value,.1,60);
-        else if(key==="color")target.color=validColor(value,"#4f88df");
-        else if(key==="wheelColor")target.wheelColor=validColor(value,"#202935");
-    else if(key==="kind"&&isCart(target))target.kind=["sport-cart","minimal-cart"].includes(value)?value:"scientific-cart";
-    else if(["details","vector","vectorA","vectorD","trail","visible","locked"].includes(key))target[key]=value;
-        else if(key==="chartVisible")target.chartVisible=value;
-        if(["x0","v0","a"].includes(key)){for(const peer of $("mruv-properties").querySelectorAll('[data-prop="'+key+'"]'))if(peer!==field)peer.value=String(clamp(value,Number(peer.min)||-1e6,Number(peer.max)||1e6));}
-        parameterChanged();renderObjects();refreshFrame(true);
-      });
-      field.addEventListener("change",()=>{if(before)historyPush(before);before=null;renderDataTable();drawCharts();});
+    const actionMarkup='<div class="mruv-edit-actions" id="mruv-edit-actions" hidden><p>As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.</p><div class="mruv-edit-buttons"><button id="mruv-prop-apply" class="button" type="button" disabled>Aplicar alterações</button><button id="mruv-prop-discard" class="button button-outline" type="button">Descartar</button></div><span id="mruv-edit-feedback" class="mruv-edit-feedback" role="status" aria-live="polite"></span></div>';
+    $("mruv-properties").innerHTML=html+actionMarkup;
+    const editingId=item.id, fields=[...$("mruv-properties").querySelectorAll(".mruv-prop")], actionBox=$("mruv-edit-actions"), applyButton=$("mruv-prop-apply"), feedback=$("mruv-edit-feedback");
+    const original=clone(item);let draft=clone(item),invalid=false,dirty=false;
+    function normalize(key,value,field){
+      if(typeof value==="number"){
+        if(field.type==="range")value=clamp(value,Number(field.min),Number(field.max));
+        else if(key==="x"||key==="x0")value=clamp(value,-1000000,1000000);
+        else if(key==="v"||key==="v0")value=clamp(value,-100,100);
+        else if(key==="a")value=clamp(value,-20,20);
+        else if(key==="size")value=clamp(value,.55,1.7);
+        else if(key==="opacity")value=clamp(value,.2,1);
+        else if(key==="wheelRadius")value=clamp(value,.01,.15);
+        else if(key==="interval")value=clamp(value,.1,60);
+      }
+      if(key==="name")return String(value).trim().slice(0,42);
+      if(key==="color")return validColor(value,"#4f88df");
+      if(key==="wheelColor")return validColor(value,"#202935");
+      if(key==="kind"&&isCart(item))return ["sport-cart","minimal-cart"].includes(value)?value:"scientific-cart";
+      return value;
+    }
+    function updateDraft(field){
+      const key=field.dataset.prop;if(!key)return;
+      let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
+      if((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(value))){invalid=true;dirty=true;return;}
+      value=normalize(key,value,field);
+      if(key==="name"&&!value){invalid=true;dirty=true;return;}
+      draft[key]=value;
+      if(["x0","v0","a"].includes(key)){
+        for(const peer of fields.filter(node=>node!==field&&node.dataset.prop===key)){
+          if(peer.type==="range")peer.value=String(clamp(value,Number(peer.min),Number(peer.max)));
+          else peer.value=String(value);
+        }
+      }
+    }
+    function refreshActions(){
+      invalid=fields.some(field=>((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))||(field.dataset.prop==="name"&&!String(field.value).trim()));
+      const changed=Object.keys(draft).some(key=>draft[key]!==original[key]);
+      dirty=dirty||changed;
+      actionBox.hidden=!dirty;
+      applyButton.disabled=invalid||!changed;
+      feedback.textContent=invalid?"Preencha os campos obrigatórios com valores válidos.":changed?"Confira os valores e clique em “Aplicar alterações” para confirmar.":"Nenhuma alteração pendente.";
+    }
+    fields.forEach(field=>{
+      const handle=()=>{dirty=true;actionBox.querySelector("p").textContent="As alterações ainda não foram aplicadas. Confirme para atualizar a simulação.";actionBox.querySelector(".mruv-edit-buttons").hidden=false;updateDraft(field);refreshActions();};
+      field.addEventListener("input",handle);field.addEventListener("change",handle);
     });
+    applyButton.addEventListener("click",()=>{
+      refreshActions();if(applyButton.disabled){feedback.textContent="Corrija os campos destacados antes de aplicar.";const bad=fields.find(field=>(field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value)))||(field.dataset.prop==="name"&&!String(field.value).trim()));bad?.focus();return;}
+      const target=entity(editingId);if(!target){status("O objeto selecionado não está mais disponível.","error");renderProperties();return;}
+      const before=capture();Object.assign(target,clone(draft));historyPush(before);changedParameter();renderAll();status("Alteração aplicada ao objeto. A pista e os gráficos foram atualizados sem recarregar a página.");const notice=$("mruv-edit-actions");notice.hidden=false;notice.querySelector("p").textContent="Alteração aplicada com sucesso.";notice.querySelector(".mruv-edit-buttons").hidden=true;$("mruv-edit-feedback").textContent="Simulação, leituras e gráficos atualizados sem recarregar o site.";
+    });
+    $("mruv-prop-discard").addEventListener("click",()=>{renderProperties();status("Alterações descartadas.");});
   }
   function renderDataTable(){
     const times=sampleTimes(state.duration,state.sampleInterval,80),rows=[];
@@ -251,7 +283,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   }
   function pause(message=""){
     state.running=false;if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;
-    $("mruv-play").textContent="Continuar";$("mruv-play").setAttribute("aria-pressed","false");if(message)status(message);
+    syncPlaybackButtons();if(message)status(message);
   }
   function clearMeasurementRun(){state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;}
   function changedParameter(){
@@ -283,12 +315,12 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       }
     }
     lastFrame=time;
-    refreshFrame(false,time);
-    if(state.running)raf=requestAnimationFrame(animationFrame);else{raf=0;lastFrame=0;$("mruv-play").setAttribute("aria-pressed","false");}
+    if(time-lastVisualFrame>=(state.reduceMotion?180:33)){refreshFrame(false,time);lastVisualFrame=time;}
+    if(state.running)raf=requestAnimationFrame(animationFrame);else{raf=0;lastFrame=0;syncPlaybackButtons();}
   }
   function play(){
     if(state.time>=state.duration)state.time=0;
-    state.running=true;lastFrame=0;$("mruv-play").textContent="Pausar";$("mruv-play").setAttribute("aria-pressed","true");
+    state.running=true;lastFrame=0;syncPlaybackButtons();
     status("Simulação em andamento · x(t) = x₀ + v₀t + ½at²; v(t) = v₀ + at.");raf=requestAnimationFrame(animationFrame);
   }
   function setTime(time,source="timeline"){
@@ -351,6 +383,40 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     $("mruv-investigation").hidden=state.mode!=="investigate";$("mruv-teacher-reveal").hidden=state.mode!=="teacher";
     const hidden=state.mode==="teacher"&&!state.teacherReveal;$("mruv-results-heading").closest(".mruv-results-card").hidden=hidden;$("mruv-graphs-heading").closest(".mruv-graphs-card").hidden=hidden;$("mruv-table-heading").closest(".mruv-table-card").hidden=hidden;$("mruv-math-card").hidden=hidden;
     $("mruv-teacher-reveal").textContent=state.teacherReveal?"Ocultar resultados":"Mostrar resultados";
+  }
+  function setupFullscreenDock(){
+    const stage=$("mruv-stage"),tools=$("mruv-fullscreen-tools"),drawer=$("mruv-fullscreen-drawer"),content=drawer.querySelector(".mruv-fullscreen-drawer-content");
+    const selectors=[".mruv-mode-bar",".mruv-playback-card",".mruv-results-card","#mruv-math-card","#mruv-graphs-card",".mruv-table-card",".mruv-sidebar",".mruv-investigation-card"];
+    const relocated=[];
+    function movePanelsIntoDock(){
+      for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
+    }
+    function restorePanels(){
+      for(const {node,marker} of relocated){if(marker.parentNode)marker.parentNode.replaceChild(node,marker);}
+      relocated.length=0;
+    }
+    $("mruv-fullscreen-menu").addEventListener("click",()=>{
+      drawer.hidden=!drawer.hidden;stage.classList.toggle("mruv-drawer-collapsed",drawer.hidden);
+      $("mruv-fullscreen-menu").setAttribute("aria-expanded",String(!drawer.hidden));
+      $("mruv-fullscreen-menu").textContent=drawer.hidden?"Mostrar painel":"Ocultar painel";
+      requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
+    });
+    $("mruv-fullscreen-play").addEventListener("click",()=>state.running?pause("Simulação pausada."):play());
+    $("mruv-fullscreen-exit").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();});
+    document.addEventListener("fullscreenchange",()=>{
+      const active=document.fullscreenElement===stage;
+      if(active){
+        movePanelsIntoDock();tools.hidden=false;drawer.hidden=false;stage.classList.remove("mruv-drawer-collapsed");
+        $("mruv-fullscreen-menu").setAttribute("aria-expanded","true");$("mruv-fullscreen-menu").textContent="Ocultar painel";
+        document.body.classList.add("mruv-fullscreen-active");syncPlaybackButtons();
+        requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
+      }else{
+        restorePanels();tools.hidden=true;drawer.hidden=true;stage.classList.remove("mruv-drawer-collapsed");
+        document.body.classList.remove("mruv-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);
+      }
+      $("mruv-fullscreen").textContent=active?"Sair da tela cheia":"Tela cheia";
+      $("mruv-graphs-fullscreen").textContent=document.fullscreenElement===$("mruv-graphs-card")?"Sair dos gráficos em tela cheia":"Gráficos em tela cheia";
+    });
   }
   function renderAll(){
     renderInputs();renderMode();renderObjects();renderProperties();drawScene();renderReadouts();renderInstruments();renderDataTable();drawCharts();renderSavedExperiments();syncHistoryButtons();
@@ -461,11 +527,12 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   function moveDrag(event){
     if(!state.drag||state.drag.pointer!==event.pointerId)return;const item=entity(state.drag.id);if(!item)return;
     const x=pointerWorld(event),delta=x-state.drag.lastX;state.drag.lastX=x;for(const id of state.drag.groupIds){const member=entity(id);if(!member||member.locked)continue;if(isCart(member))member.x0+=delta;else member.x+=delta;}state.drag.moved=true;if(state.follow&&state.drag.groupIds.some(id=>isCart(entity(id))))state.follow=false;
-    renderObjects();renderProperties();refreshFrame(true);
+    if(!dragRenderFrame)dragRenderFrame=requestAnimationFrame(()=>{dragRenderFrame=0;refreshFrame(false,performance.now());});
   }
   function stopDrag(event){
     if(!state.drag||state.drag.pointer!==event.pointerId)return;
-    if(state.drag.moved){historyPush(dragBefore);changedParameter();renderDataTable();drawCharts();}
+    if(dragRenderFrame){cancelAnimationFrame(dragRenderFrame);dragRenderFrame=0;}
+    if(state.drag.moved){historyPush(dragBefore);changedParameter();renderObjects();renderProperties();refreshFrame(true);renderDataTable();drawCharts();}
     state.drag=null;dragBefore=null;
   }
 
@@ -509,7 +576,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   });
   $("mruv-reset-config").addEventListener("click",()=>{
     if(!confirm("Restaurar a cena inicial? As alterações feitas nesta página serão substituídas."))return;
-    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();status("Configuração inicial restaurada.");
+    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();status("Configuração inicial restaurada.");
   });
   $("mruv-check-prediction").addEventListener("click",checkPrediction);
   $("mruv-teacher-reveal").addEventListener("click",()=>{state.teacherReveal=!state.teacherReveal;renderMode();});
@@ -526,7 +593,6 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     event.preventDefault();state.running?pause("Simulação pausada pelo teclado."):play();
   });
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.running)lastFrame=0;});
-  document.addEventListener("fullscreenchange",()=>{$("mruv-fullscreen").textContent=document.fullscreenElement===$("mruv-stage")?"Sair da tela cheia":"Tela cheia";$("mruv-graphs-fullscreen").textContent=document.fullscreenElement===$("mruv-graphs-card")?"Sair dos gráficos em tela cheia":"Gráficos em tela cheia";setTimeout(drawCharts,100);});
   $("mruv-chart-grid").addEventListener("click",event=>{const button=event.target.closest("[data-chart-cart]");if(!button)return;const car=state.carts.find(item=>item.id===button.dataset.chartCart);if(!car)return;const before=capture();car.chartVisible=car.chartVisible===false;historyPush(before);renderProperties();drawCharts();});
   $("mruv-fullscreen").addEventListener("click",async()=>{
     try{if(document.fullscreenElement)await document.exitFullscreen();else await $("mruv-stage").requestFullscreen();}
