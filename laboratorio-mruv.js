@@ -174,9 +174,10 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
         if(!before)before=capture();
         const target=entity(),key=field.dataset.prop;if(!target)return;
         let value=field.type==="checkbox"?field.checked:field.type==="number"||field.type==="range"?Number(field.value):field.value;
+        if((field.type==="number"||field.type==="range")&&field.value.trim()==="")return;
         if(typeof value==="number"&&!Number.isFinite(value))return;
         if(key==="name")target.name=String(value).trim().slice(0,42)||names[target.kind];
-        else if(["x","x0","v0","a"].includes(key))target[key]=value;
+        else if(["x","x0","v0","a"].includes(key)){const lower=Number(field.min),upper=Number(field.max);target[key]=clamp(value,Number.isFinite(lower)?lower:-1e6,Number.isFinite(upper)?upper:1e6);field.value=String(target[key]);}
         else if(key==="size")target.size=clamp(value,.55,1.7);
         else if(key==="opacity")target.opacity=clamp(value,.2,1);
         else if(key==="wheelRadius")target.wheelRadius=clamp(value,.01,.15);
