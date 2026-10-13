@@ -8,13 +8,13 @@
   <meta name="description" content="Laboratório virtual de Movimento Retilíneo Uniforme: explore carrinhos, medições, gráficos e velocidade constante.">
   <title>Laboratório de MRU — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-2">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
   <link rel="stylesheet" href="laboratorio-mru.css?v=motion-controls-20261013-3">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
-  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
   <script type="module" src="laboratorio-mru.js?v=motion-controls-20261013-3"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
-</head>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
@@ -49,7 +49,7 @@
             <div class="mru-scene-actions"><button id="mru-follow-toggle" class="button button-outline" type="button" aria-pressed="true">Câmera: acompanhar</button><button id="mru-fullscreen" class="button button-outline" type="button">Tela cheia</button></div>
           </div>
           <div class="mru-stage" id="mru-stage">
-            <svg id="mru-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mru-svg-title mru-svg-desc" tabindex="0">
+            <svg id="mru-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mru-svg-title mru-svg-desc" aria-describedby="mru-scene-summary mru-readouts" tabindex="0">
               <title id="mru-svg-title">Pista de MRU com carrinhos</title><desc id="mru-svg-desc">Pista horizontal com escala em metros, origem, sentido positivo e carrinhos de laboratório.</desc>
               <defs>
                 <linearGradient id="mru-track-shade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#25364c"/><stop offset="1" stop-color="#101a2b"/></linearGradient>
@@ -72,12 +72,12 @@
               <div class="mru-fullscreen-drawer-content"></div>
             </aside>
           </div>
-          <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="polite"></span></div>
+          <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="off"></span></div>
           <div class="mru-camera-controls" role="group" aria-label="Ajustar enquadramento"><label for="mru-view-span">Escala visível <output id="mru-view-span-value">24 m</output></label><input id="mru-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mru-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mru-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mru-recenter" class="button button-outline" type="button">Recentrar pista</button><label class="mru-check"><input id="mru-show-grid" type="checkbox" checked> Grade</label><label class="mru-check"><input id="mru-reduce-motion" type="checkbox"> Menos movimento</label><label class="mru-check"><input id="mru-high-contrast" type="checkbox"> Alto contraste</label><label for="mru-text-size">Texto <input id="mru-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mru-text-size-value">100%</output></label></div>
         </section>
 
         <section class="mru-card mru-playback-card" aria-labelledby="mru-playback-heading">
-          <div class="mru-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mru-playback-heading">Controle do experimento</h2></div><output class="mru-time-readout" id="mru-time-readout" aria-live="polite">t = 0,00 s</output></div>
+          <div class="mru-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mru-playback-heading">Controle do experimento</h2></div><output class="mru-time-readout" id="mru-time-readout" aria-live="off">t = 0,00 s</output></div>
           <div class="mru-transport" role="group" aria-label="Controles de reprodução">
             <button id="mru-step-back" class="button button-outline" type="button" aria-label="Voltar um passo">− Passo</button><button id="mru-play" class="button button-primary" type="button" aria-pressed="false">Iniciar</button><button id="mru-step-forward" class="button button-outline" type="button">+ Passo</button><button id="mru-reset" class="button button-outline" type="button">Reiniciar</button>
             <label for="mru-playback-rate">Reprodução<select id="mru-playback-rate"><option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
@@ -91,7 +91,7 @@
 
         <section class="mru-card mru-results-card" aria-labelledby="mru-results-heading">
           <div class="mru-card-heading compact"><div><span class="section-kicker">LEITURAS DO MODELO</span><h2 id="mru-results-heading">Estado do carrinho selecionado</h2></div><span id="mru-direction-pill" class="mru-direction-pill">Repouso</span></div>
-          <div id="mru-readouts" class="mru-readouts" aria-live="polite"></div>
+          <div id="mru-readouts" class="mru-readouts" aria-live="off"></div>
           <p id="mru-displacement-note" class="mru-explain-note">O deslocamento tem sinal; a distância percorrida é sempre positiva.</p>
           <div class="mru-meeting-note" id="mru-meeting-note" role="status"></div>
         </section>
@@ -126,7 +126,7 @@
         <section class="mru-card mru-instruments-card" aria-labelledby="mru-instruments-heading">
           <div class="mru-card-heading compact"><div><span class="section-kicker">INSTRUMENTOS</span><h2 id="mru-instruments-heading">Sensores e referências</h2></div></div>
           <p class="mru-muted">Fotocélulas registram o cruzamento do ponto de referência do carrinho. Os instrumentos não alteram sua velocidade.</p>
-          <div id="mru-instrument-readings" class="mru-instrument-readings" aria-live="polite"></div>
+          <div id="mru-instrument-readings" class="mru-instrument-readings" aria-live="off"></div>
           <div class="mru-ruler-tool"><h3>Régua de deslocamento</h3><div class="mru-two-inputs"><label for="mru-ruler-a">Ponto A<input id="mru-ruler-a" type="number" step="0.1" value="0"><small>m</small></label><label for="mru-ruler-b">Ponto B<input id="mru-ruler-b" type="number" step="0.1" value="5"><small>m</small></label></div><output id="mru-ruler-result">Δx = 5,00 m · distância = 5,00 m</output></div>
           <div class="mru-event-log"><h3>Eventos das fotocélulas</h3><ol id="mru-events"><li>Nenhum cruzamento registrado nesta execução.</li></ol></div>
         </section>

@@ -8,13 +8,13 @@
   <meta name="description" content="Laboratório virtual de MRUV: explore aceleração constante, carrinhos, sensores, gráficos e inversões de sentido.">
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=laboratorio-fisica-20261009-2">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
   <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-controls-20261013-3">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
-  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
   <script type="module" src="laboratorio-mruv.js?v=motion-controls-20261013-3"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
-</head>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
@@ -49,7 +49,7 @@
             <div class="mruv-scene-actions"><button id="mruv-follow-toggle" class="button button-outline" type="button" aria-pressed="true">Câmera: acompanhar</button><button id="mruv-fullscreen" class="button button-outline" type="button">Tela cheia</button></div>
           </div>
           <div class="mruv-stage" id="mruv-stage">
-            <svg id="mruv-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mruv-svg-title mruv-svg-desc" tabindex="0">
+            <svg id="mruv-scene" viewBox="0 0 1100 500" role="img" aria-labelledby="mruv-svg-title mruv-svg-desc" aria-describedby="mruv-scene-summary mruv-readouts" tabindex="0">
               <title id="mruv-svg-title">Pista de MRUV com carrinhos</title><desc id="mruv-svg-desc">Pista horizontal com escala em metros, origem, sentido positivo e carrinhos de laboratório.</desc>
               <defs>
                 <linearGradient id="mruv-track-shade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#25364c"/><stop offset="1" stop-color="#101a2b"/></linearGradient>
@@ -72,12 +72,12 @@
               <div class="mruv-fullscreen-drawer-content"></div>
             </aside>
           </div>
-          <div class="mruv-stage-footer"><span id="mruv-reference-label">Referencial: pista · origem x = 0 m</span><span id="mruv-scene-summary" aria-live="polite"></span></div><p class="mruv-muted">As setas de velocidade e aceleração têm escala visual ampliada para facilitar a leitura; os valores numéricos usam as unidades SI.</p>
+          <div class="mruv-stage-footer"><span id="mruv-reference-label">Referencial: pista · origem x = 0 m</span><span id="mruv-scene-summary" aria-live="off"></span></div><p class="mruv-muted">As setas de velocidade e aceleração têm escala visual ampliada para facilitar a leitura; os valores numéricos usam as unidades SI.</p>
           <div class="mruv-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label for="mruv-view-span">Escala visível <output id="mruv-view-span-value">24 m</output></label><input id="mruv-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mruv-pan-left" class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mruv-pan-right" class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mruv-recenter" class="button button-outline" type="button">Recentrar pista</button><label class="mruv-check"><input id="mruv-show-grid" type="checkbox" checked> Grade</label><label class="mruv-check"><input id="mruv-reduce-motion" type="checkbox"> Reduzir efeitos visuais</label><label class="mruv-check"><input id="mruv-high-contrast" type="checkbox"> Alto contraste</label><label class="mruv-check"><input id="mruv-simple-mode" type="checkbox"> Modo simplificado</label><label for="mruv-text-size">Texto <input id="mruv-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mruv-text-size-value">100%</output></label></div>
         </section>
 
         <section class="mruv-card mruv-playback-card" aria-labelledby="mruv-playback-heading">
-          <div class="mruv-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mruv-playback-heading">Controle do experimento</h2></div><output class="mruv-time-readout" id="mruv-time-readout" aria-live="polite">t = 0,00 s</output></div>
+          <div class="mruv-card-heading compact"><div><span class="section-kicker">RELÓGIO VIRTUAL</span><h2 id="mruv-playback-heading">Controle do experimento</h2></div><output class="mruv-time-readout" id="mruv-time-readout" aria-live="off">t = 0,00 s</output></div>
           <div class="mruv-transport" role="group" aria-label="Controles de reprodução">
             <button id="mruv-step-back" class="button button-outline" type="button" aria-label="Voltar um passo">− Passo</button><button id="mruv-play" class="button button-primary" type="button" aria-pressed="false">Iniciar</button><button id="mruv-step-forward" class="button button-outline" type="button">+ Passo</button><button id="mruv-reset" class="button button-outline" type="button">Reiniciar</button>
             <label for="mruv-playback-rate">Reprodução<select id="mruv-playback-rate"><option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
@@ -92,7 +92,7 @@
 
         <section class="mruv-card mruv-results-card" aria-labelledby="mruv-results-heading">
           <div class="mruv-card-heading compact"><div><span class="section-kicker">LEITURAS DO MODELO</span><h2 id="mruv-results-heading">Estado do carrinho selecionado</h2></div><span id="mruv-direction-pill" class="mruv-direction-pill">Repouso</span></div>
-          <div id="mruv-readouts" class="mruv-readouts" aria-live="polite"></div>
+          <div id="mruv-readouts" class="mruv-readouts" aria-live="off"></div>
           <p id="mruv-displacement-note" class="mruv-explain-note">O deslocamento tem sinal; a distância percorrida é sempre positiva.</p>
           <div class="mruv-meeting-note" id="mruv-meeting-note" role="status"></div>
           <div class="mruv-meeting-note" id="mruv-stop-comparison" role="status"></div>
@@ -101,8 +101,8 @@
         <section id="mruv-math-card" class="mruv-card" aria-labelledby="mruv-math-heading">
           <details class="mruv-detail" open><summary id="mruv-math-heading">Matemática do movimento</summary>
             <p><strong>x(t) = x₀ + v₀t + ½at²</strong> · <strong>v(t) = v₀ + at</strong> · <strong>a = Δv/Δt</strong></p>
-            <p id="mruv-equation-substitution" aria-live="polite"></p>
-            <p id="mruv-torricelli-result" aria-live="polite"></p>
+            <p id="mruv-equation-substitution" aria-live="off"></p>
+            <p id="mruv-torricelli-result" aria-live="off"></p>
             <p id="mruv-turn-analysis" role="status" aria-live="polite"></p>
             <p class="mruv-muted">A rapidez diminui quando v·a &lt; 0. Torricelli relaciona v² e Δx; o sinal de v vem de v₀ + at, não de escolher uma raiz.</p>
             <details class="mruv-detail"><summary>Símbolos, unidades e hipótese física</summary><p>x e x₀ são posições em metros; v e v₀, velocidades em metros por segundo; a, aceleração em metros por segundo ao quadrado; t, tempo em segundos. O modelo ideal assume trajetória retilínea e aceleração constante.</p><p>Use Torricelli quando o intervalo de tempo não for conhecido. Use a área algébrica no gráfico v × t para obter o deslocamento e no gráfico a × t para obter Δv.</p></details>
@@ -140,7 +140,7 @@
         <section class="mruv-card mruv-instruments-card" aria-labelledby="mruv-instruments-heading">
           <div class="mruv-card-heading compact"><div><span class="section-kicker">INSTRUMENTOS</span><h2 id="mruv-instruments-heading">Sensores e referências</h2></div></div>
           <p class="mruv-muted">Fotocélulas registram o cruzamento do ponto de referência do carrinho. Os instrumentos não alteram sua velocidade.</p>
-          <div id="mruv-instrument-readings" class="mruv-instrument-readings" aria-live="polite"></div>
+          <div id="mruv-instrument-readings" class="mruv-instrument-readings" aria-live="off"></div>
           <div class="mruv-ruler-tool"><h3>Régua de deslocamento</h3><div class="mruv-two-inputs"><label for="mruv-ruler-a">Ponto A<input id="mruv-ruler-a" type="number" step="0.1" value="0"><small>m</small></label><label for="mruv-ruler-b">Ponto B<input id="mruv-ruler-b" type="number" step="0.1" value="5"><small>m</small></label></div><output id="mruv-ruler-result">Δx = 5,00 m · distância = 5,00 m</output></div>
           <div class="mruv-event-log"><h3>Eventos das fotocélulas</h3><ol id="mruv-events"><li>Nenhum cruzamento registrado nesta execução.</li></ol></div>
         </section>

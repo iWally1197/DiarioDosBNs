@@ -8,12 +8,12 @@
   <meta name="description" content="Laboratório interativo 2D e 3D de indução eletromagnética: fluxo magnético e lei de Faraday.">
   <title>Indução eletromagnética — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=physics-lab-pilot-20261011">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
   <link rel="stylesheet" href="physics-faraday.css?v=fullscreen-menu-20261011&previous=physics-lab-pilot-20261011">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
-  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
   <script type="module" src="physics-faraday.js?v=loop-long-20261011-1"></script>
-</head>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
@@ -46,8 +46,8 @@
           </div>
         </div>
         <p class="faraday-help" id="faraday-help">Vista 2D: projeção da espira e direção do campo. Selecione Vista 3D para girar a perspectiva com o mouse ou toque.</p>
-        <canvas id="faraday-scene" tabindex="0" role="img" aria-label="Animação da rotação de uma espira entre os polos de um ímã"></canvas>
-        <div class="faraday-readouts" aria-live="polite">
+        <canvas id="faraday-scene" tabindex="0" role="img" aria-label="Animação da rotação de uma espira entre os polos de um ímã" aria-describedby="faraday-help faraday-readouts"></canvas>
+        <div class="faraday-readouts" id="faraday-readouts" aria-live="off">
           <div><span>Tempo</span><b id="faraday-time">0,00 s</b></div>
           <div><span>Ângulo da normal</span><b id="faraday-angle">0°</b></div>
           <div><span>Fluxo por espira</span><b id="faraday-flux">0 Wb</b></div>

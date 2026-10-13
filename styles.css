@@ -6,7 +6,7 @@
   --surface-2: #131f32;
   --text: #f4f5f8;
   --muted: #9aa6b9;
-  --subtle: #6b7890;
+  --subtle: #8793a6;
   --line: rgba(206,218,240,.12);
   --gold: #d6b87a;
   --gold-bright: #ead4a2;
@@ -27,9 +27,9 @@
   --surface-2: #f2f4f9;
   --text: #111b2d;
   --muted: #516078;
-  --subtle: #728098;
+  --subtle: #566174;
   --line: rgba(34,49,76,.13);
-  --gold: #9b762e;
+  --gold: #83611f;
   --gold-bright: #7c5d20;
   --blue: #345fa6;
   --shadow: 0 20px 55px rgba(37,51,77,.09);
@@ -41,7 +41,8 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 92px;
+  scroll-padding-top: 100px;
+  scroll-padding-bottom: 100px;
 }
 
 body {
@@ -88,7 +89,7 @@ button {
   position: fixed;
   top: 12px;
   left: 12px;
-  z-index: 20;
+  z-index: 10050;
   padding: 10px 16px;
   transform: translateY(-160%);
   background: var(--gold);
@@ -3278,3 +3279,40 @@ a.button:not(.button-primary):not(.button-danger) { color: var(--text); }
 .admin-lab-validation__item span,.admin-lab-validation-progress { color:var(--muted); overflow-wrap:anywhere; }
 .admin-lab-validation__item.is-valid strong { color:#a8e4bc; }
 .admin-lab-validation__item.has-error strong { color:#ff9a9a; }
+
+
+/* Ajustes de acessibilidade: contraste, alvos de toque e conteúdo focalizado. */
+body :is(button, .button, input[type="button"], input[type="submit"], input[type="reset"]) {
+  min-height: 44px !important;
+}
+body input[type="checkbox"], body input[type="radio"] {
+  min-width: 20px;
+  min-height: 20px;
+  accent-color: var(--gold);
+}
+body input:not([type="checkbox"]):not([type="radio"]), body select, body textarea {
+  border-color: color-mix(in srgb, var(--text) 55%, var(--bg)) !important;
+}
+body :focus-visible {
+  scroll-margin-block: 96px;
+}
+:target { scroll-margin-top: 100px; }
+@media (prefers-contrast: more) {
+  body a { text-decoration: underline; text-underline-offset: .14em; }
+  body :focus-visible { outline-width: 4px; }
+}
+@media (forced-colors: active) {
+  body::before { display: none !important; }
+  body :focus-visible { outline-color: Highlight; }
+  body button, body input, body select, body textarea {
+    border-color: ButtonText !important;
+    forced-color-adjust: auto;
+  }
+  .skip-link { color: CanvasText; background: Highlight; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  body { scroll-behavior: auto !important; }
+}
+
+body:has(:fullscreen) .a11y-launcher { visibility: hidden; pointer-events: none; }

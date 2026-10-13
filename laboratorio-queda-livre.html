@@ -8,12 +8,12 @@
   <meta name="description" content="Compare massas em uma queda livre ideal com animação, gráfico, referencial e controles de altura e gravidade.">
   <title>Queda livre — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=freefall-20261011-1">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
   <link rel="stylesheet" href="physics-freefall.css?v=fullscreen-menu-20261011&previous=freefall-20261011-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
-  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
   <script type="module" src="physics-freefall.js?v=loop-long-20261011-1"></script>
-</head>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
@@ -45,9 +45,9 @@
             <button class="button button-outline" type="button" id="freefall-panel-toggle" aria-controls="freefall-controls" aria-expanded="false" hidden>Gráficos e parâmetros</button><button class="button button-outline" type="button" data-fullscreen aria-pressed="false">Tela cheia</button>
           </div>
         </div>
-        <canvas id="freefall-scene" role="img" aria-label="Dois objetos de massas diferentes caem da mesma altura em um referencial fixo no solo." tabindex="0"></canvas>
-        <p class="freefall-scene-caption">Referencial: solo. O eixo vertical positivo aponta para baixo. Sem resistência do ar, as massas não mudam a queda.</p>
-        <div class="freefall-readouts" aria-live="polite">
+        <canvas id="freefall-scene" role="img" aria-label="Dois objetos de massas diferentes caem da mesma altura em um referencial fixo no solo." aria-describedby="freefall-scene-description freefall-readouts" tabindex="0"></canvas>
+        <p class="freefall-scene-caption" id="freefall-scene-description">Referencial: solo. O eixo vertical positivo aponta para baixo. Sem resistência do ar, as massas não mudam a queda.</p>
+        <div class="freefall-readouts" id="freefall-readouts" aria-live="off">
           <div><span>Tempo</span><b id="freefall-time">0,00 s</b></div>
           <div><span>Altura sobre o solo</span><b id="freefall-height">20,00 m</b></div>
           <div><span>Velocidade para baixo</span><b id="freefall-velocity">0,00 m/s</b></div>

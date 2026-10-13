@@ -189,7 +189,14 @@ function updateControlText() {
 }
 
 function updateModeUI() {
-  document.querySelectorAll("[data-mode]").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.mode === state.mode)));
+  const tabs = [...document.querySelectorAll(".magnet-modes [role=tab]")];
+  tabs.forEach((button) => {
+    const selected = button.dataset.mode === state.mode;
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  });
+  const selectedTab = tabs.find((button) => button.dataset.mode === state.mode);
+  if (selectedTab) byId("magnet-workspace").setAttribute("aria-labelledby", selectedTab.id);
   byId("permanent-controls").hidden = !["permanent", "interaction", "field"].includes(state.mode);
   byId("coil-controls").hidden = !state.coilEnabled;
   byId("field-controls").hidden = state.mode !== "field";
@@ -197,6 +204,7 @@ function updateModeUI() {
   document.querySelectorAll(".magnet-secondary-control").forEach((node) => { node.hidden = state.mode !== "interaction"; });
   document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; });
   byId("magnet-graphs").hidden = state.mode !== "graphs";
+  syncKeyboardPositionControls();
   const titles = { permanent: "Ímã permanente", electromagnet: "Eletroímã", field: "Campo magnético", interaction: "Interação entre ímãs", graphs: "Experimentos e gráficos" };
   const descriptions = {
     permanent: "Arraste o ímã, a bússola ou o sensor. Você também pode inserir uma bobina e esferas metálicas para observar a interação magnética.",
@@ -240,6 +248,110 @@ function updateModeUI() {
     state.showCoilSource = byId("show-coil-source").checked;
   }
 }
+
+function positionableObjects() {
+  const objects = [
+    { value: "sensor", label: "Sensor digital", type: "sensor", point: state.sensor },
+    { value: "magnet-1", label: "Ímã permanente", type: "magnet", index: 0, point: state.magnet }
+  ];
+  if (state.mode === "interaction") objects.push({ value: "magnet-2", label: "Segundo ímã", type: "magnet", index: 1, point: state.secondMagnet });
+  if (state.coilEnabled) objects.push({ value: "coil", label: "Bobina", type: "coil", point: state.coil });
+  state.compasses.forEach((point, index) => objects.push({ value: `compass-${index}`, label: `Bússola ${index + 1}`, type: "compass", index, point }));
+  state.metalBalls.forEach((point, index) => objects.push({ value: `metal-${index}`, label: `Bolinha de metal ${index + 1}`, type: "metal", index, point }));
+  if (state.coilEnabled && state.powerCableEnabled) {
+    objects.push({ value: "power-plug", label: "Plugue do eletroímã", type: "power-plug", point: state.powerPlug || plugNearCoil() });
+  }
+  return objects;
+}
+
+function syncKeyboardPositionControls() {
+  const select = byId("magnet-position-target");
+  if (!select) return;
+  const objects = positionableObjects();
+  const signature = objects.map(({ value, label }) => `${value}:${label}`).join("|");
+  const previous = select.value;
+  if (select.dataset.options !== signature) {
+    select.replaceChildren(...objects.map(({ value, label }) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      return option;
+    }));
+    select.dataset.options = signature;
+  }
+  if (objects.some((object) => object.value === previous)) select.value = previous;
+  else if (objects.length) select.value = objects[0].value;
+  const object = objects.find((item) => item.value === select.value) || objects[0];
+  const x = byId("magnet-position-x"), y = byId("magnet-position-y");
+  if (!object || !x || !y) return;
+  x.value = String(object.point.x);
+  y.value = String(object.point.y);
+  byId("magnet-position-x-value").textContent = `${formatter(2).format(object.point.x)} m`;
+  byId("magnet-position-y-value").textContent = `${formatter(2).format(object.point.y)} m`;
+}
+
+function selectedPositionObject() {
+  return positionableObjects().find((object) => object.value === byId("magnet-position-target").value) || null;
+}
+
+function applyKeyboardPosition(event) {
+  const object = selectedPositionObject();
+  if (!object) return;
+  const movingX = event.currentTarget.id === "magnet-position-x";
+  const x = clamp(movingX ? Number(byId("magnet-position-x").value) : object.point.x, -0.37, 0.37);
+  const y = clamp(movingX ? object.point.y : Number(byId("magnet-position-y").value), -0.23, 0.23);
+  const status = byId("magnet-position-status");
+  if (object.type === "magnet" && state.mode === "interaction") {
+    const other = object.index === 0 ? state.secondMagnet : state.magnet;
+    if (magnetPrismsOverlap(other, makeMagnet({ ...object.point, x, y }))) {
+      status.textContent = "Essa posição faria os ímãs se sobreporem. Escolha outra posição.";
+      syncKeyboardPositionControls();
+      return;
+    }
+  }
+  object.point.x = x;
+  object.point.y = y;
+  if (object.type === "metal") { object.point.vx = 0; object.point.vy = 0; }
+  if (object.type === "coil") state.coilVelocity = { x: 0, y: 0, angle: 0 };
+  if (object.type === "magnet" && state.mode === "interaction") state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  if (object.type === "compass") state.selectedCompass = object.index;
+  if (object.type === "metal") state.selectedMetalBall = object.index;
+  if (object.type === "power-plug") {
+    state.powerPlug = object.point;
+    const closeToOutlet = Math.hypot(x - POWER_OUTLET_POSITION.x, y - POWER_OUTLET_POSITION.y) <= 0.065;
+    state.coilConnected = Boolean(state.powerOutletEnabled && closeToOutlet);
+    state.coilPowerRequested = false;
+    syncSimulationLoop();
+  }
+  syncKeyboardPositionControls();
+  queueDraw();
+}
+
+byId("magnet-position-target").addEventListener("change", syncKeyboardPositionControls);
+byId("magnet-position-x").addEventListener("input", applyKeyboardPosition);
+byId("magnet-position-y").addEventListener("input", applyKeyboardPosition);
+byId("magnet-position-x").addEventListener("change", () => {
+  const object = selectedPositionObject();
+  if (object) byId("magnet-position-status").textContent = `${object.label}: posição horizontal ${formatter(2).format(object.point.x)} m.`;
+});
+byId("magnet-position-y").addEventListener("change", () => {
+  const object = selectedPositionObject();
+  if (object) byId("magnet-position-status").textContent = `${object.label}: posição vertical ${formatter(2).format(object.point.y)} m.`;
+});
+
+document.querySelectorAll(".magnet-modes [role=tab]").forEach((tab) => tab.addEventListener("keydown", (event) => {
+  const tabs = [...document.querySelectorAll(".magnet-modes [role=tab]")];
+  const index = tabs.indexOf(tab);
+  let next = index;
+  if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+  else if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+  else if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = tabs.length - 1;
+  else return;
+  event.preventDefault();
+  tabs[next].focus();
+  tabs[next].click();
+}));
 
 function interactionSummary() {
   const result = state.interactionForce || magnetInteractionForceTorque(
@@ -935,7 +1047,7 @@ function endDrag(event) {
     state.powerPlug = state.coilConnected ? { ...POWER_OUTLET_POSITION } : (state.powerPlug || plugNearCoil());
     state.coilPowerRequested = false;
   }
-  drag = null; canvas.classList.remove("is-dragging"); syncSimulationLoop(); queueDraw();
+  drag = null; canvas.classList.remove("is-dragging"); syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 }
 
 for (const button of document.querySelectorAll("[data-mode]")) button.addEventListener("click", () => {
@@ -968,7 +1080,7 @@ byId("coil-toggle").addEventListener("click", () => {
     if (state.mode === "electromagnet") { state.coil.core = true; state.powerOutletEnabled = true; state.powerCableEnabled = true; }
   }
   if (state.mode === "field") state.showCoilSource = state.coilEnabled;
-  syncSimulationLoop(); queueDraw();
+  syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
 byId("power-outlet-toggle").addEventListener("click", () => {
   state.powerOutletEnabled = !state.powerOutletEnabled;
@@ -980,7 +1092,7 @@ byId("power-cable-toggle").addEventListener("click", () => {
   state.powerCableEnabled = !state.powerCableEnabled;
   if (state.powerCableEnabled) { state.powerPlug = plugNearCoil(); state.coilConnected = false; }
   else { state.coilConnected = false; state.coilPowerRequested = false; }
-  syncSimulationLoop(); queueDraw();
+  syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
 byId("electromagnet-power-toggle").addEventListener("click", () => {
   if (!state.coilEnabled || !state.powerOutletEnabled || !state.powerCableEnabled || !state.coilConnected) return;
@@ -1015,7 +1127,7 @@ byId("second-magnet-toggle").addEventListener("click", () => {
   updateModeUI(); syncSimulationLoop(); queueDraw();
 });
 byId("add-metal-ball").addEventListener("click", () => {
-  if (state.metalBalls.length >= 8) { byId("sensor-status").textContent = "O laboratório permite até oito esferas metálicas."; return; }
+  if (state.metalBalls.length >= 8) { byId("sensor-action-status").textContent = "O laboratório permite até oito esferas metálicas."; return; }
   const index = state.metalBalls.length;
   state.metalBalls.push({
     x: clamp(state.magnet.x - state.magnet.length / 2 - 0.04 - Math.floor(index / 3) * 0.035, -0.34, 0.34),
@@ -1023,13 +1135,14 @@ byId("add-metal-ball").addEventListener("click", () => {
     radius: 0.012, vx: 0, vy: 0
   });
   state.selectedMetalBall = state.metalBalls.length - 1;
-  syncSimulationLoop(); queueDraw();
+  byId("sensor-action-status").textContent = "";
+  syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
 byId("remove-metal-ball").addEventListener("click", () => {
   if (state.selectedMetalBall < 0 || !state.metalBalls.length) return;
   state.metalBalls.splice(state.selectedMetalBall, 1);
   state.selectedMetalBall = state.metalBalls.length ? Math.min(state.selectedMetalBall, state.metalBalls.length - 1) : -1;
-  syncSimulationLoop(); queueDraw();
+  syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
 byId("sensor-x").addEventListener("input", (e) => { state.sensor.x = Number(e.target.value); queueDraw(); });
 byId("sensor-y").addEventListener("input", (e) => { state.sensor.y = Number(e.target.value); queueDraw(); });
@@ -1055,8 +1168,8 @@ byId("reduce-motion").addEventListener("change", (event) => {
   syncSimulationLoop(); queueDraw();
 });
 for (const [id, key] of [["show-lines", "showLines"], ["show-vectors", "showVectors"], ["show-heatmap", "showHeatmap"], ["show-current", "showCurrent"], ["show-grid", "showGrid"], ["show-numbers", "showNumbers"], ["show-interior", "showInterior"], ["earth-compass", "earth"], ["earth-field", "earth"], ["show-magnet-source", "showMagnetSource"], ["show-coil-source", "showCoilSource"]]) byId(id).addEventListener("change", (e) => { state[key] = e.target.checked; queueDraw(); });
-byId("add-compass").addEventListener("click", () => { if (state.compasses.length >= 5) { byId("sensor-status").textContent = "O laboratório permite até cinco bússolas simultâneas."; return; } state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; queueDraw(); });
-byId("remove-compass").addEventListener("click", () => { if (!state.compasses.length) return; state.compasses.splice(state.selectedCompass, 1); state.selectedCompass = Math.max(0, Math.min(state.selectedCompass, state.compasses.length - 1)); queueDraw(); });
+byId("add-compass").addEventListener("click", () => { if (state.compasses.length >= 5) { byId("sensor-action-status").textContent = "O laboratório permite até cinco bússolas simultâneas."; return; } state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; byId("sensor-action-status").textContent = ""; syncKeyboardPositionControls(); queueDraw(); });
+byId("remove-compass").addEventListener("click", () => { if (!state.compasses.length) return; state.compasses.splice(state.selectedCompass, 1); state.selectedCompass = Math.max(0, Math.min(state.selectedCompass, state.compasses.length - 1)); syncKeyboardPositionControls(); queueDraw(); });
 byId("reset-lab").addEventListener("click", () => { state = initial(); graphComparison = null; chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; updateModeUI(); syncSimulationLoop(); queueDraw(); });
 byId("complexity-toggle").addEventListener("click", (e) => { state.advanced = !state.advanced; e.currentTarget.setAttribute("aria-pressed", String(state.advanced)); e.currentTarget.textContent = state.advanced ? "Modo básico" : "Modo avançado"; document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; }); });
 byId("learning-toggle").addEventListener("click", (e) => { const body = byId("learning-body"), collapsed = !body.classList.contains("is-collapsed"); body.classList.toggle("is-collapsed", collapsed); e.currentTarget.setAttribute("aria-expanded", String(!collapsed)); e.currentTarget.textContent = collapsed ? "Mostrar detalhes" : "Ocultar detalhes"; });
@@ -1080,7 +1193,7 @@ canvas.addEventListener("pointermove", moveDrag);
 canvas.addEventListener("pointerup", endDrag);
 canvas.addEventListener("pointercancel", endDrag);
 canvas.addEventListener("keydown", (event) => {
-  const step = event.shiftKey ? 0.01 : 0.01;
+  const step = event.shiftKey ? 0.05 : 0.01;
   if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
   event.preventDefault();
   const target = event.shiftKey && state.compasses.length ? state.compasses[state.selectedCompass] : state.sensor;
@@ -1109,7 +1222,7 @@ document.addEventListener("pointerdown", (event) => {
   if (!actionMenuPanel.hidden && !event.target.closest(".magnet-action-menu")) setActionMenuOpen(false);
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !actionMenuPanel.hidden) setActionMenuOpen(false);
+  if (event.key === "Escape" && !actionMenuPanel.hidden) { setActionMenuOpen(false); actionMenuButton.focus(); }
 });
 const workspace = byId("magnet-workspace");
 const controlsPanel = document.querySelector(".magnet-controls");

@@ -8,12 +8,12 @@
   <meta name="description" content="Laboratório interativo para explorar ímãs, eletroímãs, bússolas e o campo magnético.">
   <title>Ímãs e Eletroímãs — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=magnetismo-20261012-7">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
   <link rel="stylesheet" href="laboratorio-magnetismo.css?v=magnetismo-20261012-7">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
-  <script src="quick-menu.js?v=quick-access-20261008" defer></script>
+  <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
   <script type="module" src="laboratorio-magnetismo.js?v=magnetismo-20261012-7"></script>
-</head>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
@@ -32,15 +32,15 @@
       <p class="magnet-model-note"><strong>Modelo 2D:</strong> os valores são calculados pelo mesmo modelo que desenha o campo. A visualização usa projeção no plano e indica suas aproximações.</p>
     </section>
 
-    <nav class="magnet-modes" role="tablist" aria-label="Modos do laboratório">
-      <button type="button" role="tab" data-mode="permanent" aria-selected="true">Ímã permanente</button>
-      <button type="button" role="tab" data-mode="electromagnet" aria-selected="false">Eletroímã</button>
-      <button type="button" role="tab" data-mode="field" aria-selected="false">Campo magnético</button>
-      <button type="button" role="tab" data-mode="interaction" aria-selected="false">Interação entre ímãs</button>
-      <button type="button" role="tab" data-mode="graphs" aria-selected="false">Experimentos e gráficos</button>
+    <nav class="magnet-modes" role="tablist" aria-label="Modos do laboratório" aria-orientation="horizontal">
+      <button type="button" id="mode-tab-permanent" role="tab" data-mode="permanent" aria-controls="magnet-workspace" aria-selected="true" tabindex="0">Ímã permanente</button>
+      <button type="button" id="mode-tab-electromagnet" role="tab" data-mode="electromagnet" aria-controls="magnet-workspace" aria-selected="false" tabindex="-1">Eletroímã</button>
+      <button type="button" id="mode-tab-field" role="tab" data-mode="field" aria-controls="magnet-workspace" aria-selected="false" tabindex="-1">Campo magnético</button>
+      <button type="button" id="mode-tab-interaction" role="tab" data-mode="interaction" aria-controls="magnet-workspace" aria-selected="false" tabindex="-1">Interação entre ímãs</button>
+      <button type="button" id="mode-tab-graphs" role="tab" data-mode="graphs" aria-controls="magnet-workspace" aria-selected="false" tabindex="-1">Experimentos e gráficos</button>
     </nav>
 
-    <section id="magnet-workspace" class="magnet-workspace" aria-label="Área de experimentação">
+    <section id="magnet-workspace" class="magnet-workspace" role="tabpanel" tabindex="0" aria-labelledby="mode-tab-permanent">
       <div class="magnet-scene-column">
         <div class="magnet-scene-toolbar">
           <p id="mode-description" aria-live="polite">Arraste o ímã, a bússola ou o sensor. Gire o ímã pelos controles.</p>
@@ -58,7 +58,7 @@
                   <input id="induction-load" type="range" min="1" max="100" step="1" value="10">
                 </label>
                 <button type="button" class="button button-outline" id="energy-meter-reset" disabled>Limpar medição</button>
-                <p class="magnet-power-status" id="energy-meter-status" role="status" aria-live="polite">O medidor calcula a energia transferida para a carga quando o ímã move o fluxo na bobina.</p>
+                <p class="magnet-power-status" id="energy-meter-status" aria-live="off">O medidor calcula a energia transferida para a carga quando o ímã move o fluxo na bobina.</p>
                 <p class="magnet-simulation-status">Modelo: ε = −N·ΔΦ/Δt; E = ∫ε²/R dt. É uma estimativa de energia na carga resistiva, sem simular a frenagem elétrica do ímã.</p>
                 <button type="button" class="button button-outline" id="interaction-motion-toggle" aria-pressed="false">Simular movimento do ímã livre</button>
                 <button type="button" class="button button-outline" id="second-magnet-toggle" aria-pressed="false">＋ Adicionar segundo ímã</button>
@@ -76,14 +76,14 @@
           </div>
         </div>
         <div class="magnet-canvas-frame">
-          <canvas id="magnet-canvas" tabindex="0" aria-label="Cena 2D interativa do campo magnético. Use os controles para mover instrumentos e alterar as fontes."></canvas>
+          <canvas id="magnet-canvas" tabindex="0" aria-label="Cena 2D interativa do campo magnético." aria-describedby="magnet-scene-help sensor-status reading-magnitude reading-bx reading-by reading-bz reading-angle"></canvas>
         </div>
         <div class="magnet-legend" aria-label="Legenda"><span><i class="legend-n"></i> Polo norte magnético</span><span><i class="legend-s"></i> Polo sul magnético</span><span><i class="legend-field"></i> Campo: direção e sentido de B</span><span><i class="legend-grid"></i> Grade de coordenadas</span></div>
-        <p class="magnet-scene-help">Use mouse ou toque para mover ímãs, bobina, esferas, bússolas e sensor. Use “Tela cheia” para ampliar a cena e “Pausar simulação” para congelar juntos os movimentos físicos.</p>
+        <p class="magnet-scene-help" id="magnet-scene-help">Use mouse ou toque para mover os objetos. Para posicioná-los sem mouse, escolha um item em “Posicionar objetos pelo teclado” e ajuste as posições horizontal e vertical com as setas. As setas do teclado na cena movem o sensor; Shift + setas movem a bússola selecionada.</p>
       </div>
 
       <aside class="magnet-controls" aria-label="Controles do experimento">
-        <div class="magnet-control-header"><div><span class="section-kicker">CONTROLES</span><h2 id="controls-title">Ímã permanente</h2></div><button type="button" class="button button-outline" id="complexity-toggle" aria-pressed="false">Modo avançado</button></div>
+        <div class="magnet-control-header"><div><span class="section-kicker">CONTROLES</span><h2 id="controls-title">Ímã permanente</h2></div><button type="button" class="button button-outline" id="complexity-toggle" aria-pressed="false">Modo avançado</button></div>\n    <fieldset class="magnet-control-group magnet-keyboard-position"><legend>Posicionar objetos pelo teclado</legend><label for="magnet-position-target">Objeto</label><select id="magnet-position-target"></select><label for="magnet-position-x">Posição horizontal <output id="magnet-position-x-value">0,18 m</output><input id="magnet-position-x" type="range" min="-0.37" max="0.37" step="0.01" value="0.18"></label><label for="magnet-position-y">Posição vertical <output id="magnet-position-y-value">0,10 m</output><input id="magnet-position-y" type="range" min="-0.23" max="0.23" step="0.01" value="0.10"></label><p id="magnet-position-status" class="magnet-control-note" role="status" aria-live="polite">Selecione um objeto e use as setas nos controles de posição.</p></fieldset>
 
         <fieldset class="magnet-control-group" id="permanent-controls"><legend>Ímã de barra</legend>
           <label for="magnet-angle">Orientação <output id="magnet-angle-value">0°</output><input id="magnet-angle" type="range" min="-180" max="180" step="1" value="0"></label>
@@ -148,7 +148,7 @@
     </section>
 
     <section class="magnet-readings" aria-label="Leituras do magnetômetro">
-      <div class="magnet-reading-heading"><div><span class="section-kicker">MAGNETÔMETRO</span><h2>Campo no sensor</h2></div><p id="sensor-status" role="status" aria-live="polite">Leitura calculada do modelo.</p></div>
+      <div class="magnet-reading-heading"><div><span class="section-kicker">MAGNETÔMETRO</span><h2>Campo no sensor</h2></div><p id="sensor-status" aria-live="off">Leitura calculada do modelo.</p><p id="sensor-action-status" class="magnet-control-note" role="status" aria-live="polite"></p></div>
       <div class="magnet-reading-grid">
         <article><span>Intensidade |B|</span><strong id="reading-magnitude">—</strong></article>
         <article><span>Componente Bx</span><strong id="reading-bx">—</strong></article>
