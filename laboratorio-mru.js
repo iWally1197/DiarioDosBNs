@@ -164,11 +164,6 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   function renderObjects(){
     const all=state.carts.concat(state.fixtures);
     $("mru-object-list").innerHTML=all.map(item=>'<li><button type="button" data-select-id="'+esc(item.id)+'" aria-current="'+String(item.id===state.selectedId)+'" aria-pressed="'+String(state.selectedIds.includes(item.id))+'"><span class="mru-object-swatch" style="--swatch:'+validColor(item.color,"#d6b87a")+'"></span><span>'+esc(item.name)+'<small> · '+esc(names[item.kind]||"Objeto")+"</small></span><small>"+(isCart(item)?fmt(item.v)+" m/s":"x = "+fmt(item.x)+" m")+"</small></button></li>").join("")||'<li class="mru-muted">Adicione um carrinho para começar.</li>';
-    const selectedItems=state.selectedIds.map(id=>entity(id)).filter(Boolean);
-    const removableCount=state.selectedIds.filter(id=>state.fixtures.some(item=>item.id===id)||(state.carts.some(car=>car.id===id)&&state.carts.length>1)).length;
-    const sceneDelete=$("mru-scene-delete"),sceneDeleteLabel=$("mru-scene-delete-label");
-    if(sceneDelete){sceneDelete.hidden=!item;sceneDelete.disabled=!removableCount;sceneDelete.setAttribute("aria-label",removableCount?"Excluir "+(selectedItems.length>1?selectedItems.length+" objetos selecionados":item.name):"O último carrinho não pode ser removido");}
-    if(sceneDeleteLabel)sceneDeleteLabel.textContent=selectedItems.length>1?selectedItems.length+" objetos selecionados":item?item.name+" selecionado":"Selecione um objeto";
     const item=entity();$("mru-remove").disabled=!state.selectedIds.length||state.selectedIds.every(id=>state.carts.some(car=>car.id===id)&&state.carts.length===1);
     $("mru-duplicate").disabled=!state.selectedIds.length;$("mru-restore-object").disabled=!item;
     $("mru-layer-up").disabled=!item||isCart(item);$("mru-layer-down").disabled=!item||isCart(item);
@@ -189,10 +184,10 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
     html+='<label class="mru-inline-check full"><input class="mru-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mru-inline-check full"><input class="mru-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Altere os campos e pressione Enter ou clique em Aplicar para atualizar a animação.</p><div class="mru-edit-buttons"><button id="mru-prop-apply" class="button button-primary" type="button">Aplicar na animação</button><button id="mru-prop-discard" class="button button-outline" type="button">Descartar alterações pendentes</button></div><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
+    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Pré-visualização aplicada em tempo real. As alterações aparecem na pista, nas leituras e nos gráficos.</p><button id="mru-prop-discard" class="button button-outline" type="button">Descartar edição deste objeto</button><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mru-properties").innerHTML=html+actionMarkup;
     const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], actionBox=$("mru-edit-actions"), feedback=$("mru-edit-feedback");
-    let draft=clone(item),lastFeedback="";
+    const original=clone(item),editBefore=capture();let draft=clone(item),editHistoryPushed=false,wasDirty=false,lastFeedback="";
     function updateDraft(field){
       const key=field.dataset.prop;if(!key)return false;
       let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
@@ -208,39 +203,41 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       }
       return true;
     }
+    function changedDraft(){return Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(original[key]));}
     function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
-    function fieldsAreValid(){
-      return !fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
-    }
-    function stage(field){
-      const valid=updateDraft(field),pending=Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(entity(editingId)?.[key]));
-      actionBox.hidden=false;
-      if(!valid||!fieldsAreValid()){showFeedback("Corrija os campos obrigatórios antes de aplicar.");return;}
-      showFeedback(pending?"Alteração pendente. Pressione Enter ou clique em Aplicar na animação.":"Nenhuma alteração pendente.");
-    }
-    function applyDraft(){
-      const active=document.activeElement;
-      if(active&&fields.includes(active))updateDraft(active);
-      if(!fieldsAreValid()){actionBox.hidden=false;showFeedback("Corrija os campos obrigatórios antes de aplicar.");const invalid=fields.find(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));invalid?.focus();return;}
+    function preview(){
       const target=entity(editingId);if(!target)return;
-      const changed=Object.keys(draft).some(key=>JSON.stringify(target[key])!==JSON.stringify(draft[key]));
-      if(!changed){actionBox.hidden=false;showFeedback("Nenhuma alteração pendente.");return;}
-      const physicalChanged=["x0","v"].some(key=>target[key]!==draft[key]);
-      historyPush();
-      Object.assign(target,clone(draft));
-      changedParameter(false);
-      actionBox.hidden=false;
-      showFeedback(physicalChanged?"Alterações aplicadas; movimento recalculado em t = "+fmt(state.time)+" s.":"Alterações aplicadas na animação, nas leituras e nos gráficos.");
-      renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+      const changed=changedDraft(),physicalChanged=["x0","v"].some(key=>target[key]!==draft[key]);
+      if(changed){
+        if(!editHistoryPushed){historyPush(editBefore);editHistoryPushed=true;}
+        Object.assign(target,clone(draft));
+        changedParameter(false);
+        actionBox.hidden=false;
+        if(!wasDirty){showFeedback(physicalChanged?"Condição atualizada; trajetória recalculada em t = "+fmt(state.time)+" s.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
+        renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+      }else{
+        const targetChanged=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));
+        if(targetChanged){
+          const physicalRestore=["x0","v"].some(key=>target[key]!==original[key]);
+          Object.assign(target,clone(original));changedParameter(false);
+          renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+        }
+        actionBox.hidden=true;wasDirty=false;showFeedback("Nenhuma alteração pendente neste objeto.");
+      }
     }
     fields.forEach(field=>{
-      field.addEventListener("input",()=>stage(field));field.addEventListener("change",()=>stage(field));
-      field.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();applyDraft();}});
+      const handle=()=>{
+        const valid=updateDraft(field);
+        const invalid=fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
+        if(!valid||invalid){actionBox.hidden=false;showFeedback("Pré-visualização pausada até que os campos obrigatórios tenham valores válidos.");return;}
+        preview();
+      };
+      field.addEventListener("input",handle);field.addEventListener("change",handle);
     });
-    $("mru-prop-apply").addEventListener("click",applyDraft);
     $("mru-prop-discard").addEventListener("click",()=>{
-      status("Alterações pendentes descartadas; os valores já aplicados foram mantidos.");
-      renderProperties();
+      draft=clone(original);
+      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));changedParameter(false);renderAll();}}
+      status("Edição do objeto descartada.");renderProperties();
     });
   }
   function renderDataTable(){
@@ -621,7 +618,7 @@ function renderMode(){
 
   $("mru-object-list").addEventListener("click",event=>{const button=event.target.closest("[data-select-id]");if(button)select(button.dataset.selectId,event.shiftKey);});
   $("mru-add-object").addEventListener("click",()=>addObject($("mru-add-type").value));
-  $("mru-duplicate").addEventListener("click",duplicateSelection);$("mru-remove").addEventListener("click",removeSelection);$("mru-scene-delete").addEventListener("click",removeSelection);
+  $("mru-duplicate").addEventListener("click",duplicateSelection);$("mru-remove").addEventListener("click",removeSelection);
   $("mru-restore-object").addEventListener("click",restoreSelected);$("mru-layer-up").addEventListener("click",()=>moveLayer(1));$("mru-layer-down").addEventListener("click",()=>moveLayer(-1));
   $("mru-clear-scene").addEventListener("click",clearScene);$("mru-undo").addEventListener("click",undo);$("mru-redo").addEventListener("click",redo);
   $("mru-play").addEventListener("click",()=>state.running?pause("Simulação pausada. O estado foi preservado."):play());
