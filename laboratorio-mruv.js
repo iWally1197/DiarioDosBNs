@@ -577,7 +577,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   });
   $("mruv-reset-config").addEventListener("click",()=>{
     if(!confirm("Restaurar a cena inicial? As alterações feitas nesta página serão substituídas."))return;
-    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();status("Configuração inicial restaurada.");
+    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();status("Configuração inicial restaurada.");
   });
   $("mruv-check-prediction").addEventListener("click",checkPrediction);
   $("mruv-teacher-reveal").addEventListener("click",()=>{state.teacherReveal=!state.teacherReveal;renderMode();});
@@ -613,5 +613,5 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   if("ResizeObserver"in window){const observer=new ResizeObserver(drawCharts);document.querySelectorAll(".mruv-chart").forEach(node=>observer.observe(node));}
   const shared=new URLSearchParams(location.search).get("config");
   if(shared){try{importConfig(JSON.parse(shared));}catch(error){status("Configuração do link inválida: "+error.message,"error");}}
-  state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();
+  state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();
 })();

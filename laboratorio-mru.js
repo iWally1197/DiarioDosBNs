@@ -511,7 +511,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   });
   $("mru-reset-config").addEventListener("click",()=>{
     if(!confirm("Restaurar a cena inicial? As alterações feitas nesta página serão substituídas."))return;
-    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();status("Configuração inicial restaurada.");
+    pause();state.selectedId=null;state.selectedIds=[];state.mode="explore";state.teacherReveal=false;state.loop=true;undoStack.length=0;redoStack.length=0;applyConfig(initialConfig());state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();status("Configuração inicial restaurada.");
   });
   $("mru-check-prediction").addEventListener("click",checkPrediction);
   $("mru-teacher-reveal").addEventListener("click",()=>{state.teacherReveal=!state.teacherReveal;renderMode();});
@@ -542,6 +542,6 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   if("ResizeObserver"in window){const observer=new ResizeObserver(drawCharts);document.querySelectorAll(".mru-chart").forEach(node=>observer.observe(node));}
   const shared=new URLSearchParams(location.search).get("config");
   if(shared){try{importConfig(JSON.parse(shared));}catch(error){status("Configuração do link inválida: "+error.message,"error");}}
-  state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();
+  state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();
 })();
 
