@@ -168,8 +168,8 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-duplicate").disabled=!state.selectedIds.length;$("mru-restore-object").disabled=!item;
     $("mru-layer-up").disabled=!item||isCart(item);$("mru-layer-down").disabled=!item||isCart(item);
   }
-  function prop(id,label,value,type,attrs="",full=false){return '<div class="mru-property-field'+(full?" full":"")+'"><div class="mru-property-field-head"><label for="mru-prop-'+id+'">'+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mru-prop" id="mru-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
-  function toggleProp(id,label,checked,full=false){return '<div class="mru-property-toggle'+(full?" full":"")+'"><label class="mru-inline-check"><input class="mru-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
+  function prop(id,label,value,type,attrs="",full=false){return '<div class="mru-property-field'+(full?" full":"")+'"><div class="mru-property-field-head"><label for="mru-prop-'+id+'">'+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mru-prop" id="mru-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
+  function toggleProp(id,label,checked,full=false){return '<div class="mru-property-toggle'+(full?" full":"")+'"><label class="mru-inline-check"><input class="mru-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
   function renderProperties(){
     const item=entity();if(!item){$("mru-properties").innerHTML='<p class="mru-muted">Selecione um objeto para editar suas propriedades.</p>';return;}
     let html="<h3>"+esc(item.name)+"</h3><div class=\"mru-properties-grid\">"+prop("name","Nome",item.name,"text",'maxlength="42" required',true);
@@ -178,7 +178,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       html+=prop("color","Cor da carroceria",item.color,"color")+prop("wheelColor","Cor das rodas",item.wheelColor,"color");
       html+=prop("size","Tamanho visual",item.size,"range",'min="0.55" max="1.7" step="0.05"')+prop("wheelRadius","Raio da roda",item.wheelRadius,"number",'min="0.01" max="0.15" step="0.005"');
       html+=prop("opacity","Opacidade",item.opacity,"range",'min="0.2" max="1" step="0.05"');
-      html+='<div class="mru-property-field full"><div class="mru-property-field-head"><label for="mru-prop-kind">Aparência</label><button class="button button-outline mru-field-apply" data-apply-prop="kind" type="button" disabled aria-label="Aplicar alteração: Aparência">Aplicar</button></div><select class="mru-prop" id="mru-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option></select></div>';
+      html+='<div class="mru-property-field full"><div class="mru-property-field-head"><label for="mru-prop-kind">Aparência</label><button class="button button-outline mru-field-apply" data-apply-prop="kind" type="button" aria-label="Aplicar alteração: Aparência">Aplicar</button></div><select class="mru-prop" id="mru-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option></select></div>';
       for(const key of ["details","vector","trail"])html+=toggleProp(key,{details:"Detalhes",vector:"Vetor v",trail:"Trajetória"}[key],!!item[key]);
     }else{
       html+=prop("x","Posição fixa x",item.x,"number",'step="0.1" min="-1000000" max="1000000"')+prop("color","Cor",item.color,"color");
@@ -188,7 +188,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Altere um campo e confirme pelo botão Aplicar ao lado dele. Os outros campos pendentes ficam separados.</p><button id="mru-prop-discard" class="button button-outline" type="button" disabled>Descartar alterações pendentes</button><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mru-properties").innerHTML=html+actionMarkup;
     const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], applyButtons=[...$("mru-properties").querySelectorAll("[data-apply-prop]")], actionBox=$("mru-edit-actions"), feedback=$("mru-edit-feedback"), discardButton=$("mru-prop-discard");
-    let draft=clone(item),lastFeedback="";
+    let draft=clone(item),lastFeedback="";const lastEditedField=new Map();
     function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
     function keyFields(key){return fields.filter(field=>field.dataset.prop===key);}
     function validField(field){return !((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))&&!(field.dataset.prop==="name"&&!String(field.value).trim());}
@@ -209,18 +209,14 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       return [...new Set(applyButtons.map(button=>button.dataset.applyProp))].filter(key=>JSON.stringify(draft[key])!==JSON.stringify(target[key]));
     }
     function refreshApplyButtons(){
-      const pending=pendingKeys(), target=entity(editingId);
-      for(const button of applyButtons){
-        const key=button.dataset.applyProp, group=keyFields(key);
-        button.disabled=!target||JSON.stringify(draft[key])===JSON.stringify(target[key])||group.some(field=>!validField(field));
-      }
-      const invalid=fields.some(field=>!validField(field));
+      const pending=pendingKeys(), invalid=fields.some(field=>!validField(field));
       actionBox.hidden=!pending.length&&!invalid;
       discardButton.disabled=!pending.length;
       if(pending.length)showFeedback("Confirme cada campo pendente no botão correspondente.");
-      else if(!invalid){actionBox.hidden=true;}
+      else if(!invalid)actionBox.hidden=true;
     }
     function stage(field){
+      lastEditedField.set(field.dataset.prop,field);
       const valid=updateDraft(field);
       refreshApplyButtons();
       if(!valid||keyFields(field.dataset.prop).some(node=>!validField(node))){
@@ -230,9 +226,11 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     function applyProperty(key){
       const target=entity(editingId), group=keyFields(key);
       if(!target)return;
+      const source=lastEditedField.get(key)||group.find(field=>field.type!=="range")||group[0];
+      if(source)updateDraft(source);
       if(group.some(field=>!validField(field))){showFeedback("Corrija este campo antes de aplicar.");group.find(field=>!validField(field))?.focus();return;}
       const pending=JSON.stringify(draft[key])!==JSON.stringify(target[key]);
-      if(!pending){refreshApplyButtons();return;}
+      if(!pending){refreshApplyButtons();showFeedback("Esse campo não tem alteração pendente.");return;}
       const physicalChanged=["x0","v"].includes(key);
       historyPush();
       target[key]=clone(draft[key]);

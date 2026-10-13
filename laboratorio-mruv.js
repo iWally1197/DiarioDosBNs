@@ -191,9 +191,9 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     $("mruv-duplicate").disabled=!state.selectedIds.length;$("mruv-restore-object").disabled=!item;
     $("mruv-layer-up").disabled=!item||isCart(item);$("mruv-layer-down").disabled=!item||isCart(item);
   }
-  function prop(id,label,value,type,attrs="",full=false){return '<div class="mruv-property-field'+(full?" full":"")+'"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
-  function toggleProp(id,label,checked,full=false){return '<div class="mruv-property-toggle'+(full?" full":"")+'"><label class="mruv-inline-check"><input class="mruv-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
-  function parameterControl(id,label,value,min,max,step){const exactMin=id==="x0"?-1000000:id==="v0"?-100:-20,exactMax=id==="x0"?1000000:id==="v0"?100:20;return '<div class="mruv-property-field mruv-parameter-control"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="number" value="'+esc(value)+'" step="'+step+'" min="'+exactMin+'" max="'+exactMax+'" aria-label="'+label+' · valor preciso"><input class="mruv-prop" id="mruv-prop-'+id+'-range" data-prop="'+id+'" type="range" value="'+esc(value)+'" min="'+min+'" max="'+max+'" step="'+step+'" aria-label="'+label+' · ajuste deslizante"></div>';}
+  function prop(id,label,value,type,attrs="",full=false){return '<div class="mruv-property-field'+(full?" full":"")+'"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
+  function toggleProp(id,label,checked,full=false){return '<div class="mruv-property-toggle'+(full?" full":"")+'"><label class="mruv-inline-check"><input class="mruv-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
+  function parameterControl(id,label,value,min,max,step){const exactMin=id==="x0"?-1000000:id==="v0"?-100:-20,exactMax=id==="x0"?1000000:id==="v0"?100:20;return '<div class="mruv-property-field mruv-parameter-control"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="number" value="'+esc(value)+'" step="'+step+'" min="'+exactMin+'" max="'+exactMax+'" aria-label="'+label+' · valor preciso"><input class="mruv-prop" id="mruv-prop-'+id+'-range" data-prop="'+id+'" type="range" value="'+esc(value)+'" min="'+min+'" max="'+max+'" step="'+step+'" aria-label="'+label+' · ajuste deslizante"></div>';}
   function renderProperties(){
     const item=entity();if(!item){$("mruv-properties").innerHTML='<p class="mruv-muted">Selecione um objeto para editar suas propriedades.</p>';return;}
     let html="<h3>"+esc(item.name)+"</h3><div class=\"mruv-properties-grid\">"+prop("name","Nome",item.name,"text",'maxlength="42" required',true);
@@ -202,7 +202,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       html+=prop("color","Cor da carroceria",item.color,"color")+prop("wheelColor","Cor das rodas",item.wheelColor,"color");
       html+=prop("size","Tamanho visual",item.size,"range",'min="0.55" max="1.7" step="0.05"')+prop("wheelRadius","Raio da roda",item.wheelRadius,"number",'min="0.01" max="0.15" step="0.005"');
       html+=prop("opacity","Opacidade",item.opacity,"range",'min="0.2" max="1" step="0.05"');
-      html+='<div class="mruv-property-field full"><div class="mruv-property-field-head"><label for="mruv-prop-kind">Aparência</label><button class="button button-outline mruv-field-apply" data-apply-prop="kind" type="button" disabled aria-label="Aplicar alteração: Aparência">Aplicar</button></div><select class="mruv-prop" id="mruv-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option><option value="minimal-cart" '+(item.kind==="minimal-cart"?"selected":"")+'>Carrinho minimalista</option></select></div>';
+      html+='<div class="mruv-property-field full"><div class="mruv-property-field-head"><label for="mruv-prop-kind">Aparência</label><button class="button button-outline mruv-field-apply" data-apply-prop="kind" type="button" aria-label="Aplicar alteração: Aparência">Aplicar</button></div><select class="mruv-prop" id="mruv-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option><option value="minimal-cart" '+(item.kind==="minimal-cart"?"selected":"")+'>Carrinho minimalista</option></select></div>';
       for(const key of ["details","vector","vectorA","vectorD","trail","chartVisible"])html+=toggleProp(key,{details:"Detalhes",vector:"Vetor velocidade",vectorA:"Vetor aceleração",vectorD:"Vetor deslocamento",trail:"Trajetória",chartVisible:"Mostrar nos gráficos"}[key],item[key]!==false);
     }else{
       html+=prop("x","Posição fixa x",item.x,"number",'step="0.1" min="-1000000" max="1000000"')+prop("color","Cor",item.color,"color");
@@ -212,7 +212,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     const actionMarkup='<div class="mruv-edit-actions" id="mruv-edit-actions" hidden><p>Altere um campo e confirme pelo botão Aplicar ao lado dele. Os outros campos pendentes ficam separados.</p><button id="mruv-prop-discard" class="button button-outline" type="button" disabled>Descartar alterações pendentes</button><span id="mruv-edit-feedback" class="mruv-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mruv-properties").innerHTML=html+actionMarkup;
     const editingId=item.id, fields=[...$("mruv-properties").querySelectorAll(".mruv-prop")], applyButtons=[...$("mruv-properties").querySelectorAll("[data-apply-prop]")], actionBox=$("mruv-edit-actions"), feedback=$("mruv-edit-feedback"), discardButton=$("mruv-prop-discard");
-    let draft=clone(item),lastFeedback="";
+    let draft=clone(item),lastFeedback="";const lastEditedField=new Map();
     function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
     function keyFields(key){return fields.filter(field=>field.dataset.prop===key);}
     function validField(field){return !((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))&&!(field.dataset.prop==="name"&&!String(field.value).trim());}
@@ -233,18 +233,14 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       return [...new Set(applyButtons.map(button=>button.dataset.applyProp))].filter(key=>JSON.stringify(draft[key])!==JSON.stringify(target[key]));
     }
     function refreshApplyButtons(){
-      const pending=pendingKeys(), target=entity(editingId);
-      for(const button of applyButtons){
-        const key=button.dataset.applyProp, group=keyFields(key);
-        button.disabled=!target||JSON.stringify(draft[key])===JSON.stringify(target[key])||group.some(field=>!validField(field));
-      }
-      const invalid=fields.some(field=>!validField(field));
+      const pending=pendingKeys(), invalid=fields.some(field=>!validField(field));
       actionBox.hidden=!pending.length&&!invalid;
       discardButton.disabled=!pending.length;
       if(pending.length)showFeedback("Confirme cada campo pendente no botão correspondente.");
-      else if(!invalid){actionBox.hidden=true;}
+      else if(!invalid)actionBox.hidden=true;
     }
     function stage(field){
+      lastEditedField.set(field.dataset.prop,field);
       const valid=updateDraft(field);
       refreshApplyButtons();
       if(!valid||keyFields(field.dataset.prop).some(node=>!validField(node))){
@@ -254,9 +250,11 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     function applyProperty(key){
       const target=entity(editingId), group=keyFields(key);
       if(!target)return;
+      const source=lastEditedField.get(key)||group.find(field=>field.type!=="range")||group[0];
+      if(source)updateDraft(source);
       if(group.some(field=>!validField(field))){showFeedback("Corrija este campo antes de aplicar.");group.find(field=>!validField(field))?.focus();return;}
       const pending=JSON.stringify(draft[key])!==JSON.stringify(target[key]);
-      if(!pending){refreshApplyButtons();return;}
+      if(!pending){refreshApplyButtons();showFeedback("Esse campo não tem alteração pendente.");return;}
       const physicalChanged=["x0","v0","a"].includes(key);
       historyPush();
       target[key]=clone(draft[key]);
