@@ -164,6 +164,11 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   function renderObjects(){
     const all=state.carts.concat(state.fixtures);
     $("mru-object-list").innerHTML=all.map(item=>'<li><button type="button" data-select-id="'+esc(item.id)+'" aria-current="'+String(item.id===state.selectedId)+'" aria-pressed="'+String(state.selectedIds.includes(item.id))+'"><span class="mru-object-swatch" style="--swatch:'+validColor(item.color,"#d6b87a")+'"></span><span>'+esc(item.name)+'<small> · '+esc(names[item.kind]||"Objeto")+"</small></span><small>"+(isCart(item)?fmt(item.v)+" m/s":"x = "+fmt(item.x)+" m")+"</small></button></li>").join("")||'<li class="mru-muted">Adicione um carrinho para começar.</li>';
+    const selectedItems=state.selectedIds.map(id=>entity(id)).filter(Boolean);
+    const removableCount=state.selectedIds.filter(id=>state.fixtures.some(item=>item.id===id)||(state.carts.some(car=>car.id===id)&&state.carts.length>1)).length;
+    const sceneDelete=$("mru-scene-delete"),sceneDeleteLabel=$("mru-scene-delete-label");
+    if(sceneDelete){sceneDelete.hidden=!item;sceneDelete.disabled=!removableCount;sceneDelete.setAttribute("aria-label",removableCount?"Excluir "+(selectedItems.length>1?selectedItems.length+" objetos selecionados":item.name):"O último carrinho não pode ser removido");}
+    if(sceneDeleteLabel)sceneDeleteLabel.textContent=selectedItems.length>1?selectedItems.length+" objetos selecionados":item?item.name+" selecionado":"Selecione um objeto";
     const item=entity();$("mru-remove").disabled=!state.selectedIds.length||state.selectedIds.every(id=>state.carts.some(car=>car.id===id)&&state.carts.length===1);
     $("mru-duplicate").disabled=!state.selectedIds.length;$("mru-restore-object").disabled=!item;
     $("mru-layer-up").disabled=!item||isCart(item);$("mru-layer-down").disabled=!item||isCart(item);
@@ -618,7 +623,7 @@ function renderMode(){
 
   $("mru-object-list").addEventListener("click",event=>{const button=event.target.closest("[data-select-id]");if(button)select(button.dataset.selectId,event.shiftKey);});
   $("mru-add-object").addEventListener("click",()=>addObject($("mru-add-type").value));
-  $("mru-duplicate").addEventListener("click",duplicateSelection);$("mru-remove").addEventListener("click",removeSelection);
+  $("mru-duplicate").addEventListener("click",duplicateSelection);$("mru-remove").addEventListener("click",removeSelection);$("mru-scene-delete").addEventListener("click",removeSelection);
   $("mru-restore-object").addEventListener("click",restoreSelected);$("mru-layer-up").addEventListener("click",()=>moveLayer(1));$("mru-layer-down").addEventListener("click",()=>moveLayer(-1));
   $("mru-clear-scene").addEventListener("click",clearScene);$("mru-undo").addEventListener("click",undo);$("mru-redo").addEventListener("click",redo);
   $("mru-play").addEventListener("click",()=>state.running?pause("Simulação pausada. O estado foi preservado."):play());

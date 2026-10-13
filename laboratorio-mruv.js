@@ -187,6 +187,11 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   function renderObjects(){
     const all=state.carts.concat(state.fixtures);
     $("mruv-object-list").innerHTML=all.map(item=>'<li><button type="button" data-select-id="'+esc(item.id)+'" aria-current="'+String(item.id===state.selectedId)+'" aria-pressed="'+String(state.selectedIds.includes(item.id))+'"><span class="mruv-object-swatch" style="--swatch:'+validColor(item.color,"#d6b87a")+'"></span><span>'+esc(item.name)+'<small> · '+esc(names[item.kind]||"Objeto")+"</small></span><small>"+(isCart(item)?"v₀ "+fmt(item.v0)+" · a "+fmt(item.a):"x = "+fmt(item.x)+" m")+"</small></button></li>").join("")||'<li class="mruv-muted">Adicione um carrinho para começar.</li>';
+    const selectedItems=state.selectedIds.map(id=>entity(id)).filter(Boolean);
+    const removableCount=state.selectedIds.filter(id=>state.fixtures.some(item=>item.id===id)||(state.carts.some(car=>car.id===id)&&state.carts.length>1)).length;
+    const sceneDelete=$("mruv-scene-delete"),sceneDeleteLabel=$("mruv-scene-delete-label");
+    if(sceneDelete){sceneDelete.hidden=!item;sceneDelete.disabled=!removableCount;sceneDelete.setAttribute("aria-label",removableCount?"Excluir "+(selectedItems.length>1?selectedItems.length+" objetos selecionados":item.name):"O último carrinho não pode ser removido");}
+    if(sceneDeleteLabel)sceneDeleteLabel.textContent=selectedItems.length>1?selectedItems.length+" objetos selecionados":item?item.name+" selecionado":"Selecione um objeto";
     const item=entity();$("mruv-remove").disabled=!state.selectedIds.length||state.selectedIds.every(id=>state.carts.some(car=>car.id===id)&&state.carts.length===1);
     $("mruv-duplicate").disabled=!state.selectedIds.length;$("mruv-restore-object").disabled=!item;
     $("mruv-layer-up").disabled=!item||isCart(item);$("mruv-layer-down").disabled=!item||isCart(item);
@@ -679,7 +684,7 @@ function renderMode(){
 
   $("mruv-object-list").addEventListener("click",event=>{const button=event.target.closest("[data-select-id]");if(button)select(button.dataset.selectId,event.shiftKey);});
   $("mruv-add-object").addEventListener("click",()=>addObject($("mruv-add-type").value));
-  $("mruv-duplicate").addEventListener("click",duplicateSelection);$("mruv-remove").addEventListener("click",removeSelection);
+  $("mruv-duplicate").addEventListener("click",duplicateSelection);$("mruv-remove").addEventListener("click",removeSelection);$("mruv-scene-delete").addEventListener("click",removeSelection);
   $("mruv-restore-object").addEventListener("click",restoreSelected);$("mruv-layer-up").addEventListener("click",()=>moveLayer(1));$("mruv-layer-down").addEventListener("click",()=>moveLayer(-1));
   $("mruv-clear-scene").addEventListener("click",clearScene);$("mruv-undo").addEventListener("click",undo);$("mruv-redo").addEventListener("click",redo);
   $("mruv-play").addEventListener("click",()=>state.running?pause("Simulação pausada. O estado foi preservado."):play());
