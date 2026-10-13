@@ -462,7 +462,7 @@ async function renderAdminLaboratories(user) {
 }
 
 async function loadAdminLaboratoryRecords(root) {
-  const {laboratoryPublicationRecords,laboratoryPublicationSlugs}=await import('./laboratorio-publicacao.js?v=lab-publication-20261012-1');
+  const {laboratoryPublicationRecords,laboratoryPublicationSlugs}=await import('./laboratorio-publicacao.js?v=lab-publication-20261013-1');
   const {data:authData,error:authError}=await withDeadline(supabase.auth.getUser(),'A validação da conta de administrador demorou demais.');
   if(authError)throw authError;
   if(!authData.user?.id)throw new Error('Entre novamente na conta de administrador para gerenciar os laboratórios.');
@@ -475,7 +475,7 @@ async function loadAdminLaboratoryRecords(root) {
   const seeds=laboratoryPublicationRecords
     .filter((item)=>!existingSlugs.has(item.slug))
     .map((item)=>{
-      const seed={...item,is_published:false,created_by:authData.user.id};
+      const seed={...item,is_published:item.is_published===true,created_by:authData.user.id};
       delete seed.id;
       return seed;
     });

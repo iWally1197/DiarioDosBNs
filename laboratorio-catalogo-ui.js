@@ -1,5 +1,5 @@
 import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-20261012-3";
-import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261012-1";
+import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261013-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
@@ -19,6 +19,7 @@ function initializeCatalog() {
   const diagrams = {
     "lab-magnetic-field": '<path d="M23 30h38v18H23z"/><path class="secondary" d="M42 30v18M12 31c6-19 55-25 62 0M12 47c6 19 55 25 62 0M31 36h5m12 6h5"/>',
     "optics-reflection": '<path d="M51 12v52"/><path class="secondary" d="M12 39h36m0 0-7-6m7 6-7 6M51 21l21 18-21 18"/>',
+    "optics-concave-mirror": '<path d="M49 11q-22 27 0 54"/><path class="secondary" d="M9 23h32m0 0-8-6m8 6-8 6M9 53h32m0 0-8-6m8 6-8 6M41 23 27 38M41 53 27 38"/><circle cx="27" cy="38" r="3"/>',
     "optics-convex-mirror": '<path d="M48 12q-19 26 0 52"/><path class="secondary" d="M14 39h30m0 0-6-6m6 6-6 6M52 25l20 14-20 14"/>',
     "lens-diverging": '<path d="M36 13q7 25 0 50m12-50q-7 25 0 50"/><path class="secondary" d="M10 39h25m0 0-6-6m6 6-6 6M49 39h25m-25-12-11-8m11 32-11 8"/>',
     projectile: '<path d="M12 56 Q39 4 72 37"/><circle cx="12" cy="56" r="3"/><circle class="secondary" cx="72" cy="37" r="4"/><path class="secondary" d="M16 57h62M16 59v-8"/>',
