@@ -3316,3 +3316,14 @@ body :focus-visible {
 }
 
 body:has(:fullscreen) .a11y-launcher { visibility: hidden; pointer-events: none; }
+.admin-lab-state { align-items:center; gap:.3rem; }
+.admin-lab-state__icon { display:inline-grid; place-items:center; width:1rem; height:1rem; font-size:.9rem; font-weight:900; }
+.admin-lab-state.is-published { color:#b8f0c7; border-color:#488c5c; background:rgba(46,125,67,.18); }
+.admin-lab-state.is-unpublished { color:#f3d58f; border-color:#9a7835; background:rgba(154,120,53,.16); }
+html[data-theme="light"] .admin-lab-state.is-published { color:#175b2d; border-color:#4b8b5b; background:#e8f6eb; }
+html[data-theme="light"] .admin-lab-state.is-unpublished { color:#654a10; border-color:#9a7835; background:#fff4d8; }
+.admin-lab-visibility-guide { display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; padding:.9rem 1rem; margin:1rem 0; border:1px solid var(--line); border-radius:.75rem; background:var(--surface-2); }
+.admin-lab-visibility-guide > span { display:grid; justify-items:start; gap:.25rem; min-width:min(100%,17rem); }
+.admin-lab-visibility-guide small { color:var(--muted); line-height:1.5; }
+@media (max-width:640px) { .admin-lab-visibility-guide { display:grid; } }
+

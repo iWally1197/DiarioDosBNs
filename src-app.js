@@ -517,13 +517,13 @@ async function loadAdminLaboratoryRecords(root) {
       <td><input type="checkbox" data-admin-lab-select="${safeText(item.slug)}" aria-label="Selecionar ${safeText(item.title)}" ${selected.has(item.slug)?'checked':''} ${locked?'disabled':''}></td>
       <td><b>${safeText(item.title||'Sem título')}</b><small class="admin-user-detail">${safeText(item.slug||'')}</small></td>
       <td>${safeText(item.topic||'Sem categoria')}</td>
-      <td><span class="admin-lab-state ${item.is_published?'is-published':'is-unpublished'}">${item.is_published?'No ar':'Fora do ar'}</span></td>
-      <td><button class="button button-outline" type="button" data-admin-lab-action="${safeText(item.slug)}" ${locked?'disabled':''}>${item.is_published?'Retirar do ar':'Colocar no ar'}</button></td>
+      <td><span class="admin-lab-state ${item.is_published?'is-published':'is-unpublished'}"><span class="admin-lab-state__icon" aria-hidden="true">${item.is_published?'✓':'○'}</span>${item.is_published?'Visível para todos':'Oculto do catálogo'}</span></td>
+      <td><button class="button button-outline" type="button" data-admin-lab-action="${safeText(item.slug)}" ${locked?'disabled':''}>${item.is_published?'Ocultar do catálogo':'Publicar para todos'}</button></td>
     </tr>`).join('');
     root.innerHTML=`<div class="dashboard-cards admin-lab-stats">
       <article><b>${records.length}</b><span>registros cadastrados</span></article>
-      <article><b>${publishedCount}</b><span>publicados</span></article>
-      <article><b>${unpublishedCount}</b><span>fora do ar</span></article>
+      <article><b>${publishedCount}</b><span>visíveis para todos</span></article>
+      <article><b>${unpublishedCount}</b><span>ocultos do catálogo</span></article>
       <article><b>${selectedCount}</b><span>selecionados</span></article>
     </div>
     <section class="account-section">
@@ -531,13 +531,17 @@ async function loadAdminLaboratoryRecords(root) {
       <h2>Escolha quais conteúdos ficam no ar</h2>
       <p>Este painel controla individualmente os laboratórios da aba pública. O primeiro acesso cria no banco os registros de controle que estiverem faltando, preservando o estado inicial do catálogo; use Publicar para exibir os que estiverem fora do ar.</p>
       <p>Use “Validar laboratórios” para conferir o acesso de administrador, os registros no banco e se cada página de simulação está acessível.</p>
+      <div class="admin-lab-visibility-guide" role="group" aria-label="Legenda da visibilidade dos laboratórios">
+        <span><span class="admin-lab-state is-published"><span class="admin-lab-state__icon" aria-hidden="true">✓</span>Visível para todos</span><small>Aparece no catálogo público.</small></span>
+        <span><span class="admin-lab-state is-unpublished"><span class="admin-lab-state__icon" aria-hidden="true">○</span>Oculto do catálogo</span><small>Não aparece na lista pública; o status não bloqueia acesso por endereço direto.</small></span>
+      </div>
       <div class="admin-lab-toolbar">
         <label for="admin-lab-search">Buscar por nome ou tópico<input id="admin-lab-search" type="search" value="${safeText(search)}" placeholder="Ex.: MRU, óptica, ondas" autocomplete="off" ${locked?'disabled':''}></label>
         <label for="admin-lab-category">Categoria<select id="admin-lab-category" ${locked?'disabled':''}><option value="">Todas as categorias</option>${options}</select></label>
         <label for="admin-lab-publication">Situação<select id="admin-lab-publication" ${locked?'disabled':''}>
           <option value="all" ${publication==='all'?'selected':''}>Todas</option>
-          <option value="published" ${publication==='published'?'selected':''}>No ar</option>
-          <option value="unpublished" ${publication==='unpublished'?'selected':''}>Fora do ar</option>
+          <option value="published" ${publication==='published'?'selected':''}>Visível para todos</option>
+          <option value="unpublished" ${publication==='unpublished'?'selected':''}>Oculto do catálogo</option>
         </select></label>
       </div>
       <div class="admin-lab-actions">
@@ -545,13 +549,13 @@ async function loadAdminLaboratoryRecords(root) {
         <button class="button button-outline" type="button" data-select-visible ${locked||filtered.length===0?'disabled':''}>Adicionar resultados filtrados (${filtered.length})</button>
         <button class="button button-outline" type="button" data-clear-selection ${locked||selectedCount===0?'disabled':''}>Desmarcar seleção</button>
         <button class="button button-outline" type="button" data-validate-admin-labs ${locked?'disabled':''}>${validating?'Validando…':'Validar laboratórios'}</button>
-        <button class="button button-primary" type="button" data-set-publication="true" ${locked||selectedCount===0?'disabled':''}>${busy?'Salvando…':'Publicar selecionados'}</button>
-        <button class="button button-outline" type="button" data-set-publication="false" ${locked||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Retirar selecionados do ar'}</button>
+        <button class="button button-primary" type="button" data-set-publication="true" ${locked||selectedCount===0?'disabled':''}>${busy?'Salvando…':'Publicar para todos os selecionados'}</button>
+        <button class="button button-outline" type="button" data-set-publication="false" ${locked||selectedCount===0?'disabled':''}>${busy?'Aguarde…':'Ocultar selecionados do catálogo'}</button>
       </div>
       <p class="admin-lab-feedback" role="status" aria-live="polite" data-error="${messageIsError}">${safeText(message||`Mostrando ${filtered.length} de ${records.length} registros. A seleção atual inclui ${selectedCount}.`)}</p>
       ${validating?'<p class="admin-lab-validation-progress" role="status">Conferindo o acesso ao Supabase e os endereços das simulações…</p>':''}
       ${validationResults?'<section class="admin-lab-validation" aria-live="polite"><h3>Resultado da validação</h3><ul>'+validationResults.map((item)=>'<li class="admin-lab-validation__item '+(item.ok?'is-valid':'has-error')+'"><strong>'+(item.ok?'✓':'×')+' '+safeText(item.title)+'</strong><span>'+safeText(item.details)+'</span></li>').join('')+'</ul></section>':''}
-      <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Situação</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum laboratório corresponde aos filtros.</td></tr>'}</tbody></table></div>
+      <div class="table-scroll"><table class="admin-table"><thead><tr><th><span class="sr-only">Selecionar</span></th><th>Laboratório / animação</th><th>Categoria</th><th>Visibilidade</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum laboratório corresponde aos filtros.</td></tr>'}</tbody></table></div>
       <p class="privacy-note">A autorização também é conferida pelo Supabase. Somente uma sessão com papel de administrador ativo pode alterar o estado de publicação; a interface não é a barreira de segurança.</p>
     </section>`;
     if(focusId==='admin-lab-search'){
