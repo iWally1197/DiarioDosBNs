@@ -189,10 +189,10 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
     html+='<label class="mru-inline-check full"><input class="mru-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mru-inline-check full"><input class="mru-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Pré-visualização aplicada em tempo real. As alterações aparecem na pista, nas leituras e nos gráficos.</p><button id="mru-prop-discard" class="button button-outline" type="button">Descartar edição deste objeto</button><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
+    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Altere os campos e pressione Enter ou clique em Aplicar para atualizar a animação.</p><div class="mru-edit-buttons"><button id="mru-prop-apply" class="button button-primary" type="button">Aplicar na animação</button><button id="mru-prop-discard" class="button button-outline" type="button">Descartar alterações pendentes</button></div><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mru-properties").innerHTML=html+actionMarkup;
     const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], actionBox=$("mru-edit-actions"), feedback=$("mru-edit-feedback");
-    const original=clone(item),editBefore=capture();let draft=clone(item),editHistoryPushed=false,wasDirty=false,lastFeedback="";
+    let draft=clone(item),lastFeedback="";
     function updateDraft(field){
       const key=field.dataset.prop;if(!key)return false;
       let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
@@ -208,41 +208,39 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       }
       return true;
     }
-    function changedDraft(){return Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(original[key]));}
     function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
-    function preview(){
+    function fieldsAreValid(){
+      return !fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
+    }
+    function stage(field){
+      const valid=updateDraft(field),pending=Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(entity(editingId)?.[key]));
+      actionBox.hidden=false;
+      if(!valid||!fieldsAreValid()){showFeedback("Corrija os campos obrigatórios antes de aplicar.");return;}
+      showFeedback(pending?"Alteração pendente. Pressione Enter ou clique em Aplicar na animação.":"Nenhuma alteração pendente.");
+    }
+    function applyDraft(){
+      const active=document.activeElement;
+      if(active&&fields.includes(active))updateDraft(active);
+      if(!fieldsAreValid()){actionBox.hidden=false;showFeedback("Corrija os campos obrigatórios antes de aplicar.");const invalid=fields.find(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));invalid?.focus();return;}
       const target=entity(editingId);if(!target)return;
-      const changed=changedDraft(),physicalChanged=["x0","v"].some(key=>target[key]!==draft[key]);
-      if(changed){
-        if(!editHistoryPushed){historyPush(editBefore);editHistoryPushed=true;}
-        Object.assign(target,clone(draft));
-        changedParameter(false);
-        actionBox.hidden=false;
-        if(!wasDirty){showFeedback(physicalChanged?"Condição atualizada; trajetória recalculada em t = "+fmt(state.time)+" s.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
-        renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
-      }else{
-        const targetChanged=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));
-        if(targetChanged){
-          const physicalRestore=["x0","v"].some(key=>target[key]!==original[key]);
-          Object.assign(target,clone(original));changedParameter(false);
-          renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
-        }
-        actionBox.hidden=true;wasDirty=false;showFeedback("Nenhuma alteração pendente neste objeto.");
-      }
+      const changed=Object.keys(draft).some(key=>JSON.stringify(target[key])!==JSON.stringify(draft[key]));
+      if(!changed){actionBox.hidden=false;showFeedback("Nenhuma alteração pendente.");return;}
+      const physicalChanged=["x0","v"].some(key=>target[key]!==draft[key]);
+      historyPush();
+      Object.assign(target,clone(draft));
+      changedParameter(false);
+      actionBox.hidden=false;
+      showFeedback(physicalChanged?"Alterações aplicadas; movimento recalculado em t = "+fmt(state.time)+" s.":"Alterações aplicadas na animação, nas leituras e nos gráficos.");
+      renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
     }
     fields.forEach(field=>{
-      const handle=()=>{
-        const valid=updateDraft(field);
-        const invalid=fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
-        if(!valid||invalid){actionBox.hidden=false;showFeedback("Pré-visualização pausada até que os campos obrigatórios tenham valores válidos.");return;}
-        preview();
-      };
-      field.addEventListener("input",handle);field.addEventListener("change",handle);
+      field.addEventListener("input",()=>stage(field));field.addEventListener("change",()=>stage(field));
+      field.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();applyDraft();}});
     });
+    $("mru-prop-apply").addEventListener("click",applyDraft);
     $("mru-prop-discard").addEventListener("click",()=>{
-      draft=clone(original);
-      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));changedParameter(false);renderAll();}}
-      status("Edição do objeto descartada.");renderProperties();
+      status("Alterações pendentes descartadas; os valores já aplicados foram mantidos.");
+      renderProperties();
     });
   }
   function renderDataTable(){
