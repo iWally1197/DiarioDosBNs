@@ -172,6 +172,7 @@
   background:rgba(8,16,31,.92);backdrop-filter:blur(8px);
 }
 .mru-stage:fullscreen>.mru-fullscreen-tools .button{min-height:42px;padding:.58rem .85rem}
+.mru-stage:fullscreen .mru-fullscreen-time{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:.58rem .95rem;border:1px solid rgba(240,198,110,.55);border-radius:999px;background:rgba(12,22,39,.92);color:var(--text);font-size:.95rem;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .mru-stage:fullscreen>.mru-fullscreen-drawer{
   position:absolute;z-index:9;top:70px;right:12px;bottom:12px;width:min(460px,calc(100vw - 24px));max-height:none;
   box-sizing:border-box;overflow:auto;padding:14px;border:1px solid var(--line);border-radius:14px;

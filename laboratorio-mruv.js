@@ -165,10 +165,10 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   }
   function syncPlaybackButtons(){
     const label=state.running?"Pausar":state.time>=state.duration&&!state.loop?"Recomeçar":"Continuar";
-    for(const id of ["mruv-play","mruv-fullscreen-play"]){const button=$(id);if(button){button.textContent=label;button.setAttribute("aria-pressed",String(state.running));}}
+    for(const id of ["mruv-play","mruv-fullscreen-play"]){const button=$(id);if(button){button.textContent=label;button.setAttribute("aria-pressed",String(state.running));button.setAttribute("aria-label",state.running?"Pausar animação":label==="Recomeçar"?"Recomeçar animação":"Retomar animação");}}
   }
   function renderReadouts(){
-    const car=currentCart();$("mruv-time-readout").textContent="t = "+fmt(state.time)+" s";
+    const car=currentCart(),timeLabel="t = "+fmt(state.time)+" s";$("mruv-time-readout").textContent=timeLabel;const fullscreenTime=$("mruv-fullscreen-time");if(fullscreenTime)fullscreenTime.textContent=timeLabel;
     $("mruv-timeline").max=state.duration;$("mruv-timeline").value=state.time;$("mruv-timeline-value").textContent=fmt(state.time)+" s";
     syncPlaybackButtons();
     if(!car){$("mruv-readouts").innerHTML="<p class=\"mruv-muted\">Adicione um carrinho para ver as leituras.</p>";return;}
@@ -235,16 +235,15 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       if(changed){
         if(!editHistoryPushed){historyPush(editBefore);editHistoryPushed=true;}
         Object.assign(target,clone(draft));
-        if(physicalChanged)state.time=0;
-        changedParameter();
+        changedParameter(false);
         actionBox.hidden=false;
-        if(!wasDirty){showFeedback(physicalChanged?"Condição inicial atualizada; o relógio voltou a t = 0 para manter o movimento consistente.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
+        if(!wasDirty){showFeedback(physicalChanged?"Condição atualizada; trajetória recalculada em t = "+fmt(state.time)+" s.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
         renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
       }else{
         const targetChanged=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));
         if(targetChanged){
           const physicalRestore=["x0","v0","a"].some(key=>target[key]!==original[key]);
-          Object.assign(target,clone(original));if(physicalRestore)state.time=0;changedParameter();
+          Object.assign(target,clone(original));changedParameter(false);
           renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
         }
         actionBox.hidden=true;wasDirty=false;showFeedback("Nenhuma alteração pendente neste objeto.");
@@ -261,7 +260,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     });
     $("mruv-prop-discard").addEventListener("click",()=>{
       draft=clone(original);
-      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v0","a"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));if(physicalChanged)state.time=0;changedParameter();renderAll();}}
+      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v0","a"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));changedParameter(false);renderAll();}}
       status("Edição do objeto descartada.");renderProperties();
     });
   }
@@ -326,8 +325,8 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     syncPlaybackButtons();if(message)status(message);
   }
   function clearMeasurementRun(){state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;}
-  function changedParameter(){
-    if(state.running)pause("Parâmetro alterado. Simulação pausada e recalculada.");
+  function changedParameter(pauseAnimation=true){
+    if(pauseAnimation&&state.running)pause("Parâmetro alterado. Simulação pausada e recalculada.");
     clearMeasurementRun();if($("mruv-preset").value!=="custom")$("mruv-preset").value="custom";
   }
   function logCrossings(from,to){

@@ -9,10 +9,10 @@
   <title>Laboratório de MRU — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-foldout-sections-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-live-editor-timer-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mru.js?v=motion-foldout-sections-20261013-1"></script>
+  <script type="module" src="laboratorio-mru.js?v=motion-live-editor-timer-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -64,7 +64,7 @@
             </svg>
             <div id="mru-live-description" class="sr-only" aria-live="polite"></div>
             <div class="mru-fullscreen-tools" id="mru-fullscreen-tools" hidden>
-              <button id="mru-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><button id="mru-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mru-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
+              <button id="mru-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><output id="mru-fullscreen-time" class="mru-fullscreen-time" aria-label="Tempo decorrido da animação" aria-live="off">t = 0,00 s</output><button id="mru-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mru-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
               <button id="mru-fullscreen-menu" class="button button-outline" type="button" aria-controls="mru-fullscreen-drawer" aria-expanded="false">☰ Controles</button>
               <button id="mru-fullscreen-exit" class="button button-outline" type="button">Sair da tela cheia</button>
             </div>

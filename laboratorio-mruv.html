@@ -9,10 +9,10 @@
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-foldout-sections-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-live-editor-timer-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mruv.js?v=motion-foldout-sections-20261013-1"></script>
+  <script type="module" src="laboratorio-mruv.js?v=motion-live-editor-timer-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -64,7 +64,7 @@
             </svg>
             <div id="mruv-live-description" class="sr-only" aria-live="polite"></div>
             <div class="mruv-fullscreen-tools" id="mruv-fullscreen-tools" hidden>
-              <button id="mruv-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><button id="mruv-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mruv-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
+              <button id="mruv-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><output id="mruv-fullscreen-time" class="mruv-fullscreen-time" aria-label="Tempo decorrido da animação" aria-live="off">t = 0,00 s</output><button id="mruv-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mruv-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
               <button id="mruv-fullscreen-menu" class="button button-outline" type="button" aria-controls="mruv-fullscreen-drawer" aria-expanded="false">☰ Controles</button>
               <button id="mruv-fullscreen-exit" class="button button-outline" type="button">Sair da tela cheia</button>
             </div>
