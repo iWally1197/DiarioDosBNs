@@ -396,9 +396,10 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
       relocated.length=0;
     }
     $("mruv-fullscreen-menu").addEventListener("click",()=>{
-      drawer.hidden=!drawer.hidden;stage.classList.toggle("mruv-drawer-collapsed",drawer.hidden);
-      $("mruv-fullscreen-menu").setAttribute("aria-expanded",String(!drawer.hidden));
-      $("mruv-fullscreen-menu").textContent=drawer.hidden?"Mostrar painel":"Ocultar painel";
+      const open=drawer.hidden;drawer.hidden=!open;stage.classList.toggle("mruv-drawer-collapsed",!open);
+      $("mruv-fullscreen-menu").setAttribute("aria-expanded",String(open));
+      $("mruv-fullscreen-menu").textContent=open?"Fechar painel":"☰ Controles";
+      if(open)drawer.scrollTop=0;
       requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
     });
     $("mruv-fullscreen-play").addEventListener("click",()=>state.running?pause("Simulação pausada."):play());
@@ -406,8 +407,8 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     document.addEventListener("fullscreenchange",()=>{
       const active=document.fullscreenElement===stage;
       if(active){
-        movePanelsIntoDock();tools.hidden=false;drawer.hidden=false;stage.classList.remove("mruv-drawer-collapsed");
-        $("mruv-fullscreen-menu").setAttribute("aria-expanded","true");$("mruv-fullscreen-menu").textContent="Ocultar painel";
+        movePanelsIntoDock();tools.hidden=false;drawer.hidden=true;stage.classList.add("mruv-drawer-collapsed");
+        $("mruv-fullscreen-menu").setAttribute("aria-expanded","false");$("mruv-fullscreen-menu").textContent="☰ Controles";
         document.body.classList.add("mruv-fullscreen-active");syncPlaybackButtons();
         requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
       }else{

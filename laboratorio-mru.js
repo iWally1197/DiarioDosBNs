@@ -258,9 +258,10 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       relocated.length=0;
     }
     $("mru-fullscreen-menu").addEventListener("click",()=>{
-      drawer.hidden=!drawer.hidden;stage.classList.toggle("mru-drawer-collapsed",drawer.hidden);
-      $("mru-fullscreen-menu").setAttribute("aria-expanded",String(!drawer.hidden));
-      $("mru-fullscreen-menu").textContent=drawer.hidden?"Mostrar painel":"Ocultar painel";
+      const open=drawer.hidden;drawer.hidden=!open;stage.classList.toggle("mru-drawer-collapsed",!open);
+      $("mru-fullscreen-menu").setAttribute("aria-expanded",String(open));
+      $("mru-fullscreen-menu").textContent=open?"Fechar painel":"☰ Controles";
+      if(open)drawer.scrollTop=0;
       requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
     });
     $("mru-fullscreen-play").addEventListener("click",()=>state.running?pause("Simulação pausada."):play());
@@ -268,8 +269,8 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     document.addEventListener("fullscreenchange",()=>{
       const active=document.fullscreenElement===stage;
       if(active){
-        movePanelsIntoDock();tools.hidden=false;drawer.hidden=false;stage.classList.remove("mru-drawer-collapsed");
-        $("mru-fullscreen-menu").setAttribute("aria-expanded","true");$("mru-fullscreen-menu").textContent="Ocultar painel";
+        movePanelsIntoDock();tools.hidden=false;drawer.hidden=true;stage.classList.add("mru-drawer-collapsed");
+        $("mru-fullscreen-menu").setAttribute("aria-expanded","false");$("mru-fullscreen-menu").textContent="☰ Controles";
         document.body.classList.add("mru-fullscreen-active");syncPlaybackButtons();
         requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
       }else{
