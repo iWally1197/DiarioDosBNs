@@ -69,7 +69,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .bnzinho-widget__art {
-      position: relative; display: block; width: 100%; aspect-ratio: 230 / 307;
+      position: relative; display: block; width: 100%; aspect-ratio: 2 / 3;
       overflow: hidden; border: 1px solid rgba(219, 190, 119, .82); border-radius: 18px;
       background: #08152b; box-shadow: 0 12px 30px rgba(0,0,0,.4);
       transform-origin: 50% 84%; transition: box-shadow .24s cubic-bezier(.2,.8,.2,1), transform .24s cubic-bezier(.2,.8,.2,1);
@@ -83,10 +83,10 @@
       position: absolute; display: block; width: 27%; height: 20%; overflow: visible;
       filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); pointer-events: none;
     }
-    .bnzinho-widget__paw--left { left: 17%; top: 55%; transform-origin: 70% 85%; animation: bnz-paw-rest 2.4s ease-in-out infinite; }
-    .bnzinho-widget__paw--right { right: 15%; top: 61%; transform-origin: 30% 85%; animation: bnz-paw-rest 2.9s ease-in-out infinite reverse; }
+    .bnzinho-widget__paw--left { left: 1%; top: 52%; transform-origin: 70% 85%; animation: bnz-paw-rest 2.4s ease-in-out infinite; }
+    .bnzinho-widget__paw--right { right: 19%; top: 58%; transform-origin: 30% 85%; animation: bnz-paw-rest 2.9s ease-in-out infinite reverse; }
     .bnzinho-widget__nose {
-      position: absolute; left: 50%; top: 42%; width: 7px; height: 5px; border-radius: 50%;
+      position: absolute; left: 40.5%; top: 38.5%; width: 8px; height: 6px; border-radius: 50%;
       background: #f47b88; box-shadow: 0 0 0 1px rgba(255,255,255,.5);
       transform: translateX(-50%); animation: bnz-sniff 3.1s ease-in-out infinite;
       pointer-events: none;
@@ -280,7 +280,7 @@
       '</div><a class="bnzinho-widget__launcher" href="ia.html" aria-label="Abrir conversa com a IA do BNzinho">' +
       '<span class="bnzinho-widget__bubble" aria-hidden="true">Oi! Quer conversar sobre Física? Clique para abrir o chat.</span>' +
       '<span class="bnzinho-widget__art" aria-hidden="true">' +
-      '<img class="bnzinho-widget__image" src="assets/mascote-ia-fisica.png" alt="" loading="lazy">' +
+      '<img class="bnzinho-widget__image" src="assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1" alt="" loading="lazy">' +
       '<svg class="bnzinho-widget__paw bnzinho-widget__paw--left" viewBox="0 0 32 26" aria-hidden="true"><g fill="#d8d2ca" stroke="#49484a" stroke-width="1.15"><ellipse cx="16" cy="18" rx="10.5" ry="7"/><ellipse cx="5.8" cy="10" rx="3.4" ry="4.2"/><ellipse cx="12.3" cy="6.3" rx="3.3" ry="4.2"/><ellipse cx="19.6" cy="6.7" rx="3.2" ry="4.1"/><ellipse cx="26" cy="11" rx="3.2" ry="4.1"/></g><ellipse cx="16" cy="18.5" rx="5" ry="3.2" fill="#ef9ba7"/></svg>' +
       '<svg class="bnzinho-widget__paw bnzinho-widget__paw--right" viewBox="0 0 32 26" aria-hidden="true"><g fill="#d8d2ca" stroke="#49484a" stroke-width="1.15"><ellipse cx="16" cy="18" rx="10.5" ry="7"/><ellipse cx="5.8" cy="10" rx="3.4" ry="4.2"/><ellipse cx="12.3" cy="6.3" rx="3.3" ry="4.2"/><ellipse cx="19.6" cy="6.7" rx="3.2" ry="4.1"/><ellipse cx="26" cy="11" rx="3.2" ry="4.1"/></g><ellipse cx="16" cy="18.5" rx="5" ry="3.2" fill="#ef9ba7"/></svg>' +
       '<span class="bnzinho-widget__nose"></span></span></a>';
@@ -290,7 +290,7 @@
     restore.className = 'bnzinho-restore';
     restore.setAttribute('aria-label', 'Mostrar BNzinho no canto da tela');
     restore.title = 'Mostrar BNzinho';
-    restore.innerHTML = '<img src="assets/mascote-ia-fisica.png" alt="" loading="lazy"><span class="sr-only">Mostrar BNzinho</span>';
+    restore.innerHTML = '<img src="assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1" alt="" loading="lazy"><span class="sr-only">Mostrar BNzinho</span>';
     document.body.append(dock, restore);
 
     const hideButton = dock.querySelector('[data-bnz-hide]');

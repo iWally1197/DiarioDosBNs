@@ -1,5 +1,7 @@
 import { supabasePromise } from './src-supabase.js';
 
+const mascotImageSrc = 'assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1';
+
 const loginGate = document.querySelector('#physics-ai-login-gate');
 const statusBox = document.querySelector('#physics-ai-status');
 const historyList = document.querySelector('#physics-ai-conversation-list');
@@ -138,13 +140,14 @@ function renderConversationList() {
   }
 }
 
-function addMessage(role, content, createdAt = null) {
+function addMessage(role, content, createdAt = null, animate = false) {
   const article = document.createElement('article');
   article.className = 'physics-ai-message ' + (role === 'assistant' ? 'is-assistant' : 'is-user');
+  if (animate) article.classList.add('is-message-entering');
   if (role === 'assistant') {
     const avatar = document.createElement('img');
     avatar.className = 'physics-ai-message-avatar';
-    avatar.src = 'assets/mascote-ia-fisica.png';
+    avatar.src = mascotImageSrc;
     avatar.alt = '';
     avatar.setAttribute('aria-hidden', 'true');
     article.append(avatar);
@@ -168,15 +171,16 @@ function addMessage(role, content, createdAt = null) {
   }
   article.append(body);
   messagesBox.append(article);
+  return article;
 }
 
-function renderMessages() {
+function renderMessages(animateLatest = false) {
   messagesBox.replaceChildren();
   if (!messages.length) {
     const welcome = document.createElement('div');
     welcome.className = 'physics-ai-welcome';
     const mascot = document.createElement('img');
-    mascot.src = 'assets/mascote-ia-fisica.png';
+    mascot.src = mascotImageSrc;
     mascot.alt = '';
     mascot.setAttribute('aria-hidden', 'true');
     const copy = document.createElement('div');
@@ -188,7 +192,10 @@ function renderMessages() {
     welcome.append(mascot, copy);
     messagesBox.append(welcome);
   } else {
-    for (const message of messages) addMessage(message.role, message.content, message.created_at);
+    messages.forEach((message, index) => {
+      addMessage(message.role, message.content, message.created_at,
+        animateLatest && index >= Math.max(0, messages.length - 2));
+    });
   }
   messagesBox.scrollTop = messagesBox.scrollHeight;
 }
@@ -263,12 +270,21 @@ async function openConversation(conversationId) {
     return;
   }
   showStatus('');
-  const { data, error } = await supabase
-    .from('physics_ai_messages')
-    .select('role,content,created_at')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-    .limit(200);
+  let data;
+  let error;
+  try {
+    ({ data, error } = await withTimeout(
+      supabase.from('physics_ai_messages')
+        .select('role,content,created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(200),
+      8000,
+      'O histórico demorou para abrir.'
+    ));
+  } catch (loadError) {
+    error = loadError;
+  }
   if (error) {
     remoteHistoryReady = false;
     conversations = readLocalConversations();
@@ -303,18 +319,23 @@ async function ensureConversation(firstMessage) {
   if (activeConversationId) return activeConversationId;
   const title = firstMessage.replace(/\s+/g, ' ').trim().slice(0, 72) || 'Nova conversa';
   if (remoteHistoryReady) {
-    const { data, error } = await supabase
-      .from('physics_ai_conversations')
-      .insert({ user_id: user.id, title })
-      .select('id,title,updated_at')
-      .single();
-    if (!error && data) {
-      activeConversationId = data.id;
-      activeConversationLocal = false;
-      conversations.unshift(data);
-      renderConversationList();
-      return activeConversationId;
-    }
+    try {
+      const { data, error } = await withTimeout(
+        supabase.from('physics_ai_conversations')
+          .insert({ user_id: user.id, title })
+          .select('id,title,updated_at')
+          .single(),
+        8000,
+        'O histórico online demorou para criar a conversa.'
+      );
+      if (!error && data) {
+        activeConversationId = data.id;
+        activeConversationLocal = false;
+        conversations.unshift(data);
+        renderConversationList();
+        return activeConversationId;
+      }
+    } catch {}
     remoteHistoryReady = false;
   }
   activeConversationId = (globalThis.crypto?.randomUUID?.() || 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2));
@@ -372,22 +393,58 @@ function localTutorAnswer(question) {
   return null;
 }
 
+function showTypingIndicator() {
+  const indicator = document.createElement('article');
+  indicator.className = 'physics-ai-message is-assistant physics-ai-typing is-message-entering';
+  indicator.setAttribute('role', 'status');
+  indicator.setAttribute('aria-label', 'BNzinho está escrevendo');
+
+  const avatar = document.createElement('img');
+  avatar.className = 'physics-ai-message-avatar';
+  avatar.src = mascotImageSrc;
+  avatar.alt = '';
+  avatar.setAttribute('aria-hidden', 'true');
+
+  const bubble = document.createElement('div');
+  bubble.className = 'physics-ai-message-body physics-ai-typing-body';
+  const label = document.createElement('strong');
+  label.textContent = 'BNzinho está escrevendo';
+  const dots = document.createElement('span');
+  dots.className = 'physics-ai-typing-dots';
+  dots.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 3; i += 1) dots.append(document.createElement('i'));
+  bubble.append(label, dots);
+  indicator.append(avatar, bubble);
+  messagesBox.append(indicator);
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+  document.querySelector('.physics-ai-chat-panel')?.classList.add('is-thinking');
+  return indicator;
+}
+
 async function sendMessage(event) {
   event.preventDefault();
   const question = input.value.trim();
   if (!question || !user || !databaseReady || busy) return;
   busy = true;
+  input.value = '';
   updateControls();
-  showStatus('O BNzinho está pensando…');
+  showStatus('');
+  const pendingMessage = addMessage('user', question, null, true);
+  pendingMessage.classList.add('is-sending');
+  const typingIndicator = showTypingIndicator();
   const previousHistory = messages.slice(-10).map((message) => ({ role: message.role, content: message.content }));
   try {
     let answer = '';
     let usedLocalTutor = false;
     let serviceError = null;
     try {
-      const { data, error } = await supabase.functions.invoke('physics-assistant', {
-        body: { message: question, history: previousHistory }
-      });
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke('physics-assistant', {
+          body: { message: question, history: previousHistory }
+        }),
+        35000,
+        'A resposta demorou mais que o esperado. Tente enviar novamente.'
+      );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       answer = typeof data?.answer === 'string' ? data.answer.trim() : '';
@@ -405,29 +462,25 @@ async function sendMessage(event) {
     const assistantMessage = { role: 'assistant', content: answer, created_at: new Date().toISOString() };
 
     if (remoteHistoryReady && !activeConversationLocal) {
-      const { error: questionError } = await supabase.from('physics_ai_messages').insert({
-        conversation_id: conversationId, user_id: user.id, role: 'user', content: question
-      });
-      if (questionError) {
+      try {
+        const { error: questionError } = await withTimeout(supabase.from('physics_ai_messages').insert({
+          conversation_id: conversationId, user_id: user.id, role: 'user', content: question
+        }), 6000, 'O histórico online demorou para salvar a pergunta.');
+        if (questionError) throw questionError;
+        const { error: answerError } = await withTimeout(supabase.from('physics_ai_messages').insert({
+          conversation_id: conversationId, user_id: user.id, role: 'assistant', content: answer
+        }), 6000, 'O histórico online demorou para salvar a resposta.');
+        if (answerError) throw answerError;
+        await withTimeout(supabase.from('physics_ai_conversations')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', conversationId), 6000, 'O histórico online demorou para atualizar.');
+      } catch {
         remoteHistoryReady = false;
         activeConversationLocal = true;
-      } else {
-        const { error: answerError } = await supabase.from('physics_ai_messages').insert({
-          conversation_id: conversationId, user_id: user.id, role: 'assistant', content: answer
-        });
-        if (answerError) {
-          remoteHistoryReady = false;
-          activeConversationLocal = true;
-        } else {
-          await supabase.from('physics_ai_conversations')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('id', conversationId);
-        }
       }
     }
 
     messages.push(userMessage, assistantMessage);
-    input.value = '';
     saveLocalSnapshot();
     const existing = conversations.find((item) => item.id === conversationId);
     if (existing) {
@@ -436,7 +489,7 @@ async function sendMessage(event) {
     }
     conversations.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
     renderConversations();
-    renderMessages();
+    renderMessages(true);
     if (usedLocalTutor) {
       showStatus('Resposta de apoio salva neste dispositivo. O serviço de IA está indisponível; esta resposta usa explicações locais.');
     } else {
@@ -445,8 +498,12 @@ async function sendMessage(event) {
     if (remoteHistoryReady) void refreshConversations(false);
     if (serviceError && !usedLocalTutor) console.warn('Physics assistant returned a recoverable error.');
   } catch (error) {
+    input.value = question;
     showStatus(error?.message || 'Não foi possível enviar a pergunta. Tente novamente.', true);
   } finally {
+    pendingMessage.remove();
+    typingIndicator.remove();
+    document.querySelector('.physics-ai-chat-panel')?.classList.remove('is-thinking');
     busy = false;
     updateControls();
   }
@@ -465,13 +522,17 @@ function activateUser(nextUser) {
 
 async function initialize() {
   try {
-    supabase = await supabasePromise;
+    supabase = await withTimeout(supabasePromise, 10000, 'O serviço de contas demorou para responder. Atualize a página e tente novamente.');
     if (!supabase) {
       showStatus('Não foi possível conectar ao serviço de contas. Atualize a página e tente novamente.', true);
       loginGate.hidden = false;
       return;
     }
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await withTimeout(
+      supabase.auth.getSession(),
+      8000,
+      'A verificação da sua conta demorou. Atualize a página e tente novamente.'
+    );
     if (error) throw error;
     activateUser(data?.session?.user || null);
     supabase.auth.onAuthStateChange((_event, session) => activateUser(session?.user || null));
@@ -482,6 +543,11 @@ async function initialize() {
 }
 
 input.addEventListener('input', updateControls);
+input.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  if (!sendButton.disabled) form.requestSubmit(sendButton);
+});
 form.addEventListener('submit', (event) => void sendMessage(event));
 newChatButton.addEventListener('click', startNewConversation);
 for (const button of suggestionButtons) {
