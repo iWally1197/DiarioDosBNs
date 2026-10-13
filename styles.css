@@ -3326,4 +3326,157 @@ html[data-theme="light"] .admin-lab-state.is-unpublished { color:#654a10; border
 .admin-lab-visibility-guide > span { display:grid; justify-items:start; gap:.25rem; min-width:min(100%,17rem); }
 .admin-lab-visibility-guide small { color:var(--muted); line-height:1.5; }
 @media (max-width:640px) { .admin-lab-visibility-guide { display:grid; } }
+/* Cores padronizadas para confirmar e recusar ações em todo o site. */
+:root {
+  --action-save-bg: #1e7540;
+  --action-save-hover: #185f34;
+  --action-save-border: #3b9a5c;
+  --action-save-text: #ffffff;
+  --action-refuse-bg: #a82636;
+  --action-refuse-hover: #871f2d;
+  --action-refuse-border: #ca5360;
+  --action-refuse-text: #ffffff;
+}
 
+html body :is(
+  .button-primary,
+  .account-button-primary,
+  button.mru-field-apply,
+  button[type="submit"],
+  input[type="submit"],
+  button[data-action="save"],
+  button[data-action="apply"],
+  button[data-action="confirm"],
+  button[data-save],
+  button[data-confirm],
+  button[id*="save" i],
+  button[id*="apply" i],
+  button[id*="confirm" i],
+  button[data-set-publication="true"],
+  button[data-submit-existing-activity],
+  button[data-review-status="verified"],
+  button[data-review-status="approved"],
+  button[data-review-teacher][data-status="active"],
+  button[data-toggle-activity][data-published="false"],
+  #teacher-tools button[data-teacher-publish][data-published="false"],
+  button[data-publish-animation][data-published="false"],
+  button[data-publish-course][data-published="false"],
+  button[data-publish-download][data-published="false"]
+) {
+  border-color: var(--action-save-border);
+  background: var(--action-save-bg);
+  color: var(--action-save-text);
+}
+
+html body :is(
+  .button-primary,
+  .account-button-primary,
+  button.mru-field-apply,
+  button[type="submit"],
+  input[type="submit"],
+  button[data-action="save"],
+  button[data-action="apply"],
+  button[data-action="confirm"],
+  button[data-save],
+  button[data-confirm],
+  button[id*="save" i],
+  button[id*="apply" i],
+  button[id*="confirm" i],
+  button[data-set-publication="true"],
+  button[data-submit-existing-activity],
+  button[data-review-status="verified"],
+  button[data-review-status="approved"],
+  button[data-review-teacher][data-status="active"],
+  button[data-toggle-activity][data-published="false"],
+  #teacher-tools button[data-teacher-publish][data-published="false"],
+  button[data-publish-animation][data-published="false"],
+  button[data-publish-course][data-published="false"],
+  button[data-publish-download][data-published="false"]
+):hover:not(:disabled) {
+  border-color: var(--action-save-border);
+  background: var(--action-save-hover);
+  color: var(--action-save-text);
+}
+
+html body :is(
+  .button-danger,
+  button[data-reject-teacher],
+  button[data-remove-teacher],
+  button[data-status="blocked"],
+  button[data-review-status="rejected"],
+  button[data-review-teacher][data-status="blocked"],
+  button[data-set-publication="false"],
+  button[id*="discard" i],
+  button[id*="cancel" i],
+  button[id*="reject" i],
+  button[id*="decline" i],
+  button[id*="delete" i],
+  button[id*="remove" i],
+  button[data-action="cancel"],
+  button[data-action="discard"],
+  button[data-action="reject"],
+  button[data-action="decline"],
+  button[data-animation-cancel],
+  button[data-course-cancel],
+  button[data-lesson-cancel],
+  button[data-activity-cancel],
+  button[data-delete-animation],
+  button[data-delete-download],
+  button[data-delete-course],
+  button[data-delete-lesson],
+  button[data-delete-class],
+  button[data-delete-activity],
+  button[data-toggle-activity][data-published="true"],
+  #teacher-tools button[data-teacher-publish][data-published="true"],
+  button[data-publish-animation][data-published="true"],
+  button[data-publish-course][data-published="true"],
+  button[data-publish-download][data-published="true"]
+) {
+  border-color: var(--action-refuse-border);
+  background: var(--action-refuse-bg);
+  color: var(--action-refuse-text);
+}
+
+html body :is(
+  .button-danger,
+  button[data-reject-teacher],
+  button[data-remove-teacher],
+  button[data-status="blocked"],
+  button[data-review-status="rejected"],
+  button[data-review-teacher][data-status="blocked"],
+  button[data-set-publication="false"],
+  button[id*="discard" i],
+  button[id*="cancel" i],
+  button[id*="reject" i],
+  button[id*="decline" i],
+  button[id*="delete" i],
+  button[id*="remove" i],
+  button[data-action="cancel"],
+  button[data-action="discard"],
+  button[data-action="reject"],
+  button[data-action="decline"],
+  button[data-animation-cancel],
+  button[data-course-cancel],
+  button[data-lesson-cancel],
+  button[data-activity-cancel],
+  button[data-delete-animation],
+  button[data-delete-download],
+  button[data-delete-course],
+  button[data-delete-lesson],
+  button[data-delete-class],
+  button[data-delete-activity],
+  button[data-toggle-activity][data-published="true"],
+  #teacher-tools button[data-teacher-publish][data-published="true"],
+  button[data-publish-animation][data-published="true"],
+  button[data-publish-course][data-published="true"],
+  button[data-publish-download][data-published="true"]
+):hover:not(:disabled) {
+  border-color: var(--action-refuse-border);
+  background: var(--action-refuse-hover);
+  color: var(--action-refuse-text);
+}
+
+html body :is(button, input[type="submit"]):disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
