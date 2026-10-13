@@ -2,7 +2,7 @@
   let topics = window.DIARIO_TOPICS || [];
   let publicationCheckFailed = false;
   try {
-    const { loadPublishedAnimationSlugs } = await import('./public-catalog.js');
+    const { loadPublishedAnimationSlugs } = await import('./public-catalog.js?v=site-performance-20261013-1');
     const published = await loadPublishedAnimationSlugs();
     topics = topics.map((topic) => ({ ...topic, animations: topic.animations.filter((item) => published.has(`${topic.id}--${item[2]}`)) }));
   } catch {
@@ -27,7 +27,14 @@
     empty.hidden = filtered.length > 0;
     summary.setAttribute('aria-label', `${filtered.length} projetos Blender encontrados`);
   };
-  if (!animations.length) empty.textContent = publicationCheckFailed ? 'Não foi possível carregar os downloads agora. Tente novamente em instantes.' : 'Nenhum projeto está publicado no momento.';
+  if (!animations.length) {
+    if (publicationCheckFailed) {
+      empty.innerHTML = 'Não foi possível carregar os downloads agora. <button class="button button-outline" id="retry-download-catalog" type="button">Tentar novamente</button>';
+      empty.querySelector('#retry-download-catalog')?.addEventListener('click', () => window.location.reload());
+    } else {
+      empty.textContent = 'Nenhum projeto está publicado no momento.';
+    }
+  }
   search.addEventListener('input', render); topicFilter.addEventListener('change', render); render();
   document.querySelector('#export-csv')?.addEventListener('click', () => {
     const rows = [['Tópico','Área','Animação','Descrição','Arquivo Blender'], ...animations.map(({topic,title,description,file}) => [topic.name,topic.area,title,description,`downloads-${topic.id}-${file}.blend`])];

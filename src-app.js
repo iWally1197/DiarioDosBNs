@@ -922,7 +922,10 @@ async function syncLegacyFavorite(event) {
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
-import('./features.js?v=teacher-response-fix-20261008-1').catch(()=>{});
+const featureRoutes = new Set(['/login','/cadastro','/recuperar-senha','/aluno','/professor','/admin','/admin/laboratorios','/perfil','/turmas','/turma','/apoie']);
+if (featureRoutes.has(route) || document.querySelector('#pix-content, #classroom-root, #teacher-tools, #admin-tools, #student-workspace')) {
+  import('./features.js?v=site-performance-20261013-1').catch(() => {});
+}
 
 if (main) {
   attachAuthNavigation();

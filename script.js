@@ -65,7 +65,7 @@
   let publishedSlugs = new Set();
   if (topicGrid || document.querySelector('#topic-page')) {
     try {
-      const { loadPublishedAnimationSlugs } = await import('./public-catalog.js');
+      const { loadPublishedAnimationSlugs } = await import('./public-catalog.js?v=site-performance-20261013-1');
       publishedSlugs = await loadPublishedAnimationSlugs();
       topics = topics.map((topic) => ({
         ...topic,
@@ -108,7 +108,8 @@
         <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-mode" aria-label="Tipo de animação">${modes.join(' + ')}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`;
       }).join('')}
       </div></section>`;
-    }).filter(Boolean).join('') || `<p class="empty-state">${publicationCheckFailed ? 'Não foi possível carregar os conteúdos agora. Tente novamente em instantes.' : 'Nenhuma animação está publicada no momento.'}</p>`;
+    }).filter(Boolean).join('') || `<div class="empty-state"><p>${publicationCheckFailed ? 'Não foi possível carregar os conteúdos agora.' : 'Nenhuma animação está publicada no momento.'}</p>${publicationCheckFailed ? '<button class="button button-outline" id="retry-public-catalog" type="button">Tentar novamente</button>' : ''}</div>`;
+    topicGrid.querySelector('#retry-public-catalog')?.addEventListener('click', () => window.location.reload());
     const topicSearch = document.querySelector('#topic-search');
     const topicSearchResults = document.querySelector('#topic-search-results');
     topicSearch?.addEventListener('input', () => {

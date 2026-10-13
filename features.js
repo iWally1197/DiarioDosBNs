@@ -957,7 +957,7 @@ async function loadClassroom(root) {
 
 if (document.body) {
   const observer = new MutationObserver(() => enhance());
-  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  observer.observe(document.querySelector('main#conteudo') || document.body, { childList: true, subtree: true, characterData: true });
   enhance();
 }
 

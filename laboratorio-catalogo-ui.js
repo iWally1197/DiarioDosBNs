@@ -2,6 +2,16 @@ import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-2026101
 import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261013-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
+function withDeadline(promise, timeoutMs, message) {
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((_, reject) => {
+      timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    })
+  ]).finally(() => window.clearTimeout(timer));
+}
+
 const catalog = globalThis.document?.querySelector("#lab-cards");
 const allowedExperiments = experiments.filter((item) => laboratoryPublicationByExperimentId.has(item.id));
 export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "laboratorio-magnetismo.html" : id === "mru" ? "laboratorio-mru.html" : id === "muv" ? "laboratorio-mruv.html" : id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
@@ -66,9 +76,13 @@ function initializeCatalog() {
 
   async function syncPublication() {
     try {
-      const client = await supabasePromise;
+      const client = await withDeadline(supabasePromise, 5000, "O serviço de publicação demorou para iniciar.");
       if (!client) throw new Error("Supabase indisponível");
-      const { data, error } = await client.from("animations").select("slug").in("slug", laboratoryPublicationSlugs);
+      const { data, error } = await withDeadline(
+        client.from("animations").select("slug").in("slug", laboratoryPublicationSlugs),
+        5000,
+        "A consulta de publicação demorou para responder."
+      );
       if (error) throw error;
       const published = new Set((data || []).map((row) => row.slug));
       visibleExperiments = allowedExperiments.filter((item) => published.has(laboratoryPublicationByExperimentId.get(item.id)?.slug));
