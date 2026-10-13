@@ -9,10 +9,10 @@
   <title>Laboratório de MRU — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-controls-vectors-20261013-2">
+  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-wheel-modal-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mru.js?v=motion-controls-vectors-20261013-2"></script>
+  <script type="module" src="laboratorio-mru.js?v=motion-wheel-modal-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -72,6 +72,11 @@
               <h2 class="mru-fullscreen-drawer-title">Controles do laboratório MRU</h2>
               <div class="mru-fullscreen-drawer-content"></div>
             </aside>
+            <div id="mru-pending-save" class="mru-pending-save" hidden role="dialog" aria-modal="true" aria-labelledby="mru-pending-save-title" tabindex="-1">
+              <h2 id="mru-pending-save-title">Salvar alterações?</h2>
+              <p>Você alterou este experimento. Salve para guardar a configuração neste dispositivo ou descarte para restaurar a última configuração salva.</p>
+              <div class="mru-pending-save-actions"><button id="mru-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mru-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div>
+            </div>
           </div>
           <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="off"></span><span class="mru-pan-hint">Arraste uma área vazia para mover. No celular, use pinça para zoom; no touchpad, deslize dois dedos ou use Ctrl + roda.</span></div>
 <details class="mru-camera-details" id="mru-camera-panel"><summary>Enquadramento e acessibilidade</summary><div class="mru-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label data-advanced-only for="mru-view-span">Escala visível <output id="mru-view-span-value">24 m</output></label><input id="mru-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mru-zoom-in" class="button button-outline" type="button">+ Aproximar</button><button id="mru-zoom-out" class="button button-outline" type="button">− Afastar</button><button id="mru-zoom-reset" class="button button-outline" type="button">Restaurar zoom</button><button id="mru-center-camera" class="button button-outline" type="button">Centralizar</button><button id="mru-fit-camera" data-advanced-only class="button button-outline" type="button">Enquadrar experimento</button><button id="mru-pan-left" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mru-pan-right" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mru-recenter" class="button button-outline" type="button">Acompanhar carrinho</button><label class="mru-check"><input id="mru-show-grid" type="checkbox" checked> Grade</label><label data-advanced-only class="mru-check"><input id="mru-reduce-motion" type="checkbox"> Menos movimento</label><label data-advanced-only class="mru-check"><input id="mru-high-contrast" type="checkbox"> Alto contraste</label><label data-advanced-only for="mru-text-size">Texto <input id="mru-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mru-text-size-value">100%</output></label></div></details>
@@ -138,8 +143,7 @@
         <section class="mru-card mru-persistence-card" aria-labelledby="mru-save-heading">
           <div class="mru-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mru-save-heading">Salvar e exportar</h2></div></div>
           <div class="mru-button-grid"><button id="mru-save" class="button button-outline" type="button">Salvar neste dispositivo</button><button id="mru-load" class="button button-outline" type="button">Carregar salvo</button><button id="mru-share" data-advanced-only class="button button-outline" type="button">Copiar link da configuração</button><button id="mru-export-scene" data-advanced-only class="button button-outline" type="button">Baixar pista SVG</button><button id="mru-reset-config" data-advanced-only class="button button-outline" type="button">Restaurar padrão</button><label data-advanced-only class="button button-outline mru-file-label" for="mru-import-file">Abrir configuração JSON<input id="mru-import-file" type="file" accept="application/json,.json"></label></div>
-          <div id="mru-pending-save" class="mru-pending-save" hidden aria-live="off"><p><strong>Pré-visualização ativa.</strong> As mudanças já aparecem no laboratório. Salve para restaurá-las depois ou descarte para voltar à última configuração salva.</p><div><button id="mru-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mru-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div></div>
-           <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
+          <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
         </section>
 
         <section class="mru-card mru-investigation-card" data-advanced-only id="mru-investigation" aria-labelledby="mru-investigation-heading">

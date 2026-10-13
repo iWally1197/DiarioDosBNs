@@ -247,3 +247,17 @@ body.mru-beginner-mode [data-advanced-only]{display:none!important}
  .mru-fullscreen-tools{right:.5rem;left:.5rem;justify-content:center}
  .mru-fullscreen-tools>.button{padding:.45rem .6rem;font-size:.8rem}
 }
+
+
+/* Confirmação centralizada das alterações de MRU/MRUV */
+body.mru-has-pending-save{overflow:hidden}
+body.mru-has-pending-save::before{content:"";position:fixed;inset:0;z-index:10000;background:rgba(3,7,15,.78);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.mru-stage.mru-has-pending-save:fullscreen::after{content:"";position:absolute;inset:0;z-index:90;background:rgba(3,7,15,.78);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);pointer-events:auto}
+.mru-pending-save{position:fixed;z-index:10001;top:50%;left:50%;box-sizing:border-box;width:min(34rem,calc(100vw - 2rem));max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);overflow:auto;transform:translate(-50%,-50%);display:grid;gap:.85rem;margin:0;padding:clamp(1.2rem,3vw,1.8rem);border:1px solid var(--gold,#f0c66e);border-radius:18px;background:var(--panel,#111d30);color:var(--text,#f5f7fb);box-shadow:0 28px 100px rgba(0,0,0,.65)}
+.mru-pending-save[hidden]{display:none!important}
+.mru-pending-save h2{margin:0;font-size:1.3rem;line-height:1.25}
+.mru-pending-save p{margin:0;color:var(--muted,#b7c5d8);font-size:.95rem;line-height:1.6}
+.mru-pending-save-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:.65rem;margin-top:.3rem}
+.mru-pending-save-actions .button{min-height:46px}
+@media(max-width:520px){.mru-pending-save-actions{display:grid;grid-template-columns:1fr}.mru-pending-save-actions .button{width:100%}}
+.mru-stage:fullscreen .mru-pending-save{z-index:101}

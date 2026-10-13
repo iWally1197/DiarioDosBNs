@@ -16,7 +16,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   const names = { "scientific-cart":"Carrinho científico","sport-cart":"Carrinho esportivo","position-sensor":"Sensor de posição",photogate:"Fotocélula","position-marker":"Marcador de posição","time-marker":"Marcadores temporais","start-line":"Linha de partida","finish-line":"Linha de chegada","distance-sign":"Placa de distância",cone:"Cone de sinalização",tree:"Árvore de referência",post:"Poste de referência",flag:"Bandeira" };
   const newCart = (i = 0) => ({ id:uid("cart"),kind:i===1?"sport-cart":"scientific-cart",name:"Carrinho "+String.fromCharCode(65+i),x0:i?5:0,v:i?-2:4,color:colorSet[i%colorSet.length],wheelColor:"#202935",size:1,wheelRadius:.03,opacity:1,details:true,vector:true,trail:true,visible:true,locked:false });
   const newFixtures = () => [{id:uid("sensor"),kind:"position-sensor",name:"Sensor de posição",x:3,color:"#f0c66e",visible:true,locked:false},{id:uid("gate"),kind:"photogate",name:"Fotocélula 1",x:8,color:"#79a8ff",visible:true,locked:false}];
-  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,cameraOffsetY:0,follow:true,showGrid:true,vectors:{velocity:true,acceleration:false,displacement:false},reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
+  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,cameraFollowOffset:0,cameraOffsetY:0,follow:true,showGrid:true,vectors:{velocity:true,acceleration:false,displacement:false},reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
   const state = Object.assign(initialConfig(),{uiMode:"advanced",time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
   try{const savedUiMode=localStorage.getItem("diario-bns-mru-ui-mode-v1");if(savedUiMode==="beginner"||savedUiMode==="advanced")state.uiMode=savedUiMode;}catch{}
   const undoStack=[],redoStack=[];
@@ -31,13 +31,40 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   const currentCart=()=>state.carts.find((item)=>item.id===state.selectedId)||state.carts[0]||null;
   const entity=(id=state.selectedId)=>state.carts.find((item)=>item.id===id)||state.fixtures.find((item)=>item.id===id)||null;
   const isCart=(item)=>Boolean(item&&state.carts.some((car)=>car.id===item.id));
-  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraOffsetY:state.cameraOffsetY,vectors:state.vectors,follow:state.follow,showGrid:state.showGrid,reduceMotion:state.reduceMotion});}
+  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraFollowOffset:state.cameraFollowOffset,cameraOffsetY:state.cameraOffsetY,vectors:state.vectors,follow:state.follow,showGrid:state.showGrid,reduceMotion:state.reduceMotion});}
+  const pendingSignature=(config)=>{const {viewSpan,cameraCenter,cameraFollowOffset,cameraOffsetY,follow,...experiment}=config;return JSON.stringify(experiment);};
   let savedConfigSnapshot=capture();
-  let savedConfigSignature=JSON.stringify(savedConfigSnapshot);
-  function hasPendingConfigChanges(){return JSON.stringify(capture())!==savedConfigSignature;}
-  function updatePendingSave(){const panel=$("mru-pending-save");if(panel)panel.hidden=!hasPendingConfigChanges();}
-  function markSavedConfig(){savedConfigSnapshot=capture();savedConfigSignature=JSON.stringify(savedConfigSnapshot);updatePendingSave();}
-  function discardPendingConfig(){if(!hasPendingConfigChanges())return;pause();applyConfig(clone(savedConfigSnapshot));status("Alterações descartadas; a última configuração salva foi restaurada.");}
+  let savedConfigSignature=pendingSignature(savedConfigSnapshot);
+  let pendingReturnFocus=null;
+  function hasPendingConfigChanges(){return pendingSignature(capture())!==savedConfigSignature;}
+  function updatePendingSave(){
+    const panel=$("mru-pending-save"),stage=$("mru-stage"),pending=hasPendingConfigChanges();
+    if(!panel)return;
+    const host=document.fullscreenElement||document.body;if(panel.parentElement!==host)host.append(panel);
+    const wasOpen=!panel.hidden;
+    panel.hidden=!pending;
+    document.body.classList.toggle("mru-has-pending-save",pending);
+    stage?.classList.toggle("mru-has-pending-save",pending);
+    if(pending&&!wasOpen){pendingReturnFocus=document.activeElement instanceof HTMLElement&&!panel.contains(document.activeElement)?document.activeElement:null;requestAnimationFrame(()=>{if(!panel.hidden)$("#mru-save-pending")?.focus({preventScroll:true});});}
+    else if(!pending&&wasOpen){const target=pendingReturnFocus;pendingReturnFocus=null;if(target?.isConnected)requestAnimationFrame(()=>target.focus({preventScroll:true}));}
+  }
+  function markSavedConfig(){savedConfigSnapshot=capture();savedConfigSignature=pendingSignature(savedConfigSnapshot);updatePendingSave();}
+  function discardPendingConfig(){
+    if(!hasPendingConfigChanges())return;
+    pause();
+    const camera={viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraFollowOffset:state.cameraFollowOffset,cameraOffsetY:state.cameraOffsetY,follow:state.follow};
+    applyConfig({...clone(savedConfigSnapshot),...camera});
+    status("Alterações descartadas; a última configuração salva foi restaurada.");
+  }
+  document.addEventListener("fullscreenchange",()=>{const panel=$("mru-pending-save"),host=document.fullscreenElement||document.body;if(panel&&panel.parentElement!==host)host.append(panel);});
+  document.addEventListener("keydown",event=>{
+    const panel=$("mru-pending-save");if(!panel||panel.hidden)return;
+    if(event.key==="Escape"){event.preventDefault();event.stopImmediatePropagation();return;}
+    if(event.key!=="Tab")return;
+    const first=$("#mru-save-pending"),last=$("#mru-discard-pending");
+    if(event.shiftKey&&(document.activeElement===first||!panel.contains(document.activeElement))){event.preventDefault();last?.focus();}
+    else if(!event.shiftKey&&(document.activeElement===last||!panel.contains(document.activeElement))){event.preventDefault();first?.focus();}
+  },true);
   window.addEventListener("beforeunload",event=>{if(!hasPendingConfigChanges())return;event.preventDefault();event.returnValue="";});
   function historyPush(snapshot=capture()){undoStack.push(clone(snapshot));if(undoStack.length>30)undoStack.shift();redoStack.length=0;syncHistoryButtons();}
   function syncHistoryButtons(){$("mru-undo").disabled=!undoStack.length;$("mru-redo").disabled=!redoStack.length;}
@@ -48,13 +75,14 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     state.carts=config.carts.map((car,i)=>({id:String(car.id),kind:car.kind==="sport-cart"?"sport-cart":"scientific-cart",name:String(car.name||("Carrinho "+String.fromCharCode(65+i))).trim().slice(0,42)||"Carrinho",x0:Number(car.x0),v:Number(car.v),color:validColor(car.color,colorSet[i%colorSet.length]),wheelColor:validColor(car.wheelColor,"#202935"),size:clamp(Number(car.size)||1,.55,1.7),wheelRadius:clamp(Number(car.wheelRadius)||.03,.01,.15),opacity:clamp(Number(car.opacity??1),.2,1),details:car.details!==false,vector:car.vector!==false,trail:car.trail!==false,visible:car.visible!==false,locked:car.locked===true}));
     state.fixtures=Array.isArray(config.fixtures)?config.fixtures.slice(0,50).filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
     state.playbackRate=[.25,.5,1,2,4].includes(Number(config.playbackRate))?Number(config.playbackRate):1;state.loop=config.loop!==false;
-    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-500,500);state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration===true,displacement:config.vectors?.displacement===true};state.reduceMotion=config.reduceMotion===true;
+    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.cameraFollowOffset=clamp(Number(config.cameraFollowOffset)||0,-1000000,1000000);state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-500,500);state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration===true,displacement:config.vectors?.displacement===true};state.reduceMotion=config.reduceMotion===true;
     if(!state.carts.some((car)=>car.id===state.selectedId))state.selectedId=state.carts[0]?.id||null;
     state.selectedIds=state.selectedIds.filter((id)=>entity(id));if(state.selectedId&&!state.selectedIds.includes(state.selectedId))state.selectedIds=[state.selectedId];
     if(resetTime)state.time=0;state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;
     renderAll();
   }
-  function cameraMin(){let center=state.cameraCenter;if(state.follow&&currentCart())center=mruAt(currentCart(),state.time).x;return center-state.viewSpan/2;}
+  function stopCameraFollow(){if(!state.follow)return;const car=currentCart();if(car)state.cameraCenter=mruAt(car,state.time).x+state.cameraFollowOffset;state.cameraFollowOffset=0;state.follow=false;}
+  function cameraMin(){let center=state.cameraCenter;const car=currentCart();if(state.follow&&car)center=mruAt(car,state.time).x+state.cameraFollowOffset;return center-state.viewSpan/2;}
   function laneY(index,total){return 258+index*(total>1?Math.min(43,172/(total-1)):0);}
   function niceStep(raw){const p=Math.pow(10,Math.floor(Math.log10(Math.max(raw,1e-6)))),n=raw/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p;}
   function textSvg(x,y,value,cls,anchor="middle"){return '<text class="'+cls+'" x="'+x.toFixed(2)+'" y="'+y.toFixed(2)+'" text-anchor="'+anchor+'">'+esc(value)+"</text>";}
@@ -425,23 +453,26 @@ function renderMode(){
     const pointAt=(event)=>{const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;return point.matrixTransform(svg.getScreenCTM().inverse());};
     const intercept=(event)=>{event.preventDefault();event.stopImmediatePropagation();};
     const scheduleRender=()=>{if(renderFrame)return;renderFrame=requestAnimationFrame(()=>{renderFrame=0;drawScene();updatePendingSave();});};
-    const resetCamera=()=>{state.viewSpan=24;state.cameraCenter=0;state.follow=true;state.cameraOffsetY=0;drawScene();updatePendingSave();};
-    const centerCamera=()=>{const car=currentCart();state.follow=false;if(car)state.cameraCenter=mruAt(car,state.time).x;state.cameraOffsetY=0;drawScene();updatePendingSave();};
+    const resetCamera=()=>{state.viewSpan=24;state.cameraCenter=0;state.cameraFollowOffset=0;state.follow=true;state.cameraOffsetY=0;drawScene();updatePendingSave();};
+    const centerCamera=()=>{const car=currentCart();state.follow=false;state.cameraFollowOffset=0;if(car)state.cameraCenter=mruAt(car,state.time).x;state.cameraOffsetY=0;drawScene();updatePendingSave();};
     const fitExperiment=()=>{
       const xs=state.carts.filter(item=>item.visible!==false).map(car=>mruAt(car,state.time).x).concat(state.fixtures.filter(item=>item.visible!==false).map(item=>item.x));
       if(!xs.length){resetCamera();return;}
       const min=Math.min(...xs),max=Math.max(...xs),margin=Math.max(2,(max-min)*.15);
-      state.viewSpan=clamp(max-min+margin*2,8,80);state.cameraCenter=(min+max)/2;state.follow=false;state.cameraOffsetY=0;drawScene();updatePendingSave();
+      state.viewSpan=clamp(max-min+margin*2,8,80);state.cameraCenter=(min+max)/2;state.cameraFollowOffset=0;state.follow=false;state.cameraOffsetY=0;drawScene();updatePendingSave();
     };
     const zoomAt=(point,factor)=>{
-      const ratio=clamp((point.x-100)/900,0,1),world=cameraMin()+ratio*state.viewSpan;
-      state.viewSpan=clamp(state.viewSpan*factor,8,80);state.follow=false;
-      state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();
+      const ratio=clamp((point.x-100)/900,0,1),world=cameraMin()+ratio*state.viewSpan,car=currentCart();
+      const followedX=car?mruAt(car,state.time).x:null;
+      state.viewSpan=clamp(state.viewSpan*factor,8,80);
+      if(state.follow&&Number.isFinite(followedX))state.cameraFollowOffset=world-followedX-(ratio-.5)*state.viewSpan;
+      else{stopCameraFollow();state.cameraCenter=world-(ratio-.5)*state.viewSpan;}
+      drawScene();updatePendingSave();
     };
     const centerPoint=()=>({x:550,y:250});
     $("mru-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.12));$("mru-fullscreen-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.12));
     $("mru-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.12));$("mru-fullscreen-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.12));
-    $("mru-zoom-reset").addEventListener("click",()=>{state.viewSpan=24;drawScene();updatePendingSave();});
+    $("mru-zoom-reset").addEventListener("click",()=>{state.viewSpan=24;if(state.follow)state.cameraFollowOffset=0;drawScene();updatePendingSave();});
     $("mru-center-camera").addEventListener("click",centerCamera);
     $("mru-fit-camera").addEventListener("click",fitExperiment);
     svg.addEventListener("pointerdown",event=>{
@@ -463,7 +494,7 @@ function renderMode(){
         const pair=touchPointers.slice(-2),a=pair[0][1].point,b=pair[1][1].point,mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
         const ratio=clamp((mid.x-100)/900,0,1);
         gesture={type:"pinch",ids:pair.map(([id])=>id),distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),span:state.viewSpan,anchorWorld:cameraMin()+ratio*state.viewSpan,ratio,centerY:mid.y,offsetY:state.cameraOffsetY};
-        state.follow=false;
+        stopCameraFollow();
         for(const [id] of pair){try{svg.setPointerCapture(id);}catch{}}
         svg.classList.add("is-camera-moving");intercept(event);return;
       }
@@ -477,7 +508,7 @@ function renderMode(){
       if(pointers.has(event.pointerId))pointers.get(event.pointerId).point=pointAt(event);
       if(gesture?.type==="pan"&&gesture.id===event.pointerId){
         const point=pointAt(event),dx=point.x-gesture.last.x,dy=point.y-gesture.last.y;gesture.last=point;
-        state.follow=false;state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-500,500);scheduleRender();intercept(event);return;
+        stopCameraFollow();state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-500,500);scheduleRender();intercept(event);return;
       }
       if(gesture?.type==="pinch"&&gesture.ids.includes(event.pointerId)){
         const a=pointers.get(gesture.ids[0])?.point,b=pointers.get(gesture.ids[1])?.point;
@@ -485,7 +516,7 @@ function renderMode(){
         const distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),midY=(a.y+b.y)/2;
         state.viewSpan=clamp(gesture.span*Math.pow(gesture.distance/distance,.78),8,80);
         state.cameraCenter=gesture.anchorWorld-(gesture.ratio-.5)*state.viewSpan;
-        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-500,500);state.follow=false;scheduleRender();intercept(event);
+        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-500,500);state.cameraFollowOffset=0;state.follow=false;scheduleRender();intercept(event);
       }
     },true);
     const endPointer=event=>{
@@ -505,8 +536,8 @@ function renderMode(){
       const point=pointAt(event),rect=svg.getBoundingClientRect(),factor=event.deltaMode===1?16:event.deltaMode===2?rect.height:1;
       if(event.ctrlKey||event.metaKey){zoomAt(point,Math.exp(event.deltaY*factor*.0008));}
       else{
-        state.follow=false;
-        state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
+        if(state.follow)state.cameraFollowOffset+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
+        else state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
         state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-500,500);
         drawScene();updatePendingSave();
       }
@@ -576,7 +607,7 @@ function renderMode(){
   }
   function moveDrag(event){
     if(!state.drag||state.drag.pointer!==event.pointerId)return;const item=entity(state.drag.id);if(!item)return;
-    const x=pointerWorld(event);if(isCart(item))item.x0=x-item.v*state.time;else item.x=x;state.drag.moved=true;if(state.follow&&isCart(item))state.follow=false;
+    const x=pointerWorld(event);if(state.follow&&isCart(item))stopCameraFollow();if(isCart(item))item.x0=x-item.v*state.time;else item.x=x;state.drag.moved=true;
     if(!dragRenderFrame)dragRenderFrame=requestAnimationFrame(()=>{dragRenderFrame=0;refreshFrame(false,performance.now());});
   }
   function stopDrag(event){
@@ -603,10 +634,10 @@ function renderMode(){
   $("mru-step-size").addEventListener("change",event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<=0||n>10){event.target.value=".5";status("O passo temporal deve ficar entre 0,01 e 10 s.","error");}});
   $("mru-loop").addEventListener("change",event=>{state.loop=event.target.checked;updatePendingSave();});
   $("mru-view-span").addEventListener("input",event=>{state.viewSpan=clamp(Number(event.target.value),8,80);$("mru-view-span-value").textContent=fmt(state.viewSpan,0)+" m";drawScene();updatePendingSave();});
-  $("mru-pan-left").addEventListener("click",()=>{state.follow=false;state.cameraCenter-=state.viewSpan*.2;drawScene();updatePendingSave();});
-  $("mru-pan-right").addEventListener("click",()=>{state.follow=false;state.cameraCenter+=state.viewSpan*.2;drawScene();updatePendingSave();});
-  $("mru-follow-toggle").addEventListener("click",()=>{state.follow=!state.follow;if(!state.follow&&currentCart())state.cameraCenter=mruAt(currentCart(),state.time).x;state.cameraOffsetY=0;drawScene();updatePendingSave();});
-  $("mru-recenter").addEventListener("click",()=>{state.follow=true;state.cameraOffsetY=0;drawScene();updatePendingSave();});
+  $("mru-pan-left").addEventListener("click",()=>{stopCameraFollow();state.cameraCenter-=state.viewSpan*.2;drawScene();updatePendingSave();});
+  $("mru-pan-right").addEventListener("click",()=>{stopCameraFollow();state.cameraCenter+=state.viewSpan*.2;drawScene();updatePendingSave();});
+  $("mru-follow-toggle").addEventListener("click",()=>{if(state.follow){const car=currentCart();if(car)state.cameraCenter=mruAt(car,state.time).x+state.cameraFollowOffset;state.follow=false;}else{state.follow=true;state.cameraFollowOffset=0;}state.cameraOffsetY=0;drawScene();updatePendingSave();});
+  $("mru-recenter").addEventListener("click",()=>{state.follow=true;state.cameraFollowOffset=0;state.cameraOffsetY=0;drawScene();updatePendingSave();});
   $("mru-show-grid").addEventListener("change",event=>{state.showGrid=event.target.checked;drawScene();updatePendingSave();});
   $("mru-reduce-motion").addEventListener("change",event=>{state.reduceMotion=event.target.checked;document.body.classList.toggle("mru-reduced-motion",state.reduceMotion);drawScene();updatePendingSave();});
   $("mru-high-contrast").addEventListener("change",event=>{document.body.classList.toggle("mru-high-contrast",event.target.checked);});
@@ -630,9 +661,9 @@ function renderMode(){
   svg.addEventListener("pointerdown",startDrag);svg.addEventListener("pointermove",moveDrag);svg.addEventListener("pointerup",stopDrag);svg.addEventListener("pointercancel",stopDrag);
   installCameraNavigation();
   svg.addEventListener("keydown",event=>{
-    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();state.follow=false;const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-500,500);drawScene();updatePendingSave();return;}
-    if(event.key==="+"||event.key==="="){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan/1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
-    if(event.key==="-"){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan*1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
+    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();stopCameraFollow();const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-500,500);drawScene();updatePendingSave();return;}
+    if(event.key==="+"||event.key==="="){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan/1.2,8,80);state.follow=false;state.cameraFollowOffset=0;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
+    if(event.key==="-"){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan*1.2,8,80);state.follow=false;state.cameraFollowOffset=0;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
     if(event.key==="0"){event.preventDefault();state.viewSpan=24;state.cameraCenter=0;state.cameraOffsetY=0;state.follow=true;drawScene();updatePendingSave();return;}
     if(event.code==="Space"){event.preventDefault();state.running?pause():play();return;}
     if(!["ArrowLeft","ArrowRight"].includes(event.key))return;const item=entity();if(!item||item.locked)return;

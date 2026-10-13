@@ -9,10 +9,10 @@
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-controls-vectors-20261013-2">
+  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-wheel-modal-20261013-1">
   <script src="script.js?v=site-performance-20261013-1" defer></script>
   <script src="quick-menu.js?v=accessibility-20261013-1" defer></script>
-  <script type="module" src="laboratorio-mruv.js?v=motion-controls-vectors-20261013-2"></script>
+  <script type="module" src="laboratorio-mruv.js?v=motion-wheel-modal-20261013-1"></script>
   <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>\n</head>
 <body>
@@ -72,6 +72,11 @@
               <h2 class="mruv-fullscreen-drawer-title">Controles do laboratório MRUV</h2>
               <div class="mruv-fullscreen-drawer-content"></div>
             </aside>
+            <div id="mruv-pending-save" class="mruv-pending-save" hidden role="dialog" aria-modal="true" aria-labelledby="mruv-pending-save-title" tabindex="-1">
+              <h2 id="mruv-pending-save-title">Salvar alterações?</h2>
+              <p>Você alterou este experimento. Salve para guardar a configuração neste dispositivo ou descarte para restaurar a última configuração salva.</p>
+              <div class="mruv-pending-save-actions"><button id="mruv-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mruv-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div>
+            </div>
           </div>
           <div class="mruv-stage-footer"><span id="mruv-reference-label">Referencial: pista · origem x = 0 m</span><span id="mruv-scene-summary" aria-live="off"></span><span class="mruv-pan-hint">Arraste uma área vazia para mover. No celular, use pinça para zoom; no touchpad, deslize dois dedos ou use Ctrl + roda.</span></div><p class="mruv-muted">As setas de velocidade e aceleração têm escala visual ampliada para facilitar a leitura; os valores numéricos usam as unidades SI.</p>
 <details class="mruv-camera-details" id="mruv-camera-panel"><summary>Enquadramento e acessibilidade</summary><div class="mruv-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label data-advanced-only for="mruv-view-span">Escala visível <output id="mruv-view-span-value">24 m</output></label><input id="mruv-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mruv-zoom-in" class="button button-outline" type="button">+ Aproximar</button><button id="mruv-zoom-out" class="button button-outline" type="button">− Afastar</button><button id="mruv-zoom-reset" class="button button-outline" type="button">Restaurar zoom</button><button id="mruv-center-camera" class="button button-outline" type="button">Centralizar</button><button id="mruv-fit-camera" data-advanced-only class="button button-outline" type="button">Enquadrar experimento</button><button id="mruv-pan-left" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mruv-pan-right" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mruv-recenter" class="button button-outline" type="button">Acompanhar carrinho</button><label class="mruv-check"><input id="mruv-show-grid" type="checkbox" checked> Grade</label><label data-advanced-only class="mruv-check"><input id="mruv-reduce-motion" type="checkbox"> Reduzir efeitos visuais</label><label data-advanced-only class="mruv-check"><input id="mruv-high-contrast" type="checkbox"> Alto contraste</label><label data-advanced-only class="mruv-check"><input id="mruv-simple-mode" type="checkbox"> Modo simplificado</label><label data-advanced-only for="mruv-text-size">Texto <input id="mruv-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mruv-text-size-value">100%</output></label></div></details>
@@ -153,8 +158,7 @@
           <div class="mruv-card-heading compact"><div><span class="section-kicker">SEU EXPERIMENTO</span><h2 id="mruv-save-heading">Salvar e exportar</h2></div></div>
           <label class="mruv-saved-select" for="mruv-saved-experiments">Experimentos salvos neste dispositivo<select id="mruv-saved-experiments"><option value="">Selecione um experimento salvo</option></select></label>
           <div class="mruv-button-grid"><button id="mruv-save" class="button button-outline" type="button">Salvar alterações / novo</button><button id="mruv-load" class="button button-outline" type="button" disabled>Carregar</button><button id="mruv-duplicate-saved" data-advanced-only class="button button-outline" type="button" disabled>Duplicar salvo</button><button id="mruv-rename-saved" data-advanced-only class="button button-outline" type="button" disabled>Renomear salvo</button><button id="mruv-delete-saved" data-advanced-only class="button button-outline" type="button" disabled>Apagar salvo</button><button id="mruv-share" data-advanced-only class="button button-outline" type="button">Copiar link da configuração</button><button id="mruv-export-scene" data-advanced-only class="button button-outline" type="button">Baixar pista SVG</button><button id="mruv-reset-config" data-advanced-only class="button button-outline" type="button">Restaurar padrão</button><label data-advanced-only class="button button-outline mruv-file-label" for="mruv-import-file">Abrir configuração JSON<input id="mruv-import-file" type="file" accept="application/json,.json"></label></div>
-          <div id="mruv-pending-save" class="mruv-pending-save" hidden aria-live="off"><p><strong>Pré-visualização ativa.</strong> As mudanças já aparecem no laboratório. Salve para restaurá-las depois ou descarte para voltar à última configuração salva.</p><div><button id="mruv-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mruv-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div></div>
-           <p id="mruv-save-status" class="mruv-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
+          <p id="mruv-save-status" class="mruv-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
         </section>
 
         <section class="mruv-card mruv-investigation-card" data-advanced-only id="mruv-investigation" aria-labelledby="mruv-investigation-heading">
