@@ -297,3 +297,15 @@ body.mruv-has-pending-save::before{content:"";position:fixed;inset:0;z-index:100
 
 .mruv-card-heading.compact.mruv-foldout-summary{margin:0}
 .mruv-foldout-title{color:var(--text,#f5f7fb)}
+
+/* Confirmação individual dos campos do editor de objetos */
+.mruv-property-field,.mruv-property-toggle{min-width:0}
+.mruv-property-field.full,.mruv-property-toggle.full{grid-column:1/-1}
+.mruv-property-field-head{display:flex;align-items:center;justify-content:space-between;gap:.35rem;min-height:32px;margin-bottom:.25rem}
+.mruv-property-field-head label{display:block!important;min-width:0;margin:0;color:var(--muted);font-size:.74rem}
+.mruv-property-field>input{width:100%}
+.mruv-property-toggle{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
+.mruv-property-toggle label{display:flex!important;align-items:center;gap:.4rem;min-width:0;color:var(--muted);font-size:.74rem}
+.mruv-property-toggle input{width:auto!important;accent-color:var(--gold)}
+.mruv-field-apply{flex:0 0 auto;min-height:30px;padding:.2rem .42rem;font-size:.68rem;line-height:1.15;white-space:nowrap}
+.mruv-field-apply:disabled{opacity:.42;cursor:not-allowed}

@@ -168,7 +168,8 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-duplicate").disabled=!state.selectedIds.length;$("mru-restore-object").disabled=!item;
     $("mru-layer-up").disabled=!item||isCart(item);$("mru-layer-down").disabled=!item||isCart(item);
   }
-  function prop(id,label,value,type,attrs="",full=false){return '<label class="'+(full?"full":"")+'" for="mru-prop-'+id+'">'+label+'<input class="mru-prop" id="mru-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></label>";}
+  function prop(id,label,value,type,attrs="",full=false){return '<div class="mru-property-field'+(full?" full":"")+'"><div class="mru-property-field-head"><label for="mru-prop-'+id+'">'+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mru-prop" id="mru-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
+  function toggleProp(id,label,checked,full=false){return '<div class="mru-property-toggle'+(full?" full":"")+'"><label class="mru-inline-check"><input class="mru-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" disabled aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
   function renderProperties(){
     const item=entity();if(!item){$("mru-properties").innerHTML='<p class="mru-muted">Selecione um objeto para editar suas propriedades.</p>';return;}
     let html="<h3>"+esc(item.name)+"</h3><div class=\"mru-properties-grid\">"+prop("name","Nome",item.name,"text",'maxlength="42" required',true);
@@ -177,67 +178,77 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       html+=prop("color","Cor da carroceria",item.color,"color")+prop("wheelColor","Cor das rodas",item.wheelColor,"color");
       html+=prop("size","Tamanho visual",item.size,"range",'min="0.55" max="1.7" step="0.05"')+prop("wheelRadius","Raio da roda",item.wheelRadius,"number",'min="0.01" max="0.15" step="0.005"');
       html+=prop("opacity","Opacidade",item.opacity,"range",'min="0.2" max="1" step="0.05"');
-      html+='<label class="full" for="mru-prop-kind">Aparência<select class="mru-prop" id="mru-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option></select></label>';
-      for(const key of ["details","vector","trail"])html+='<label class="mru-inline-check"><input class="mru-prop" data-prop="'+key+'" type="checkbox" '+(item[key]?"checked":"")+'> '+({details:"Detalhes",vector:"Vetor v",trail:"Trajetória"}[key])+"</label>";
+      html+='<div class="mru-property-field full"><div class="mru-property-field-head"><label for="mru-prop-kind">Aparência</label><button class="button button-outline mru-field-apply" data-apply-prop="kind" type="button" disabled aria-label="Aplicar alteração: Aparência">Aplicar</button></div><select class="mru-prop" id="mru-prop-kind" data-prop="kind"><option value="scientific-cart" '+(item.kind==="scientific-cart"?"selected":"")+'>Carrinho científico</option><option value="sport-cart" '+(item.kind==="sport-cart"?"selected":"")+'>Carrinho esportivo</option></select></div>';
+      for(const key of ["details","vector","trail"])html+=toggleProp(key,{details:"Detalhes",vector:"Vetor v",trail:"Trajetória"}[key],!!item[key]);
     }else{
       html+=prop("x","Posição fixa x",item.x,"number",'step="0.1" min="-1000000" max="1000000"')+prop("color","Cor",item.color,"color");
       if(item.kind==="time-marker")html+=prop("interval","Intervalo temporal",item.interval||state.sampleInterval,"number",'min="0.1" max="60" step="0.1"');
     }
-    html+='<label class="mru-inline-check full"><input class="mru-prop" data-prop="visible" type="checkbox" '+(item.visible!==false?"checked":"")+'> Exibir</label><label class="mru-inline-check full"><input class="mru-prop" data-prop="locked" type="checkbox" '+(item.locked?"checked":"")+'> Bloquear posição</label></div>';
-    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Pré-visualização aplicada em tempo real. As alterações aparecem na pista, nas leituras e nos gráficos.</p><button id="mru-prop-discard" class="button button-outline" type="button">Descartar edição deste objeto</button><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
+    html+=toggleProp("visible","Exibir",item.visible!==false,true)+toggleProp("locked","Bloquear posição",!!item.locked,true)+"</div>";
+    const actionMarkup='<div class="mru-edit-actions" id="mru-edit-actions" hidden><p>Altere um campo e confirme pelo botão Aplicar ao lado dele. Os outros campos pendentes ficam separados.</p><button id="mru-prop-discard" class="button button-outline" type="button" disabled>Descartar alterações pendentes</button><span id="mru-edit-feedback" class="mru-edit-feedback" role="status" aria-live="polite"></span></div>';
     $("mru-properties").innerHTML=html+actionMarkup;
-    const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], actionBox=$("mru-edit-actions"), feedback=$("mru-edit-feedback");
-    const original=clone(item),editBefore=capture();let draft=clone(item),editHistoryPushed=false,wasDirty=false,lastFeedback="";
+    const editingId=item.id, fields=[...$("mru-properties").querySelectorAll(".mru-prop")], applyButtons=[...$("mru-properties").querySelectorAll("[data-apply-prop]")], actionBox=$("mru-edit-actions"), feedback=$("mru-edit-feedback"), discardButton=$("mru-prop-discard");
+    let draft=clone(item),lastFeedback="";
+    function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
+    function keyFields(key){return fields.filter(field=>field.dataset.prop===key);}
+    function validField(field){return !((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(Number(field.value))))&&!(field.dataset.prop==="name"&&!String(field.value).trim());}
     function updateDraft(field){
       const key=field.dataset.prop;if(!key)return false;
+      if(!validField(field))return false;
       let value=field.type==="checkbox"?field.checked:(field.type==="number"||field.type==="range"?Number(field.value):field.value);
-      if((field.type==="number"||field.type==="range")&&(field.value.trim()===""||!Number.isFinite(value)))return false;
       value=normalize(key,value,field);
-      if(key==="name"&&!value)return false;
       draft[key]=value;
-      if(["x0","v0","v","a"].includes(key)){
-        for(const peer of fields.filter(node=>node!==field&&node.dataset.prop===key)){
-          if(peer.type==="range")peer.value=String(clamp(value,Number(peer.min),Number(peer.max)));
-          else peer.value=String(value);
-        }
+      for(const peer of keyFields(key).filter(node=>node!==field)){
+        if(peer.type==="range")peer.value=String(clamp(value,Number(peer.min),Number(peer.max)));
+        else peer.value=String(value);
       }
       return true;
     }
-    function changedDraft(){return Object.keys(draft).some(key=>JSON.stringify(draft[key])!==JSON.stringify(original[key]));}
-    function showFeedback(text){if(text!==lastFeedback){feedback.textContent=text;lastFeedback=text;}}
-    function preview(){
-      const target=entity(editingId);if(!target)return;
-      const changed=changedDraft(),physicalChanged=["x0","v"].some(key=>target[key]!==draft[key]);
-      if(changed){
-        if(!editHistoryPushed){historyPush(editBefore);editHistoryPushed=true;}
-        Object.assign(target,clone(draft));
-        changedParameter(false);
-        actionBox.hidden=false;
-        if(!wasDirty){showFeedback(physicalChanged?"Condição atualizada; trajetória recalculada em t = "+fmt(state.time)+" s.":"Pré-visualização atualizada na pista, nos dados e nos gráficos.");wasDirty=true;}
-        renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
-      }else{
-        const targetChanged=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));
-        if(targetChanged){
-          const physicalRestore=["x0","v"].some(key=>target[key]!==original[key]);
-          Object.assign(target,clone(original));changedParameter(false);
-          renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
-        }
-        actionBox.hidden=true;wasDirty=false;showFeedback("Nenhuma alteração pendente neste objeto.");
+    function pendingKeys(){
+      const target=entity(editingId);if(!target)return [];
+      return [...new Set(applyButtons.map(button=>button.dataset.applyProp))].filter(key=>JSON.stringify(draft[key])!==JSON.stringify(target[key]));
+    }
+    function refreshApplyButtons(){
+      const pending=pendingKeys(), target=entity(editingId);
+      for(const button of applyButtons){
+        const key=button.dataset.applyProp, group=keyFields(key);
+        button.disabled=!target||JSON.stringify(draft[key])===JSON.stringify(target[key])||group.some(field=>!validField(field));
+      }
+      const invalid=fields.some(field=>!validField(field));
+      actionBox.hidden=!pending.length&&!invalid;
+      discardButton.disabled=!pending.length;
+      if(pending.length)showFeedback("Confirme cada campo pendente no botão correspondente.");
+      else if(!invalid){actionBox.hidden=true;}
+    }
+    function stage(field){
+      const valid=updateDraft(field);
+      refreshApplyButtons();
+      if(!valid||keyFields(field.dataset.prop).some(node=>!validField(node))){
+        actionBox.hidden=false;showFeedback("Preencha este campo com um valor válido antes de confirmar.");
       }
     }
+    function applyProperty(key){
+      const target=entity(editingId), group=keyFields(key);
+      if(!target)return;
+      if(group.some(field=>!validField(field))){showFeedback("Corrija este campo antes de aplicar.");group.find(field=>!validField(field))?.focus();return;}
+      const pending=JSON.stringify(draft[key])!==JSON.stringify(target[key]);
+      if(!pending){refreshApplyButtons();return;}
+      const physicalChanged=["x0","v"].includes(key);
+      historyPush();
+      target[key]=clone(draft[key]);
+      changedParameter(false);
+      if(key==="name"){const heading=$("mru-properties").querySelector("h3");if(heading)heading.textContent=target.name;}
+      renderObjects();refreshFrame(true);renderDataTable();drawCharts();updatePendingSave();
+      refreshApplyButtons();
+      showFeedback(physicalChanged?"Alteração aplicada; movimento atualizado em t = "+fmt(state.time)+" s.":"Alteração aplicada na animação, nos dados e nos gráficos.");
+    }
     fields.forEach(field=>{
-      const handle=()=>{
-        const valid=updateDraft(field);
-        const invalid=fields.some(node=>((node.type==="number"||node.type==="range")&&(node.value.trim()===""||!Number.isFinite(Number(node.value))))||(node.dataset.prop==="name"&&!String(node.value).trim()));
-        if(!valid||invalid){actionBox.hidden=false;showFeedback("Pré-visualização pausada até que os campos obrigatórios tenham valores válidos.");return;}
-        preview();
-      };
-      field.addEventListener("input",handle);field.addEventListener("change",handle);
+      field.addEventListener("input",()=>stage(field));field.addEventListener("change",()=>stage(field));
     });
-    $("mru-prop-discard").addEventListener("click",()=>{
-      draft=clone(original);
-      const target=entity(editingId);if(target){const changed=Object.keys(original).some(key=>JSON.stringify(target[key])!==JSON.stringify(original[key]));if(changed){const physicalChanged=["x0","v"].some(key=>target[key]!==original[key]);Object.assign(target,clone(original));changedParameter(false);renderAll();}}
-      status("Edição do objeto descartada.");renderProperties();
+    applyButtons.forEach(button=>button.addEventListener("click",()=>applyProperty(button.dataset.applyProp)));
+    discardButton.addEventListener("click",()=>{
+      status("Alterações pendentes descartadas; os valores já aplicados foram mantidos.");
+      renderProperties();
     });
   }
   function renderDataTable(){
