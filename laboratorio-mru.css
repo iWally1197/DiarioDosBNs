@@ -211,3 +211,39 @@
 .mru-camera-controls { align-items:center; }
 .mru-camera-controls button { min-height:44px; }
 @media(max-width:720px) { .mru-pending-save>div { display:grid; grid-template-columns:1fr; } .mru-camera-controls { align-items:stretch; } .mru-pan-hint { flex-basis:100%; } }
+
+/* MRU: modos de uso e painéis recolhíveis */
+.mru-ui-mode{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:0 0 1rem;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.mru-ui-mode p{margin:.25rem 0 0;color:var(--muted);font-size:.85rem}
+.mru-ui-mode-buttons{display:flex;gap:.55rem;flex-shrink:0}
+.mru-ui-mode-buttons button{min-height:42px;padding:.55rem .9rem;border:1px solid var(--line);border-radius:999px;background:var(--panel-strong,#111c2f);color:var(--text);font:inherit;cursor:pointer}
+.mru-ui-mode-buttons button.is-active{border-color:var(--gold);background:rgba(240,198,110,.14);color:var(--gold-bright,#f3cd79)}
+body.mru-beginner-mode [data-advanced-only]{display:none!important}
+.mru-camera-details,.mru-vector-details,.mru-editor-details{border:1px solid var(--line);border-radius:12px;background:rgba(7,13,25,.32);overflow:hidden}
+.mru-camera-details>summary,.mru-vector-details>summary,.mru-editor-details>summary{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.8rem 1rem;color:var(--text);font-weight:700;cursor:pointer;list-style:none}
+.mru-camera-details>summary::-webkit-details-marker,.mru-vector-details>summary::-webkit-details-marker,.mru-editor-details>summary::-webkit-details-marker{display:none}
+.mru-camera-details>summary::after,.mru-vector-details>summary::after{content:"⌄";color:var(--gold);font-size:1.1rem;transition:transform .18s ease}
+.mru-camera-details[open]>summary::after,.mru-vector-details[open]>summary::after{transform:rotate(180deg)}
+.mru-camera-controls{padding:.4rem 1rem 1rem}
+.mru-vector-details{margin-top:.65rem}
+.mru-vector-details>p{margin:.15rem 1rem .7rem;color:var(--muted);font-size:.84rem}
+.mru-vector-buttons{display:flex;flex-wrap:wrap;gap:.55rem;padding:0 1rem 1rem}
+.mru-vector-toggle[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-bright,#f3cd79);background:rgba(240,198,110,.12)}
+.mru-vector-toggle[aria-pressed="false"]{opacity:.75}
+.mru-editor-details>summary{padding:1rem}
+.mru-editor-chevron{color:var(--gold);font-size:1.25rem;transition:transform .18s ease}
+.mru-editor-details[open] .mru-editor-chevron{transform:rotate(180deg)}
+.mru-editor-content{padding:0 1rem 1rem}
+.mru-cart-name{fill:#fff;font-size:12px;font-weight:800;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:4px;stroke-linejoin:round}
+.mru-cart-value{fill:#f5d990;font-size:11px;font-weight:750;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:4px;stroke-linejoin:round}
+.mru-cart-vector-value{fill:#eff5ff;font-size:10px;font-weight:700;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:3px;stroke-linejoin:round}
+.mru-fullscreen-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem}
+.mru-fullscreen-tools>.button{min-height:40px}
+@media(max-width:640px){
+ .mru-ui-mode{align-items:flex-start;flex-direction:column}
+ .mru-ui-mode-buttons{width:100%}
+ .mru-ui-mode-buttons button{flex:1}
+ .mru-vector-buttons .button{flex:1 1 42%}
+ .mru-fullscreen-tools{right:.5rem;left:.5rem;justify-content:center}
+ .mru-fullscreen-tools>.button{padding:.45rem .6rem;font-size:.8rem}
+}

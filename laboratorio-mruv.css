@@ -226,3 +226,39 @@
 .mruv-camera-controls { align-items:center; }
 .mruv-camera-controls button { min-height:44px; }
 @media(max-width:720px) { .mruv-pending-save>div { display:grid; grid-template-columns:1fr; } .mruv-camera-controls { align-items:stretch; } .mruv-pan-hint { flex-basis:100%; } }
+
+/* MRUV: modos de uso e painéis recolhíveis */
+.mruv-ui-mode{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:0 0 1rem;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.mruv-ui-mode p{margin:.25rem 0 0;color:var(--muted);font-size:.85rem}
+.mruv-ui-mode-buttons{display:flex;gap:.55rem;flex-shrink:0}
+.mruv-ui-mode-buttons button{min-height:42px;padding:.55rem .9rem;border:1px solid var(--line);border-radius:999px;background:var(--panel-strong,#111c2f);color:var(--text);font:inherit;cursor:pointer}
+.mruv-ui-mode-buttons button.is-active{border-color:var(--gold);background:rgba(240,198,110,.14);color:var(--gold-bright,#f3cd79)}
+body.mruv-beginner-mode [data-advanced-only]{display:none!important}
+.mruv-camera-details,.mruv-vector-details,.mruv-editor-details{border:1px solid var(--line);border-radius:12px;background:rgba(7,13,25,.32);overflow:hidden}
+.mruv-camera-details>summary,.mruv-vector-details>summary,.mruv-editor-details>summary{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.8rem 1rem;color:var(--text);font-weight:700;cursor:pointer;list-style:none}
+.mruv-camera-details>summary::-webkit-details-marker,.mruv-vector-details>summary::-webkit-details-marker,.mruv-editor-details>summary::-webkit-details-marker{display:none}
+.mruv-camera-details>summary::after,.mruv-vector-details>summary::after{content:"⌄";color:var(--gold);font-size:1.1rem;transition:transform .18s ease}
+.mruv-camera-details[open]>summary::after,.mruv-vector-details[open]>summary::after{transform:rotate(180deg)}
+.mruv-camera-controls{padding:.4rem 1rem 1rem}
+.mruv-vector-details{margin-top:.65rem}
+.mruv-vector-details>p{margin:.15rem 1rem .7rem;color:var(--muted);font-size:.84rem}
+.mruv-vector-buttons{display:flex;flex-wrap:wrap;gap:.55rem;padding:0 1rem 1rem}
+.mruv-vector-toggle[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-bright,#f3cd79);background:rgba(240,198,110,.12)}
+.mruv-vector-toggle[aria-pressed="false"]{opacity:.75}
+.mruv-editor-details>summary{padding:1rem}
+.mruv-editor-chevron{color:var(--gold);font-size:1.25rem;transition:transform .18s ease}
+.mruv-editor-details[open] .mruv-editor-chevron{transform:rotate(180deg)}
+.mruv-editor-content{padding:0 1rem 1rem}
+.mruv-cart-name{fill:#fff;font-size:12px;font-weight:800;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:4px;stroke-linejoin:round}
+.mruv-cart-value{fill:#f5d990;font-size:11px;font-weight:750;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:4px;stroke-linejoin:round}
+.mruv-cart-vector-value{fill:#eff5ff;font-size:10px;font-weight:700;paint-order:stroke;stroke:rgba(7,13,25,.96);stroke-width:3px;stroke-linejoin:round}
+.mruv-fullscreen-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem}
+.mruv-fullscreen-tools>.button{min-height:40px}
+@media(max-width:640px){
+ .mruv-ui-mode{align-items:flex-start;flex-direction:column}
+ .mruv-ui-mode-buttons{width:100%}
+ .mruv-ui-mode-buttons button{flex:1}
+ .mruv-vector-buttons .button{flex:1 1 42%}
+ .mruv-fullscreen-tools{right:.5rem;left:.5rem;justify-content:center}
+ .mruv-fullscreen-tools>.button{padding:.45rem .6rem;font-size:.8rem}
+}

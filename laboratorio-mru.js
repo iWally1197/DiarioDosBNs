@@ -16,8 +16,9 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   const names = { "scientific-cart":"Carrinho científico","sport-cart":"Carrinho esportivo","position-sensor":"Sensor de posição",photogate:"Fotocélula","position-marker":"Marcador de posição","time-marker":"Marcadores temporais","start-line":"Linha de partida","finish-line":"Linha de chegada","distance-sign":"Placa de distância",cone:"Cone de sinalização",tree:"Árvore de referência",post:"Poste de referência",flag:"Bandeira" };
   const newCart = (i = 0) => ({ id:uid("cart"),kind:i===1?"sport-cart":"scientific-cart",name:"Carrinho "+String.fromCharCode(65+i),x0:i?5:0,v:i?-2:4,color:colorSet[i%colorSet.length],wheelColor:"#202935",size:1,wheelRadius:.03,opacity:1,details:true,vector:true,trail:true,visible:true,locked:false });
   const newFixtures = () => [{id:uid("sensor"),kind:"position-sensor",name:"Sensor de posição",x:3,color:"#f0c66e",visible:true,locked:false},{id:uid("gate"),kind:"photogate",name:"Fotocélula 1",x:8,color:"#79a8ff",visible:true,locked:false}];
-  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,cameraOffsetY:0,follow:true,showGrid:true,reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
-  const state = Object.assign(initialConfig(),{time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
+  const initialConfig = () => ({duration:12,sampleInterval:1,carts:[newCart()],fixtures:newFixtures(),playbackRate:1,viewSpan:24,cameraCenter:0,cameraOffsetY:0,follow:true,showGrid:true,vectors:{velocity:true,acceleration:false,displacement:false},reduceMotion:Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)});
+  const state = Object.assign(initialConfig(),{uiMode:"advanced",time:0,running:false,loop:true,mode:"explore",teacherReveal:false,selectedId:null,selectedIds:[],events:[],logged:new Set(),lastGateTimes:{},run:1,drag:null});
+  try{const savedUiMode=localStorage.getItem("diario-bns-mru-ui-mode-v1");if(savedUiMode==="beginner"||savedUiMode==="advanced")state.uiMode=savedUiMode;}catch{}
   const undoStack=[],redoStack=[];
   let raf=0,lastFrame=0,lastChart=0,dragBefore=null,dragRenderFrame=0;
   let graphZoom=1;
@@ -30,7 +31,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   const currentCart=()=>state.carts.find((item)=>item.id===state.selectedId)||state.carts[0]||null;
   const entity=(id=state.selectedId)=>state.carts.find((item)=>item.id===id)||state.fixtures.find((item)=>item.id===id)||null;
   const isCart=(item)=>Boolean(item&&state.carts.some((car)=>car.id===item.id));
-  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraOffsetY:state.cameraOffsetY,follow:state.follow,showGrid:state.showGrid,reduceMotion:state.reduceMotion});}
+  function capture(){return clone({duration:state.duration,sampleInterval:state.sampleInterval,carts:state.carts,fixtures:state.fixtures,playbackRate:state.playbackRate,loop:state.loop,viewSpan:state.viewSpan,cameraCenter:state.cameraCenter,cameraOffsetY:state.cameraOffsetY,vectors:state.vectors,follow:state.follow,showGrid:state.showGrid,reduceMotion:state.reduceMotion});}
   let savedConfigSnapshot=capture();
   let savedConfigSignature=JSON.stringify(savedConfigSnapshot);
   function hasPendingConfigChanges(){return JSON.stringify(capture())!==savedConfigSignature;}
@@ -47,7 +48,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     state.carts=config.carts.map((car,i)=>({id:String(car.id),kind:car.kind==="sport-cart"?"sport-cart":"scientific-cart",name:String(car.name||("Carrinho "+String.fromCharCode(65+i))).trim().slice(0,42)||"Carrinho",x0:Number(car.x0),v:Number(car.v),color:validColor(car.color,colorSet[i%colorSet.length]),wheelColor:validColor(car.wheelColor,"#202935"),size:clamp(Number(car.size)||1,.55,1.7),wheelRadius:clamp(Number(car.wheelRadius)||.03,.01,.15),opacity:clamp(Number(car.opacity??1),.2,1),details:car.details!==false,vector:car.vector!==false,trail:car.trail!==false,visible:car.visible!==false,locked:car.locked===true}));
     state.fixtures=Array.isArray(config.fixtures)?config.fixtures.slice(0,50).filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
     state.playbackRate=[.25,.5,1,2,4].includes(Number(config.playbackRate))?Number(config.playbackRate):1;state.loop=config.loop!==false;
-    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-180,180);state.showGrid=config.showGrid!==false;state.reduceMotion=config.reduceMotion===true;
+    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-500,500);state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration===true,displacement:config.vectors?.displacement===true};state.reduceMotion=config.reduceMotion===true;
     if(!state.carts.some((car)=>car.id===state.selectedId))state.selectedId=state.carts[0]?.id||null;
     state.selectedIds=state.selectedIds.filter((id)=>entity(id));if(state.selectedId&&!state.selectedIds.includes(state.selectedId))state.selectedIds=[state.selectedId];
     if(resetTime)state.time=0;state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;
@@ -63,10 +64,11 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       :'<path class="mru-cart-body" d="M3-12Q4-20 12-22L22-23 32-38H68Q77-37 82-23L91-20Q96-17 96-10V-5H3Z"/><path class="mru-cart-window" d="M28-25 36-35H48V-25ZM53-35H66Q74-34 78-25H53Z"/>';
     const wheel=(cx)=>'<g transform="rotate('+rotation.toFixed(1)+" "+cx+' 0)"><circle class="mru-cart-wheel" cx="'+cx+'" cy="0" r="10"/><circle class="mru-cart-hub" cx="'+cx+'" cy="0" r="5"/><path class="mru-wheel-spoke" d="M'+cx+'-8v16M'+(cx-8)+' 0h16"/></g>';
     const len=clamp(Math.abs(car.v)*8,14,54),start=car.v<0?48+len:48,end=car.v<0?48:48+len;
-    const vector=car.vector?'<path class="mru-vector" style="--cart-color:'+validColor(car.color,colorSet[index%5])+'" d="M'+start+' -53H'+end+'" marker-end="url(#mru-arrow)"/>'+textSvg((start+end)/2,-59,"v = "+fmt(car.v)+" m/s","mru-cart-label"):"";
+    const vector=state.vectors.velocity&&car.vector?'<path class="mru-vector" style="--cart-color:'+validColor(car.color,colorSet[index%5])+'" d="M'+start+' -64H'+end+'" marker-end="url(#mru-arrow)"/>'+textSvg((start+end)/2,-70,"v = "+fmt(car.v)+" m/s","mru-cart-vector-value"):"";
+    const acceleration=state.vectors.acceleration?textSvg(48,-54,"a = 0 m/s²","mru-cart-vector-value"):"";
     const trail=car.trail?'<path class="mru-trail" style="--cart-color:'+validColor(car.color,colorSet[index%5])+'" d="M'+(48+(car.x0-pos)*900/state.viewSpan).toFixed(2)+' 2H48"/>':"";
     const details=car.details?'<path class="mru-cart-highlight" d="M12-18h9m5-2 7-14m37 0 7 14"/><circle cx="15" cy="-9" r="1.8" fill="#fff"/><circle cx="84" cy="-9" r="1.8" fill="#fff"/>':"";
-    return '<g class="mru-cart-group" data-entity-id="'+esc(car.id)+'" tabindex="0" role="button" aria-label="'+esc(car.name)+", posição "+fmt(pos)+" metros, velocidade "+fmt(car.v)+' metros por segundo" transform="translate('+(x-48).toFixed(1)+" "+y.toFixed(1)+') scale('+scale+')" style="--cart-color:'+validColor(car.color,colorSet[index%5])+';--wheel-color:'+validColor(car.wheelColor,"#202935")+';opacity:'+clamp(car.opacity,.2,1)+'">'+trail+vector+textSvg(48,-69,car.name+" · x = "+fmt(pos)+" m","mru-cart-label")+'<g aria-hidden="true">'+wheel(25)+wheel(72)+body+details+'<path d="M4-7H94" stroke="rgba(255,255,255,.2)"/></g></g>';
+    return '<g class="mru-cart-group" data-entity-id="'+esc(car.id)+'" tabindex="0" role="button" aria-label="'+esc(car.name)+", posição "+fmt(pos)+" metros, velocidade "+fmt(car.v)+' metros por segundo" transform="translate('+(x-48).toFixed(1)+" "+y.toFixed(1)+') scale('+scale+')" style="--cart-color:'+validColor(car.color,colorSet[index%5])+';--wheel-color:'+validColor(car.wheelColor,"#202935")+';opacity:'+clamp(car.opacity,.2,1)+'">'+trail+vector+textSvg(48,-96,car.name,"mru-cart-name")+textSvg(48,-81,"x = "+fmt(pos)+" m","mru-cart-value")+acceleration+'<g aria-hidden="true">'+wheel(25)+wheel(72)+body+details+'<path d="M4-7H94" stroke="rgba(255,255,255,.2)"/></g></g>';
   }
   function fixtureSvg(item,x){
     const yTop=185,yBottom=456,color=validColor(item.color,"#f0c66e"),label=esc(item.name);
@@ -105,7 +107,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     const active=state.carts.filter(car=>car.visible),cars=[];
     active.forEach((car,index)=>{const x=xOf(mruAt(car,state.time).x);if(x>50&&x<1050)cars.push(cartSvg(car,index,x,laneY(index,active.length)-12));else cars.push('<g aria-label="'+esc(car.name)+' fora do enquadramento"><path d="'+(x<50?"M115 220l-16 10 16 10Z":"M985 220l16 10-16 10Z")+'" fill="'+validColor(car.color,"#4f88df")+'"/>'+textSvg(x<50?105:995,255,car.name+" · x = "+fmt(mruAt(car,state.time).x)+" m","mru-grid-label")+"</g>");});
     $("mru-scene-carts").innerHTML=cars.join("");
-    const cart=currentCart(),overlay=[];if(cart&&state.time>0){const a=xOf(cart.x0),b=xOf(mruAt(cart,state.time).x);if(a>100&&a<1000&&b>100&&b<1000)overlay.push('<path d="M'+a+' 154H'+b+'" stroke="'+validColor(cart.color,"#4f88df")+'" stroke-width="2.5" stroke-dasharray="5 6"/><circle cx="'+a+'" cy="154" r="4" fill="'+validColor(cart.color,"#4f88df")+'"/>');}
+    const cart=currentCart(),overlay=[];if(cart&&state.time>0&&state.vectors.displacement){const a=xOf(cart.x0),b=xOf(mruAt(cart,state.time).x);if(a>100&&a<1000&&b>100&&b<1000)overlay.push('<path d="M'+a+' 154H'+b+'" stroke="'+validColor(cart.color,"#4f88df")+'" stroke-width="2.5" stroke-dasharray="5 6" marker-end="url(#mru-arrow)"/><circle cx="'+a+'" cy="154" r="4" fill="'+validColor(cart.color,"#4f88df")+'"/>');}
     $("mru-scene-overlay").innerHTML=overlay.join("");
     const visible=state.carts.filter(car=>car.visible);
     $("mru-scene-summary").textContent=visible.length+" carrinho"+(visible.length===1?"":"s")+" · t = "+fmt(state.time)+" s";
@@ -259,7 +261,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   }
   function setupFullscreenDock(){
     const stage=$("mru-stage"),tools=$("mru-fullscreen-tools"),drawer=$("mru-fullscreen-drawer"),content=drawer.querySelector(".mru-fullscreen-drawer-content");
-    const selectors=[".mru-mode-bar",".mru-camera-controls",".mru-playback-card",".mru-results-card",".mru-graphs-card",".mru-table-card",".mru-sidebar",".mru-investigation-card"];
+    const selectors=[".mru-mode-bar",".mru-camera-details",".mru-vector-details",".mru-playback-card",".mru-results-card",".mru-graphs-card",".mru-table-card",".mru-sidebar",".mru-investigation-card"];
     const relocated=[];
     function movePanelsIntoDock(){
       for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
@@ -361,7 +363,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   function addObject(kind){
     if(kind==="scientific-cart"||kind==="sport-cart"){
       if(state.carts.length>=5){status("A bancada comporta até cinco carrinhos.","error");return;}
-      historyPush();const i=state.carts.length,ref=currentCart(),car=newCart(i);car.kind=kind;car.x0=ref?mruAt(ref,state.time).x+2:0;state.carts.push(car);select(car.id);
+      historyPush();const i=state.carts.length,ref=currentCart(),car=newCart(i);car.kind=kind;car.x0=ref?mruAt(ref,state.time).x+2:0;car.vector=state.vectors.velocity;state.carts.push(car);select(car.id);
     }else{
       if(state.fixtures.length>=50){status("A bancada comporta até cinquenta referências.","error");return;}
       historyPush();const i=state.fixtures.filter(item=>item.kind===kind).length+1,car=currentCart();
@@ -401,7 +403,11 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   function undo(){if(!undoStack.length)return;redoStack.push(capture());const old=undoStack.pop();applyConfig(old,false);syncHistoryButtons();status("Última alteração desfeita.");}
   function redo(){if(!redoStack.length)return;undoStack.push(capture());const next=redoStack.pop();applyConfig(next,false);syncHistoryButtons();status("Alteração refeita.");}
   function renderInputs(){ $("mru-duration").value=state.duration;$("mru-sample-interval").value=state.sampleInterval;$("mru-playback-rate").value=state.playbackRate;$("mru-loop").checked=state.loop; }
-  function renderMode(){
+  function renderUiMode(){const beginner=state.uiMode==="beginner";document.body.classList.toggle("mru-beginner-mode",beginner);document.querySelectorAll("[data-mru-ui-mode]").forEach(button=>{const active=button.dataset.mruUiMode===state.uiMode;button.setAttribute("aria-pressed",String(active));button.classList.toggle("is-active",active);});document.querySelectorAll("#mru-add-type option[data-advanced-only]").forEach(option=>{option.hidden=beginner;});const selector=$("mru-add-type");if(beginner&&selector.selectedOptions[0]?.hidden)selector.value="scientific-cart";}
+function setUiMode(mode){if(mode!=="beginner"&&mode!=="advanced")return;state.uiMode=mode;if(mode==="beginner"&&state.mode!=="explore"){state.mode="explore";state.teacherReveal=false;renderMode();}try{localStorage.setItem("diario-bns-mru-ui-mode-v1",mode);}catch{}renderUiMode();}
+function renderVectorControls(){document.querySelectorAll("#mru-vector-panel [data-vector]").forEach(button=>{const active=state.vectors[button.dataset.vector]===true;button.setAttribute("aria-pressed",String(active));button.classList.toggle("is-active",active);button.textContent=({velocity:"Velocidade",acceleration:"Aceleração",displacement:"Deslocamento"})[button.dataset.vector]+(active?" · ligado":" · desligado");});}
+function toggleVector(key){if(!Object.prototype.hasOwnProperty.call(state.vectors,key))return;const before=capture();state.vectors[key]=!state.vectors[key];const property={velocity:"vector",acceleration:"vectorA",displacement:"vectorD"}[key];if(property)state.carts.forEach(car=>{car[property]=state.vectors[key];});historyPush(before);renderVectorControls();drawScene();updatePendingSave();}
+function renderMode(){
     document.querySelectorAll("[data-mru-mode]").forEach(button=>{const on=button.dataset.mruMode===state.mode;button.classList.toggle("is-active",on);button.setAttribute("aria-pressed",String(on));});
     $("mru-mode-note").textContent={explore:"Altere as condições e observe o movimento em tempo real.",investigate:"Faça uma previsão e use o modelo para explicar o resultado.",teacher:"Prepare a demonstração e escolha quando mostrar as respostas."}[state.mode];
     $("mru-investigation").hidden=state.mode!=="investigate";$("mru-teacher-reveal").hidden=state.mode!=="teacher";
@@ -412,7 +418,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     renderInputs();renderMode();renderObjects();renderProperties();drawScene();renderReadouts();renderInstruments();renderDataTable();drawCharts();syncHistoryButtons();
     $("mru-timeline").max=state.duration;$("mru-timeline").step=Math.min(.05,state.duration/100);document.body.classList.toggle("mru-reduced-motion",state.reduceMotion);
     updatePendingSave();
-  }
+  renderVectorControls();renderUiMode();}
   function pointerWorld(event){const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const pos=point.matrixTransform(svg.getScreenCTM().inverse());return cameraMin()+(pos.x-100)/900*state.viewSpan;}
   function installCameraNavigation(){
     const pointers=new Map();let gesture=null,renderFrame=0,lastTap={time:0,x:0,y:0};
@@ -433,8 +439,8 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();
     };
     const centerPoint=()=>({x:550,y:250});
-    $("mru-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.2));
-    $("mru-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.2));
+    $("mru-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.12));$("mru-fullscreen-zoom-in").addEventListener("click",()=>zoomAt(centerPoint(),1/1.12));
+    $("mru-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.12));$("mru-fullscreen-zoom-out").addEventListener("click",()=>zoomAt(centerPoint(),1.12));
     $("mru-zoom-reset").addEventListener("click",()=>{state.viewSpan=24;drawScene();updatePendingSave();});
     $("mru-center-camera").addEventListener("click",centerCamera);
     $("mru-fit-camera").addEventListener("click",fitExperiment);
@@ -471,15 +477,15 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
       if(pointers.has(event.pointerId))pointers.get(event.pointerId).point=pointAt(event);
       if(gesture?.type==="pan"&&gesture.id===event.pointerId){
         const point=pointAt(event),dx=point.x-gesture.last.x,dy=point.y-gesture.last.y;gesture.last=point;
-        state.follow=false;state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-180,180);scheduleRender();intercept(event);return;
+        state.follow=false;state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-500,500);scheduleRender();intercept(event);return;
       }
       if(gesture?.type==="pinch"&&gesture.ids.includes(event.pointerId)){
         const a=pointers.get(gesture.ids[0])?.point,b=pointers.get(gesture.ids[1])?.point;
         if(!a||!b)return;
         const distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),midY=(a.y+b.y)/2;
-        state.viewSpan=clamp(gesture.span*gesture.distance/distance,8,80);
+        state.viewSpan=clamp(gesture.span*Math.pow(gesture.distance/distance,.78),8,80);
         state.cameraCenter=gesture.anchorWorld-(gesture.ratio-.5)*state.viewSpan;
-        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-180,180);state.follow=false;scheduleRender();intercept(event);
+        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-500,500);state.follow=false;scheduleRender();intercept(event);
       }
     },true);
     const endPointer=event=>{
@@ -497,11 +503,11 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     svg.addEventListener("dblclick",event=>{const target=event.target instanceof Element?event.target:null;if(!target?.closest("[data-entity-id]")){event.preventDefault();resetCamera();}},true);
     svg.addEventListener("wheel",event=>{
       const point=pointAt(event),rect=svg.getBoundingClientRect(),factor=event.deltaMode===1?16:event.deltaMode===2?rect.height:1;
-      if(event.ctrlKey||event.metaKey){zoomAt(point,Math.exp(event.deltaY*factor*.0012));}
+      if(event.ctrlKey||event.metaKey){zoomAt(point,Math.exp(event.deltaY*factor*.0008));}
       else{
         state.follow=false;
         state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
-        state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-180,180);
+        state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-500,500);
         drawScene();updatePendingSave();
       }
       event.preventDefault();
@@ -624,7 +630,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   svg.addEventListener("pointerdown",startDrag);svg.addEventListener("pointermove",moveDrag);svg.addEventListener("pointerup",stopDrag);svg.addEventListener("pointercancel",stopDrag);
   installCameraNavigation();
   svg.addEventListener("keydown",event=>{
-    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();state.follow=false;const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-180,180);drawScene();updatePendingSave();return;}
+    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();state.follow=false;const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-500,500);drawScene();updatePendingSave();return;}
     if(event.key==="+"||event.key==="="){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan/1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
     if(event.key==="-"){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan*1.2,8,80);state.follow=false;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
     if(event.key==="0"){event.preventDefault();state.viewSpan=24;state.cameraCenter=0;state.cameraOffsetY=0;state.follow=true;drawScene();updatePendingSave();return;}
@@ -652,6 +658,6 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   if("ResizeObserver"in window){const observer=new ResizeObserver(drawCharts);document.querySelectorAll(".mru-chart").forEach(node=>observer.observe(node));}
   const shared=new URLSearchParams(location.search).get("config");
   if(shared){try{importConfig(JSON.parse(shared));}catch(error){status("Configuração do link inválida: "+error.message,"error");}}
-  state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();
+  document.querySelectorAll("[data-mru-ui-mode]").forEach(button=>button.addEventListener("click",()=>setUiMode(button.dataset.mruUiMode)));document.querySelectorAll("#mru-vector-panel [data-vector]").forEach(button=>button.addEventListener("click",()=>toggleVector(button.dataset.vector)));state.selectedId=state.carts[0].id;state.selectedIds=[state.selectedId];renderAll();setupFullscreenDock();
 })();
 
