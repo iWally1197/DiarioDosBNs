@@ -14,15 +14,64 @@ const suggestionButtons = [...document.querySelectorAll('[data-physics-ai-prompt
 let supabase = null;
 let user = null;
 let activeConversationId = null;
+let activeConversationLocal = true;
 let conversations = [];
 let messages = [];
 let databaseReady = false;
+let remoteHistoryReady = false;
 let busy = false;
 
 function showStatus(message = '', isError = false) {
   statusBox.textContent = message;
   statusBox.classList.toggle('is-error', isError);
   statusBox.hidden = !message;
+}
+
+function localStorageKey() {
+  return user ? 'diario-physics-ai:v1:' + user.id : null;
+}
+
+function readLocalConversations() {
+  const key = localStorageKey();
+  if (!key) return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item && typeof item.id === 'string')
+      .slice(0, 30)
+      .map((item) => ({
+        id: item.id,
+        title: String(item.title || 'Conversa sem título').slice(0, 120),
+        updated_at: item.updated_at || item.created_at || '',
+        _local: true,
+        messages: Array.isArray(item.messages) ? item.messages
+          .filter((message) => message && ['user', 'assistant'].includes(message.role) && typeof message.content === 'string')
+          .slice(-100)
+          .map((message) => ({ role: message.role, content: message.content.slice(0, 5000), created_at: message.created_at || null })) : []
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalSnapshot() {
+  const key = localStorageKey();
+  if (!key || !activeConversationId) return;
+  try {
+    const cached = readLocalConversations().filter((item) => item.id !== activeConversationId);
+    const existing = conversations.find((item) => item.id === activeConversationId);
+    const firstQuestion = messages.find((item) => item.role === 'user')?.content || '';
+    const current = {
+      id: activeConversationId,
+      title: existing?.title || firstQuestion.replace(/\s+/g, ' ').trim().slice(0, 72) || 'Nova conversa',
+      updated_at: new Date().toISOString(),
+      messages: messages.slice(-100),
+      _local: true
+    };
+    localStorage.setItem(key, JSON.stringify([current, ...cached].slice(0, 30)));
+  } catch {
+    showStatus('O navegador não conseguiu guardar este histórico neste dispositivo.', true);
+  }
 }
 
 function updateControls() {
@@ -34,14 +83,27 @@ function updateControls() {
 }
 
 function setSignedIn(nextUser) {
-  user = nextUser || null;
+  const next = nextUser || null;
+  const changed = next?.id !== user?.id;
+  user = next;
   loginGate.hidden = Boolean(user);
   accountLink.textContent = user ? 'Minha conta' : 'Entrar';
   accountLink.href = user ? 'perfil.html' : 'login.html?next=ia';
   if (!user) {
     databaseReady = false;
+    remoteHistoryReady = false;
     activeConversationId = null;
+    activeConversationLocal = true;
     conversations = [];
+    messages = [];
+    renderConversationList();
+    renderMessages();
+  } else if (changed) {
+    databaseReady = true;
+    remoteHistoryReady = false;
+    activeConversationId = null;
+    activeConversationLocal = true;
+    conversations = readLocalConversations();
     messages = [];
     renderConversationList();
     renderMessages();
@@ -79,12 +141,14 @@ function renderConversationList() {
 function addMessage(role, content, createdAt = null) {
   const article = document.createElement('article');
   article.className = 'physics-ai-message ' + (role === 'assistant' ? 'is-assistant' : 'is-user');
-  const avatar = document.createElement('img');
-  avatar.className = 'physics-ai-message-avatar';
-  avatar.src = 'assets/mascote-ia-fisica.png';
-  avatar.alt = '';
-  avatar.setAttribute('aria-hidden', 'true');
-  if (role === 'assistant') article.append(avatar);
+  if (role === 'assistant') {
+    const avatar = document.createElement('img');
+    avatar.className = 'physics-ai-message-avatar';
+    avatar.src = 'assets/mascote-ia-fisica.png';
+    avatar.alt = '';
+    avatar.setAttribute('aria-hidden', 'true');
+    article.append(avatar);
+  }
 
   const body = document.createElement('div');
   body.className = 'physics-ai-message-body';
@@ -134,33 +198,70 @@ function renderConversations() {
   updateControls();
 }
 
+function withTimeout(promise, milliseconds, message) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), milliseconds); })
+  ]).finally(() => clearTimeout(timer));
+}
+
 async function refreshConversations(selectLatest = true) {
-  const { data, error } = await supabase
-    .from('physics_ai_conversations')
-    .select('id,title,updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(30);
-  if (error) {
-    databaseReady = false;
+  if (!user) return false;
+  const cached = readLocalConversations();
+  try {
+    const result = await withTimeout(
+      supabase.from('physics_ai_conversations').select('id,title,updated_at').order('updated_at', { ascending: false }).limit(30),
+      8000,
+      'O histórico online demorou para responder.'
+    );
+    if (result.error) throw result.error;
+    remoteHistoryReady = true;
+    const remote = result.data || [];
+    const remoteIds = new Set(remote.map((item) => item.id));
+    conversations = [...remote, ...cached.filter((item) => !remoteIds.has(item.id))]
+      .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+      .slice(0, 30);
+    databaseReady = true;
     renderConversations();
-    showStatus('O histórico do chat ainda não foi ativado no Supabase. O administrador precisa concluir a configuração.', true);
+    if (selectLatest && conversations.length) await openConversation(conversations[0].id);
+    else if (!activeConversationId) {
+      messages = [];
+      renderMessages();
+    }
+    if (cached.length && remote.length) showStatus('Histórico online conectado. Conversas salvas neste dispositivo também estão disponíveis.');
+    else showStatus('');
+    updateControls();
+    return true;
+  } catch {
+    remoteHistoryReady = false;
+    databaseReady = true;
+    conversations = cached;
+    renderConversations();
+    if (selectLatest && conversations.length) {
+      await openConversation(conversations[0].id);
+    } else if (!activeConversationId) {
+      messages = [];
+      renderMessages();
+    }
+    showStatus('O histórico online ainda não está configurado. As conversas serão guardadas neste dispositivo.');
+    updateControls();
     return false;
   }
-  databaseReady = true;
-  conversations = data || [];
-  renderConversations();
-  if (selectLatest && conversations.length) await openConversation(conversations[0].id);
-  else if (!conversations.length) {
-    activeConversationId = null;
-    messages = [];
-    renderMessages();
-  }
-  updateControls();
-  return true;
 }
 
 async function openConversation(conversationId) {
   if (!databaseReady) return;
+  const conversation = conversations.find((item) => item.id === conversationId);
+  if (conversation?._local || !remoteHistoryReady) {
+    activeConversationId = conversationId;
+    activeConversationLocal = true;
+    messages = conversation?.messages || [];
+    renderConversationList();
+    renderMessages();
+    showStatus(remoteHistoryReady ? 'Esta conversa está guardada neste dispositivo.' : 'Esta conversa está guardada neste dispositivo.');
+    return;
+  }
   showStatus('');
   const { data, error } = await supabase
     .from('physics_ai_messages')
@@ -169,11 +270,20 @@ async function openConversation(conversationId) {
     .order('created_at', { ascending: true })
     .limit(200);
   if (error) {
-    showStatus('Não foi possível abrir esta conversa. Atualize a página e tente novamente.', true);
+    remoteHistoryReady = false;
+    conversations = readLocalConversations();
+    activeConversationId = conversationId;
+    activeConversationLocal = true;
+    messages = conversations.find((item) => item.id === conversationId)?.messages || [];
+    renderConversations();
+    renderMessages();
+    showStatus('Não foi possível abrir o histórico online. As mensagens deste dispositivo continuam disponíveis.', true);
     return;
   }
   activeConversationId = conversationId;
+  activeConversationLocal = false;
   messages = data || [];
+  saveLocalSnapshot();
   renderConversationList();
   renderMessages();
 }
@@ -181,6 +291,7 @@ async function openConversation(conversationId) {
 function startNewConversation() {
   if (!databaseReady || busy) return;
   activeConversationId = null;
+  activeConversationLocal = true;
   messages = [];
   renderConversationList();
   renderMessages();
@@ -191,24 +302,74 @@ function startNewConversation() {
 async function ensureConversation(firstMessage) {
   if (activeConversationId) return activeConversationId;
   const title = firstMessage.replace(/\s+/g, ' ').trim().slice(0, 72) || 'Nova conversa';
-  const { data, error } = await supabase
-    .from('physics_ai_conversations')
-    .insert({ user_id: user.id, title })
-    .select('id,title,updated_at')
-    .single();
-  if (error) throw new Error('Não foi possível criar uma conversa salva.');
-  activeConversationId = data.id;
-  conversations.unshift(data);
+  if (remoteHistoryReady) {
+    const { data, error } = await supabase
+      .from('physics_ai_conversations')
+      .insert({ user_id: user.id, title })
+      .select('id,title,updated_at')
+      .single();
+    if (!error && data) {
+      activeConversationId = data.id;
+      activeConversationLocal = false;
+      conversations.unshift(data);
+      renderConversationList();
+      return activeConversationId;
+    }
+    remoteHistoryReady = false;
+  }
+  activeConversationId = (globalThis.crypto?.randomUUID?.() || 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  activeConversationLocal = true;
+  const conversation = { id: activeConversationId, title, updated_at: new Date().toISOString(), _local: true, messages: [] };
+  conversations.unshift(conversation);
+  conversations = conversations.slice(0, 30);
   renderConversationList();
   return activeConversationId;
 }
 
-function explainFunctionError(error) {
-  const status = Number(error?.context?.status || error?.status || 0);
+async function explainFunctionError(error) {
+  const response = error?.context;
+  const status = Number(response?.status || error?.status || 0);
+  if (response && typeof response.clone === 'function') {
+    try {
+      const payload = await response.clone().json();
+      if (typeof payload?.error === 'string' && payload.error.trim()) return payload.error;
+    } catch {}
+  }
+  if (error?.message && !response) return error.message;
   if (status === 401) return 'Sua sessão expirou. Entre novamente para continuar.';
-  if (status === 429) return 'Você enviou perguntas muito rapidamente. Aguarde um minuto e tente de novo.';
-  if (status === 404) return 'O serviço de IA ainda não foi publicado no Supabase.';
-  return 'Não consegui obter uma resposta agora. Tente novamente em instantes.';
+  if (status === 404) return 'A função de IA ainda não foi publicada no Supabase.';
+  if (status === 429) return 'O serviço de IA está ocupado ou você atingiu o limite de perguntas. Aguarde um minuto e tente novamente.';
+  if (status === 503) return 'O serviço de IA ainda precisa ser configurado no Supabase.';
+  return 'Não consegui conectar ao serviço de IA. Confira sua internet e tente novamente.';
+}
+
+function localTutorAnswer(question) {
+  const normalized = question.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/\bmruv?\b|movimento retilineo uniforme|movimento uniformemente variado/.test(normalized)) {
+    if (/\bmruv\b|aceleracao|acelerado|desacelerado|velocidade varia/.test(normalized)) {
+      return 'No MRUV, a aceleração é constante. As relações principais são v = v₀ + a·t e s = s₀ + v₀·t + (a·t²)/2. Aqui, v é a velocidade no instante t, v₀ é a velocidade inicial, a é a aceleração e s é a posição. O sinal de a indica se a velocidade aumenta ou diminui no sentido escolhido.';
+    }
+    return 'No MRU, a velocidade permanece constante e a aceleração é zero. A posição é s = s₀ + v·t: s₀ é a posição inicial, v é a velocidade e t é o tempo. Em um gráfico posição × tempo, a inclinação representa a velocidade.';
+  }
+  if (/lancamento obliquo|projetil|trajetoria parabolica/.test(normalized)) {
+    return 'No lançamento oblíquo, separamos o movimento em dois eixos. Na horizontal: x = x₀ + v₀·cos(θ)·t, com velocidade constante. Na vertical: y = y₀ + v₀·sen(θ)·t − g·t²/2. Desprezando o ar, a aceleração horizontal é zero e a vertical vale −g.';
+  }
+  if (/espelho concavo|espelho esferico concavo/.test(normalized)) {
+    return 'Para o espelho côncavo, f = R/2 e 1/f = 1/p + 1/p′, onde p é a distância do objeto, p′ é a distância da imagem e f é o foco. Fora do foco, a imagem é real e invertida; entre o foco e o espelho, é virtual, direita e ampliada. No foco, os raios refletidos saem paralelos.';
+  }
+  if (/espelho convexo|espelho divergente/.test(normalized)) {
+    return 'O espelho convexo é divergente: para um objeto real, forma uma imagem virtual, direita e menor, atrás do espelho. Use 1/f = 1/p + 1/p′; na convenção usual, o foco do convexo é negativo. A imagem menor explica o campo de visão amplo.';
+  }
+  if (/espelho plano/.test(normalized)) {
+    return 'No espelho plano, a imagem é virtual, direita e do mesmo tamanho do objeto. Ela aparece atrás do espelho à mesma distância que o objeto está à frente. A inversão percebida troca os lados laterais, mas não vira a imagem de cima para baixo.';
+  }
+  if (/faraday|lenz|inducao|bobina|eletroima|eletroima|ima|magnetismo/.test(normalized)) {
+    return 'A indução eletromagnética acontece quando o fluxo magnético através de uma bobina muda. A fem induzida é ε = −N·ΔΦ/Δt: N é o número de espiras e o sinal negativo representa a lei de Lenz, que indica que a corrente induzida se opõe à variação do fluxo. Mover o ímã mais rápido costuma aumentar a tensão induzida.';
+  }
+  if (/laboratorio|grafico|vetor|tela cheia|pausar|animacao|site/.test(normalized)) {
+    return 'No Diário dos BNs, abra Laboratórios e escolha um tópico para entrar na simulação. Dentro dela, use Controles para ajustar os parâmetros e Gráficos e parâmetros para consultar os dados. Em tela cheia, procure o botão de controles para abrir o painel lateral. Se algum controle não aparecer, atualize a página e tente novamente.';
+  }
+  return null;
 }
 
 async function sendMessage(event) {
@@ -218,55 +379,88 @@ async function sendMessage(event) {
   busy = true;
   updateControls();
   showStatus('O BNzinho está pensando…');
-  const previousHistory = messages.slice(-10).map((message) => ({
-    role: message.role,
-    content: message.content
-  }));
+  const previousHistory = messages.slice(-10).map((message) => ({ role: message.role, content: message.content }));
   try {
-    const conversationId = await ensureConversation(question);
-    const { data: savedQuestion, error: questionError } = await supabase
-      .from('physics_ai_messages')
-      .insert({ conversation_id: conversationId, user_id: user.id, role: 'user', content: question })
-      .select('role,content,created_at')
-      .single();
-    if (questionError) throw new Error('Não foi possível salvar sua pergunta. Tente novamente.');
-    messages.push(savedQuestion);
-    input.value = '';
-    renderMessages();
-    updateControls();
+    let answer = '';
+    let usedLocalTutor = false;
+    let serviceError = null;
+    try {
+      const { data, error } = await supabase.functions.invoke('physics-assistant', {
+        body: { message: question, history: previousHistory }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      answer = typeof data?.answer === 'string' ? data.answer.trim() : '';
+      if (!answer) throw new Error('O assistente não retornou uma resposta.');
+    } catch (error) {
+      serviceError = error;
+      answer = localTutorAnswer(question) || '';
+      if (answer) usedLocalTutor = true;
+      else throw new Error(await explainFunctionError(error));
+    }
 
-    const { data, error } = await supabase.functions.invoke('physics-assistant', {
-      body: { message: question, history: previousHistory }
-    });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    const answer = typeof data?.answer === 'string' ? data.answer.trim() : '';
-    if (!answer) throw new Error('O assistente não retornou uma resposta. Tente novamente.');
-    const { data: savedAnswer, error: answerError } = await supabase
-      .from('physics_ai_messages')
-      .insert({ conversation_id: conversationId, user_id: user.id, role: 'assistant', content: answer })
-      .select('role,content,created_at')
-      .single();
-    if (answerError) {
-      messages.push({ role: 'assistant', content: answer, created_at: new Date().toISOString() });
-      showStatus('Resposta recebida, mas não foi possível salvar no histórico. Confira a conexão.', true);
+    const conversationId = await ensureConversation(question);
+    const timestamp = new Date().toISOString();
+    const userMessage = { role: 'user', content: question, created_at: timestamp };
+    const assistantMessage = { role: 'assistant', content: answer, created_at: new Date().toISOString() };
+
+    if (remoteHistoryReady && !activeConversationLocal) {
+      const { error: questionError } = await supabase.from('physics_ai_messages').insert({
+        conversation_id: conversationId, user_id: user.id, role: 'user', content: question
+      });
+      if (questionError) {
+        remoteHistoryReady = false;
+        activeConversationLocal = true;
+      } else {
+        const { error: answerError } = await supabase.from('physics_ai_messages').insert({
+          conversation_id: conversationId, user_id: user.id, role: 'assistant', content: answer
+        });
+        if (answerError) {
+          remoteHistoryReady = false;
+          activeConversationLocal = true;
+        } else {
+          await supabase.from('physics_ai_conversations')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', conversationId);
+        }
+      }
+    }
+
+    messages.push(userMessage, assistantMessage);
+    input.value = '';
+    saveLocalSnapshot();
+    const existing = conversations.find((item) => item.id === conversationId);
+    if (existing) {
+      existing.updated_at = new Date().toISOString();
+      existing.messages = messages.slice(-100);
+    }
+    conversations.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+    renderConversations();
+    renderMessages();
+    if (usedLocalTutor) {
+      showStatus('Resposta de apoio salva neste dispositivo. O serviço de IA está indisponível; esta resposta usa explicações locais.');
     } else {
-      messages.push(savedAnswer);
       showStatus('');
     }
-    await supabase
-      .from('physics_ai_conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
-    renderMessages();
-    await refreshConversations(false);
+    if (remoteHistoryReady) void refreshConversations(false);
+    if (serviceError && !usedLocalTutor) console.warn('Physics assistant returned a recoverable error.');
   } catch (error) {
-    const message = error?.message && !error.context ? error.message : explainFunctionError(error);
-    showStatus(message, true);
+    showStatus(error?.message || 'Não foi possível enviar a pergunta. Tente novamente.', true);
   } finally {
     busy = false;
     updateControls();
   }
+}
+
+function activateUser(nextUser) {
+  const changed = nextUser?.id !== user?.id;
+  setSignedIn(nextUser);
+  if (!nextUser || !changed) return;
+  databaseReady = true;
+  conversations = readLocalConversations();
+  renderConversations();
+  showStatus('Verificando o histórico salvo…');
+  void refreshConversations(true);
 }
 
 async function initialize() {
@@ -279,15 +473,8 @@ async function initialize() {
     }
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
-    const session = data?.session;
-    if (!session?.user) {
-      setSignedIn(null);
-      return;
-    }
-    setSignedIn(session.user);
-    showStatus('Carregando seu histórico salvo…');
-    const ready = await refreshConversations(true);
-    if (ready) showStatus('');
+    activateUser(data?.session?.user || null);
+    supabase.auth.onAuthStateChange((_event, session) => activateUser(session?.user || null));
   } catch {
     setSignedIn(null);
     showStatus('Não foi possível verificar sua conta. Atualize a página e tente novamente.', true);
