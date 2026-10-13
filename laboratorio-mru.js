@@ -168,6 +168,16 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-duplicate").disabled=!state.selectedIds.length;$("mru-restore-object").disabled=!item;
     $("mru-layer-up").disabled=!item||isCart(item);$("mru-layer-down").disabled=!item||isCart(item);
   }
+  function normalize(key,value,field){
+    if(key==="name")return String(value).trim().slice(0,42);
+    if(field.type==="checkbox")return Boolean(value);
+    if(field.type==="number"||field.type==="range"){
+      const numeric=Number(value),min=field.min===""?-Infinity:Number(field.min),max=field.max===""?Infinity:Number(field.max);
+      return Number.isFinite(numeric)?clamp(numeric,min,max):numeric;
+    }
+    if(field.type==="color")return validColor(value,field.value||"#4f88df");
+    return String(value);
+  }
   function prop(id,label,value,type,attrs="",full=false){return '<div class="mru-property-field'+(full?" full":"")+'"><div class="mru-property-field-head"><label for="mru-prop-'+id+'">'+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mru-prop" id="mru-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
   function toggleProp(id,label,checked,full=false){return '<div class="mru-property-toggle'+(full?" full":"")+'"><label class="mru-inline-check"><input class="mru-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mru-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
   function renderProperties(){

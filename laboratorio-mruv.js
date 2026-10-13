@@ -191,6 +191,16 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     $("mruv-duplicate").disabled=!state.selectedIds.length;$("mruv-restore-object").disabled=!item;
     $("mruv-layer-up").disabled=!item||isCart(item);$("mruv-layer-down").disabled=!item||isCart(item);
   }
+  function normalize(key,value,field){
+    if(key==="name")return String(value).trim().slice(0,42);
+    if(field.type==="checkbox")return Boolean(value);
+    if(field.type==="number"||field.type==="range"){
+      const numeric=Number(value),min=field.min===""?-Infinity:Number(field.min),max=field.max===""?Infinity:Number(field.max);
+      return Number.isFinite(numeric)?clamp(numeric,min,max):numeric;
+    }
+    if(field.type==="color")return validColor(value,field.value||"#4f88df");
+    return String(value);
+  }
   function prop(id,label,value,type,attrs="",full=false){return '<div class="mruv-property-field'+(full?" full":"")+'"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="'+type+'" value="'+esc(value)+'" '+attrs+"></div>";}
   function toggleProp(id,label,checked,full=false){return '<div class="mruv-property-toggle'+(full?" full":"")+'"><label class="mruv-inline-check"><input class="mruv-prop" data-prop="'+id+'" type="checkbox" '+(checked?'checked':'')+'> '+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div>';}
   function parameterControl(id,label,value,min,max,step){const exactMin=id==="x0"?-1000000:id==="v0"?-100:-20,exactMax=id==="x0"?1000000:id==="v0"?100:20;return '<div class="mruv-property-field mruv-parameter-control"><div class="mruv-property-field-head"><label for="mruv-prop-'+id+'">'+label+'</label><button class="button button-outline mruv-field-apply" data-apply-prop="'+id+'" type="button" aria-label="Aplicar alteração: '+esc(label)+'">Aplicar</button></div><input class="mruv-prop" id="mruv-prop-'+id+'" data-prop="'+id+'" type="number" value="'+esc(value)+'" step="'+step+'" min="'+exactMin+'" max="'+exactMax+'" aria-label="'+label+' · valor preciso"><input class="mruv-prop" id="mruv-prop-'+id+'-range" data-prop="'+id+'" type="range" value="'+esc(value)+'" min="'+min+'" max="'+max+'" step="'+step+'" aria-label="'+label+' · ajuste deslizante"></div>';}
