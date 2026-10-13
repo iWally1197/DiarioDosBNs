@@ -71,20 +71,20 @@
     .bnzinho-widget__art {
       position: relative; display: block; width: 100%; aspect-ratio: 230 / 307;
       overflow: hidden; border: 1px solid rgba(219, 190, 119, .82); border-radius: 18px;
-      background: #08152b; box-shadow: 0 10px 28px rgba(0,0,0,.38);
-      transform-origin: 50% 80%; transition: box-shadow .2s ease, transform .2s ease;
+      background: #08152b; box-shadow: 0 12px 30px rgba(0,0,0,.4);
+      transform-origin: 50% 84%; transition: box-shadow .24s cubic-bezier(.2,.8,.2,1), transform .24s cubic-bezier(.2,.8,.2,1);
     }
     .bnzinho-widget__image {
       display: block; width: 100%; height: 100%; object-fit: cover;
-      animation: bnz-breathe 3s ease-in-out infinite;
-      transform-origin: 50% 76%;
+      animation: bnz-breathe 3.4s cubic-bezier(.45,0,.55,1) infinite;
+      transform-origin: 50% 82%; will-change: transform;
     }
     .bnzinho-widget__paw {
       position: absolute; display: block; width: 27%; height: 20%; overflow: visible;
       filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); pointer-events: none;
     }
-    .bnzinho-widget__paw--left { left: 18%; top: 56%; transform-origin: 70% 85%; animation: bnz-paw-rest 2.6s ease-in-out infinite; }
-    .bnzinho-widget__paw--right { right: 15%; top: 62%; transform-origin: 30% 85%; animation: bnz-paw-rest 3s ease-in-out infinite reverse; }
+    .bnzinho-widget__paw--left { left: 17%; top: 55%; transform-origin: 70% 85%; animation: bnz-paw-rest 2.4s ease-in-out infinite; }
+    .bnzinho-widget__paw--right { right: 15%; top: 61%; transform-origin: 30% 85%; animation: bnz-paw-rest 2.9s ease-in-out infinite reverse; }
     .bnzinho-widget__nose {
       position: absolute; left: 50%; top: 42%; width: 7px; height: 5px; border-radius: 50%;
       background: #f47b88; box-shadow: 0 0 0 1px rgba(255,255,255,.5);
@@ -106,13 +106,15 @@
     }
     .bnzinho-widget__launcher:hover .bnzinho-widget__art,
     .bnzinho-widget__launcher:focus-visible .bnzinho-widget__art {
-      box-shadow: 0 14px 34px rgba(0,0,0,.48), 0 0 0 3px rgba(217,189,122,.34);
-      transform: translateY(-3px) rotate(-1deg) scale(1.025);
+      box-shadow: 0 16px 36px rgba(0,0,0,.46), 0 0 0 3px rgba(217,189,122,.3);
+      transform: translateY(-5px) rotate(-1.5deg) scale(1.04);
     }
     .bnzinho-widget__launcher:hover .bnzinho-widget__bubble,
     .bnzinho-widget__launcher:focus-visible .bnzinho-widget__bubble {
       opacity: 1; visibility: visible; transform: translateY(0);
     }
+    .bnzinho-widget__launcher:hover .bnzinho-widget__image,
+    .bnzinho-widget__launcher:focus-visible .bnzinho-widget__image { animation: bnz-greet 1.15s cubic-bezier(.35,.05,.55,.95) infinite; }
     .bnzinho-widget__launcher:hover .bnzinho-widget__paw--left,
     .bnzinho-widget__launcher:focus-visible .bnzinho-widget__paw--left { animation: bnz-paw-wave .68s ease-in-out infinite; }
     .bnzinho-widget__launcher:hover .bnzinho-widget__paw--right,
@@ -137,10 +139,11 @@
     .bnzinho-restore img { width: 100%; height: 100%; object-fit: cover; }
     .bnzinho-restore:focus-visible { outline: 3px solid var(--text, #f8fafc); outline-offset: 3px; }
     .bnzinho-restore.is-unpinned { position: absolute; top: var(--bnzinho-page-top, 300px); bottom: auto; }
-    @keyframes bnz-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.012); } }
-    @keyframes bnz-paw-rest { 0%,100% { transform: rotate(-2deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-2px); } }
-    @keyframes bnz-paw-wave { 0%,100% { transform: rotate(-8deg) translateY(0); } 50% { transform: rotate(17deg) translateY(-5px); } }
-    @keyframes bnz-sniff { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.18,.8) translateY(1px); } }
+    @keyframes bnz-breathe { 0%,100% { transform: translateY(0) rotate(-.4deg) scale(1); } 50% { transform: translateY(-3px) rotate(.5deg) scale(1.012); } }
+    @keyframes bnz-greet { 0%,100% { transform: translateY(0) rotate(-1deg) scale(1); } 25% { transform: translateY(-6px) rotate(1.5deg) scale(1.018); } 55% { transform: translateY(-1px) rotate(-.8deg) scale(1.008); } 78% { transform: translateY(-4px) rotate(1deg) scale(1.014); } }
+    @keyframes bnz-paw-rest { 0%,100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(5deg) translateY(-3px); } }
+    @keyframes bnz-paw-wave { 0%,100% { transform: rotate(-13deg) translateY(1px); } 28% { transform: rotate(21deg) translateY(-5px); } 58% { transform: rotate(-5deg) translateY(-2px); } 82% { transform: rotate(17deg) translateY(-4px); } }
+    @keyframes bnz-sniff { 0%,100% { transform: translateX(-50%) scale(1); } 25% { transform: translateX(-46%) scale(1.16,.86) translateY(-1px); } 52% { transform: translateX(-54%) scale(.92,1.12) translateY(1px); } 76% { transform: translateX(-48%) scale(1.14,.9); } }
     @media (max-width: 560px) {
       .bnzinho-widget { width: 84px; }
       .bnzinho-widget__art { border-radius: 15px; }
