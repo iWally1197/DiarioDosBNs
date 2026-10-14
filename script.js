@@ -44,7 +44,8 @@
 
   const toggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('.nav');
-  if (toggle && !window.diarioQuickMenuLoaded && toggle.dataset.diarioMenuBound !== 'true') {
+  const quickMenuScriptPresent = Array.from(document.scripts).some((script) => script.src.includes('quick-menu.js'));
+  if (toggle && !quickMenuScriptPresent && toggle.dataset.diarioMenuBound !== 'true') {
     toggle.dataset.diarioMenuBound = 'true';
     toggle.addEventListener('click', () => {
       const open = toggle.getAttribute('aria-expanded') !== 'true';

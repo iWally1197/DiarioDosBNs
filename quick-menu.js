@@ -197,6 +197,13 @@
       toggle.innerHTML = '<span class="sr-only">Abrir acesso rápido</span><span></span><span></span><span></span>';
       header.insertBefore(toggle, nav);
     }
+    const iconBars = Array.from(toggle.children).filter((child) => child.tagName === 'SPAN' && !child.classList.contains('sr-only'));
+    iconBars.slice(3).forEach((bar) => bar.remove());
+    while (iconBars.length < 3) {
+      const bar = document.createElement('span');
+      toggle.append(bar);
+      iconBars.push(bar);
+    }
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Abrir acesso rápido');
