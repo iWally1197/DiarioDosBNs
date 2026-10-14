@@ -1,6 +1,15 @@
 import { supabasePromise } from './src-supabase.js';
 
 const mascotImageSrc = 'assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1';
+const webLlmModuleUrl = 'https://esm.run/@mlc-ai/web-llm@0.2.85';
+const localModelId = 'Llama-3.2-1B-Instruct-q4f16_1-MLC';
+const localSystemPrompt = [
+  'Você é o BNzinho, assistente virtual do Diário dos BNs. Ajude com perguntas de qualquer assunto, não somente Física ou sobre o site.',
+  'Seja conversacional, gentil, direto e útil. Responda no idioma da pessoa, usando português do Brasil por padrão. Siga o pedido de formato e detalhe; não se apresente de novo em toda mensagem.',
+  'Use o histórico para continuar naturalmente a conversa. Se o pedido estiver claro, responda sem perguntas desnecessárias. Se faltar uma informação essencial, pergunte somente o que falta.',
+  'Em Física, matemática e ciências, confira os cálculos, explique unidades e deixe hipóteses claras. Não invente fatos atuais, fontes, medições nem informações que não recebeu; diga quando houver incerteza.',
+  'Responda com segurança: não ajude a causar dano nem a expor credenciais ou dados pessoais. Para pedidos perigosos, explique brevemente e ofereça uma alternativa segura.'
+].join('\n');
 
 const loginGate = document.querySelector('#physics-ai-login-gate');
 const statusBox = document.querySelector('#physics-ai-status');
@@ -22,6 +31,8 @@ let messages = [];
 let databaseReady = false;
 let remoteHistoryReady = false;
 let busy = false;
+let localEngine = null;
+let localEnginePromise = null;
 
 function showStatus(message = '', isError = false) {
   statusBox.textContent = message;
@@ -81,6 +92,7 @@ function updateControls() {
   input.disabled = !enabled;
   newChatButton.disabled = !enabled;
   sendButton.disabled = !enabled || !input.value.trim();
+  sendButton.textContent = busy ? 'Respondendo…' : 'Enviar';
   for (const button of suggestionButtons) button.disabled = !enabled;
 }
 
@@ -347,23 +359,6 @@ async function ensureConversation(firstMessage) {
   return activeConversationId;
 }
 
-async function explainFunctionError(error) {
-  const response = error?.context;
-  const status = Number(response?.status || error?.status || 0);
-  if (response && typeof response.clone === 'function') {
-    try {
-      const payload = await response.clone().json();
-      if (typeof payload?.error === 'string' && payload.error.trim()) return payload.error;
-    } catch {}
-  }
-  if (error?.message && !response) return error.message;
-  if (status === 401) return 'Sua sessão expirou. Entre novamente para continuar.';
-  if (status === 404) return 'A função de IA ainda não foi publicada no Supabase.';
-  if (status === 429) return 'O serviço de IA está ocupado ou você atingiu o limite de perguntas. Aguarde um minuto e tente novamente.';
-  if (status === 503) return 'O serviço de IA ainda precisa ser configurado no Supabase.';
-  return 'Não consegui conectar ao serviço de IA. Confira sua internet e tente novamente.';
-}
-
 function localTutorAnswer(question) {
   const normalized = question.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (/\bmruv?\b|movimento retilineo uniforme|movimento uniformemente variado/.test(normalized)) {
@@ -384,13 +379,100 @@ function localTutorAnswer(question) {
   if (/espelho plano/.test(normalized)) {
     return 'No espelho plano, a imagem é virtual, direita e do mesmo tamanho do objeto. Ela aparece atrás do espelho à mesma distância que o objeto está à frente. A inversão percebida troca os lados laterais, mas não vira a imagem de cima para baixo.';
   }
-  if (/faraday|lenz|inducao|bobina|eletroima|eletroima|ima|magnetismo/.test(normalized)) {
+  if (/\b(faraday|lenz|inducao|bobina|eletroima|imas|ima|magnetismo)\b/.test(normalized)) {
     return 'A indução eletromagnética acontece quando o fluxo magnético através de uma bobina muda. A fem induzida é ε = −N·ΔΦ/Δt: N é o número de espiras e o sinal negativo representa a lei de Lenz, que indica que a corrente induzida se opõe à variação do fluxo. Mover o ímã mais rápido costuma aumentar a tensão induzida.';
   }
   if (/laboratorio|grafico|vetor|tela cheia|pausar|animacao|site/.test(normalized)) {
     return 'No Diário dos BNs, abra Laboratórios e escolha um tópico para entrar na simulação. Dentro dela, use Controles para ajustar os parâmetros e Gráficos e parâmetros para consultar os dados. Em tela cheia, procure o botão de controles para abrir o painel lateral. Se algum controle não aparecer, atualize a página e tente novamente.';
   }
   return null;
+}
+
+function setTypingLabel(indicator, text) {
+  const label = indicator?.querySelector('.physics-ai-typing-label');
+  if (label) label.textContent = text;
+}
+
+function explainLocalModelError(error) {
+  const detail = String(error?.message || '').toLocaleLowerCase('pt-BR');
+  if (!navigator.gpu || /webgpu|adapter|gpu|memory|memoria|device|shader|feature/.test(detail)) {
+    return 'Não consegui iniciar a IA neste aparelho. Use um navegador atualizado com suporte a WebGPU e feche outras abas para liberar recursos.';
+  }
+  if (/fetch|network|rede|download|load model|baixar|connection|conex/.test(detail)) {
+    return 'Não consegui baixar o modelo gratuito. Confira sua conexão com a internet e tente novamente.';
+  }
+  return 'Não consegui iniciar o modelo local agora. Atualize a página e tente novamente; nenhuma API paga foi chamada.';
+}
+
+async function loadLocalEngine(indicator) {
+  if (!navigator.gpu) {
+    throw new Error('Este aparelho ou navegador não oferece WebGPU para executar a IA local. Tente um navegador atualizado em um computador compatível. Nenhuma API paga foi chamada.');
+  }
+  if (localEngine) return localEngine;
+  if (!localEnginePromise) {
+    setTypingLabel(indicator, 'Preparando a IA local pela primeira vez…');
+    showStatus('Baixando o modelo gratuito para este navegador. A primeira preparação pode demorar; nas próximas conversas ele será reutilizado do cache.');
+    localEnginePromise = import(webLlmModuleUrl)
+      .then(({ CreateMLCEngine }) => {
+        if (typeof CreateMLCEngine !== 'function') throw new Error('Não consegui carregar o mecanismo local de IA. Confira sua conexão e tente novamente.');
+        return CreateMLCEngine(localModelId, {
+          initProgressCallback: (progress) => {
+            const ratio = Number(progress?.progress);
+            const percent = Number.isFinite(ratio) && ratio > 0 ? ` ${Math.min(100, Math.round(ratio * 100))}%` : '';
+            setTypingLabel(indicator, `Preparando a IA local${percent}…`);
+            showStatus(`Preparando o modelo no seu dispositivo${percent}. O primeiro carregamento pode levar alguns minutos.`);
+          }
+        });
+      })
+      .then((engine) => {
+        localEngine = engine;
+        return engine;
+      })
+      .catch((error) => {
+        localEnginePromise = null;
+        throw error;
+      });
+  }
+  return localEnginePromise;
+}
+
+async function streamLocalAnswer(question, history, indicator, onAssistantArticle) {
+  const engine = await loadLocalEngine(indicator);
+  setTypingLabel(indicator, 'BNzinho está escrevendo');
+  const article = addMessage('assistant', '', null, true);
+  onAssistantArticle(article);
+  const answerElement = article.querySelector('.physics-ai-message-body p');
+  indicator.remove();
+  showStatus('');
+
+  const priorMessages = history.slice(-6).map((message) => ({
+    role: message.role,
+    content: String(message.content || '').slice(-1200)
+  }));
+  const stream = await engine.chat.completions.create({
+    messages: [
+      { role: 'system', content: localSystemPrompt },
+      ...priorMessages,
+      { role: 'user', content: question }
+    ],
+    temperature: 0.7,
+    top_p: 0.9,
+    max_tokens: 700,
+    stream: true
+  });
+
+  let answer = '';
+  for await (const chunk of stream) {
+    const part = chunk.choices?.[0]?.delta?.content;
+    if (typeof part !== 'string' || !part) continue;
+    answer += part;
+    answerElement.textContent = answer;
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  }
+  answer = answer.trim();
+  if (!answer) throw new Error('O modelo local não retornou uma resposta. Tente reformular a pergunta.');
+  answerElement.textContent = answer;
+  return answer;
 }
 
 function showTypingIndicator() {
@@ -408,7 +490,8 @@ function showTypingIndicator() {
   const bubble = document.createElement('div');
   bubble.className = 'physics-ai-message-body physics-ai-typing-body';
   const label = document.createElement('strong');
-  label.textContent = 'BNzinho está escrevendo';
+  label.className = 'physics-ai-typing-label';
+  label.textContent = 'Preparando a IA local…';
   const dots = document.createElement('span');
   dots.className = 'physics-ai-typing-dots';
   dots.setAttribute('aria-hidden', 'true');
@@ -433,27 +516,20 @@ async function sendMessage(event) {
   pendingMessage.classList.add('is-sending');
   const typingIndicator = showTypingIndicator();
   const previousHistory = messages.slice(-10).map((message) => ({ role: message.role, content: message.content }));
+  let streamedAssistant = null;
   try {
-    let answer = '';
+    let answer;
     let usedLocalTutor = false;
-    let serviceError = null;
     try {
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke('physics-assistant', {
-          body: { message: question, history: previousHistory }
-        }),
-        35000,
-        'A resposta demorou mais que o esperado. Tente enviar novamente.'
-      );
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      answer = typeof data?.answer === 'string' ? data.answer.trim() : '';
-      if (!answer) throw new Error('O assistente não retornou uma resposta.');
-    } catch (error) {
-      serviceError = error;
+      answer = await streamLocalAnswer(question, previousHistory, typingIndicator, (article) => {
+        streamedAssistant = article;
+      });
+    } catch (modelError) {
+      streamedAssistant?.remove();
+      streamedAssistant = null;
       answer = localTutorAnswer(question) || '';
-      if (answer) usedLocalTutor = true;
-      else throw new Error(await explainFunctionError(error));
+      if (!answer) throw new Error(explainLocalModelError(modelError));
+      usedLocalTutor = true;
     }
 
     const conversationId = await ensureConversation(question);
@@ -491,13 +567,13 @@ async function sendMessage(event) {
     renderConversations();
     renderMessages(true);
     if (usedLocalTutor) {
-      showStatus('Resposta de apoio salva neste dispositivo. O serviço de IA está indisponível; esta resposta usa explicações locais.');
+      showStatus('Resposta de apoio exibida. Para conversar sobre outros assuntos, este aparelho precisa oferecer WebGPU e carregar o modelo local.');
     } else {
       showStatus('');
     }
     if (remoteHistoryReady) void refreshConversations(false);
-    if (serviceError && !usedLocalTutor) console.warn('Physics assistant returned a recoverable error.');
   } catch (error) {
+    streamedAssistant?.remove();
     input.value = question;
     showStatus(error?.message || 'Não foi possível enviar a pergunta. Tente novamente.', true);
   } finally {
@@ -559,4 +635,3 @@ for (const button of suggestionButtons) {
 }
 
 void initialize();
-

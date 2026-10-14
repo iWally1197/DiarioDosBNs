@@ -15,7 +15,7 @@
   <script defer src="script.js?v=physics-ai-20261013-1"></script>
   <script defer src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
-  <script type="module" src="physics-ai.js?v=bnzinho-assistente-geral-20261013-1"></script>
+  <script type="module" src="physics-ai.js?v=bnzinho-local-ai-20261014-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -46,7 +46,7 @@
         <div class="section-kicker">BNZINHO · ASSISTENTE VIRTUAL</div>
         <h1 id="physics-ai-title">Converse sobre qualquer assunto.</h1>
         <p>Peça explicações, ideias, ajuda para escrever ou programar, traduções e respostas para dúvidas gerais. O BNzinho também ajuda com Física e com o Diário dos BNs.</p>
-        <p class="physics-ai-privacy">Entre na sua conta para enviar perguntas e manter o histórico salvo. As mensagens ficam associadas à sua conta; evite compartilhar dados pessoais ou senhas.</p>
+        <p class="physics-ai-privacy">Entre na sua conta para manter suas conversas salvas. As respostas da IA são geradas no seu dispositivo, sem enviar suas perguntas a uma API paga.</p>
       </div>
     </section>
 
@@ -66,7 +66,7 @@
         <header class="physics-ai-chat-header">
           <img src="assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1" alt="" aria-hidden="true">
           <div><strong>BNzinho</strong><span>Assistente virtual</span></div>
-          <span class="physics-ai-online"><i aria-hidden="true"></i> Pronto para conversar</span>
+          <span class="physics-ai-online"><i aria-hidden="true"></i> IA local · sem custo</span>
         </header>
 
         <div class="physics-ai-login-gate" id="physics-ai-login-gate">
@@ -94,7 +94,7 @@
           <textarea id="physics-ai-input" name="message" rows="2" maxlength="6000" placeholder="Pergunte ou peça ajuda com qualquer assunto…" required disabled></textarea>
           <button class="button button-primary" type="submit" id="physics-ai-send" disabled>Enviar</button>
         </form>
-        <p class="physics-ai-footnote">Enter envia a mensagem; Shift+Enter inicia outra linha. A IA pode cometer erros; confira resultados e fórmulas com o material didático.</p>
+        <p class="physics-ai-footnote">Enter envia a mensagem; Shift+Enter inicia outra linha. O BNzinho roda no navegador e não usa uma API paga. Na primeira conversa, o navegador baixa o modelo; é preciso conexão com a internet e suporte a WebGPU. O histórico continua salvo na sua conta. A IA pode cometer erros; confira informações importantes.</p>
       </section>
     </section>
   </main>
@@ -105,4 +105,3 @@
   </footer>
 </body>
 </html>
-
