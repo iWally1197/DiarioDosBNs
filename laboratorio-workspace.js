@@ -1392,7 +1392,7 @@ function initializeExperimentPage(topicId) {
       || canvas.classList.contains("lab-view-pan-mode") || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
-    const view = opticalViewFor(model.geometry.bounds, canvas.clientWidth || rect.width, canvas.clientHeight || rect.height);
+    const view = opticalViewFor(state.opticalBounds || model.geometry.bounds, canvas.clientWidth || rect.width, canvas.clientHeight || rect.height);
     const point = pointerCanvasPoint(event, view);
     const near = (handle, tolerance = 30) => {
       if (!handle) return false;
