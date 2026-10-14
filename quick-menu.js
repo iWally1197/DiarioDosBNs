@@ -42,7 +42,7 @@
     .quick-access-panel.is-open { display: flex; }
     .quick-access-panel a { min-height: 44px; padding: 12px 4px; color: var(--text, #f8fafc); text-decoration: none; border-bottom: 1px solid var(--line, #334155); }
     .quick-access-panel a:focus-visible { outline: 3px solid var(--accent, #e6c477); outline-offset: 2px; }
-    @media (max-width: 850px) {
+    @media (max-width: 1450px) {
       .site-header .menu-toggle { margin-left: auto; }
       .site-header .nav {
         display: none !important; position: absolute; top: 100%; left: 0; right: 0;
@@ -56,7 +56,7 @@
       .quick-access-panel { display: none !important; }
       .quick-menu-extra { display: block !important; }
     }
-    @media (min-width: 851px) { .quick-menu-extra { display: none !important; } }
+    @media (min-width: 1451px) { .quick-menu-extra { display: none !important; } }
     .bnzinho-widget, .bnzinho-restore {
       position: fixed; right: max(14px, env(safe-area-inset-right)); z-index: 10010;
     }
@@ -162,7 +162,7 @@
   `;
   document.head.append(style);
 
-  const mobileMenu = window.matchMedia('(max-width: 850px)');
+  const mobileMenu = window.matchMedia('(max-width: 1450px)');
   document.querySelectorAll('header.site-header').forEach((header, headerIndex) => {
     let nav = header.querySelector('nav.nav');
     if (!nav) {
