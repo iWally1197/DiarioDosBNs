@@ -3619,3 +3619,18 @@ html body :is(button, input[type="submit"]):disabled {
     gap: 14px;
   }
 }
+
+/* Compact, keyboard-accessible sections in the administrative dashboard. */
+.admin-dashboard-sections { display:grid; gap:10px; margin:20px 0 30px; }
+.admin-dashboard-section { min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.admin-dashboard-section>summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:54px; padding:12px 16px; color:var(--text); list-style:none; cursor:pointer; }
+.admin-dashboard-section>summary::-webkit-details-marker { display:none; }
+.admin-dashboard-section>summary:focus-visible { outline:3px solid var(--accent); outline-offset:-3px; }
+.admin-dashboard-section-title { font-weight:700; font-size:14px; }
+.admin-dashboard-section-chevron { display:inline-block; flex:none; color:var(--gold); font-size:18px; transition:transform .18s ease; }
+.admin-dashboard-section[open]>.admin-dashboard-section-chevron,
+.admin-dashboard-section[open]>summary .admin-dashboard-section-chevron { transform:rotate(180deg); }
+.admin-dashboard-section-body { padding:0 16px 16px; }
+.admin-dashboard-section-body>.account-section { padding:4px 0 0; border-top:0; }
+@media(max-width:600px) { .admin-dashboard-section>summary { min-height:50px; padding:11px 13px; }.admin-dashboard-section-body { padding:0 12px 13px; } }
+@media(prefers-reduced-motion:reduce) { .admin-dashboard-section-chevron { transition:none; } }
