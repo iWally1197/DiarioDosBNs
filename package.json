@@ -5,11 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test:physics": "node --test laboratorio-core.test.js laboratorio-advanced-core.test.js laboratorio-optica-core.test.js laboratorio-pages.test.js physics-topics.test.js admin-laboratorios.test.js physics-faraday.test.js laboratorio-magnetismo.test.js"
+    "test:physics": "node --test laboratorio-core.test.js laboratorio-advanced-core.test.js laboratorio-optica-core.test.js laboratorio-pages.test.js physics-topics.test.js admin-laboratorios.test.js physics-faraday.test.js laboratorio-magnetismo.test.js",
+    "test:questions": "node --test questoes/questoes.test.mjs"
   },
   "engines": {
     "node": ">=20"
   }
 }
-
-

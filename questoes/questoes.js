@@ -1,3 +1,6 @@
+import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs";
+import "./questoes-data.js";
+
 (() => {
   "use strict";
 
@@ -23,7 +26,9 @@
   const emptyPanel = el("question-empty");
   const imageDialog = el("question-image-dialog");
   const progressBar = document.querySelector(".q-progress-bar");
-  let state = readState();
+  let progressStorage = null;
+  try { progressStorage = window.localStorage; } catch {}
+  let state = loadProgress(progressStorage,storageKey);
   let activeView = "all";
   let currentPage = 1;
   let searchTimer = 0;
@@ -31,19 +36,8 @@
   let quizTimer = 0;
   const simulations = allowedLabs;
 
-  function readState() {
-    const fallback = {favorites:[],answers:{}};
-    try {
-      const parsed = JSON.parse(localStorage.getItem(storageKey) || "null");
-      if (!parsed || typeof parsed !== "object") return fallback;
-      return {
-        favorites:Array.isArray(parsed.favorites) ? parsed.favorites.filter(value => typeof value === "string") : [],
-        answers:parsed.answers && typeof parsed.answers === "object" ? parsed.answers : {}
-      };
-    } catch { return fallback; }
-  }
   function saveState() {
-    try { localStorage.setItem(storageKey,JSON.stringify(state)); } catch { setStatus("O navegador não permitiu salvar o progresso local."); }
+    if (!saveProgress(progressStorage,storageKey,state)) setStatus("O navegador não permitiu salvar o progresso local.");
   }
   function setStatus(message) { questionCount.textContent = message; }
   function questionRecord(question) {
@@ -55,12 +49,8 @@
       lastCorrect:typeof value.lastCorrect === "boolean" ? value.lastCorrect : null
     };
   }
-  function validateQuestion(question) {
-    return question && typeof question.id === "string" && typeof question.statement === "string" &&
-      typeof question.subject === "string" && Array.isArray(question.choices) && question.choices.length >= 2 &&
-      question.choices.some(choice => choice && choice.letter === question.correct);
-  }
-  const questions = allQuestions.filter(validateQuestion);
+  const validation = normalizeQuestionList(allQuestions);
+  const questions = validation.questions;
   const activeQuestionIds = new Set(questions.map(question => question.id));
   state.favorites = state.favorites.filter(id => activeQuestionIds.has(id));
   for (const id of Object.keys(state.answers)) if (!activeQuestionIds.has(id)) delete state.answers[id];
@@ -172,39 +162,17 @@
     }
     el("active-filter-count").textContent = count + " filtro" + (count === 1 ? "" : "s") + " ativo" + (count === 1 ? "" : "s");
   }
-  function questionMatchesFilters(question) {
-    for (const item of filterConfig) {
-      const selected = filterSets[item.key];
-      if (selected.size && !selected.has(String(question[item.field] ?? ""))) return false;
-    }
-    return true;
-  }
-  function searchHaystack(question) {
-    return [question.title,question.statement,question.discipline,question.subject,question.subtopic,question.bank,question.institution,question.year,question.source,...(question.tags || []),...question.choices.map(choice => choice.text)]
-      .filter(value => value !== null && value !== undefined).join(" ").toLocaleLowerCase("pt-BR");
-  }
   function baseMatches() {
-    const query = searchInput.value.trim().toLocaleLowerCase("pt-BR");
-    return questions.filter(question => questionMatchesFilters(question) && (!query || searchHaystack(question).includes(query)));
+    const selectedFilters = Object.fromEntries(filterConfig.map(item => [item.field,filterSets[item.key]]));
+    return filterQuestions(questions,selectedFilters,searchInput.value);
   }
   function sortedQuestions(list) {
-    const sorted = [...list];
-    const sort = el("question-sort").value;
-    if (sort === "year-desc") sorted.sort((a,b) => (b.year || 0)-(a.year || 0));
-    if (sort === "year-asc") sorted.sort((a,b) => (a.year || 9999)-(b.year || 9999));
-    if (sort === "difficulty") {
-      const order = {Fácil:0,Média:1,Difícil:2};
-      sorted.sort((a,b) => (order[a.difficulty] ?? 1)-(order[b.difficulty] ?? 1));
-    }
-    return sorted;
+    return sortQuestionList(list,el("question-sort").value);
   }
   function getVisibleQuestions() {
     if (quizSession) return quizSession.ids.map(id => questions.find(question => question.id === id)).filter(Boolean);
     let result = baseMatches();
-    if (activeView === "favorites") result = result.filter(question => state.favorites.includes(question.id));
-    if (activeView === "unanswered") result = result.filter(question => questionRecord(question).attempts === 0);
-    if (activeView === "wrong") result = result.filter(question => questionRecord(question).lastCorrect === false);
-    return sortedQuestions(result);
+    return sortedQuestions(filterByView(result,activeView,state.favorites,state.answers));
   }
   function makeChip(text,extraClass) {
     const chip = document.createElement("span");
@@ -239,8 +207,7 @@
     favorite.title = state.favorites.includes(question.id) ? "Remover dos favoritos" : "Salvar nos favoritos";
     favorite.textContent = state.favorites.includes(question.id) ? "★" : "☆";
     favorite.addEventListener("click",() => {
-      if (state.favorites.includes(question.id)) state.favorites = state.favorites.filter(id => id !== question.id);
-      else state.favorites.push(question.id);
+      state.favorites = toggleFavorite(state.favorites,question.id);
       saveState();
       updateProgress();
       renderQuestions();
@@ -314,8 +281,8 @@
       checked = true;
       choices.disabled = true;
       const correct = chosen.value === question.correct;
-      const prior = questionRecord(question);
-      state.answers[question.id] = {attempts:prior.attempts+1,correct:prior.correct+(correct ? 1 : 0),lastCorrect:correct};
+      const answerUpdate = recordAnswer(state.answers,question.id,chosen.value,question.correct);
+      state.answers = answerUpdate.answers;
       saveState();
       for (const label of choices.querySelectorAll(".q-choice")) {
         const radio = label.querySelector("input");
@@ -439,16 +406,13 @@
     updateQuizBanner();
   }
   function updateProgress() {
-    const attempted = questions.filter(question => questionRecord(question).attempts > 0);
-    const totalAttempts = questions.reduce((sum,question) => sum+questionRecord(question).attempts,0);
-    const correctAttempts = questions.reduce((sum,question) => sum+questionRecord(question).correct,0);
-    const accuracy = totalAttempts ? Math.round(correctAttempts/totalAttempts*100) : 0;
-    el("progress-accuracy").textContent = accuracy + "%";
-    el("progress-answered").textContent = String(attempted.length);
-    el("progress-correct").textContent = String(correctAttempts);
-    el("progress-attempts").textContent = String(totalAttempts);
-    progressBar.setAttribute("aria-valuenow",String(accuracy));
-    el("progress-bar-fill").style.width = accuracy + "%";
+    const progress = summarizeProgress(questions,state.answers);
+    el("progress-accuracy").textContent = progress.accuracy + "%";
+    el("progress-answered").textContent = String(progress.answered);
+    el("progress-correct").textContent = String(progress.correct);
+    el("progress-attempts").textContent = String(progress.attempts);
+    progressBar.setAttribute("aria-valuenow",String(progress.accuracy));
+    el("progress-bar-fill").style.width = progress.accuracy + "%";
     el("favorite-count").textContent = String(state.favorites.length);
   }
   function shuffle(list) {
@@ -464,7 +428,7 @@
     if (!quizSession) { banner.hidden = true; return; }
     banner.hidden = false;
     const completed = quizSession.checked.size;
-    el("quiz-progress").textContent = "Questão " + Math.min(completed+1,quizSession.ids.length) + " de " + quizSession.ids.length + " · " + completed + " respondida" + (completed === 1 ? "" : "s");
+    el("quiz-progress").textContent = "Questão " + Math.min(completed+1,quizSession.ids.length) + " de " + quizSession.ids.length + " · " + completed + " respondida" + (completed === 1 ? "" : "s") + (quizSession.shortage ? " · quantidade ajustada aos filtros" : "");
     if (quizSession.secondsLeft !== null) {
       const minutes = Math.floor(quizSession.secondsLeft/60).toString().padStart(2,"0");
       const seconds = (quizSession.secondsLeft%60).toString().padStart(2,"0");
@@ -526,16 +490,12 @@
     }
     const wanted = Number(el("quiz-amount").value) || 5;
     const ids = shuffle(candidates).slice(0,Math.min(wanted,candidates.length)).map(question => question.id);
-    quizSession = {ids,checked:new Map(),secondsLeft:el("quiz-timer-enabled").checked ? Number(el("quiz-time").value)*60 : null};
+    quizSession = {ids,checked:new Map(),secondsLeft:el("quiz-timer-enabled").checked ? Number(el("quiz-time").value)*60 : null,shortage:candidates.length<wanted};
     const previous = el("quiz-summary");
     if (previous) previous.remove();
     activeView = "all";
     currentPage = 1;
     document.querySelector(".q-study-details").open = false;
-    if (candidates.length < wanted) {
-      const note = "Há " + candidates.length + " questão" + (candidates.length === 1 ? "" : "ões") + " disponível" + (candidates.length === 1 ? "" : "s") + " com os filtros atuais; o simulado usará todas.";
-      el("quiz-progress").textContent = note;
-    }
     renderQuestions();
     if (quizSession.secondsLeft !== null) {
       quizTimer = window.setInterval(() => {
@@ -622,6 +582,6 @@
   });
   updateProgress();
   renderQuestions();
-  if (questions.length !== 20) setStatus("A página carregou " + questions.length + " questões válidas; " + Math.max(0,allQuestions.length-questions.length) + " registros foram ignorados por estarem incompletos.");
+  if (validation.invalidCount > 0) setStatus("A página carregou " + questions.length + " questões válidas; " + validation.invalidCount + " registros foram ignorados por estarem incompletos.");
 })();
 

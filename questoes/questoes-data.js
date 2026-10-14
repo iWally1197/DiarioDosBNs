@@ -21,6 +21,24 @@ window.DIARIO_QUESTIONS = [
     tags:["fios","regra da mão direita","campo magnético","corrente elétrica"]
   },
   {
+    id:"lei-faraday-bobina-ima",
+    title:"Variação de fluxo em uma bobina",
+    discipline:"Física", subject:"Eletromagnetismo", subtopic:"Indução eletromagnética",
+    bank:"", institution:"", year:null, difficulty:"Média",
+    statement:"Uma bobina está ligada a um galvanômetro. Um ímã é movimentado para dentro dela e depois mantido parado no interior. Em que situação surge corrente induzida na bobina?",
+    choices:[
+      {letter:"A",text:"Enquanto o fluxo magnético através da bobina varia durante o movimento do ímã."},
+      {letter:"B",text:"Somente quando o ímã fica parado dentro da bobina."},
+      {letter:"C",text:"Em nenhum momento, pois a bobina não tem bateria."},
+      {letter:"D",text:"Apenas quando a bobina é retirada do circuito."},
+      {letter:"E",text:"Enquanto o campo magnético permanece constante."}
+    ],
+    correct:"A",
+    solution:"A lei de Faraday relaciona a força eletromotriz induzida à taxa de variação do fluxo magnético. O movimento relativo do ímã altera o fluxo e induz corrente. Quando o ímã fica parado e o fluxo deixa de variar, a corrente induzida cessa.",
+    source:"Questão autoral — Diário dos BNs.", license:"Conteúdo autoral.",
+    simulation:"/laboratorio-magnetismo/"
+  },
+  {
     id:"mru-posicao-tempo",
     title:"Posição de um ciclista em movimento uniforme",
     discipline:"Física", subject:"Cinemática", subtopic:"Movimento Retilíneo Uniforme (MRU)",
