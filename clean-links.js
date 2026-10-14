@@ -3,14 +3,18 @@
   if (!script) return;
   const siteRoot = new URL('.', script.src).pathname;
   const siteOrigin = location.origin;
-  const files = {'acessar-conta.html':'acessar-conta','admin-laboratorios.html':'admin-laboratorios','admin.html':'admin','aluno.html':'aluno','animacao.html':'animacao','apoie.html':'apoie','auth-callback.html':'auth-callback','auth.html':'auth','biblioteca-fisica.html':'biblioteca-fisica','blender.html':'blender','cadastro.html':'cadastro','conta.html':'conta','criar-perfil.html':'criar-perfil','downloads.html':'downloads','ia.html':'ia','index.html':'','laboratorio-espelhos.html':'laboratorio-espelhos','laboratorio-experimento.html':'laboratorio-experimento','laboratorio-faraday.html':'laboratorio-faraday','laboratorio-magnetismo.html':'laboratorio-magnetismo','laboratorio-mru.html':'laboratorio-mru','laboratorio-mruv.html':'laboratorio-mruv','laboratorio-queda-livre.html':'laboratorio-queda-livre','laboratorio.html':'laboratorio','login.html':'login','minha-area.html':'minha-area','perfil.html':'perfil','pesquisa.html':'pesquisa','privacidade.html':'privacidade','professor.html':'professor','professores.html':'professores','recuperar senha.html':'recuperar-senha','recuperar-senha.html':'recuperar-senha','site.html':'','termos.html':'termos','topico.html':'topico','turma.html':'turma','turmas.html':'turmas'};
+  const files = {'acessar-conta.html':'login','admin-laboratorios.html':'admin-laboratorios','admin.html':'admin','aluno.html':'aluno','animacao.html':'animacao','apoie.html':'apoie','auth-callback.html':'auth-callback','auth.html':'login','biblioteca-fisica.html':'biblioteca-fisica','blender.html':'blender','cadastro.html':'cadastro','conta.html':'conta','criar-perfil.html':'cadastro','downloads.html':'downloads','ia.html':'ia','index.html':'','laboratorio-espelhos.html':'laboratorio-espelhos','laboratorio-experimento.html':'laboratorio-experimento','laboratorio-faraday.html':'laboratorio-faraday','laboratorio-magnetismo.html':'laboratorio-magnetismo','laboratorio-mru.html':'laboratorio-mru','laboratorio-mruv.html':'laboratorio-mruv','laboratorio-queda-livre.html':'laboratorio-queda-livre','laboratorio.html':'laboratorio','login.html':'login','minha-area.html':'minha-area','perfil.html':'perfil','pesquisa.html':'pesquisa','privacidade.html':'privacidade','professor.html':'professor','professores.html':'professores','recuperar senha.html':'recuperar-senha','recuperar-senha.html':'recuperar-senha','site.html':'','termos.html':'termos','topico.html':'topico','turma.html':'turma','turmas.html':'turmas'};
   const lower = value => String(value || '').toLocaleLowerCase('pt-BR');
+  const routeAliases = Object.freeze({'acessar-conta':'login','auth':'login','criar-perfil':'cadastro'});
   function canonicalPath(pathname) {
     const relative = pathname.startsWith(siteRoot) ? pathname.slice(siteRoot.length) : pathname;
     let parts = relative.split('/').filter(Boolean);
     try { parts = parts.map(part => decodeURIComponent(part)); } catch {}
-    const last = lower(parts[parts.length - 1]);
-    if (last === 'index.html') { parts.pop(); return siteRoot + (parts.length ? parts.map(encodeURIComponent).join('/') + '/' : ''); }
+    let last = lower(parts[parts.length - 1]);
+    if (last === 'index.html') parts.pop();
+    if (!parts.length) return siteRoot;
+    last = lower(parts[parts.length - 1]);
+    if (parts.length === 1 && Object.prototype.hasOwnProperty.call(routeAliases, last)) return siteRoot + routeAliases[last] + '/';
     if (!Object.prototype.hasOwnProperty.call(files, last)) return null;
     const slug = files[last];
     return siteRoot + (slug ? encodeURIComponent(slug) + '/' : '');
