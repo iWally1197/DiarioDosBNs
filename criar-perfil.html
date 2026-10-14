@@ -1,17 +1,19 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/criar-perfil/"></noscript>
+  <meta http-equiv="refresh" content="2;url=index.html">
+  <title>Área removida — Diário dos BNs</title>
 </head>
 <body>
   <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/criar-perfil/">Abrir a página atualizada</a></p>
+    <h1>Esta área foi removida</h1>
+    <p>O Diário dos BNs agora é aberto e não oferece mais criação de contas, login ou recuperação de senha.</p>
+    <p><a href="/">Voltar ao início</a></p>
   </main>
+  <script>window.setTimeout(() => location.replace(new URL("index.html", document.baseURI).href), 300);</script>
 </body>
 </html>

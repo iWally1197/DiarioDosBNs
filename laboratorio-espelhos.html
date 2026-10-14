@@ -2,16 +2,47 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/laboratorio-espelhos/"></noscript>
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Escolha um dos três laboratórios interativos de espelhos planos e esféricos.">
+  <title>Laboratórios de espelhos — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=lab-mirror-choice-20261011">
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
+  <script src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1" defer></script>
+  <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
+  <style>.mirror-lab-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.mirror-back{margin-top:24px}@media(max-width:760px){.mirror-lab-cards{grid-template-columns:1fr}}</style>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
 <body>
-  <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/laboratorio-espelhos/">Abrir a página atualizada</a></p>
+  <a class="skip-link" href="/laboratorio-espelhos/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/#animacoes">Física</a><a href="/turmas/">Turmas</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a href="/laboratorio/" aria-current="page">Laboratório</a><a href="/apoie/">Apoie o projeto</a><a class="nav-account" href="/login/">Entrar</a><a class="nav-account" href="/cadastro/">Criar conta</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+  <main id="conteudo" class="section-wrap tool-page physics-lab">
+    <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório Virtual</a><span aria-hidden="true">/</span><span>Espelhos</span></nav>
+    <section class="tool-heading">
+      <div class="section-kicker">ÓPTICA GEOMÉTRICA · TRÊS EXPERIMENTOS</div>
+      <h1>Laboratórios de <span>espelhos</span></h1>
+      <p>Escolha o tipo de espelho. Cada opção abre sua própria simulação, com raios, imagem, parâmetros e gráfico.</p>
+    </section>
+    <section class="lab-catalog" aria-label="Escolha um laboratório de espelhos">
+      <div class="lab-cards mirror-lab-cards">
+        <a class="lab-card" href="/laboratorio-experimento/?topico=optics-reflection"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M42 10v56M10 24l30 14-30 14M44 38l31-15M44 38l31 15"/><path d="M37 18l5-8 5 8" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho plano<small>Reflexão regular</small></span><span class="lab-card-meta">Compare ângulo de incidência e ângulo refletido, mova o espelho e o ponto de incidência.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a>
+        <a class="lab-card" href="/laboratorio-experimento/?topico=optics-concave-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M49 10q-23 28 0 56M10 21l31 15M10 55l31-14M10 38h35"/><circle cx="27" cy="38" r="2" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho côncavo<small>Foco e imagem</small></span><span class="lab-card-meta">Altere a curvatura e a distância do objeto para investigar imagens reais, virtuais e invertidas.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a>
+        <a class="lab-card" href="/laboratorio-experimento/?topico=optics-convex-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M40 10q23 28 0 56M10 21l31 15M10 55l31-14M10 38h37"/><path d="M40 36h30m0 0-6-5m6 5-6 5" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho convexo<small>Imagem virtual</small></span><span class="lab-card-meta">Observe os raios refletidos e seus prolongamentos para localizar a imagem virtual.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a>
+      </div>
+      <p class="mirror-back"><a class="button button-outline" href="/laboratorio/#lab-cards">← Voltar aos 25 experimentos</a></p>
+    </section>
   </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Modelos físicos interativos para investigar.</p><a class="back-top" href="/laboratorio-espelhos/#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Óptica geométrica interativa.</span><a href="/laboratorio/">Laboratório ↗</a></div></footer>
 </body>
 </html>

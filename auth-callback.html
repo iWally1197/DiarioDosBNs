@@ -1,17 +1,22 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/auth-callback/"></noscript>
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f"><title>Confirmar e-mail — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1"><link rel="stylesheet" href="account-system.css?v=site-20261008">
+  <script defer src="account-system.js?v=site-20261008"></script>
+  <script defer src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
-<body>
-  <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/auth-callback/">Abrir a página atualizada</a></p>
-  </main>
+<body data-account-page="callback">
+  <a class="skip-link" href="/auth-callback/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header"><a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a></header>
+  <main id="conteudo" class="account-page"><section class="account-panel">
+    <p class="account-kicker">Confirmação segura</p><h1>Confirmar e-mail</h1>
+    <p id="callback-status" class="account-message" role="status" aria-live="polite">Verificando o link…</p>
+    <div id="callback-links" class="account-actions" hidden><a href="/login/">Entrar</a><a href="/cadastro/">Criar conta</a></div>
+  </section></main>
 </body>
 </html>

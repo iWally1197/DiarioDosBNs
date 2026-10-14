@@ -1,17 +1,35 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/apoie/"></noscript>
+  <meta name="theme-color" content="#08101f">
+  <title>Apoie o Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
+  <script defer src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
 <body>
-  <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/apoie/">Abrir a página atualizada</a></p>
+  <a class="skip-link" href="/apoie/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <nav class="nav" aria-label="Navegação principal"><a href="/">Início</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a class="nav-account" href="/login/">Entrar</a><a class="nav-account" href="/cadastro/">Criar conta</a></nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+  <main id="conteudo" class="section-wrap">
+    <section class="donation-panel" id="pix-support" aria-labelledby="pix-heading">
+      <div class="section-kicker">APOIO AO PROJETO</div>
+      <h1 id="pix-heading">Apoie o Diário dos BNs</h1>
+      <p>As contribuições ajudam na manutenção, no desenvolvimento e na expansão desta plataforma educacional.</p>
+      <div class="pix-content" id="pix-content" aria-live="polite"><p>Carregando as informações de apoio…</p></div>
+      <a class="text-link" href="/">← Voltar ao site</a>
+    </section>
   </main>
+  <footer class="site-footer"><p>Diário dos BNs · Física que ganha forma</p><a href="/privacidade/">Privacidade</a></footer>
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
 </body>
 </html>

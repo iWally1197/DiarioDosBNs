@@ -2,16 +2,81 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/laboratorio-faraday/"></noscript>
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Laboratório interativo 2D e 3D de indução eletromagnética: fluxo magnético e lei de Faraday.">
+  <title>Indução eletromagnética — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="physics-faraday.css?v=fullscreen-menu-20261011&previous=physics-lab-pilot-20261011">
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
+  <script src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1" defer></script>
+  <script type="module" src="physics-faraday.js?v=loop-long-20261011-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
 <body>
-  <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/laboratorio-faraday/">Abrir a página atualizada</a></p>
+  <a class="skip-link" href="/laboratorio-faraday/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/laboratorio/">Experimentos</a><a href="/biblioteca-fisica/">Biblioteca de Física</a>
+    </nav>
+  </header>
+  <main id="conteudo" class="section-wrap faraday-page">
+    <div class="section-kicker">LABORATÓRIO DIGITAL · ELETROMAGNETISMO · 2D + 3D</div>
+    <h1>Indução eletromagnética</h1>
+    <p class="faraday-lede">Gire uma espira em um campo magnético uniforme e investigue como a orientação, a área, o campo e a frequência alteram o fluxo e a força eletromotriz induzida.</p>
+    <div class="faraday-equation" aria-label="Fluxo concatenado é N vezes B vezes A vezes cosseno de teta; força eletromotriz é menos a derivada temporal do fluxo concatenado. Para rotação uniforme, a força eletromotriz é N B A ômega seno de teta.">
+      <strong>λ = N B A cos θ</strong><span>ε = −dλ/dt = N B A ω sen θ</span>
+    </div>
+    <section class="faraday-lab-shell" id="faraday-lab" aria-label="Laboratório de indução eletromagnética">
+      <div class="faraday-stage">
+        <div class="faraday-toolbar">
+          <div class="faraday-mode" role="group" aria-label="Perspectiva da animação">
+            <button type="button" data-mode="2d" aria-pressed="true">Vista 2D</button>
+            <button type="button" data-mode="3d" aria-pressed="false">Vista 3D</button>
+          </div>
+          <div class="faraday-actions">
+            <button class="button button-outline" type="button" data-play>Iniciar</button>
+            <button class="button button-outline" type="button" data-step="-0.1" aria-label="Voltar 0,1 segundo">− 0,1 s</button>
+            <button class="button button-outline" type="button" data-step="0.1" aria-label="Avançar 0,1 segundo">+ 0,1 s</button>
+            <button class="button button-outline" type="button" data-reset>Restaurar início e parâmetros</button>
+            <button class="button button-outline" type="button" id="faraday-panel-toggle" aria-controls="faraday-controls" aria-expanded="false" hidden>Gráficos e parâmetros</button><button class="button button-outline" type="button" data-fullscreen aria-pressed="false">Tela cheia</button>
+          </div>
+        </div>
+        <p class="faraday-help" id="faraday-help">Vista 2D: projeção da espira e direção do campo. Selecione Vista 3D para girar a perspectiva com o mouse ou toque.</p>
+        <canvas id="faraday-scene" tabindex="0" role="img" aria-label="Animação da rotação de uma espira entre os polos de um ímã" aria-describedby="faraday-help faraday-readouts"></canvas>
+        <div class="faraday-readouts" id="faraday-readouts" aria-live="off">
+          <div><span>Tempo</span><b id="faraday-time">0,00 s</b></div>
+          <div><span>Ângulo da normal</span><b id="faraday-angle">0°</b></div>
+          <div><span>Fluxo por espira</span><b id="faraday-flux">0 Wb</b></div>
+          <div><span>Fluxo concatenado λ</span><b id="faraday-linkage">0 Wb·espira</b></div>
+          <div><span>Força eletromotriz ε</span><b id="faraday-emf">0 V</b></div>
+        </div>
+        <div class="faraday-chart-heading"><strong>Fluxo concatenado e força eletromotriz no tempo</strong><span>Curvas analíticas do modelo</span></div>
+        <canvas id="faraday-chart" role="img" aria-label="Gráficos de fluxo magnético concatenado e força eletromotriz em função do tempo"></canvas>
+      </div>
+      <aside class="faraday-controls" id="faraday-controls" aria-label="Gráficos e parâmetros do modelo">
+        <h2>Gráficos e parâmetros</h2><button class="button button-primary faraday-panel-play" id="faraday-panel-play" type="button" hidden>Pausar</button>
+        <label for="faraday-turns">Número de espiras <output data-out="turns">20</output><input id="faraday-turns" data-param="turns" type="range" min="1" max="100" step="1" value="20"></label>
+        <label for="faraday-field">Campo magnético B <output data-out="magneticField">0,30 T</output><input id="faraday-field" data-param="magneticField" type="range" min="0" max="1.5" step="0.05" value="0.3"></label>
+        <label for="faraday-area">Área da espira A <output data-out="area">0,25 m²</output><input id="faraday-area" data-param="area" type="range" min="0.02" max="1" step="0.01" value="0.25"></label>
+        <label for="faraday-frequency">Frequência de rotação f <output data-out="frequency">0,50 Hz</output><input id="faraday-frequency" data-param="frequency" type="range" min="0" max="2" step="0.05" value="0.5"></label>
+        <label for="faraday-phase">Fase inicial <output data-out="phaseDegrees">0°</output><input id="faraday-phase" data-param="phaseDegrees" type="range" min="-180" max="180" step="5" value="0"></label>
+        <label for="faraday-speed">Velocidade da animação <output data-out="speed">0,25×</output><input id="faraday-speed" data-param="speed" type="range" min="0.25" max="3" step="0.25" value="0.25"></label>
+        <p class="faraday-note">Arraste a cena 3D para mudar a vista. A rotação da câmera altera apenas a perspectiva, não os valores físicos.</p>
+        <details class="faraday-model" open>
+          <summary>Modelo e limitações</summary>
+          <p>Modelo ideal de uma bobina rígida com N espiras, área constante e rotação uniforme em um campo B uniforme. O fluxo por espira é Φ = BA cos θ; λ = NΦ; a tensão induzida é ε = −dλ/dt. A simulação não calcula corrente: para isso seriam necessários a resistência da bobina e o circuito externo. A perspectiva 3D é uma projeção visual e não está em escala.</p>
+          <p>Referência: <a href="https://openstax.org/books/university-physics-volume-2/pages/13-1-faradays-law" target="_blank" rel="noopener">OpenStax, University Physics Volume 2, seção 13.1 — Faraday’s Law</a>.</p>
+        </details>
+      </aside>
+    </section>
+    <p class="privacy-note"><a href="/biblioteca-fisica/">← Voltar à Biblioteca dos 480 tópicos</a></p>
   </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/">Diário dos BNs · Física que ganha forma</a><a href="/privacidade/">Privacidade</a></div></footer>
 </body>
 </html>

@@ -2,16 +2,87 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <base href="./">
+  <script defer src="/clean-links.js?v=clean-urls-2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Endereço atualizado — Diário dos BNs</title>
-  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
-  <noscript><meta http-equiv="refresh" content="0; url=/laboratorio-queda-livre/"></noscript>
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Compare massas em uma queda livre ideal com animação, gráfico, referencial e controles de altura e gravidade.">
+  <title>Queda livre — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="physics-freefall.css?v=fullscreen-menu-20261011&previous=freefall-20261011-1">
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
+  <script src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1" defer></script>
+  <script type="module" src="physics-freefall.js?v=loop-long-20261011-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
 <body>
-  <main>
-    <h1>Endereço atualizado</h1>
-    <p>Esta página agora tem um endereço mais curto.</p>
-    <p><a href="/laboratorio-queda-livre/">Abrir a página atualizada</a></p>
+  <a class="skip-link" href="/laboratorio-queda-livre/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/laboratorio/">Experimentos</a><a href="/biblioteca-fisica/#top-25">Top 25 do ensino médio</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+  <main id="conteudo" class="section-wrap freefall-page">
+    <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório</a><span aria-hidden="true">/</span><span>Queda livre</span></nav>
+    <a class="back-top" href="/biblioteca-fisica/#top-25">← Voltar ao grupo de movimento</a>
+    <div class="section-kicker">LABORATÓRIO DIGITAL · CINEMÁTICA · 2D</div>
+    <h1>Queda livre</h1>
+    <p class="freefall-lede">Solte dois objetos de massas diferentes e acompanhe a queda em relação ao solo. No modelo sem resistência do ar, eles percorrem a mesma trajetória e chegam juntos.</p>
+    <div class="freefall-equations" aria-label="Deslocamento para baixo s igual a g vezes t ao quadrado dividido por dois; velocidade para baixo v igual a g vezes t; altura h igual a h zero menos g vezes t ao quadrado dividido por dois; tempo de queda igual à raiz quadrada de dois h zero dividido por g.">
+      <strong>s = ½gt²</strong><span>v = gt</span><span>h = h₀ − ½gt²</span><span>t<sub>impacto</sub> = √(2h₀/g)</span>
+    </div>
+    <section class="freefall-lab" id="freefall-lab" aria-label="Animação interativa de queda livre">
+      <div class="freefall-stage">
+        <div class="freefall-toolbar">
+          <span class="model-tag">MODELO 2D · QUEDA VERTICAL</span>
+          <div class="freefall-actions">
+            <button class="button button-primary" type="button" data-play>Iniciar</button>
+            <button class="button button-outline" type="button" data-step="-0.1" aria-label="Voltar 0,1 segundo">− 0,1 s</button>
+            <button class="button button-outline" type="button" data-step="0.1" aria-label="Avançar 0,1 segundo">+ 0,1 s</button>
+            <button class="button button-outline" type="button" data-reset>Restaurar início</button>
+            <button class="button button-outline" type="button" id="freefall-panel-toggle" aria-controls="freefall-controls" aria-expanded="false" hidden>Gráficos e parâmetros</button><button class="button button-outline" type="button" data-fullscreen aria-pressed="false">Tela cheia</button>
+          </div>
+        </div>
+        <canvas id="freefall-scene" role="img" aria-label="Dois objetos de massas diferentes caem da mesma altura em um referencial fixo no solo." aria-describedby="freefall-scene-description freefall-readouts" tabindex="0"></canvas>
+        <p class="freefall-scene-caption" id="freefall-scene-description">Referencial: solo. O eixo vertical positivo aponta para baixo. Sem resistência do ar, as massas não mudam a queda.</p>
+        <div class="freefall-readouts" id="freefall-readouts" aria-live="off">
+          <div><span>Tempo</span><b id="freefall-time">0,00 s</b></div>
+          <div><span>Altura sobre o solo</span><b id="freefall-height">20,00 m</b></div>
+          <div><span>Velocidade para baixo</span><b id="freefall-velocity">0,00 m/s</b></div>
+          <div><span>Gravidade</span><b id="freefall-gravity">9,81 m/s²</b></div>
+          <div><span>Tempo até o impacto</span><b id="freefall-impact">2,02 s</b></div>
+        </div>
+        <div class="freefall-chart-heading">
+          <label for="freefall-chart-select"><strong>Gráfico sincronizado</strong></label>
+          <select id="freefall-chart-select" aria-label="Escolher grandeza do gráfico">
+            <option value="height">Altura sobre o solo × tempo</option>
+            <option value="velocity">Velocidade para baixo × tempo</option>
+          </select>
+        </div>
+        <canvas id="freefall-chart" role="img" aria-label="Gráfico da queda livre. Clique ou use as setas para consultar um instante." tabindex="0"></canvas>
+        <p class="freefall-chart-hint">Clique no gráfico ou use as setas esquerda e direita para consultar um instante e sincronizar a cena.</p>
+        <p id="freefall-status" class="freefall-status" role="status" aria-live="polite">Pronto para iniciar.</p>
+      </div>
+      <aside class="freefall-controls" id="freefall-controls" aria-label="Gráficos e parâmetros da simulação">
+        <h2>Gráficos e parâmetros</h2><button class="button button-primary freefall-panel-play" id="freefall-panel-play" type="button" hidden>Pausar</button>
+        <label for="freefall-height-input">Altura inicial <output data-out="height">20 m</output><input id="freefall-height-input" data-param="height" type="range" min="5" max="80" step="1" value="20"></label>
+        <label for="freefall-gravity-input">Aceleração gravitacional <output data-out="gravity">9,81 m/s²</output><input id="freefall-gravity-input" data-param="gravity" type="range" min="1" max="20" step="0.01" value="9.81"></label>
+        <label for="freefall-mass-a">Massa do objeto A <output data-out="massA">0,2 kg</output><input id="freefall-mass-a" data-param="massA" type="range" min="0.1" max="10" step="0.1" value="0.2"></label>
+        <label for="freefall-mass-b">Massa do objeto B <output data-out="massB">2,0 kg</output><input id="freefall-mass-b" data-param="massB" type="range" min="0.1" max="10" step="0.1" value="2"></label>
+        <label for="freefall-playback-input">Velocidade da animação <output data-out="playback">0,25×</output><input id="freefall-playback-input" data-param="playback" type="range" min="0.25" max="2.5" step="0.25" value="0.25"></label>
+        <p class="freefall-note"><strong>Compare as massas:</strong> o tamanho desenhado é apenas ilustrativo. Como o modelo despreza o ar, a aceleração gravitacional é igual para os dois objetos, qualquer que seja a massa.</p>
+        <details class="freefall-model" open>
+          <summary>Modelo e limitações</summary>
+          <p>Queda vertical a partir do repouso, com gravidade uniforme. A coordenada de deslocamento é positiva para baixo; a altura é medida a partir do solo. O modelo não inclui resistência do ar, vento, empuxo ou ressalto.</p>
+          <p>Referência: <a href="https://openstax.org/books/college-physics-2e/pages/2-7-falling-objects" target="_blank" rel="noopener">OpenStax, College Physics 2e, seção 2.7 — Falling Objects</a>.</p>
+        </details>
+      </aside>
+    </section>
   </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><div class="footer-links"><a href="/privacidade/">Privacidade</a><a href="/termos/">Termos</a></div></div></footer>
 </body>
 </html>
