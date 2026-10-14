@@ -724,7 +724,7 @@ async function loadAdminTools(root,user) {
     <section class="account-section" id="admin-questions-shortcut"><div class="section-kicker">BANCO DE QUESTÕES</div><h2>Banco de questões</h2><p>Cadastre, edite e publique questões para os estudantes.</p><a class="button button-primary" href="/admin/questoes/">Gerenciar questões</a></section>`);
   const compactAdminSections=document.createElement('div');
   compactAdminSections.className='admin-dashboard-sections';
-  const compactLabels={'USUÁRIOS':'Contas e professores','ANIMAÇÕES':'Animações','DOWNLOADS PRIVADOS':'Downloads','CURSOS BLENDER':'Cursos Blender','AULAS BLENDER':'Aulas Blender','TURMAS E ATIVIDADES':'Turmas e atividades','TRANSMISSÃO AO VIVO':'Gerenciar área ao vivo','ARQUIVOS':'Arquivos da animação','LABORATÓRIOS':'Laboratórios','BANCO DE QUESTÕES':'Banco de questões'};
+  const compactLabels={'USUÁRIOS':'Contas e professores','ANIMAÇÕES':'Animações','DOWNLOADS PRIVADOS':'Downloads','CURSOS BLENDER':'Cursos Blender','AULAS BLENDER':'Aulas Blender','TURMAS E ATIVIDADES':'Turmas','TRANSMISSÃO AO VIVO':'Gerenciar área ao vivo','ARQUIVOS':'Arquivos da animação','LABORATÓRIOS':'Laboratórios','BANCO DE QUESTÕES':'Banco de questões'};
   for(const section of [...root.children].filter((node)=>node.matches('section.account-section'))){
     const kicker=section.querySelector(':scope > .section-kicker');
     const heading=section.querySelector(':scope > h2');
@@ -954,7 +954,7 @@ document.querySelector('#print-resource')?.addEventListener('click',()=>window.p
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
 const featureRoutes = new Set(['/login','/cadastro','/recuperar-senha','/aluno','/professor','/admin','/admin/laboratorios','/perfil','/turmas','/turma','/apoie']);
 if (featureRoutes.has(route) || document.querySelector('#pix-content, #classroom-root, #teacher-tools, #admin-tools, #student-workspace')) {
-  import('./features.js?v=site-performance-20261013-1').catch(() => {});
+  import('./features.js?v=admin-compact-20261014-1').catch(() => {});
 }
 
 if (main) {

@@ -481,10 +481,42 @@ async function adminWorkspace(root) {
     '<div class="permission-checks">' +
     '<label><input type="checkbox" name="can_create_activities"> Professor pode criar atividades</label><label><input type="checkbox" name="can_edit_activities"> Professor pode editar atividades</label><label><input type="checkbox" name="can_publish_activities"> Professor pode publicar atividades</label><label><input type="checkbox" name="require_activity_approval" checked> Exigir aprovação das atividades</label><label><input type="checkbox" name="can_create_lessons"> Professor pode criar aulas</label><label><input type="checkbox" name="can_edit_lessons"> Professor pode editar aulas</label><label><input type="checkbox" name="can_send_materials"> Professor pode enviar materiais e avisos</label><label><input type="checkbox" name="can_view_progress"> Professor pode acompanhar o progresso</label></div>' +
     '<button class="button button-primary" type="submit">Salvar permissões</button><p role="status" aria-live="polite"></p></form>' +
-    '<h3>Adicionar atividade diretamente a uma turma</h3><form data-admin-direct-activity class="admin-form"><label>Turma<select name="classroom" required>' + classOptions + '</select></label><label>Título<input name="title" required maxlength="160"></label><label>Disciplina<input name="subject" maxlength="100"></label><label>Instruções<textarea name="description" maxlength="5000"></textarea></label><label>Animação relacionada<select name="animation_id">' + animationOptions + '</select></label><label>Aula relacionada<select name="related_lesson"><option value="">Nenhuma</option></select></label><label>Questões (uma por linha)<textarea name="questions" maxlength="9000" rows="4"></textarea></label><label>Link externo HTTPS (opcional)<input name="resource_url" type="url" maxlength="2000" placeholder="https://…"></label><label>Título do link (opcional)<input name="resource_title" maxlength="160"></label><label>Arquivos privados (até 50 MB cada)<input name="files" type="file" multiple accept=".pdf,.blend,.mp4,.glb,.png,.jpg,.jpeg,.webp,.zip"></label><label>Prazo<input name="due_at" type="datetime-local"></label><label>Pontuação<input name="points" type="number" min="0" max="100000" step="0.5" value="0"></label><button class="button button-primary">Criar e publicar</button><p role="status" aria-live="polite"></p></form>' +
-    '<div class="section-kicker">GERENCIAR ATIVIDADES</div><h2>Editar, publicar, duplicar ou excluir</h2><ul class="private-list">' + (managementRows || '<li>Nenhuma atividade cadastrada.</li>') + '</ul>' +
+    '<div class="section-kicker">ATIVIDADES</div><h2>Gerenciar atividades</h2><h3>Adicionar atividade diretamente a uma turma</h3><form data-admin-direct-activity class="admin-form"><label>Turma<select name="classroom" required>' + classOptions + '</select></label><label>Título<input name="title" required maxlength="160"></label><label>Disciplina<input name="subject" maxlength="100"></label><label>Instruções<textarea name="description" maxlength="5000"></textarea></label><label>Animação relacionada<select name="animation_id">' + animationOptions + '</select></label><label>Aula relacionada<select name="related_lesson"><option value="">Nenhuma</option></select></label><label>Questões (uma por linha)<textarea name="questions" maxlength="9000" rows="4"></textarea></label><label>Link externo HTTPS (opcional)<input name="resource_url" type="url" maxlength="2000" placeholder="https://…"></label><label>Título do link (opcional)<input name="resource_title" maxlength="160"></label><label>Arquivos privados (até 50 MB cada)<input name="files" type="file" multiple accept=".pdf,.blend,.mp4,.glb,.png,.jpg,.jpeg,.webp,.zip"></label><label>Prazo<input name="due_at" type="datetime-local"></label><label>Pontuação<input name="points" type="number" min="0" max="100000" step="0.5" value="0"></label><button class="button button-primary">Criar e publicar</button><p role="status" aria-live="polite"></p></form>' +
+    '<h3>Atividades cadastradas</h3><ul class="private-list">' + (managementRows || '<li>Nenhuma atividade cadastrada.</li>') + '</ul>' +
     '<div class="section-kicker">VERIFICAÇÃO DE PROFESSORES</div><h2>Solicitações e acesso docente</h2><ul class="private-list">' + (verificationRows || '<li>Nenhuma solicitação de verificação.</li>') + '</ul>' +
     '<div class="section-kicker">ATIVIDADES PENDENTES</div><h2>Revisar atividades enviadas</h2><ul class="private-list">' + (pendingRows || '<li>Nenhuma atividade aguardando aprovação.</li>') + '</ul>';
+  const adminGroupLabels = {
+    'CONFIGURAÇÃO DO PIX': 'Pix',
+    'TURMAS': 'Turmas',
+    'ATIVIDADES': 'Atividades',
+    'VERIFICAÇÃO DE PROFESSORES': 'Verificação de professores',
+    'ATIVIDADES PENDENTES': 'Atividades pendentes'
+  };
+  for (const kicker of Array.from(section.querySelectorAll(':scope > .section-kicker'))) {
+    const heading = kicker.textContent.trim();
+    const details = document.createElement('details');
+    details.className = 'admin-dashboard-section';
+    details.dataset.adminSection = heading.toLocaleLowerCase('pt-BR');
+    const summary = document.createElement('summary');
+    const title = document.createElement('span');
+    title.className = 'admin-dashboard-section-title';
+    title.textContent = adminGroupLabels[heading] || heading;
+    const chevron = document.createElement('span');
+    chevron.className = 'admin-dashboard-section-chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.textContent = '⌄';
+    summary.append(title, chevron);
+    const body = document.createElement('div');
+    body.className = 'admin-dashboard-section-body';
+    const children = [];
+    for (let node = kicker.nextSibling; node && !(node.nodeType === 1 && node.matches('.section-kicker')); node = node.nextSibling) {
+      children.push(node);
+    }
+    section.insertBefore(details, kicker);
+    kicker.remove();
+    details.append(summary, body);
+    for (const child of children) body.append(child);
+  }
   root.append(section);
   bindAdminExtras(section, classes || [], teacherLinks || [], allActivities || [], pix);
 }
