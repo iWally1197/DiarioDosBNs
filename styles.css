@@ -3578,3 +3578,44 @@ html body :is(button, input[type="submit"]):disabled {
 @media(prefers-reduced-motion:reduce) {
   .physics-ai-message.is-message-entering,.physics-ai-chat-panel.is-thinking .physics-ai-chat-header>img,.physics-ai-typing-dots i { animation:none; }
 }
+
+
+.footer-contact {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 23px 0;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 92px;
+}
+.footer-contact h2 {
+  margin: 5px 0 6px;
+  color: var(--text);
+  font-size: clamp(18px, 2vw, 24px);
+}
+.footer-contact-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.footer-contact-link {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.footer-contact-link:hover,
+.footer-contact-link:focus-visible {
+  color: var(--text);
+}
+@media (max-width: 640px) {
+  .footer-contact {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+}

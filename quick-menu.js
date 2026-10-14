@@ -13,6 +13,7 @@
     ['Professores', '/professores/'],
     ['Pesquisa', '/pesquisa/'],
     ['Apoiar com Pix', '/apoie/'],
+    ['Contato', '/#contato'],
     ['Entrar', '/login/'],
     ['Criar conta', '/cadastro/']
   ];
