@@ -30,7 +30,7 @@
     message.append(reload);
     const login = document.createElement('a');
     login.className = 'button button-outline';
-    login.href = new URL('login.html', document.baseURI).href;
+    login.href = new URL('/login/', location.origin).href;
     login.textContent = 'Voltar para entrar';
     message.append(login);
     main.replaceChildren(message);

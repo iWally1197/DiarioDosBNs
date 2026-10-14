@@ -3,18 +3,18 @@
   window.diarioQuickMenuLoaded = true;
 
   const essentials = [
-    ['Início', 'index.html'],
-    ['Física', 'index.html#animacoes'],
-    ['Turmas', 'turmas.html'],
-    ['Downloads', 'downloads.html'],
-    ['Aprender Blender', 'blender.html'],
-    ['Laboratório', 'laboratorio.html'],
-    ['Assistente de Física', 'ia.html'],
-    ['Professores', 'professores.html'],
-    ['Pesquisa', 'pesquisa.html'],
-    ['Apoiar com Pix', 'apoie.html'],
-    ['Entrar', 'login.html'],
-    ['Criar conta', 'cadastro.html']
+    ['Início', '/'],
+    ['Física', '/#animacoes'],
+    ['Turmas', '/turmas/'],
+    ['Downloads', '/downloads/'],
+    ['Aprender Blender', '/blender/'],
+    ['Laboratório', '/laboratorio/'],
+    ['Assistente de Física', '/ia/'],
+    ['Professores', '/professores/'],
+    ['Pesquisa', '/pesquisa/'],
+    ['Apoiar com Pix', '/apoie/'],
+    ['Entrar', '/login/'],
+    ['Criar conta', '/cadastro/']
   ];
 
   const style = document.createElement('style');
@@ -278,7 +278,7 @@
     dock.innerHTML = '<div class="bnzinho-widget__controls">' +
       '<button class="bnzinho-widget__control" type="button" data-bnz-pin aria-label="Desafixar BNzinho do canto" aria-pressed="true" title="Desafixar do canto">⌖</button>' +
       '<button class="bnzinho-widget__control" type="button" data-bnz-hide aria-label="Ocultar BNzinho" title="Ocultar">×</button>' +
-      '</div><a class="bnzinho-widget__launcher" href="ia.html" aria-label="Abrir conversa com a IA do BNzinho">' +
+      '</div><a class="bnzinho-widget__launcher" href="/ia/" aria-label="Abrir conversa com a IA do BNzinho">' +
       '<span class="bnzinho-widget__bubble" aria-hidden="true">Oi! Quer conversar sobre Física? Clique para abrir o chat.</span>' +
       '<span class="bnzinho-widget__art" aria-hidden="true">' +
       '<img class="bnzinho-widget__image" src="assets/mascote-ia-fisica.png?v=bnzinho-art-20261013-1" alt="" loading="lazy">' +

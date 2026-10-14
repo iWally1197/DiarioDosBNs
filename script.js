@@ -88,7 +88,7 @@
   const publishedCount = topics.reduce((sum, topic) => sum + topic.animations.length, 0);
   const penroseFeature = document.querySelector('#primeira-animacao');
   if (penroseFeature) penroseFeature.hidden = !publishedSlugs.has('fisica-moderna--processo-penrose');
-  const countLink = document.querySelector('.downloads-section a[href="downloads.html"]');
+  const countLink = document.querySelector('.downloads-section a[href="/downloads/"]');
   if (countLink) countLink.textContent = `Ver ${publishedCount} projetos na central de downloads →`;
 
   if (topicGrid) {
@@ -105,7 +105,7 @@
       return `<section class="topic-group"><div class="topic-group-heading"><h3>${group.name}</h3><span>${members.length} ${members.length === 1 ? 'tópico' : 'tópicos'}</span></div><div class="topic-links">${members.map((topic) => {
         const modes = [...new Set(topic.animations.map((item) => String(item[3] || '3D').toUpperCase() === '2D' ? '2D' : '3D'))];
         return `
-        <a class="topic-link" href="topico.html?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-mode" aria-label="Tipo de animação">${modes.join(' + ')}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`;
+        <a class="topic-link" href="/topico/?topico=${encodeURIComponent(topic.id)}"><span class="topic-link-name">${topic.name}</span><span class="topic-link-mode" aria-label="Tipo de animação">${modes.join(' + ')}</span><span class="topic-link-count">${topic.animations.length} animações <b aria-hidden="true">↗</b></span></a>`;
       }).join('')}
       </div></section>`;
     }).filter(Boolean).join('') || `<div class="empty-state"><p>${publicationCheckFailed ? 'Não foi possível carregar os conteúdos agora.' : 'Nenhuma animação está publicada no momento.'}</p>${publicationCheckFailed ? '<button class="button button-outline" id="retry-public-catalog" type="button">Tentar novamente</button>' : ''}</div>`;
@@ -132,7 +132,7 @@
     const id = new URLSearchParams(window.location.search).get('topico');
     const topic = topics.find((item) => item.id === id);
     if (!topic || !topic.animations.length) {
-      topicPage.innerHTML = `<section class="section-wrap topic-not-found"><div class="section-kicker">BIBLIOTECA DE FÍSICA</div><h1>Escolha um tópico</h1><p>Não encontrei esse assunto. Volte à biblioteca para escolher entre os tópicos de Física.</p><a class="button button-primary" href="index.html#animacoes">Ver os tópicos <span aria-hidden="true">↗</span></a></section>`;
+      topicPage.innerHTML = `<section class="section-wrap topic-not-found"><div class="section-kicker">BIBLIOTECA DE FÍSICA</div><h1>Escolha um tópico</h1><p>Não encontrei esse assunto. Volte à biblioteca para escolher entre os tópicos de Física.</p><a class="button button-primary" href="/#animacoes">Ver os tópicos <span aria-hidden="true">↗</span></a></section>`;
     } else {
       const ideas = topic.ideas.map((idea) => `<li>${idea}</li>`).join('');
       const savedFavorites = (() => { try { return JSON.parse(localStorage.getItem('diario-bns-favorites') || '[]'); } catch { return []; } })();
@@ -142,13 +142,13 @@
         return `
         <article class="topic-animation-card" id="animacao-${filename}">
           <div class="topic-animation-index">${String(i + 1).padStart(2, '0')}</div>
-          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO ${modeLabel}</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="animacao.html?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: downloads-${topic.id}-${filename}.blend</span></div>
+          <div class="topic-animation-copy"><span class="lesson-tag">ANIMAÇÃO ${modeLabel}</span><h3>${title}</h3><p>${description}</p><details class="concept-details"><summary>Explicação e conceitos relacionados</summary><p>${topic.intro}</p><ul>${topic.ideas.map((idea) => `<li>${idea}</li>`).join('')}</ul><p>Use a cena como representação didática e compare o que aparece com equações, gráficos ou uma atividade prática. As dimensões e movimentos do modelo são esquemáticos.</p><p>Arquivo disponível: projeto Blender <strong>.blend</strong>. Vídeo <strong>.mp4</strong>, visualização web <strong>.glb</strong> e ficha <strong>PDF</strong> podem ser adicionados quando esses materiais forem publicados.</p></details><a class="text-link animation-detail-link" href="/animacao/?topico=${encodeURIComponent(topic.id)}&amp;animacao=${encodeURIComponent(filename)}">Ver página desta animação →</a><span class="blend-filename">Arquivo da cena: downloads-${topic.id}-${filename}.blend</span></div>
           <div class="animation-actions"><button class="favorite-toggle" type="button" data-favorite-topic="${topic.id}" data-favorite-file="${filename}" aria-pressed="${saved}" aria-label="${saved ? 'Remover dos favoritos' : 'Salvar como favorita'}: ${title}">${saved ? '★ Favorita' : '☆ Salvar favorita'}</button><a class="blend-download" href="downloads-${topic.id}-${filename}.blend" download aria-label="Baixar projeto Blender: ${title}">Baixar projeto <span>.blend</span><b aria-hidden="true">↓</b></a></div>
         </article>`;
       }).join('');
       topicPage.innerHTML = `
         <section class="topic-hero section-wrap">
-          <nav class="breadcrumbs" aria-label="Você está em"><a href="index.html">Início</a><span aria-hidden="true">/</span><a href="index.html#animacoes">Tópicos de Física</a><span aria-hidden="true">/</span><span>${topic.name}</span></nav>
+          <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/#animacoes">Tópicos de Física</a><span aria-hidden="true">/</span><span>${topic.name}</span></nav>
           <div class="topic-hero-grid"><div><div class="eyebrow"><span class="eyebrow-dot"></span>${topic.area.toUpperCase()}</div><h1>${topic.name}</h1><p>${topic.intro}</p></div><div class="topic-hero-mark" aria-hidden="true">${topic.symbol}</div></div>
           <div class="topic-key-ideas"><h2>Neste tópico</h2><ul>${ideas}</ul></div>
         </section>

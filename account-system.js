@@ -11,7 +11,14 @@
   const byId = (id) => document.getElementById(id);
   const setText = (node, value) => { if (node) node.textContent = String(value ?? ''); };
   const show = (node, visible = true) => { if (node) node.hidden = !visible; };
-  const pageUrl = (file) => new URL(file, document.baseURI);
+  const legacyAccountRoutes = Object.freeze({'acessar-conta.html':'acessar-conta/','admin-laboratorios.html':'admin-laboratorios/','admin.html':'admin/','aluno.html':'aluno/','animacao.html':'animacao/','apoie.html':'apoie/','auth-callback.html':'auth-callback/','auth.html':'auth/','biblioteca-fisica.html':'biblioteca-fisica/','blender.html':'blender/','cadastro.html':'cadastro/','conta.html':'conta/','criar-perfil.html':'criar-perfil/','downloads.html':'downloads/','ia.html':'ia/','index.html':'','laboratorio-espelhos.html':'laboratorio-espelhos/','laboratorio-experimento.html':'laboratorio-experimento/','laboratorio-faraday.html':'laboratorio-faraday/','laboratorio-magnetismo.html':'laboratorio-magnetismo/','laboratorio-mru.html':'laboratorio-mru/','laboratorio-mruv.html':'laboratorio-mruv/','laboratorio-queda-livre.html':'laboratorio-queda-livre/','laboratorio.html':'laboratorio/','login.html':'login/','minha-area.html':'minha-area/','perfil.html':'perfil/','pesquisa.html':'pesquisa/','privacidade.html':'privacidade/','professor.html':'professor/','professores.html':'professores/','recuperar senha.html':'recuperar-senha/','recuperar-senha.html':'recuperar-senha/','site.html':'','termos.html':'termos/','topico.html':'topico/','turma.html':'turma/','turmas.html':'turmas/'});
+  const pageUrl = (file) => {
+    const url = new URL(file, document.baseURI); let name = url.pathname.split('/').pop() || '';
+    try { name = decodeURIComponent(name); } catch {}
+    const route = legacyAccountRoutes[name.toLowerCase()];
+    if (route !== undefined && url.pathname.toLowerCase().endsWith('.html')) url.pathname = '/' + route;
+    return url;
+  };
   const pendingSignupStorageKey = 'diario-bns-pending-signup';
   function clearPendingSignupConfirmation() {
     try { window.sessionStorage.removeItem(pendingSignupStorageKey); } catch {}
@@ -395,7 +402,7 @@
 
   function safeLink(href, label, className = 'account-link-button') {
     const link = node('a', label, className);
-    link.href = href;
+    link.href = pageUrl(href).href;
     return link;
   }
 

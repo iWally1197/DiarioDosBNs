@@ -14,7 +14,7 @@ function withDeadline(promise, timeoutMs, message) {
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
 const allowedExperiments = experiments.filter((item) => laboratoryPublicationByExperimentId.has(item.id));
-export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "laboratorio-magnetismo.html" : id === "mru" ? "laboratorio-mru.html" : id === "muv" ? "laboratorio-mruv.html" : id === "freefall" ? "laboratorio-queda-livre.html" : id === "faraday-induction" ? "laboratorio-faraday.html" : `laboratorio-experimento.html?topico=${encodeURIComponent(id)}`;
+export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "/laboratorio-magnetismo/" : id === "mru" ? "/laboratorio-mru/" : id === "muv" ? "/laboratorio-mruv/" : id === "freefall" ? "/laboratorio-queda-livre/" : id === "faraday-induction" ? "/laboratorio-faraday/" : `/laboratorio-experimento/?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
 function initializeCatalog() {

@@ -102,7 +102,7 @@ async function sendConfirmation(button) {
   button.dataset.sending = 'true';
   button.textContent = 'Enviando…';
   try {
-    const redirect = new URL('auth-callback.html', document.baseURI).href;
+    const redirect = new URL('/auth-callback/', location.origin).href;
     const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: redirect } });
     if (error) throw error;
     startButtonCooldown(button, 'signup', label);
@@ -255,8 +255,14 @@ function notificationPanel(root) {
       delete root.dataset.notificationsLoading;
       if (error || !root.isConnected || root.querySelector('[data-notification-panel]')) return;
       const rows = (data || []).map((item) => {
-        const candidate = String(item.href || '');
-        const href = /^(?:admin|professor|aluno)\.html$/.test(candidate) || /^turma\.html\?id=[0-9a-f-]{36}$/i.test(candidate) ? candidate : '#';
+        const candidate = String(item.href || '').trim();
+        const directTargets = {'admin.html':'/admin/','professor.html':'/professor/','aluno.html':'/aluno/','/admin/':'/admin/','/professor/':'/professor/','/aluno/':'/aluno/'};
+        let href = directTargets[candidate] || '#';
+        const classPrefix = ['turma.html?id=', '/turma/?id=', 'turma/?id='].find(prefix => candidate.startsWith(prefix));
+        if (classPrefix) {
+          const id = candidate.slice(classPrefix.length).split('&')[0];
+          if (/^[0-9a-f-]{36}$/i.test(id)) href = '/turma/?id=' + encodeURIComponent(id);
+        }
         return '<li class="' + (item.read_at ? '' : 'is-unread') + '"><a href="' + esc(href) + '">' + esc(item.title) + '</a><p>' + esc(item.body) + '</p><small>' + new Date(item.created_at).toLocaleString('pt-BR') + '</small>' +
         (item.read_at ? '' : ' <button type="button" data-notification-read="' + esc(item.id) + '">Marcar como lida</button>') + '</li>';
       }).join('');
@@ -285,7 +291,7 @@ async function studentClasses(root) {
   const records = data || [];
   const cards = records.map((row) => {
     const c = row.classrooms || {};
-    return '<article class="db-card"><span class="lesson-tag">' + esc(c.discipline || c.grade_level || 'Turma') + '</span><h3>' + esc(c.name) + '</h3><p>Abra a turma para ver professores, aulas e atividades.</p><a class="button button-primary" href="turma.html?id=' + encodeURIComponent(c.id || row.classroom_id) + '">Entrar na turma</a></article>';
+    return '<article class="db-card"><span class="lesson-tag">' + esc(c.discipline || c.grade_level || 'Turma') + '</span><h3>' + esc(c.name) + '</h3><p>Abra a turma para ver professores, aulas e atividades.</p><a class="button button-primary" href="/turma/?id=' + encodeURIComponent(c.id || row.classroom_id) + '">Entrar na turma</a></article>';
   }).join('');
   const section = document.createElement('section');
   section.dataset.extraClasses = 'true';
@@ -423,7 +429,7 @@ async function adminWorkspace(root) {
   const classRows = (classes || []).map((c) => {
     const assigned = (teacherLinks || []).filter((link) => link.classroom_id === c.id).map((link) => '<span>' + esc(teacherLabel(link.user_id)) + ' <button type="button" data-remove-class-teacher="' + esc(c.id) + '" data-user="' + esc(link.user_id) + '" aria-label="Remover professor desta turma">Remover</button></span>').join(' ');
     return '<li><b>' + esc(c.name) + '</b><span>' + esc(c.discipline || 'Disciplina não informada') + ' · código ' + esc(c.join_code) +
-      ' · ' + esc(c.status) + ' · código ' + (c.join_code_enabled ? 'ativo' : 'desativado') + '</span><span>Professor(es): ' + (assigned || 'Nenhum vinculado') + '</span><a href="turma.html?id=' + encodeURIComponent(c.id) + '">Abrir turma</a> <button type="button" data-edit-class="' + esc(c.id) + '">Editar turma</button> ' +
+      ' · ' + esc(c.status) + ' · código ' + (c.join_code_enabled ? 'ativo' : 'desativado') + '</span><span>Professor(es): ' + (assigned || 'Nenhum vinculado') + '</span><a href="/turma/?id=' + encodeURIComponent(c.id) + '">Abrir turma</a> <button type="button" data-edit-class="' + esc(c.id) + '">Editar turma</button> ' +
       '<button type="button" data-copy-code="' + esc(c.join_code) + '">Copiar código</button> <button type="button" data-regenerate-code="' + esc(c.id) + '">Gerar outro código</button> ' +
       '<button type="button" data-toggle-code="' + esc(c.id) + '" data-enabled="' + c.join_code_enabled + '">' + (c.join_code_enabled ? 'Desativar código' : 'Ativar código') + '</button> ' +
       '<button type="button" data-toggle-class-status="' + esc(c.id) + '" data-status="' + esc(c.status) + '">' + (c.status === 'active' ? 'Encerrar turma' : 'Ativar turma') + '</button></li>';
@@ -810,9 +816,9 @@ async function loadClassroom(root) {
   const id = new URLSearchParams(location.search).get('id');
   if (!id) { root.innerHTML = '<section class="auth-card"><h1>Turma não encontrada</h1><p>Abra o link recebido pelo professor ou administrador.</p></section>'; return; }
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) { location.href = 'login.html'; return; }
+  if (!auth.user) { location.href = '/login/'; return; }
   const { data: role, error: roleError } = await supabase.from('user_roles').select('role,status').eq('user_id', auth.user.id).maybeSingle();
-  if (roleError || !role || role.status === 'blocked') { root.innerHTML = '<section class="auth-card"><h1>Acesso indisponível</h1><p>Entre com uma conta ativa para abrir esta turma.</p><a href="login.html">Fazer login</a></section>'; return; }
+  if (roleError || !role || role.status === 'blocked') { root.innerHTML = '<section class="auth-card"><h1>Acesso indisponível</h1><p>Entre com uma conta ativa para abrir esta turma.</p><a href="/login/">Fazer login</a></section>'; return; }
   const [classResult, studentResult, teacherResult, permissionResult, activityResult, lessonResult, resourceResult, announcementResult, rosterResult, studentCountResult] = await Promise.all([
     supabase.from('classrooms').select('id,name,description,discipline,grade_level,status,starts_on,ends_on,join_code,join_code_enabled').eq('id', id).single(),
     supabase.from('student_classrooms').select('user_id,joined_at').eq('classroom_id', id),
@@ -825,10 +831,10 @@ async function loadClassroom(root) {
     supabase.rpc('get_classroom_roster', { p_classroom: id }),
     supabase.rpc('get_classroom_student_count', { p_classroom: id })
   ]);
-  if (classResult.error) { root.innerHTML = '<section class="auth-card"><h1>Você não tem acesso a esta turma</h1><p>O link pode estar incorreto ou sua conta não está vinculada.</p><a href="index.html">Voltar ao site</a></section>'; return; }
+  if (classResult.error) { root.innerHTML = '<section class="auth-card"><h1>Você não tem acesso a esta turma</h1><p>O link pode estar incorreto ou sua conta não está vinculada.</p><a href="/">Voltar ao site</a></section>'; return; }
   const c = classResult.data, isAdmin = role.role === 'admin', isTeacher = role.role === 'professor' && role.status === 'active' && (teacherResult.data || []).some((t) => t.user_id === auth.user.id);
   const isStudent = role.role === 'aluno' && (studentResult.data || []).some((s) => s.user_id === auth.user.id);
-  if (!isAdmin && !isTeacher && !isStudent) { root.innerHTML = '<section class="auth-card"><h1>Você não está inscrito nesta turma</h1><p>Peça o código de acesso ao professor e use a opção Entrar em uma turma na sua área.</p><a href="aluno.html">Voltar à minha área</a></section>'; return; }
+  if (!isAdmin && !isTeacher && !isStudent) { root.innerHTML = '<section class="auth-card"><h1>Você não está inscrito nesta turma</h1><p>Peça o código de acesso ao professor e use a opção Entrar em uma turma na sua área.</p><a href="/aluno/">Voltar à minha área</a></section>'; return; }
   const p = permissionResult.data || {};
   const submissionResult = isStudent
     ? await supabase.from('activity_submissions').select('student_id,activity_id,response,submitted_at,submission_feedback(feedback)').eq('classroom_id', id).eq('student_id', auth.user.id)
@@ -883,7 +889,7 @@ async function loadClassroom(root) {
     return '<article class="db-card"><h3>' + esc(lesson.title) + '</h3><p>' + esc(lesson.body) + '</p>' + editor + '</article>';
   }).join('');
   const tabs = [['lessons','Aulas'],['activities','Atividades'],['resources','Materiais'],['announcements','Avisos'],['participants','Participantes'],['progress','Progresso']];
-  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? 'professor.html' : isAdmin ? 'admin.html' : 'aluno.html') + '">Voltar ao painel</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
+  root.innerHTML = '<section class="dashboard-heading"><div><div class="lesson-tag">' + esc(c.discipline || 'Turma') + ' · ' + esc(c.grade_level || '') + '</div><h1>' + esc(c.name) + '</h1><p>' + esc(c.description || 'Espaço de aprendizagem da turma.') + '</p><p>Professor(es): ' + teachers + ' · ' + studentCount + ' aluno(s)</p></div><div class="dashboard-actions"><a class="button button-outline" href="' + (isTeacher ? '/professor/' : isAdmin ? '/admin/' : '/aluno/') + '">Voltar ao painel</a><button class="button button-outline" type="button" data-class-logout>Sair</button></div></section>' +
     (isAdmin || isTeacher ? '<p class="auth-notice">Código da turma: <strong>' + esc(c.join_code) + '</strong> · ' + (c.join_code_enabled ? 'ativo' : 'desativado') + '</p>' : '') +
     '<div class="classroom-tabs" role="tablist" aria-label="Conteúdo da turma">' + tabs.map((t, i) => '<button type="button" role="tab" id="tab-' + t[0] + '" aria-controls="panel-' + t[0] + '" aria-selected="' + (i === 0) + '" tabindex="' + (i === 0 ? '0' : '-1') + '" data-class-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' +
     '<div id="panel-lessons" role="tabpanel" aria-labelledby="tab-lessons"><h2>Aulas</h2><div class="db-grid">' + (lessonCards || '<p>As aulas desta turma serão publicadas aqui.</p>') + '</div>' +
@@ -905,7 +911,7 @@ async function loadClassroom(root) {
     const index = event.key === 'Home' ? 0 : event.key === 'End' ? controls.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : controls.length - 1)) % controls.length;
     event.preventDefault(); controls[index].focus(); controls[index].click();
   });
-  root.querySelector('[data-class-logout]')?.addEventListener('click', async () => { await supabase.auth.signOut(); location.href = 'login.html'; });
+  root.querySelector('[data-class-logout]')?.addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login/'; });
   root.querySelector('[data-class-lesson]')?.addEventListener('submit', async (event) => {
     event.preventDefault(); const f = event.currentTarget, v = new FormData(f);
     const { error } = await supabase.from('class_lessons').insert({ classroom_id: id, created_by: auth.user.id, title: String(v.get('title')).trim(), body: String(v.get('body') || '') });
