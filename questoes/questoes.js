@@ -1,4 +1,4 @@
-import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs";
+import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=question-lock-20261014-1";
 import {supabasePromise} from "/src-supabase.js";
 import "./questoes-data.js";
 
@@ -43,11 +43,12 @@ import "./questoes-data.js";
   function setStatus(message) { questionCount.textContent = message; }
   function questionRecord(question) {
     const value = state.answers[question.id];
-    if (!value || typeof value !== "object") return {attempts:0,correct:0,lastCorrect:null};
+    if (!value || typeof value !== "object") return {attempts:0,correct:0,lastCorrect:null,selectedLetter:null};
     return {
       attempts:Number.isFinite(value.attempts) ? Math.max(0,value.attempts) : 0,
       correct:Number.isFinite(value.correct) ? Math.max(0,value.correct) : 0,
-      lastCorrect:typeof value.lastCorrect === "boolean" ? value.lastCorrect : null
+      lastCorrect:typeof value.lastCorrect === "boolean" ? value.lastCorrect : null,
+      selectedLetter:typeof value.selectedLetter === "string" ? value.selectedLetter : null
     };
   }
   let validation = normalizeQuestionList(allQuestions);
@@ -249,7 +250,10 @@ import "./questoes-data.js";
     feedback.className = "q-answer-feedback";
     feedback.hidden = true;
     feedback.setAttribute("role","status");
-    let checked = false;
+    const savedAnswer = questionRecord(question);
+    const alreadyAnswered = savedAnswer.attempts > 0;
+    const savedLetter = savedAnswer.selectedLetter || (savedAnswer.lastCorrect === true ? question.correct : null);
+    let checked = alreadyAnswered;
     for (const choice of question.choices) {
       const label = document.createElement("label");
       label.className = "q-choice";
@@ -257,6 +261,8 @@ import "./questoes-data.js";
       radio.type = "radio";
       radio.name = "answer-" + question.id;
       radio.value = choice.letter;
+      radio.checked = savedLetter === choice.letter;
+      radio.disabled = alreadyAnswered;
       radio.addEventListener("change",() => {
         for (const other of choices.querySelectorAll(".q-choice")) other.classList.toggle("is-selected",other.querySelector("input").checked);
       });
@@ -265,12 +271,24 @@ import "./questoes-data.js";
       label.append(radio,text);
       choices.append(label);
     }
+    if (alreadyAnswered) {
+      choices.disabled = true;
+      for (const label of choices.querySelectorAll(".q-choice")) {
+        const radio = label.querySelector("input");
+        if (radio.value === question.correct) label.classList.add("is-correct");
+        if (radio.checked) {
+          label.classList.add("is-selected");
+          if (radio.value !== question.correct) label.classList.add("is-wrong");
+        }
+      }
+    }
     const actions = document.createElement("div");
     actions.className = "q-card-actions";
     const verify = document.createElement("button");
     verify.type = "button";
     verify.className = "q-button q-button-save";
-    verify.textContent = "Verificar resposta";
+    verify.textContent = alreadyAnswered ? "Questão respondida" : "Verificar resposta";
+    verify.disabled = alreadyAnswered;
     verify.addEventListener("click",() => {
       if (checked) return;
       const chosen = choices.querySelector('input[type="radio"]:checked');
@@ -284,6 +302,7 @@ import "./questoes-data.js";
       choices.disabled = true;
       const correct = chosen.value === question.correct;
       const answerUpdate = recordAnswer(state.answers,question.id,chosen.value,question.correct);
+      if (answerUpdate.alreadyAnswered) return;
       state.answers = answerUpdate.answers;
       saveState();
       for (const label of choices.querySelectorAll(".q-choice")) {
@@ -296,10 +315,11 @@ import "./questoes-data.js";
       const heading = document.createElement("strong");
       heading.textContent = correct ? "Resposta correta." : "Ainda não. A alternativa correta é " + question.correct + ".";
       const note = document.createElement("span");
-      note.textContent = correct ? " Confira a resolução se quiser revisar o raciocínio." : " Você pode ler a resolução e tentar novamente.";
+      note.textContent = " Sua resposta foi salva e não pode ser alterada. Confira a resolução para revisar o raciocínio.";
       feedback.replaceChildren(heading,note);
       verify.disabled = true;
-      retry.hidden = false;
+      solutionButton.hidden = false;
+      solutionButton.disabled = false;
       updateProgress();
       if (quizSession && quizSession.ids.includes(question.id) && !quizSession.checked.has(question.id)) {
         quizSession.checked.set(question.id,correct);
@@ -307,24 +327,12 @@ import "./questoes-data.js";
         if (quizSession.checked.size >= quizSession.ids.length) finishQuiz();
       }
     });
-    const retry = document.createElement("button");
-    retry.type = "button";
-    retry.className = "q-button q-button-outline";
-    retry.textContent = "Tentar novamente";
-    retry.hidden = true;
-    retry.addEventListener("click",() => {
-      checked = false;
-      choices.disabled = false;
-      choices.querySelectorAll("input").forEach(input => { input.checked = false; });
-      choices.querySelectorAll(".q-choice").forEach(label => label.classList.remove("is-selected","is-wrong","is-correct"));
-      feedback.hidden = true;
-      verify.disabled = false;
-      retry.hidden = true;
-    });
     const solutionButton = document.createElement("button");
     solutionButton.type = "button";
     solutionButton.className = "q-button q-button-outline";
     solutionButton.textContent = "Ver resolução";
+    solutionButton.hidden = !alreadyAnswered;
+    solutionButton.disabled = !alreadyAnswered;
     const solution = document.createElement("div");
     solution.className = "q-solution";
     solution.hidden = true;
@@ -333,13 +341,22 @@ import "./questoes-data.js";
     const solutionText = document.createElement("div");
     solutionText.textContent = question.solution;
     solution.append(solutionTitle,solutionText);
+    if (alreadyAnswered) {
+      feedback.hidden = false;
+      feedback.className = "q-answer-feedback" + (savedAnswer.lastCorrect === true ? " is-correct" : savedAnswer.lastCorrect === false ? " is-wrong" : "");
+      const heading = document.createElement("strong");
+      heading.textContent = savedAnswer.lastCorrect === true ? "Resposta correta, salva anteriormente." : savedAnswer.lastCorrect === false ? "Resposta incorreta, salva anteriormente. A alternativa correta é " + question.correct + "." : "Questão já respondida anteriormente.";
+      const note = document.createElement("span");
+      note.textContent = savedLetter ? " Sua alternativa foi salva neste navegador e não pode ser alterada." : " O progresso foi preservado neste navegador. Não é possível responder novamente.";
+      feedback.replaceChildren(heading,note);
+    }
     solutionButton.setAttribute("aria-expanded","false");
     solutionButton.addEventListener("click",() => {
       solution.hidden = !solution.hidden;
       solutionButton.textContent = solution.hidden ? "Ver resolução" : "Ocultar resolução";
       solutionButton.setAttribute("aria-expanded",String(!solution.hidden));
     });
-    actions.append(verify,retry,solutionButton);
+    actions.append(verify,solutionButton);
     const footer = document.createElement("div");
     footer.className = "q-card-footer";
     if (question.simulation && simulations.has(question.simulation)) {
@@ -372,7 +389,9 @@ import "./questoes-data.js";
     previous.type = "button";
     previous.textContent = "‹";
     previous.setAttribute("aria-label","Página anterior");
-    previous.disabled = currentPage <= 1;
+    const pageHasAnsweredQuestion = page => Boolean(quizSession && quizSession.ids.slice((page-1)*pageSize,page*pageSize).some(id => Number(state.answers[id]?.attempts) > 0));
+    previous.disabled = currentPage <= 1 || pageHasAnsweredQuestion(currentPage-1);
+    if (pageHasAnsweredQuestion(currentPage-1)) previous.title = "Não é possível voltar para uma página com questões já respondidas.";
     previous.addEventListener("click",() => { currentPage--; renderQuestions(); });
     pagination.append(previous);
     for (let page=1; page<=pages; page++) {
@@ -380,6 +399,8 @@ import "./questoes-data.js";
       button.type = "button";
       button.textContent = String(page);
       if (page === currentPage) button.setAttribute("aria-current","page");
+      button.disabled = Boolean(quizSession && page < currentPage && pageHasAnsweredQuestion(page));
+      if (button.disabled) button.title = "Esta página já contém questões respondidas.";
       button.setAttribute("aria-label","Página " + page);
       button.addEventListener("click",() => { currentPage=page; renderQuestions(); });
       pagination.append(button);
@@ -486,9 +507,10 @@ import "./questoes-data.js";
   function startQuiz(event) {
     event.preventDefault();
     if (quizTimer) window.clearInterval(quizTimer);
-    const candidates = baseMatches();
+    const matches = baseMatches();
+    const candidates = matches.filter(question => !(Number(state.answers[question.id]?.attempts) > 0));
     if (!candidates.length) {
-      setStatus("Nenhuma questão corresponde aos filtros atuais. Ajuste a busca para começar o simulado.");
+      setStatus(matches.length ? "Todas as questões deste filtro já foram respondidas. Ajuste os filtros para continuar." : "Nenhuma questão corresponde aos filtros atuais. Ajuste a busca para começar o simulado.");
       document.querySelector(".q-study-details").open = false;
       return;
     }

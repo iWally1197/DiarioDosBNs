@@ -65,15 +65,16 @@ export function sortQuestions(items,mode="recent") {
 
 export function recordAnswer(answerMap={},questionId,selectedLetter,correctLetter) {
   const previous = answerMap[questionId] || {};
+  if (Number(previous.attempts) > 0) return {answers:answerMap,correct:previous.lastCorrect === true,alreadyAnswered:true};
   const correct = selectedLetter === correctLetter;
   const answers = {...answerMap,[questionId]:{
-    attempts:(Number.isFinite(previous.attempts) ? Math.max(0,previous.attempts) : 0)+1,
+    attempts:1,
     correct:(Number.isFinite(previous.correct) ? Math.max(0,previous.correct) : 0)+(correct ? 1 : 0),
-    lastCorrect:correct
+    lastCorrect:correct,
+    selectedLetter:String(selectedLetter || "")
   }};
-  return {answers,correct};
+  return {answers,correct,alreadyAnswered:false};
 }
-
 export function toggleFavorite(favorites=[],questionId) {
   return favorites.includes(questionId) ? favorites.filter(id => id !== questionId) : [...favorites,questionId];
 }
