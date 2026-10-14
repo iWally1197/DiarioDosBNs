@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <script defer src="/clean-links.js?v=clean-urls-1"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Simulação de Física interativa do Diário dos BNs com animação, gráfico sincronizado, parâmetros e hipóteses do modelo.">
+  <title>Experimento de Física — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=mirror-drag-smooth-20261011-1">
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
+  <script src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1" defer></script>
+  <link rel="stylesheet" href="physics-topic-labs.css?v=lab-menu-play-20261011&previous=unified-labs-20261011-1">
+  <script type="module">
+    const topic = new URLSearchParams(location.search).get("topico") || "";
+    if (topic.startsWith("lab-")) {
+      import("./physics-topic-labs.js?v=loop-long-20261011-1");
+    } else {
+      import("./laboratorio.js?v=loop-long-20261011-1");
+      import("./laboratorio-workspace.js?v=lab-diverging-lens-20261012-1");
+    }
+  </script>
+  <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
+</head>
+<body>
+  <a class="skip-link" href="/laboratorio-experimento/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/#animacoes">Física</a><a href="/turmas/">Turmas</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a href="/laboratorio/" aria-current="page">Laboratório</a><a href="/apoie/">Apoie o projeto</a><a class="nav-account" href="/login/">Entrar</a><a class="nav-account" href="/cadastro/">Criar conta</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+
+  <main id="conteudo" class="section-wrap tool-page physics-lab" data-lab-experiment-page>
+    <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório</a><span aria-hidden="true">/</span><span id="lab-topic-crumb">Experimento</span></nav>
+    <a class="back-top lab-return-link" href="/laboratorio/">← Voltar ao catálogo</a>
+    <section class="tool-heading lab-topic-heading" aria-labelledby="lab-topic-name">
+      <div id="lab-topic-kicker" class="section-kicker">LABORATÓRIO VIRTUAL DE FÍSICA</div>
+      <h1 id="lab-topic-name">Carregando experimento</h1>
+      <p id="lab-topic-description">Preparando o modelo físico e seus controles.</p>
+    </section>
+
+    <section id="lab-topic-not-found" class="notice-card" role="status" hidden>
+      <b>Experimento não encontrado</b>
+      <p>Esse tópico não existe ou ainda não está disponível. Volte ao catálogo para escolher uma simulação.</p>
+      <a class="button button-primary" href="/laboratorio/">Abrir catálogo</a>
+    </section>
+
+    <section id="lab-workspace" class="lab-workspace" aria-labelledby="workspace-title" hidden>
+      <div class="lab-workspace-heading"><div><div id="workspace-kicker" class="lesson-tag"></div><h2 id="workspace-title">Experimento</h2><p id="workspace-description"></p></div><div class="lab-workspace-heading-actions"><span id="workspace-mode" class="model-tag"></span><button id="mirror-mode-toggle" class="button button-outline mirror-mode-toggle" type="button" aria-controls="mirror-mode-selector" aria-expanded="false" aria-label="Mostrar opções de lançamento" hidden>Lançamento: Paralelo</button><button id="workspace-controls-toggle" class="button button-outline lab-controls-toggle" type="button" aria-controls="workspace-controls-sidebar" aria-expanded="false" hidden>Controles</button><button id="workspace-fullscreen" class="button button-outline" type="button" aria-label="Abrir a simulação em tela cheia" hidden>Tela cheia</button></div></div>
+      <section id="mirror-mode-selector" class="mirror-mode-selector" aria-label="Escolha do tipo de lançamento" hidden>
+        <div class="mirror-mode-heading"><div><span class="lesson-tag">ESCOLHA A LUZ</span><h3>Tipo de lançamento</h3></div><p id="mirror-mode-description" aria-live="polite">Escolha como a luz chega ao espelho.</p></div>
+        <div class="mirror-mode-cards" role="group" aria-label="Escolha entre feixe paralelo, lanterna ou corpo humano">
+          <button class="mirror-mode-card" type="button" data-mirror-mode="parallel" aria-pressed="false"><span class="mirror-mode-icon" aria-hidden="true">⇢</span><span><b>Lançamento paralelo</b><small>Raios colimados; no espelho côncavo, refletem pelo foco F.</small></span></button>
+          <button class="mirror-mode-card" type="button" data-mirror-mode="lantern" aria-pressed="false"><span class="mirror-mode-icon" aria-hidden="true">☼</span><span><b>Lançamento de lanterna</b><small>Fonte luminosa controlável; no espelho côncavo, os raios refletidos atravessam o foco F.</small></span></button>
+          <button class="mirror-mode-card" type="button" data-mirror-mode="human" aria-pressed="false"><span class="mirror-mode-icon" aria-hidden="true">♙</span><span><b>Corpo humano</b><small>Compare a pessoa e a imagem formada no espelho.</small></span></button>
+        </div>
+      </section>
+      <div class="lab-workspace-grid">
+        <div class="lab-workspace-visuals">
+          <div class="lab-workspace-panels">
+            <div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Objeto e referencial</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" role="img" aria-label="Animação do experimento com o referencial indicado" aria-describedby="workspace-scene-caption"></canvas></div><p id="workspace-scene-caption" class="lab-scene-caption"></p></div>
+            <div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="workspace-chart"><b>Gráfico sincronizado</b></label><select id="workspace-chart" aria-label="Escolher grandeza no gráfico"></select></div><div class="lab-workspace-canvas-wrap lab-graph-canvas-wrap"><canvas id="workspace-graph" role="img" aria-label="Gráfico calculado pelo mesmo modelo. Clique para selecionar um instante ou posição." tabindex="0"></canvas></div><p class="lab-graph-hint">Clique no gráfico ou use as setas para consultar um ponto e sincronizar a simulação.</p></div>
+          </div>
+          <div id="workspace-readouts" class="lab-readouts" aria-live="off"></div>
+          <div class="lab-workspace-transport"><button id="workspace-play" class="button button-primary" type="button">Iniciar</button><button id="workspace-step" class="button button-outline" type="button">Avançar 0,1 s</button><button id="workspace-reset" class="button button-outline" type="button">Reiniciar</button><label>Reprodução <output id="workspace-speed-out">1×</output><input id="workspace-speed" type="range" min="0.25" max="2" step="0.25" value="1"></label><label for="workspace-time" class="lab-time-control">Instante <output id="workspace-time-out">0,00 s</output><input id="workspace-time" type="range" min="0" max="10" step="0.01" value="0"></label></div>
+          <div class="lab-measurements"><div class="lab-measurement-heading"><div><h3>Medições</h3><p>Registre estados calculados pelo modelo ou exporte a tabela em CSV.</p></div><div><button id="workspace-record" class="button button-outline" type="button">Registrar medição</button><button id="workspace-export" class="button button-outline" type="button" disabled>Exportar CSV</button></div></div><div class="lab-table-scroll"><table><caption id="workspace-table-caption">Medições simuladas; não são observações de um experimento real.</caption><thead id="workspace-table-head"></thead><tbody id="workspace-table-body"></tbody></table></div></div>
+        </div>
+        <aside id="workspace-controls-sidebar" class="lab-workspace-controls"><h3>Gráficos e parâmetros</h3><button id="workspace-panel-play" class="button button-primary workspace-panel-play" type="button" hidden>Pausar</button>
+          <fieldset id="mirror-human-options" class="mirror-option-group" hidden><legend>Exibição do corpo</legend><label><input id="mirror-show-image" type="checkbox" checked> Mostrar imagem no espelho</label><label><input id="mirror-show-reference" type="checkbox" checked> Mostrar eixo e referências</label><label><input id="mirror-show-measures" type="checkbox" checked> Mostrar medidas na cena</label></fieldset>
+          <fieldset id="mirror-lantern-options" class="mirror-option-group" hidden><legend>Exibição da luz</legend><label for="mirror-lantern-optics-mode">Modelo óptico da lanterna<select id="mirror-lantern-optics-mode"><option value="idealized">Convergência idealizada · foco ajustável</option><option value="realistic">Óptica fisicamente realista</option></select></label><label for="mirror-beam-mode">Tipo de feixe<select id="mirror-beam-mode"><option value="divergent">Divergente (lançamento de lanterna)</option><option value="parallel">Colimado (paralelo)</option></select></label><label><input id="mirror-show-lantern-image" type="checkbox" checked> Mostrar imagem calculada da fonte</label><label><input id="mirror-show-rays" type="checkbox" checked> Mostrar trajetórias calculadas</label><label><input id="mirror-show-normal" type="checkbox" checked> Mostrar normal local</label><label><input id="mirror-show-angles" type="checkbox" checked> Mostrar ângulos de incidência e reflexão</label><label><input id="mirror-show-trails" type="checkbox" checked> Mostrar rastros das bolinhas</label><label><input id="mirror-show-particles" type="checkbox" checked> Animar bolinhas (desmarque para ver só os raios)</label></fieldset>
+          <div id="workspace-controls" class="lab-dynamic-controls"></div><p id="workspace-status" class="lab-status" role="status" aria-live="polite"></p><div class="lab-equation-card"><span>Modelo matemático</span><strong id="workspace-equation"></strong><span id="workspace-method"></span></div><details class="lab-investigation" open><summary>Investigue</summary><p id="workspace-question"></p><dl><dt>Variável independente</dt><dd id="workspace-independent"></dd><dt>Variável dependente</dt><dd id="workspace-dependent"></dd><dt>Variáveis controladas</dt><dd id="workspace-controlled"></dd></dl><label for="workspace-hypothesis">Sua hipótese (opcional)<textarea id="workspace-hypothesis" rows="3" placeholder="O que você espera observar?"></textarea></label></details><details class="lab-limitations" open><summary>Hipóteses e limites</summary><p id="workspace-assumptions"></p></details></aside>
+      </div>
+    </section>
+
+    <section class="lab-experiment" id="lancamento" data-lab-special="projectile" aria-labelledby="projectile-title" tabindex="-1" hidden>
+      <div class="lab-experiment-heading"><div><div class="lesson-tag">CINEMÁTICA BIDIMENSIONAL</div><h2 id="projectile-title">Lançamento oblíquo</h2><p id="projectile-scene-description">Uma bola parte de um lançador em uma quadra de referência. A trajetória, a altura e as componentes da velocidade são mostradas no mesmo sistema de coordenadas.</p></div><div class="lab-special-heading-actions"><button class="button button-outline" type="button" data-lab-special-controls aria-controls="projectile-special-controls" aria-expanded="false" hidden>Gráfico e parâmetros</button><button class="button button-outline" type="button" data-lab-special-fullscreen aria-label="Abrir o lançamento em tela cheia">Tela cheia</button><span class="model-tag">MODELO 2D</span></div></div>
+      <div class="lab-simulation-grid"><div class="lab-visual-column">
+        <div class="lab-workspace-panels lab-existing-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Bola em movimento</b><span>referencial fixo do solo</span></div><div class="lab-canvas-wrap"><canvas id="projectile-canvas" aria-label="Bola em trajetória parabólica, com referencial fixo no solo, altura, alcance e vetores de velocidade." aria-describedby="projectile-scene-description projectile-readouts" role="img"></canvas></div></div><div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="projectile-graph"><b>Gráfico sincronizado</b></label><select id="projectile-graph" aria-label="Escolher grandeza no gráfico do lançamento"></select></div><div class="lab-chart-wrap lab-canvas-wrap"><canvas id="projectile-chart" aria-label="Gráfico do movimento do projétil, atualizado pelo mesmo estado da animação." role="img" tabindex="0"></canvas></div></div></div>
+        <div class="lab-readouts" id="projectile-readouts" aria-live="off"><div><span>Tempo</span><b id="projectile-time">0,00 s</b></div><div><span>Posição horizontal</span><b id="projectile-x">0,0 m</b></div><div><span>Altura</span><b id="projectile-y">0,0 m</b></div><div><span>Alcance previsto</span><b id="projectile-range">— m</b></div><div><span>Altura máxima</span><b id="projectile-apex">— m</b></div></div>
+      </div><aside class="lab-controls" id="projectile-special-controls"><h3>Condições iniciais</h3>
+        <label for="projectile-speed">Velocidade inicial <output id="projectile-speed-out">20,0 m/s</output><input id="projectile-speed" type="range" min="5" max="35" step="0.5" value="20"></label>
+        <label for="projectile-angle">Ângulo de lançamento <output id="projectile-angle-out">45°</output><input id="projectile-angle" type="range" min="10" max="80" step="1" value="45"></label>
+        <label for="projectile-height">Altura inicial <output id="projectile-height-out">2,0 m</output><input id="projectile-height" type="range" min="0" max="30" step="0.5" value="2"></label>
+        <label for="projectile-gravity">Aceleração da gravidade <output id="projectile-gravity-out">9,81 m/s²</output><input id="projectile-gravity" type="range" min="1" max="20" step="0.01" value="9.81"></label>
+        <label for="projectile-speed-playback">Velocidade da reprodução <output id="projectile-playback-out">0,25×</output><input id="projectile-speed-playback" type="range" min="0.25" max="2" step="0.25" value="0.25"></label>
+        <div class="lab-actions"><button id="projectile-play" class="button button-primary" type="button">Iniciar</button><button id="projectile-reset" class="button button-outline" type="button">Recomeçar</button></div>
+        <p id="projectile-status" class="lab-status" role="status" aria-live="polite">Pronto para iniciar.</p>
+      </aside></div>
+      <div class="lab-equations"><div><span class="section-kicker">EQUAÇÕES DO MODELO</span><p><strong>x(t) = v₀ cos(θ) · t</strong><strong>y(t) = h₀ + v₀ sen(θ) · t − ½gt²</strong></p></div><p>As componentes horizontal e vertical usam o mesmo instante e a mesma gravidade. O alcance e a altura máxima são calculados analiticamente.</p></div>
+      <details class="lab-limitations"><summary>Hipóteses e limites</summary><p>Partícula material, gravidade uniforme, sem arrasto do ar, vento, rotação ou obstáculos. A altura inicial não pode ser negativa e a gravidade deve ser positiva.</p></details>
+    </section>
+
+    <section class="lab-experiment" id="pendulo" data-lab-special="pendulum" aria-labelledby="pendulum-title" tabindex="-1" hidden>
+      <div class="lab-experiment-heading"><div><div class="lesson-tag">OSCILAÇÕES · PÊNDULO SIMPLES</div><h2 id="pendulum-title">Pêndulo simples</h2><p id="pendulum-scene-description">Observe uma massa puntiforme presa a um fio sem massa. Arraste a cena para mudar a perspectiva projetada.</p></div><div class="lab-special-heading-actions"><button class="button button-outline" type="button" data-lab-special-controls aria-controls="pendulum-special-controls" aria-expanded="false" hidden>Gráfico e parâmetros</button><button class="button button-outline" type="button" data-lab-special-fullscreen aria-label="Abrir o pêndulo em tela cheia">Tela cheia</button><span class="model-tag">PROJEÇÃO 2D</span></div></div>
+      <div class="lab-simulation-grid pendulum-grid"><div class="lab-visual-column">
+        <div class="lab-workspace-panels lab-existing-panels pendulum-panels"><div class="lab-workspace-panel"><div class="lab-panel-heading"><b>Animação do pêndulo</b><span>projeção espacial 2D</span></div><div class="lab-canvas-wrap pendulum-canvas-wrap"><canvas id="pendulum-canvas" aria-label="Projeção bidimensional interativa de um pêndulo simples. Não é uma cena WebGL." aria-describedby="pendulum-scene-description pendulum-readouts" role="img" tabindex="0"></canvas><span class="drag-hint">Arraste para girar a perspectiva</span></div></div><div class="lab-workspace-panel"><div class="lab-chart-heading"><b>Gráfico sincronizado</b><span>θ (graus) × t (s)</span></div><div class="lab-chart-wrap lab-canvas-wrap pendulum-chart-wrap"><canvas id="pendulum-chart" aria-label="Ângulo do pêndulo em função do tempo, integrado a partir da mesma simulação." role="img" tabindex="0"></canvas></div></div></div>
+        <label class="pendulum-scrubber" for="pendulum-time-scrubber">Instante selecionado <output id="pendulum-time-out">0,00 s</output><input id="pendulum-time-scrubber" type="range" min="0" max="12" step="0.01" value="0" aria-label="Selecionar o instante da simulação do pêndulo"></label>
+        <div class="lab-readouts" id="pendulum-readouts" aria-live="off"><div><span>Tempo</span><b id="pendulum-time">0,00 s</b></div><div><span>Ângulo</span><b id="pendulum-angle-readout">35,0°</b></div><div><span>Velocidade angular</span><b id="pendulum-omega">0,00 rad/s</b></div><div><span>Energia cinética por kg</span><b id="pendulum-kinetic">0,00 J/kg</b></div><div><span>Energia potencial por kg</span><b id="pendulum-potential">— J/kg</b></div><div><span>Variação da energia total</span><b id="pendulum-energy-drift">0,00%</b></div></div>
+      </div><aside class="lab-controls" id="pendulum-special-controls"><h3>Parâmetros físicos</h3>
+        <label for="pendulum-length">Comprimento do fio <output id="pendulum-length-out">1,20 m</output><input id="pendulum-length" type="range" min="0.5" max="2.5" step="0.05" value="1.2"></label>
+        <label for="pendulum-angle">Ângulo inicial <output id="pendulum-angle-out">35°</output><input id="pendulum-angle" type="range" min="5" max="75" step="1" value="35"></label>
+        <label for="pendulum-gravity">Aceleração da gravidade <output id="pendulum-gravity-out">9,81 m/s²</output><input id="pendulum-gravity" type="range" min="1" max="20" step="0.01" value="9.81"></label>
+        <label for="pendulum-playback">Velocidade da reprodução <output id="pendulum-playback-out">0,25×</output><input id="pendulum-playback" type="range" min="0.25" max="2" step="0.25" value="0.25"></label>
+        <div class="lab-actions"><button id="pendulum-play" class="button button-primary" type="button">Iniciar</button><button id="pendulum-reset" class="button button-outline" type="button">Recomeçar</button></div>
+        <div class="view-controls lab-view-controls" role="group" aria-label="Perspectiva projetada do pêndulo"><button type="button" data-pendulum-view="front" aria-pressed="false">Frente</button><button type="button" data-pendulum-view="side" aria-pressed="false">Lado</button><button type="button" data-pendulum-view="orbit" aria-pressed="true">Órbita</button></div>
+        <p id="pendulum-status" class="lab-status" role="status" aria-live="polite">Em repouso. O modelo usa a equação não linear do pêndulo.</p>
+        <div class="lab-equation-card"><span>Equação de movimento</span><strong>θ̈ = −(g/L) sen(θ)</strong><span>Integração Velocity-Verlet · Δt = 1/480 s</span></div>
+      </aside></div>
+      <details class="lab-limitations"><summary>Hipóteses, integração numérica e limites</summary><p>Fio inextensível e sem massa, massa puntiforme, pivô sem atrito e sem resistência do ar. A equação não linear θ̈ = −(g/L) sen(θ) é integrada pelo método Velocity-Verlet, com passos fixos de 1/480 s. Pequenas variações de energia decorrem da discretização. O desenho é uma projeção 2D em canvas, não uma cena WebGL.</p></details>
+    </section>
+
+    <section class="priority-lab priority-lab-fragment" id="priority-lab" data-lab-special="lab-virtual" hidden>
+        <header class="priority-header">
+          <a class="priority-back" href="/laboratorio/">← Voltar ao laboratório</a>
+          <div class="priority-header-actions">
+            <button class="priority-button priority-quiet" id="panel-toggle" type="button" aria-expanded="true" aria-controls="priority-panel">Gráficos e parâmetros</button>
+            <button class="priority-button" id="fullscreen-toggle" type="button" aria-pressed="false">Tela cheia</button>
+          </div>
+        </header>
+        <section class="priority-intro" aria-live="polite">
+          <p class="priority-kicker" id="lab-kicker">LABORATÓRIO VIRTUAL · FÍSICA 2D</p>
+          <h1 id="lab-title">Carregando simulação…</h1>
+          <p class="priority-lede" id="lab-summary"></p>
+          <p class="priority-equation" id="lab-equation"></p>
+        </section>
+        <section class="priority-workspace" aria-label="Simulação e controles">
+          <div class="priority-stage">
+            <div class="priority-stage-toolbar">
+              <div class="priority-playback">
+                <button class="priority-button priority-primary" id="play-toggle" type="button">Iniciar</button>
+                <button class="priority-button" id="step-button" type="button">Avançar 0,1 s</button>
+                <button class="priority-button" id="reset-button" type="button">Reiniciar</button>
+              </div>
+              <label class="priority-time">Tempo <output id="time-output">0,00 s</output><input id="time-control" type="range" min="0" max="1000" value="0" aria-label="Instante da simulação"></label>
+            </div>
+            <canvas id="lab-scene" aria-label="Animação científica 2D" role="img"></canvas>
+            <p class="priority-status" id="lab-status" role="status" aria-live="polite">Ajuste os parâmetros e inicie a simulação.</p>
+            <div class="priority-readouts" id="lab-readouts" aria-live="off"></div>
+          </div>
+          <aside class="priority-panel" id="priority-panel" aria-label="Gráficos e parâmetros"><button class="priority-button priority-primary priority-panel-play" id="panel-play-toggle" type="button" hidden>Pausar</button>
+            <section class="priority-panel-section">
+              <div class="priority-section-heading"><div><p class="priority-kicker">CONTROLES</p><h2>Parâmetros</h2></div><button class="priority-reset-link" id="parameters-reset" type="button">Restaurar</button></div>
+              <div class="priority-controls" id="lab-controls"></div>
+            </section>
+            <section class="priority-panel-section priority-graph-section">
+              <div class="priority-section-heading"><div><p class="priority-kicker">GRÁFICO</p><h2 id="graph-title">Grandeza física</h2></div></div>
+              <canvas id="lab-graph" aria-label="Gráfico físico atualizado com os parâmetros" role="img" tabindex="0"></canvas>
+              <p class="priority-graph-help" id="graph-caption">O ponto mostra o valor correspondente aos parâmetros atuais.</p>
+            </section>
+            <details class="priority-explanation">
+              <summary>Modelo e hipótese</summary>
+              <p id="lab-note"></p>
+            </details>
+            <p class="priority-panel-footer">Unidades no SI, salvo quando indicadas. Modelo didático 2D.</p>
+          </aside>
+        </section>
+        
+      </section>
+
+    <aside class="notice-card"><b>Do modelo ao projeto Blender</b><p>As experiências do laboratório calculam a Física no navegador. Para examinar uma cena 3D editável, abra a <a href="/downloads/">central de downloads</a> e explore os arquivos no Blender.</p></aside>
+  </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Uma simulação por página para facilitar a investigação.</p><a class="back-top" href="/laboratorio-experimento/#conteudo">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><span>Consulte as hipóteses de cada simulação.</span><a href="/laboratorio/">Catálogo ↗</a><a href="/downloads/">Projetos Blender ↗</a></div></footer>
+</body>
+</html>
+

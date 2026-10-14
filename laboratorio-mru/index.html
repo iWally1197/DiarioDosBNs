@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <script defer src="/clean-links.js?v=clean-urls-1"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Laboratório virtual de Movimento Retilíneo Uniforme: explore carrinhos, medições, gráficos e velocidade constante.">
+  <title>Laboratório de MRU — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mru.css?v=motion-live-editor-timer-20261013-1">
+  <script src="script.js?v=site-performance-20261013-1" defer></script>
+  <script src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1" defer></script>
+  <script type="module" src="laboratorio-mru.js?v=motion-property-confirm-20261013-3"></script>
+  <script type="module" src="src-app.js?v=site-performance-20261013-1"></script>
+  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
+</head>
+<body>
+  <a class="skip-link" href="/laboratorio-mru/#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/#animacoes">Física</a><a href="/turmas/">Turmas</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a href="/laboratorio/" aria-current="page">Laboratório</a><a href="/apoie/">Apoie o projeto</a><a class="nav-account" href="/login/">Entrar</a><a class="nav-account" href="/cadastro/">Criar conta</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+
+  <main id="conteudo" class="section-wrap tool-page mru-lab-page">
+    <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório Virtual de Física</a><span aria-hidden="true">/</span><span>MRU</span></nav>
+    <section class="mru-intro" aria-labelledby="mru-title">
+      <div><div class="section-kicker">CINEMÁTICA · EXPERIMENTO INTERATIVO</div><h1 id="mru-title">Movimento retilíneo uniforme <span>— MRU</span></h1><p>Monte a pista, ajuste os carrinhos e compare previsões com medições. O modelo mantém a velocidade constante e calcula cada posição diretamente pelo tempo.</p></div>
+      <div class="mru-equation-card" aria-label="Equação do movimento retilíneo uniforme"><span>MODELO DO MOVIMENTO</span><strong>x(t) = x₀ + vt</strong><small>a = 0 · referencial: pista</small></div>
+    </section>
+
+    <section class="mru-ui-mode" id="mru-ui-mode-selector" aria-label="Modo de uso do MRU" role="group"><div><span class="section-kicker">ESCOLHA COMO EXPLORAR</span><p>O modo iniciante simplifica os controles; o avançado libera todos os recursos.</p></div><div class="mru-ui-mode-buttons"><button type="button" data-mru-ui-mode="beginner" aria-pressed="false">Iniciante</button><button type="button" data-mru-ui-mode="advanced" aria-pressed="true">Avançado</button></div></section>
+    <section class="mru-mode-bar" aria-label="Modo de aprendizagem" role="group">
+      <span>Modo</span>
+      <button type="button" class="is-active" data-mru-mode="explore" aria-pressed="true">Explorar</button>
+      <button type="button" data-advanced-only data-mru-mode="investigate" aria-pressed="false">Investigar</button>
+      <button type="button" data-advanced-only data-mru-mode="teacher" aria-pressed="false">Professor</button>
+      <button id="mru-teacher-reveal" data-advanced-only type="button" hidden>Mostrar resultados</button>
+      <p id="mru-mode-note" aria-live="polite">Altere as condições e observe o movimento em tempo real.</p>
+    </section>
+
+    <section class="mru-lab-grid" aria-label="Área do experimento">
+      <div class="mru-main-column">
+        <section class="mru-card mru-scene-card" aria-labelledby="mru-scene-heading">
+          <div class="mru-card-heading"><div><span class="section-kicker">BANCADA DE CINEMÁTICA</span><h2 id="mru-scene-heading">Pista e referencial</h2><p>Arraste um carrinho para mudar sua posição inicial. As árvores, sensores e marcações permanecem fixos.</p></div>
+            <div class="mru-scene-actions"><button id="mru-follow-toggle" class="button button-outline" type="button" aria-pressed="true">Câmera: acompanhar</button><button id="mru-fullscreen" class="button button-outline" type="button">Tela cheia</button></div>
+          </div>
+          <div class="mru-stage" id="mru-stage">
+            <svg id="mru-scene" class="mru-navigation-surface" viewBox="0 0 1100 500" role="img" aria-labelledby="mru-svg-title mru-svg-desc" aria-describedby="mru-scene-summary mru-readouts" tabindex="0">
+              <title id="mru-svg-title">Pista de MRU com carrinhos</title><desc id="mru-svg-desc">Pista horizontal com escala em metros, origem, sentido positivo e carrinhos de laboratório.</desc>
+              <defs>
+                <linearGradient id="mru-track-shade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#25364c"/><stop offset="1" stop-color="#101a2b"/></linearGradient>
+                <linearGradient id="mru-cart-body" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9bc5ff"/><stop offset=".42" stop-color="#4f88df"/><stop offset="1" stop-color="#24509a"/></linearGradient>
+                <linearGradient id="mru-cart-window" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d7eeff"/><stop offset="1" stop-color="#547caa"/></linearGradient>
+                <radialGradient id="mru-wheel-metal"><stop offset="0" stop-color="#e4eaf0"/><stop offset=".42" stop-color="#8292a4"/><stop offset=".72" stop-color="#d7e1eb"/><stop offset="1" stop-color="#354152"/></radialGradient>
+                <marker id="mru-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke"/></marker>
+              </defs>
+              <rect class="mru-scene-bg" width="1100" height="500" rx="16"/>
+              <g id="mru-camera-world"><g id="mru-scene-grid"></g><g id="mru-scene-track"></g><g id="mru-scene-markers"></g><g id="mru-scene-objects"></g><g id="mru-scene-carts"></g><g id="mru-scene-overlay"></g></g>
+            </svg>
+            <div id="mru-live-description" class="sr-only" aria-live="polite"></div>
+            <div class="mru-fullscreen-tools" id="mru-fullscreen-tools" hidden>
+              <button id="mru-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><output id="mru-fullscreen-time" class="mru-fullscreen-time" aria-label="Tempo decorrido da animação" aria-live="off">t = 0,00 s</output><button id="mru-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mru-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
+              <button id="mru-fullscreen-menu" class="button button-outline" type="button" aria-controls="mru-fullscreen-drawer" aria-expanded="false">☰ Controles</button>
+              <button id="mru-fullscreen-exit" class="button button-outline" type="button">Sair da tela cheia</button>
+            </div>
+            <aside class="mru-fullscreen-drawer" id="mru-fullscreen-drawer" aria-label="Controles e informações · MRU" hidden>
+              <h2 class="mru-fullscreen-drawer-title">Controles do laboratório MRU</h2>
+              <div class="mru-fullscreen-drawer-content"></div>
+            </aside>
+            <div id="mru-pending-save" class="mru-pending-save" hidden role="dialog" aria-modal="true" aria-labelledby="mru-pending-save-title" tabindex="-1">
+              <h2 id="mru-pending-save-title">Salvar alterações?</h2>
+              <p>Você alterou este experimento. Salve para guardar a configuração neste dispositivo ou descarte para restaurar a última configuração salva.</p>
+              <div class="mru-pending-save-actions"><button id="mru-save-pending" class="button button-primary" type="button">Salvar alterações</button><button id="mru-discard-pending" class="button button-outline" type="button">Descartar alterações</button></div>
+            </div>
+          </div>
+          <div class="mru-stage-footer"><span id="mru-reference-label">Referencial: pista · origem x = 0 m</span><span id="mru-scene-summary" aria-live="off"></span><span class="mru-pan-hint">Arraste uma área vazia para mover. No celular, use pinça para zoom; no touchpad, deslize dois dedos ou use Ctrl + roda.</span></div>
+<details class="mru-camera-details" id="mru-camera-panel"><summary>Enquadramento e acessibilidade</summary><div class="mru-camera-controls" role="group" aria-label="Ajustar enquadramento e acessibilidade"><label data-advanced-only for="mru-view-span">Escala visível <output id="mru-view-span-value">24 m</output></label><input id="mru-view-span" type="range" min="8" max="80" step="1" value="24"><button id="mru-zoom-in" class="button button-outline" type="button">+ Aproximar</button><button id="mru-zoom-out" class="button button-outline" type="button">− Afastar</button><button id="mru-zoom-reset" class="button button-outline" type="button">Restaurar zoom</button><button id="mru-center-camera" class="button button-outline" type="button">Centralizar</button><button id="mru-fit-camera" data-advanced-only class="button button-outline" type="button">Enquadrar experimento</button><button id="mru-pan-left" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a esquerda">←</button><button id="mru-pan-right" data-advanced-only class="button button-outline" type="button" aria-label="Deslocar câmera para a direita">→</button><button id="mru-recenter" class="button button-outline" type="button">Acompanhar carrinho</button><label class="mru-check"><input id="mru-show-grid" type="checkbox" checked> Grade</label><label data-advanced-only class="mru-check"><input id="mru-reduce-motion" type="checkbox"> Menos movimento</label><label data-advanced-only class="mru-check"><input id="mru-high-contrast" type="checkbox"> Alto contraste</label><label data-advanced-only for="mru-text-size">Texto <input id="mru-text-size" type="range" min="90" max="125" step="5" value="100"><output id="mru-text-size-value">100%</output></label></div></details>
+<details class="mru-vector-details" id="mru-vector-panel"><summary>Vetores da animação</summary><p>Ative cada vetor para vê-lo junto ao carrinho. As setas representam grandezas físicas da pista.</p><div class="mru-vector-buttons" role="group" aria-label="Mostrar ou ocultar vetores"><button class="button button-outline mru-vector-toggle" type="button" data-vector="velocity" aria-pressed="true">Velocidade</button><button class="button button-outline mru-vector-toggle" type="button" data-vector="acceleration" aria-pressed="false">Aceleração</button><button class="button button-outline mru-vector-toggle" type="button" data-vector="displacement" aria-pressed="false">Deslocamento</button></div></details>
+
+        </section>
+
+        <details class="mru-card mru-playback-card mru-foldout-card" aria-labelledby="mru-playback-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">RELÓGIO VIRTUAL</span><span id="mru-playback-heading" class="mru-foldout-title">Controle do experimento</span></span><output class="mru-time-readout" id="mru-time-readout" aria-live="off">t = 0,00 s</output><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
+          <div class="mru-transport" role="group" aria-label="Controles de reprodução">
+            <button id="mru-step-back" data-advanced-only class="button button-outline" type="button" aria-label="Voltar um passo">− Passo</button><button id="mru-play" class="button button-primary" type="button" aria-pressed="false">Iniciar</button><button id="mru-step-forward" data-advanced-only class="button button-outline" type="button">+ Passo</button><button id="mru-reset" class="button button-outline" type="button">Reiniciar</button>
+            <label for="mru-playback-rate">Reprodução<select id="mru-playback-rate"><option data-advanced-only value="0.25">0,25×</option><option data-advanced-only value="0.5">0,5×</option><option data-advanced-only value="1" selected>1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label>
+            <label for="mru-step-size">Passo temporal<input id="mru-step-size" type="number" min="0.01" max="10" step="0.01" value="0.5"><small>s</small></label>
+          </div>
+          <label class="mru-timeline-label" for="mru-timeline"><span>Linha do tempo</span><output id="mru-timeline-value">0,00 s</output></label>
+          <input id="mru-timeline" class="mru-timeline" type="range" min="0" max="12" step="0.01" value="0" aria-label="Instante atual do experimento">
+          <div class="mru-playback-settings" data-advanced-only><label for="mru-duration">Duração<input id="mru-duration" type="number" min="0.1" max="3600" step="0.5" value="12"><small>s</small></label><label for="mru-sample-interval">Intervalo entre medições<input id="mru-sample-interval" type="number" min="0.01" max="12" step="0.1" value="1"><small>s</small></label><label class="mru-check"><input id="mru-loop" type="checkbox" checked> Repetir ao terminar</label><button id="mru-return-start" class="button button-outline" type="button">Voltar ao início</button></div>
+          <p id="mru-status" class="mru-status" role="status" aria-live="polite">Pronto para iniciar. A posição segue a equação do MRU.</p>
+        
+</div>
+</details>
+
+        <details class="mru-card mru-results-card mru-foldout-card" aria-labelledby="mru-results-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">LEITURAS DO MODELO</span><span id="mru-results-heading" class="mru-foldout-title">Estado do carrinho selecionado</span></span><span id="mru-direction-pill" class="mru-direction-pill">Repouso</span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
+          <div id="mru-readouts" class="mru-readouts" aria-live="off"></div>
+          <p id="mru-displacement-note" class="mru-explain-note">O deslocamento tem sinal; a distância percorrida é sempre positiva.</p>
+          <div class="mru-meeting-note" id="mru-meeting-note" role="status"></div>
+        
+</div>
+</details>
+
+        <details class="mru-card mru-graphs-card mru-foldout-card" aria-labelledby="mru-graphs-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">GRÁFICOS SINCRONIZADOS</span><span id="mru-graphs-heading" class="mru-foldout-title">Previsão e movimento</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+<div class="mru-card-heading mru-foldout-tools"><p>Os três gráficos usam a mesma equação e o mesmo relógio do carrinho. Clique em um gráfico para inspecionar um instante.</p><div class="mru-button-row"><label class="mru-graph-zoom-label" for="mru-graph-zoom">Zoom vertical<select id="mru-graph-zoom"><option data-advanced-only value="1">1×</option><option data-advanced-only value="2">2×</option><option data-advanced-only value="4">4×</option></select></label><button id="mru-export-graphs" class="button button-outline" type="button">Exportar gráficos</button></div></div>
+          
+          <div class="mru-chart-grid">
+            <figure class="mru-chart"><figcaption><strong>Posição × tempo</strong><span>x(t) = x₀ + vt</span></figcaption><canvas id="mru-chart-position" role="img" tabindex="0" aria-label="Gráfico posição por tempo"></canvas><p class="mru-chart-description" id="mru-chart-position-desc">Reta cuja inclinação é a velocidade do carrinho.</p></figure>
+            <figure class="mru-chart"><figcaption><strong>Velocidade × tempo</strong><span>v(t) = constante</span></figcaption><canvas id="mru-chart-velocity" role="img" tabindex="0" aria-label="Gráfico velocidade por tempo"></canvas><p class="mru-chart-description" id="mru-chart-velocity-desc">Linha horizontal no valor de velocidade selecionado.</p></figure>
+            <figure class="mru-chart"><figcaption><strong>Aceleração × tempo</strong><span>a(t) = 0</span></figcaption><canvas id="mru-chart-acceleration" role="img" tabindex="0" aria-label="Gráfico aceleração por tempo"></canvas><p class="mru-chart-description" id="mru-chart-acceleration-desc">Linha sobre a origem, pois a velocidade não varia.</p></figure>
+          </div>
+          <p class="mru-graph-inspection" id="mru-graph-inspection" aria-live="polite">Ponto de inspeção: mova o cursor ou selecione um instante no gráfico.</p>
+        
+</div>
+</details>
+
+        <details class="mru-card mru-table-card mru-foldout-card" aria-labelledby="mru-table-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">DADOS EXPERIMENTAIS IDEAIS</span><span id="mru-table-heading" class="mru-foldout-title">Tabela de medições</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+<div class="mru-card-heading mru-foldout-tools"><p>Valores calculados nos intervalos escolhidos. Os sensores registram os mesmos instantes do modelo.</p><div class="mru-button-row"><button id="mru-export-csv" class="button button-outline" type="button">Baixar CSV</button><button id="mru-export-json" class="button button-outline" type="button">Baixar JSON</button></div></div>
+          
+          <div class="mru-table-wrap"><table><caption class="sr-only">Tempo, posição, velocidade, aceleração e deslocamento para cada carrinho</caption><thead><tr><th scope="col">Tempo (s)</th><th scope="col">Carrinho</th><th scope="col">Posição x (m)</th><th scope="col">Velocidade v (m/s)</th><th scope="col">Aceleração a (m/s²)</th><th scope="col">Deslocamento Δx (m)</th></tr></thead><tbody id="mru-data-table"></tbody></table></div>
+          <p id="mru-table-status" class="mru-muted" aria-live="polite"></p>
+        
+</div>
+</details>
+      </div>
+
+      <aside class="mru-sidebar" aria-label="Editor do experimento">
+        <section class="mru-card mru-editor-card" aria-labelledby="mru-editor-heading">
+          <details class="mru-editor-details" id="mru-editor-details"><summary class="mru-card-heading compact"><div><span class="section-kicker">CONFIGURAR A CENA</span><h2 id="mru-editor-heading">Editor de objetos</h2></div><span class="mru-editor-chevron" aria-hidden="true">⌄</span></summary><div class="mru-editor-content">
+          <div class="mru-action-row"><label class="sr-only" for="mru-add-type">Tipo de objeto para adicionar</label><select id="mru-add-type"><option value="scientific-cart">Carrinho científico</option><option data-advanced-only value="sport-cart">Carrinho esportivo</option><option value="position-sensor">Sensor de posição</option><option value="photogate">Fotocélula</option><option data-advanced-only value="position-marker">Marcador de posição</option><option data-advanced-only value="time-marker">Marcadores temporais</option><option data-advanced-only value="start-line">Linha de partida</option><option data-advanced-only value="finish-line">Linha de chegada</option><option data-advanced-only value="distance-sign">Placa de distância</option><option data-advanced-only value="cone">Cone de sinalização</option><option data-advanced-only value="tree">Árvore de referência</option><option data-advanced-only value="post">Poste de referência</option><option data-advanced-only value="flag">Bandeira</option></select><button id="mru-add-object" class="button button-primary" type="button">＋ Adicionar objeto</button></div>
+          <div class="mru-object-toolbar"><button id="mru-duplicate" data-advanced-only class="button button-outline" type="button">Duplicar</button><button id="mru-remove" class="button button-outline" type="button">Remover</button><button id="mru-layer-up" data-advanced-only class="button button-outline" type="button">Trazer à frente</button><button id="mru-layer-down" data-advanced-only class="button button-outline" type="button">Enviar atrás</button><button id="mru-restore-object" data-advanced-only class="button button-outline" type="button">Restaurar valores</button><button id="mru-clear-scene" data-advanced-only class="button button-outline" type="button">Limpar cena</button><button id="mru-undo" data-advanced-only class="button button-outline" type="button" disabled>Desfazer</button><button id="mru-redo" data-advanced-only class="button button-outline" type="button" disabled>Refazer</button></div>
+          <div class="mru-object-list-wrap"><h3>Objetos na bancada</h3><ul id="mru-object-list" class="mru-object-list" aria-label="Objetos adicionados"></ul></div>
+          <div id="mru-properties" class="mru-properties" aria-live="polite"></div>
+          <details class="mru-detail"><summary>Referencial, escala e modelo</summary><p>A pista define o eixo x; a origem é x = 0 m e o sentido positivo aponta para a direita. A posição em pixels muda com o enquadramento, mas não altera x₀, v, tempo ou qualquer resultado físico. O MRU ideal não inclui atrito, força resultante, colisões nem resistência do ar.</p></details>
+        </div></details>
+</section>
+
+        <details class="mru-card mru-instruments-card mru-foldout-card" aria-labelledby="mru-instruments-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">INSTRUMENTOS</span><span id="mru-instruments-heading" class="mru-foldout-title">Sensores e referências</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
+          <p class="mru-muted">Fotocélulas registram o cruzamento do ponto de referência do carrinho. Os instrumentos não alteram sua velocidade.</p>
+          <div id="mru-instrument-readings" class="mru-instrument-readings" aria-live="off"></div>
+          <div class="mru-ruler-tool"><h3>Régua de deslocamento</h3><div class="mru-two-inputs"><label for="mru-ruler-a">Ponto A<input id="mru-ruler-a" type="number" step="0.1" value="0"><small>m</small></label><label for="mru-ruler-b">Ponto B<input id="mru-ruler-b" type="number" step="0.1" value="5"><small>m</small></label></div><output id="mru-ruler-result">Δx = 5,00 m · distância = 5,00 m</output></div>
+          <div class="mru-event-log"><h3>Eventos das fotocélulas</h3><ol id="mru-events"><li>Nenhum cruzamento registrado nesta execução.</li></ol></div>
+        
+</div>
+</details>
+
+        <details class="mru-card mru-persistence-card mru-foldout-card" aria-labelledby="mru-save-heading">
+<summary class="mru-card-heading compact mru-foldout-summary"><span class="mru-foldout-copy"><span class="section-kicker">SEU EXPERIMENTO</span><span id="mru-save-heading" class="mru-foldout-title">Salvar e exportar</span></span><span class="mru-foldout-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mru-foldout-content">
+
+          
+          <div class="mru-button-grid"><button id="mru-save" class="button button-outline" type="button">Salvar neste dispositivo</button><button id="mru-load" class="button button-outline" type="button">Carregar salvo</button><button id="mru-share" data-advanced-only class="button button-outline" type="button">Copiar link da configuração</button><button id="mru-export-scene" data-advanced-only class="button button-outline" type="button">Baixar pista SVG</button><button id="mru-reset-config" data-advanced-only class="button button-outline" type="button">Restaurar padrão</button><label data-advanced-only class="button button-outline mru-file-label" for="mru-import-file">Abrir configuração JSON<input id="mru-import-file" type="file" accept="application/json,.json"></label></div>
+          <p id="mru-save-status" class="mru-muted" role="status" aria-live="polite">As configurações ficam neste dispositivo; nenhum dado pessoal é enviado.</p>
+        
+</div>
+</details>
+
+        <section class="mru-card mru-investigation-card" data-advanced-only id="mru-investigation" aria-labelledby="mru-investigation-heading">
+          <div class="mru-card-heading compact"><div><span class="section-kicker">PREVER · OBSERVAR · EXPLICAR</span><h2 id="mru-investigation-heading">Desafio de movimento</h2></div></div>
+          <p id="mru-challenge-question">Sem mudar a velocidade, preveja a posição do carrinho selecionado após 3 s.</p>
+          <label for="mru-prediction">Minha previsão<input id="mru-prediction" type="number" step="0.1" placeholder="posição em metros"><small>m</small></label>
+          <button id="mru-check-prediction" class="button button-outline" type="button">Comparar previsão</button>
+          <p id="mru-prediction-feedback" role="status" aria-live="polite"></p>
+          <p class="mru-muted">Use x(t) = x₀ + vt para explicar como o sinal e o módulo de v afetam a posição e a rapidez.</p>
+        </section>
+      </aside>
+    </section>
+    <p class="mru-limit-note"><strong>Sobre este modelo:</strong> trata-se de uma pista ideal de uma dimensão. Encontros são calculados, mas não geram colisão; objetos decorativos são referências visuais. Assim, o carrinho mantém MRU durante todo o intervalo selecionado.</p>
+  </main>
+
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Física que ganha forma.</p></div><div class="footer-bottom"><a href="/privacidade/">Privacidade</a><span>© Diário dos BNs</span></div></footer>
+</body>
+</html>
+

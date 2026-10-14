@@ -1,63 +1,17 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <base href="./"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08101f"><title>Criar conta — Diário dos BNs</title>
-  <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
-  <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1"><link rel="stylesheet" href="account-system.css?v=site-20261008">
-  <script defer src="account-system.js?v=auth-fix-20261008"></script>
-  <script defer src="quick-menu.js?v=bnzinho-transparent-widget-20261013-1"></script>
-  <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Endereço atualizado — Diário dos BNs</title>
+  <script src="/clean-url-redirect.js?v=clean-urls-1"></script>
+  <noscript><meta http-equiv="refresh" content="0; url=/cadastro/"></noscript>
 </head>
-<body data-account-page="signup">
-  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-  <header class="site-header">
-    <a class="brand" href="index.html"><img class="brand-logo" src="assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
-    <nav class="nav" aria-label="Navegação principal"><a href="index.html">Início</a><a href="turmas.html">Turmas</a><a class="account-link" href="login.html">Entrar</a></nav>
-  </header>
-  <main id="conteudo" class="account-page"><section class="account-panel">
-    <p class="account-kicker">Cadastro seguro</p><h1>Criar conta</h1><p>O cadastro é feito pelo Supabase. Senhas não são guardadas neste site.</p>
-    <form id="signup-form" class="account-form" method="post">
-      <label for="signup-name">Nome<input id="signup-name" name="name" autocomplete="name" maxlength="100" required></label>
-      <label for="signup-email">E-mail<input id="signup-email" name="email" type="email" autocomplete="email" required></label>
-      <label for="signup-age">Faixa etária
-        <select id="signup-age" name="age_range" required>
-          <option value="">Selecione uma faixa</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option>
-        </select>
-      </label>
-      <label for="signup-role">Tipo de conta
-        <select id="signup-role" name="role" required><option value="">Selecione</option><option value="aluno">Aluno</option><option value="professor">Professor</option></select>
-      </label>
-      <fieldset id="student-fields" class="account-form">
-        <legend>Dados do aluno</legend>
-        <label for="signup-education">Etapa de ensino
-          <select id="signup-education" name="education_level"><option value="">Selecione</option><option>Ensino Fundamental I</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico</option><option>Ensino Superior</option><option>Pós-graduação</option><option>Outro</option></select>
-        </label>
-        <label for="signup-education-detail">Ano, série ou período (opcional)<input id="signup-education-detail" name="education_detail" maxlength="100" placeholder="Ex.: 2º ano"></label>
-      </fieldset>
-      <fieldset id="teacher-fields" class="account-form" hidden>
-        <legend>Dados do professor</legend>
-        <label for="signup-degree">Formação
-          <select id="signup-degree" name="teacher_degree_level"><option value="">Selecione</option><option>Bacharelado</option><option>Licenciatura</option><option>Tecnólogo</option><option>Especialização</option><option>Mestrado acadêmico</option><option>Mestrado profissional</option><option>Doutorado acadêmico</option><option>Doutorado profissional</option><option>Ainda cursando graduação</option><option>Outro</option></select>
-        </label>
-        <label for="signup-course">Curso ou área<input id="signup-course" name="teacher_degree_program" maxlength="160" placeholder="Ex.: Licenciatura em Física"></label>
-        <label for="signup-institution">Instituição (opcional)<input id="signup-institution" name="teacher_institution" maxlength="160"></label>
-        <label class="account-check"><input id="teacher-ack-check" name="teacher_ack" type="checkbox"><span>Entendo que o acesso de professor depende da aprovação do responsável pelo site.</span></label>
-      </fieldset>
-      <label for="signup-password">Senha<div class="account-password-control"><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-password" aria-pressed="false">Mostrar senha</button></div><small>Use pelo menos 10 caracteres.</small></label>
-      <label for="signup-confirm">Repita a senha<div class="account-password-control"><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-confirm" aria-pressed="false">Mostrar senha</button></div></label>
-      <label class="account-check"><input name="consent" type="checkbox" required><span>Aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
-      <button class="account-button account-button-primary" type="submit">Criar conta</button>
-      <p class="account-message" data-status aria-live="polite"></p>
-    </form>
-    <section id="signup-confirmation" class="account-resend-panel" aria-labelledby="signup-confirmation-title" hidden>
-      <h2 id="signup-confirmation-title">Confirme seu e-mail</h2>
-      <p>Enviamos o link de verificação para <strong id="signup-confirmation-email"></strong>. Confira também a pasta de spam.</p>
-      <p id="signup-resend-countdown" class="account-muted" role="status" aria-live="polite"></p>
-      <button id="signup-resend-link" class="account-button account-button-primary" type="button" disabled>Reenviar link de verificação</button>
-      <p id="signup-resend-status" class="account-message" role="status" aria-live="polite"></p>
-    </section>
-    <p>Já tem conta? <a href="login.html">Entrar</a></p>
-  </section></main>
+<body>
+  <main>
+    <h1>Endereço atualizado</h1>
+    <p>Esta página agora tem um endereço mais curto.</p>
+    <p><a href="/cadastro/">Abrir a página atualizada</a></p>
+  </main>
 </body>
 </html>
