@@ -336,7 +336,7 @@ function renderPendingTeacher(user) {
 
 async function renderStudent(user) {
   replaceMain('Área do aluno',`${profileHeader(user,{role:'aluno'},'Minha área de estudos','Acompanhe favoritos, atividades e progresso. Suas respostas ficam visíveis a você e, quando relacionadas a uma turma, ao professor responsável.')}
-    <div class="account-shortcuts"><a href="/perfil">Editar perfil</a><a href="/">Explorar animações</a><a href="/downloads/">Downloads</a><a href="/blender/>Aprenda Blender</a><a href="/laboratorio/>Laboratório 3D</a></div><div id="student-workspace"><p role="status">Carregando seus conteúdos…</p></div>`);wireLogout();
+    <div class="account-shortcuts"><a href="/perfil">Editar perfil</a><a href="/">Explorar animações</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a href="/laboratorio/">Laboratório 3D</a></div><div id="student-workspace"><p role="status">Carregando seus conteúdos…</p></div>`);wireLogout();
   await loadLearningWorkspace(document.querySelector('#student-workspace'),user,'aluno');
 }
 
@@ -384,7 +384,7 @@ async function downloadPrivate(button) {
 
 async function renderTeacher(user) {
   replaceMain('Área do professor',`${profileHeader(user,{role:'professor'},'Área do professor','Gerencie suas turmas e atividades. As respostas dos estudantes só aparecem para docentes vinculados à turma.')}
-    <div class="account-shortcuts"><a href="/perfil">Editar perfil</a><a href="/professores/>Materiais pedagógicos</a><a href="/downloads/">Central de downloads</a><a href="/blender/>Aprenda Blender</a></div><div id="teacher-tools" class="staff-workspace"><p role="status">Carregando turmas e conteúdos…</p></div><div id="student-workspace"></div>`);wireLogout();
+    <div class="account-shortcuts"><a href="/perfil">Editar perfil</a><a href="/professores/">Materiais pedagógicos</a><a href="/downloads/">Central de downloads</a><a href="/blender/">Aprenda Blender</a></div><div id="teacher-tools" class="staff-workspace"><p role="status">Carregando turmas e conteúdos…</p></div><div id="student-workspace"></div>`);wireLogout();
   await loadLearningWorkspace(document.querySelector('#student-workspace'),user,'professor');
   await loadTeacherTools(document.querySelector('#teacher-tools'),user);
 }
@@ -441,7 +441,7 @@ function explainAdminLaboratoryError(error) {
 
 async function renderAdminLaboratories(user) {
   replaceMain('Gerenciar laboratórios',`${profileHeader(user,{role:'admin'},'Gerenciar laboratórios','Gerencie quais laboratórios da aba pública ficam disponíveis e sincronize seus cartões com o Supabase.')}
-    <div class="account-shortcuts"><a href="/admin/">Voltar ao painel</a><a href="/biblioteca-fisica/>Ver o mapa dos 480 tópicos</a><a href="/">Ver site</a></div>
+    <div class="account-shortcuts"><a href="/admin/">Voltar ao painel</a><a href="/biblioteca-fisica/">Ver o mapa dos 480 tópicos</a><a href="/">Ver site</a></div>
     <div id="admin-laboratory-tools" class="staff-workspace"><p role="status">Carregando laboratórios cadastrados…</p></div>`);wireLogout();
   const root=document.querySelector('#admin-laboratory-tools');
   const load=async()=>{
