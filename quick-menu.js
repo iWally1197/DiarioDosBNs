@@ -5,6 +5,7 @@
   const essentials = [
     ['Início', '/'],
     ['Física', '/#animacoes'],
+    ['Questões de Física', '/questoes/'],
     ['Turmas', '/turmas/'],
     ['Downloads', '/downloads/'],
     ['Aprender Blender', '/blender/'],

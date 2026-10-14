@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="title desc">
+  <title id="title">Fios longos e ponto P</title>
+  <desc id="desc">Dois fios atravessam perpendicularmente a folha. O fio 1 fica a 2d de P e o fio 2 fica a d de P.</desc>
+  <rect width="760" height="220" rx="12" fill="#0b1423"/>
+  <line x1="95" y1="68" x2="680" y2="68" stroke="#b4c0d0" stroke-width="2" stroke-dasharray="9 8"/>
+  <circle cx="210" cy="68" r="17" fill="#cad2dc" stroke="#64748b" stroke-width="3"/>
+  <circle cx="430" cy="68" r="17" fill="#cad2dc" stroke="#64748b" stroke-width="3"/>
+  <circle cx="650" cy="68" r="6" fill="#f8fafc"/>
+  <text x="202" y="119" fill="#f8fafc" font-family="Arial,sans-serif" font-size="23">1</text>
+  <text x="423" y="119" fill="#f8fafc" font-family="Arial,sans-serif" font-size="23">2</text>
+  <text x="639" y="47" fill="#f8fafc" font-family="Arial,sans-serif" font-size="22">P</text>
+  <line x1="210" y1="157" x2="650" y2="157" stroke="#8391a4" stroke-width="2"/>
+  <line x1="210" y1="146" x2="210" y2="168" stroke="#8391a4" stroke-width="2"/>
+  <line x1="430" y1="146" x2="430" y2="168" stroke="#8391a4" stroke-width="2"/>
+  <line x1="650" y1="146" x2="650" y2="168" stroke="#8391a4" stroke-width="2"/>
+  <text x="312" y="192" fill="#e6c477" font-family="Arial,sans-serif" font-size="20">d</text>
+  <text x="532" y="192" fill="#e6c477" font-family="Arial,sans-serif" font-size="20">d</text>
+  <text x="95" y="205" fill="#aab7ca" font-family="Arial,sans-serif" font-size="13">Esquema redesenhado · distâncias iguais a d</text>
+</svg>
+
