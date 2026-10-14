@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Gerenciar questões — Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="/assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="/styles.css?v=accessibility-20261013-1">
+  <link rel="stylesheet" href="/questoes/questoes.css?v=questoes-20261014-3">
+  <link rel="stylesheet" href="/admin/questoes/admin-questoes.css?v=questoes-admin-20261014-1">
+  <script defer src="/clean-links.js?v=clean-routes-20261013-2"></script>
+  <script defer src="/script.js?v=clean-routes-20261013-2"></script>
+  <script defer src="/quick-menu.js?v=questoes-admin-20261014-1"></script>
+  <script defer data-diario-accessibility="true" src="/accessibility.js?v=accessibility-20261013-1"></script>
+  <script type="module" src="/admin/questoes/admin-questoes.js?v=questoes-admin-20261014-1"></script>
+</head>
+<body class="questions-page question-admin-page">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal"><a href="/">Início</a><a href="/questoes/">Questões</a><a href="/admin/">Painel administrativo</a></nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+  <main id="conteudo" class="question-admin-main">
+    <div class="question-admin-top"><div><p class="q-eyebrow">ÁREA ADMINISTRATIVA</p><h1>Gerenciar questões</h1><p>Cadastre, revise e publique questões de Física com imagens e resolução.</p></div><a class="q-button q-button-outline" href="/questoes/">Ver biblioteca de questões</a></div>
+    <p id="question-admin-auth" class="q-admin-notice" role="status" aria-live="polite">Verificando sua sessão…</p>
+    <div id="question-admin-shell" class="question-admin-layout" hidden>
+      <aside class="q-admin-library" aria-labelledby="q-admin-list-title">
+        <div class="q-admin-list-head"><div><p class="q-side-kicker">BIBLIOTECA</p><h2 id="q-admin-list-title">Questões cadastradas</h2></div><button id="question-new" class="q-button q-button-save" type="button">Nova questão</button></div>
+        <label class="q-admin-search-label" for="question-admin-search">Buscar questão<input id="question-admin-search" type="search" placeholder="Título, assunto ou banca"></label>
+        <p id="question-admin-list-status" class="q-admin-list-status" role="status" aria-live="polite">Carregando registros…</p>
+        <div id="question-admin-records" class="q-admin-records"></div>
+      </aside>
+      <section class="q-admin-editor" aria-labelledby="q-admin-form-title">
+        <form id="question-form" novalidate>
+          <div class="q-admin-form-head"><div><p class="q-side-kicker">EDITOR DE QUESTÃO</p><h2 id="q-admin-form-title">Nova questão</h2></div><button id="question-delete-current" class="q-button q-button-refuse" type="button" hidden>Excluir questão</button></div>
+          <div class="q-admin-grid">
+            <label class="q-admin-field q-admin-span-2" for="question-title">Título da questão<input id="question-title" name="title" maxlength="180" required autocomplete="off" placeholder="Ex.: Campo magnético de dois fios"></label>
+            <label class="q-admin-field" for="question-format">Formato do enunciado<select id="question-format" name="display_format"><option value="typed">Texto digitado</option><option value="image">Imagem com a questão completa</option></select></label>
+            <label class="q-admin-field" for="question-discipline">Disciplina<select id="question-discipline" name="discipline"><option>Física</option><option>Ciências da Natureza</option><option>Matemática</option><option>Química</option><option>Outra</option></select></label>
+            <label class="q-admin-field q-admin-span-2" for="question-statement">Enunciado<textarea id="question-statement" name="statement" rows="5" maxlength="20000" placeholder="Digite o enunciado. No formato de imagem completa, o texto é opcional."></textarea><small id="statement-help">Você também pode anexar uma imagem ilustrativa abaixo.</small></label>
+            <label class="q-admin-field" for="question-subject">Assunto<input id="question-subject" name="subject" list="question-subject-options" maxlength="120" required placeholder="Ex.: Eletromagnetismo"><datalist id="question-subject-options"><option value="Cinemática"><option value="Dinâmica"><option value="Trabalho e Energia"><option value="Termologia"><option value="Ondulatória"><option value="Óptica"><option value="Eletrostática"><option value="Eletrodinâmica"><option value="Eletromagnetismo"><option value="Física Moderna"></datalist></label>
+            <label class="q-admin-field" for="question-difficulty">Dificuldade<select id="question-difficulty" name="difficulty"><option>Fácil</option><option selected>Média</option><option>Difícil</option></select></label>
+            <label class="q-admin-field" for="question-bank">Banca<input id="question-bank" name="bank" maxlength="100" placeholder="Ex.: UECE"></label>
+            <label class="q-admin-field" for="question-institution">Instituição<input id="question-institution" name="institution" maxlength="140" placeholder="Ex.: Universidade Estadual do Ceará"></label>
+            <label class="q-admin-field" for="question-year">Ano<input id="question-year" name="year" type="number" min="1900" max="2100" inputmode="numeric" placeholder="2026"></label>
+          </div>
+
+          <section class="q-admin-section" aria-labelledby="q-admin-images-title"><div class="q-admin-section-head"><div><h3 id="q-admin-images-title">Imagens da questão</h3><p>PNG, JPG ou WebP · até 8 MB por imagem · até 9 imagens por questão.</p></div></div>
+            <div class="q-admin-grid q-admin-image-fields">
+              <label class="q-admin-field" for="question-cover">Imagem principal<input id="question-cover" name="cover" type="file" accept="image/png,image/jpeg,image/webp"><small>No formato de imagem completa, esta imagem contém o enunciado.</small></label>
+              <label class="q-admin-field" for="question-illustrations">Imagens ilustrativas<input id="question-illustrations" name="illustrations" type="file" accept="image/png,image/jpeg,image/webp" multiple><small>Você pode enviar mais de uma imagem do computador ou celular.</small></label>
+            </div>
+            <div id="question-image-preview" class="q-admin-image-preview" aria-live="polite"></div>
+          </section>
+
+          <section class="q-admin-section" aria-labelledby="q-admin-options-title"><div class="q-admin-section-head"><div><h3 id="q-admin-options-title">Alternativas</h3><p>Preencha de A a E. Para publicar, são necessárias pelo menos duas alternativas.</p></div></div>
+            <fieldset class="q-admin-options"><legend>Textos das alternativas</legend>
+              <label class="q-admin-option" for="question-option-A"><span>A</span><input id="question-option-A" data-option-letter="A" maxlength="1200" autocomplete="off" placeholder="Alternativa A"></label>
+              <label class="q-admin-option" for="question-option-B"><span>B</span><input id="question-option-B" data-option-letter="B" maxlength="1200" autocomplete="off" placeholder="Alternativa B"></label>
+              <label class="q-admin-option" for="question-option-C"><span>C</span><input id="question-option-C" data-option-letter="C" maxlength="1200" autocomplete="off" placeholder="Alternativa C"></label>
+              <label class="q-admin-option" for="question-option-D"><span>D</span><input id="question-option-D" data-option-letter="D" maxlength="1200" autocomplete="off" placeholder="Alternativa D"></label>
+              <label class="q-admin-option" for="question-option-E"><span>E</span><input id="question-option-E" data-option-letter="E" maxlength="1200" autocomplete="off" placeholder="Alternativa E"></label>
+            </fieldset>
+            <label class="q-admin-field q-admin-correct" for="question-correct">Alternativa correta<select id="question-correct" name="correct"><option value="">Selecione a correta</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>
+          </section>
+
+          <label class="q-admin-field q-admin-span-2" for="question-solution">Resolução detalhada<textarea id="question-solution" name="resolution" rows="6" maxlength="20000" placeholder="Explique as fórmulas, substituições e o raciocínio passo a passo."></textarea></label>
+          <div id="question-form-status" class="q-admin-notice" role="status" aria-live="polite" hidden></div>
+          <div class="q-admin-actions"><button class="q-button q-button-outline" type="button" id="question-reset">Limpar formulário</button><button class="q-button q-button-save" type="submit" name="save_mode" value="draft">Salvar rascunho</button><button class="q-button q-button-save q-admin-publish" type="submit" name="save_mode" value="published">Publicar questão</button></div>
+        </form>
+      </section>
+      <aside class="q-admin-preview" aria-labelledby="q-admin-preview-title"><p class="q-side-kicker">VISUALIZAÇÃO</p><h2 id="q-admin-preview-title">Prévia para estudantes</h2><p class="q-admin-preview-help">A prévia usa a mesma estrutura visual da biblioteca pública.</p><div id="question-student-preview"></div></aside>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><a href="/questoes/">Biblioteca de questões</a><a href="/">Início</a></div></footer>
+</body>
+</html>

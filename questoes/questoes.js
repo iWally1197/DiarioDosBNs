@@ -1,10 +1,11 @@
 import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs";
+import {supabasePromise} from "/src-supabase.js";
 import "./questoes-data.js";
 
 (() => {
   "use strict";
 
-  const allQuestions = Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS : [];
+  let allQuestions = Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS : [];
   const allowedLabs = new Set(["/laboratorio-mru/","/laboratorio-mruv/","/laboratorio-espelhos/","/laboratorio-magnetismo/"]);
   const pageSize = 6;
   const storageKey = "diario-bns-questoes-v1";
@@ -49,11 +50,8 @@ import "./questoes-data.js";
       lastCorrect:typeof value.lastCorrect === "boolean" ? value.lastCorrect : null
     };
   }
-  const validation = normalizeQuestionList(allQuestions);
-  const questions = validation.questions;
-  const activeQuestionIds = new Set(questions.map(question => question.id));
-  state.favorites = state.favorites.filter(id => activeQuestionIds.has(id));
-  for (const id of Object.keys(state.answers)) if (!activeQuestionIds.has(id)) delete state.answers[id];
+  let validation = normalizeQuestionList(allQuestions);
+  let questions = validation.questions;
 
   function uniqueOptions(field) {
     return [...new Set(questions.map(question => question[field]).filter(value => value !== null && value !== undefined && String(value).trim() !== "").map(String))]
@@ -193,6 +191,7 @@ import "./questoes-data.js";
     titleBlock.append(title);
     const meta = document.createElement("div");
     meta.className = "q-card-meta";
+    if (question.discipline) meta.append(makeChip(question.discipline));
     meta.append(makeChip(question.subject));
     if (question.subtopic) meta.append(makeChip(question.subtopic));
     if (question.bank) meta.append(makeChip(question.bank + (question.year ? " " + question.year : "")));
@@ -220,20 +219,23 @@ import "./questoes-data.js";
     statement.className = "q-statement";
     statement.textContent = question.statement;
     body.append(statement);
-    if (question.image) {
+    const questionImages = Array.isArray(question.images) && question.images.length
+      ? question.images
+      : question.image ? [{src:question.image,alt:question.imageAlt || "Figura da questão"}] : [];
+    for (const item of questionImages) {
       const imageButton = document.createElement("button");
       imageButton.type = "button";
       imageButton.className = "q-diagram-button";
-      imageButton.setAttribute("aria-label","Ampliar figura: " + (question.imageAlt || question.title));
+      imageButton.setAttribute("aria-label","Ampliar figura: " + (item.alt || question.title));
       const image = document.createElement("img");
-      image.src = question.image;
-      image.alt = question.imageAlt || "Figura da questão";
+      image.src = item.src;
+      image.alt = item.alt || "Figura da questão";
       image.loading = "lazy";
       imageButton.append(image);
       imageButton.addEventListener("click",() => {
-        el("question-image-large").src = question.image;
-        el("question-image-large").alt = question.imageAlt || "Figura da questão";
-        el("question-image-caption").textContent = question.imageAlt || question.title;
+        el("question-image-large").src = item.src;
+        el("question-image-large").alt = item.alt || "Figura da questão";
+        el("question-image-caption").textContent = item.alt || question.title;
         if (typeof imageDialog.showModal === "function") imageDialog.showModal();
       });
       body.append(imageButton);
@@ -585,5 +587,56 @@ import "./questoes-data.js";
   updateProgress();
   renderQuestions();
   if (validation.invalidCount > 0) setStatus("A página carregou " + questions.length + " questões válidas; " + validation.invalidCount + " registros foram ignorados por estarem incompletos.");
-})();
 
+  async function loadPublishedQuestions() {
+    const database = await supabasePromise;
+    if (!database) return;
+    const {data,error} = await database.from("physics_questions").select("*").eq("status","published").order("created_at",{ascending:false}).limit(500);
+    if (error) return;
+    const databaseQuestions = (data || []).map(record => {
+      const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
+      const images = paths.map((path,index) => ({
+        src:database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
+        alt:index === 0 && record.display_format === "image" ? "Imagem completa do enunciado" : `Imagem ilustrativa ${index + 1}`
+      }));
+      return {
+        id:"admin-" + record.id,
+        title:record.title,
+        discipline:record.discipline,
+        subject:record.subject,
+        subtopic:"",
+        bank:record.bank || "",
+        institution:record.institution || "",
+        year:record.year == null ? null : Number(record.year),
+        difficulty:record.difficulty,
+        statement:record.statement?.trim() || "Analise a imagem completa da questão.",
+        image:images[0]?.src || "",
+        imageAlt:images[0]?.alt || "",
+        images,
+        choices:Array.isArray(record.choices) ? record.choices : [],
+        correct:record.correct_option,
+        solution:record.resolution || "",
+        source:"",
+        license:"",
+        tags:[]
+      };
+    });
+    allQuestions = [...databaseQuestions,...(Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS : [])];
+    validation = normalizeQuestionList(allQuestions);
+    questions = validation.questions;
+    currentPage = 1;
+    renderFilters();
+    updateProgress();
+    renderQuestions();
+    const adminLink = el("question-admin-link");
+    if (adminLink) {
+      const {data:authData} = await database.auth.getUser();
+      if (authData?.user) {
+        const {data:role} = await database.from("user_roles").select("role,status").eq("user_id",authData.user.id).maybeSingle();
+        if (role?.role === "admin" && role?.status === "active") adminLink.hidden = false;
+      }
+    }
+  }
+
+  loadPublishedQuestions().catch(() => {});
+})();
