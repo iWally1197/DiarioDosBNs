@@ -305,10 +305,43 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     $("mru-results-heading").closest(".mru-results-card").hidden=hidden;$("mru-graphs-heading").closest(".mru-graphs-card").hidden=hidden;$("mru-table-heading").closest(".mru-table-card").hidden=hidden;
     $("mru-teacher-reveal").textContent=state.teacherReveal?"Ocultar resultados":"Mostrar resultados";
   }
+  function setupFullscreenTimePicker(){
+    const toggle=$("mru-fullscreen-time-toggle"),picker=$("mru-fullscreen-time-picker"),input=$("mru-fullscreen-time-input"),closeButton=$("mru-fullscreen-time-close");
+    const close=()=>{
+      picker.hidden=true;
+      toggle.setAttribute("aria-expanded","false");
+      toggle.textContent="⏱ Escolher tempo";
+    };
+    toggle.addEventListener("click",()=>{
+      if(!picker.hidden){close();return;}
+      pause();
+      input.max=String(state.duration);
+      input.value=String(Number(state.time.toFixed(2)));
+      picker.hidden=false;
+      toggle.setAttribute("aria-expanded","true");
+      toggle.textContent="Fechar seletor";
+      requestAnimationFrame(()=>input.focus());
+    });
+    picker.addEventListener("submit",event=>{
+      event.preventDefault();
+      input.max=String(state.duration);
+      if(!input.reportValidity())return;
+      setTime(input.valueAsNumber,"fullscreen");
+      close();
+      status("Animação ajustada para t = "+fmt(state.time)+" s.");
+    });
+    closeButton.addEventListener("click",()=>{close();toggle.focus();});
+    document.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&!picker.hidden){close();toggle.focus();}
+    });
+    return close;
+  }
+
   function setupFullscreenDock(){
     const stage=$("mru-stage"),tools=$("mru-fullscreen-tools"),drawer=$("mru-fullscreen-drawer"),content=drawer.querySelector(".mru-fullscreen-drawer-content");
     const selectors=[".mru-mode-bar",".mru-camera-details",".mru-vector-details",".mru-playback-card",".mru-results-card",".mru-graphs-card",".mru-table-card",".mru-sidebar",".mru-investigation-card"];
     const relocated=[];
+    const closeTimePicker=setupFullscreenTimePicker();
     function movePanelsIntoDock(){
       for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
     }
@@ -334,7 +367,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
         requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
       }else{
         restorePanels();tools.hidden=true;drawer.hidden=true;stage.classList.remove("mru-drawer-collapsed");
-        document.body.classList.remove("mru-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);
+        document.body.classList.remove("mru-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);closeTimePicker();
       }
       $("mru-fullscreen").textContent=active?"Sair da tela cheia":"Tela cheia";
       

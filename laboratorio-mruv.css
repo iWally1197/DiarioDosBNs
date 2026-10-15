@@ -204,6 +204,13 @@
 .mruv-fullscreen-tools[hidden]{display:none!important}
 .mruv-stage:fullscreen>.sr-only{position:absolute}
 .mruv-edit-actions{display:grid;gap:.55rem;margin-top:.9rem;padding:.8rem;border:1px solid var(--gold);border-radius:10px;background:var(--surface-2)}
+.mruv-fullscreen-time-picker{display:flex;align-items:flex-end;flex-wrap:wrap;gap:.4rem;padding:.32rem;border:1px solid rgba(240,198,110,.42);border-radius:10px;background:rgba(12,22,39,.98)}
+.mruv-fullscreen-time-picker[hidden]{display:none!important}
+.mruv-fullscreen-time-picker label{display:grid;gap:.15rem;color:var(--muted);font-size:.72rem;line-height:1.2}
+.mruv-fullscreen-time-picker input{box-sizing:border-box;width:6.8rem;min-height:40px;padding:.42rem .55rem;border:1px solid var(--line);border-radius:8px;background:var(--surface,#0c1627);color:var(--text);font:inherit;font-variant-numeric:tabular-nums}
+.mruv-fullscreen-time-picker .button{min-height:40px;padding:.45rem .65rem}
+@media(max-width:600px){.mruv-fullscreen-time-picker{flex-basis:100%;justify-content:center}.mruv-fullscreen-time-picker input{width:6rem}}
+
 .mruv-edit-actions[hidden]{display:none!important}
 .mruv-edit-actions p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.45}
 .mruv-edit-actions .mruv-edit-buttons{display:flex;gap:.5rem;flex-wrap:wrap}

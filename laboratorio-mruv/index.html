@@ -10,10 +10,10 @@
   <title>Laboratório de MRUV — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-mruv.css?v=motion-live-editor-timer-20261013-1">
+  <link rel="stylesheet" href="laboratorio-mruv.css?v=mru-time-selector-20261014-1">
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=menu-button-20261014-2" defer></script>
-  <script type="module" src="laboratorio-mruv.js?v=motion-property-confirm-20261013-3"></script>
+  <script type="module" src="laboratorio-mruv.js?v=mru-time-selector-20261014-1"></script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
@@ -66,7 +66,12 @@
             </svg>
             <div id="mruv-live-description" class="sr-only" aria-live="polite"></div>
             <div class="mruv-fullscreen-tools" id="mruv-fullscreen-tools" hidden>
-              <button id="mruv-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><output id="mruv-fullscreen-time" class="mruv-fullscreen-time" aria-label="Tempo decorrido da animação" aria-live="off">t = 0,00 s</output><button id="mruv-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mruv-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
+              <button id="mruv-fullscreen-play" class="button" type="button" aria-pressed="false">Continuar</button><output id="mruv-fullscreen-time" class="mruv-fullscreen-time" aria-label="Tempo decorrido da animação" aria-live="off">t = 0,00 s</output><button id="mruv-fullscreen-time-toggle" class="button button-outline" type="button" aria-controls="mruv-fullscreen-time-picker" aria-expanded="false">⏱ Escolher tempo</button>
+               <form id="mruv-fullscreen-time-picker" class="mruv-fullscreen-time-picker" hidden>
+                 <label for="mruv-fullscreen-time-input">Instante (s)<input id="mruv-fullscreen-time-input" type="number" min="0" max="12" step="any" value="0" inputmode="decimal" required></label>
+                 <button class="button button-primary" type="submit">Ir para</button>
+                 <button id="mruv-fullscreen-time-close" class="button button-outline" type="button">Fechar</button>
+               </form><button id="mruv-fullscreen-zoom-out" class="button button-outline" type="button" aria-label="Afastar a animação">− Zoom</button><button id="mruv-fullscreen-zoom-in" class="button button-outline" type="button" aria-label="Aproximar a animação">＋ Zoom</button>
               <button id="mruv-fullscreen-menu" class="button button-outline" type="button" aria-controls="mruv-fullscreen-drawer" aria-expanded="false">☰ Controles</button>
               <button id="mruv-fullscreen-exit" class="button button-outline" type="button">Sair da tela cheia</button>
             </div>

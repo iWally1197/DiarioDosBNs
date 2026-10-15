@@ -446,10 +446,43 @@ function renderMode(){
     const hidden=state.mode==="teacher"&&!state.teacherReveal;$("mruv-results-heading").closest(".mruv-results-card").hidden=hidden;$("mruv-graphs-heading").closest(".mruv-graphs-card").hidden=hidden;$("mruv-table-heading").closest(".mruv-table-card").hidden=hidden;$("mruv-math-card").hidden=hidden;
     $("mruv-teacher-reveal").textContent=state.teacherReveal?"Ocultar resultados":"Mostrar resultados";
   }
+  function setupFullscreenTimePicker(){
+    const toggle=$("mruv-fullscreen-time-toggle"),picker=$("mruv-fullscreen-time-picker"),input=$("mruv-fullscreen-time-input"),closeButton=$("mruv-fullscreen-time-close");
+    const close=()=>{
+      picker.hidden=true;
+      toggle.setAttribute("aria-expanded","false");
+      toggle.textContent="⏱ Escolher tempo";
+    };
+    toggle.addEventListener("click",()=>{
+      if(!picker.hidden){close();return;}
+      pause();
+      input.max=String(state.duration);
+      input.value=String(Number(state.time.toFixed(2)));
+      picker.hidden=false;
+      toggle.setAttribute("aria-expanded","true");
+      toggle.textContent="Fechar seletor";
+      requestAnimationFrame(()=>input.focus());
+    });
+    picker.addEventListener("submit",event=>{
+      event.preventDefault();
+      input.max=String(state.duration);
+      if(!input.reportValidity())return;
+      setTime(input.valueAsNumber,"fullscreen");
+      close();
+      status("Animação ajustada para t = "+fmt(state.time)+" s.");
+    });
+    closeButton.addEventListener("click",()=>{close();toggle.focus();});
+    document.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&!picker.hidden){close();toggle.focus();}
+    });
+    return close;
+  }
+
   function setupFullscreenDock(){
     const stage=$("mruv-stage"),tools=$("mruv-fullscreen-tools"),drawer=$("mruv-fullscreen-drawer"),content=drawer.querySelector(".mruv-fullscreen-drawer-content");
     const selectors=[".mruv-mode-bar",".mruv-camera-details",".mruv-vector-details",".mruv-playback-card",".mruv-results-card","#mruv-math-card","#mruv-graphs-card",".mruv-table-card",".mruv-sidebar",".mruv-investigation-card"];
     const relocated=[];
+    const closeTimePicker=setupFullscreenTimePicker();
     function movePanelsIntoDock(){
       for(const selector of selectors){const node=document.querySelector(selector);if(!node||content.contains(node))continue;const marker=document.createComment("fullscreen panel position");node.parentNode.insertBefore(marker,node);content.append(node);relocated.push({node,marker});}
     }
@@ -475,7 +508,7 @@ function renderMode(){
         requestAnimationFrame(()=>{refreshFrame(true);drawCharts();});
       }else{
         restorePanels();tools.hidden=true;drawer.hidden=true;stage.classList.remove("mruv-drawer-collapsed");
-        document.body.classList.remove("mruv-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);
+        document.body.classList.remove("mruv-fullscreen-active");syncPlaybackButtons();setTimeout(drawCharts,100);closeTimePicker();
       }
       $("mruv-fullscreen").textContent=active?"Sair da tela cheia":"Tela cheia";
       $("mruv-graphs-fullscreen").textContent=document.fullscreenElement===$("mruv-graphs-card")?"Sair dos gráficos em tela cheia":"Gráficos em tela cheia";
