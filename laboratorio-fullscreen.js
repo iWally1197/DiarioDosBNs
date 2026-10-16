@@ -32,6 +32,8 @@
     .lab-standard-fullscreen-time-picker label { display: grid; gap: 5px; color: #aab8cc; font-size: 12px; }
     .lab-standard-fullscreen-time-picker input { box-sizing: border-box; width: 130px; min-height: 40px; padding: 8px;
       border: 1px solid rgba(206,218,240,.3); border-radius: 7px; background: #08101f; color: #fff; font: inherit; }
+    .lab-standard-fullscreen-time-picker > button { min-height:40px; padding:8px 11px; border:1px solid rgba(228,196,119,.52); border-radius:7px; background:#111c2d; color:#f4f5fa; font:inherit; cursor:pointer; }
+    .lab-standard-fullscreen-time-picker > .lab-standard-picker-go { background:#326d58; border-color:#68bd91; }
     .lab-standard-fullscreen-toolbar .lab-standard-extra { border-color: rgba(129,179,255,.6); }
     #lab-workspace.lab-standard-fullscreen-active > .lab-standard-fullscreen-toolbar {
       position: relative; inset: auto; flex: 0 0 auto; align-self: stretch; margin: 0 0 7px;
@@ -217,7 +219,7 @@
         const extra = button(profile.extraLabel || source.textContent.trim(), "lab-standard-extra", () => source.click());
         extra.dataset.labStandardExtra = "true";
         extra.setAttribute("aria-pressed", attr(source, "aria-pressed") || "false");
-        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit") || null);
+        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit") || null);
         profile.extraButton = extra;
         profile.extraSource = source;
       }
@@ -228,7 +230,7 @@
         if (!source) return;
         const extra = button("Vista " + mode.toUpperCase(), "lab-standard-extra", () => source.click());
         extra.dataset.labStandardExtra = "true";
-        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit") || null);
+        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit") || null);
         extra.dataset.modeSource = mode;
       });
     }
@@ -237,7 +239,7 @@
       if (source) {
         const extra = button("Avançar", "lab-standard-extra", () => source.click());
         extra.dataset.labStandardExtra = "true";
-        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit") || null);
+        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit") || null);
       }
     }
     if (profile.reset) {
@@ -245,7 +247,7 @@
       if (source) {
         const extra = button("Reiniciar", "lab-standard-extra", () => source.click());
         extra.dataset.labStandardExtra = "true";
-        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit") || null);
+        bar.insertBefore(extra, bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit") || null);
       }
     }
   }
