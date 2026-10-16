@@ -1,5 +1,6 @@
-import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=concave-spherical-20261016-1";
 
+const concaveImageGraphCache = new Map();
 const G = 9.81;
 const COULOMB = 8.9875517923e9;
 
@@ -221,6 +222,40 @@ function line(id, p, time, yKey, yLabel, yUnit, count = 121) {
 
 export function graphFor(id, p, time = 0, chart = "") {
   if (["optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(id)) {
+    if (id === "optics-concave-mirror" && chart === "image") {
+      const radius = positive(p.radius, "Raio de curvatura");
+      const focalLength = radius / 2;
+      const xMin = Math.max(0.1, Math.min(focalLength * 0.25, Number(p.objectDistance) * 0.5));
+      const xMax = Math.max(xMin + 0.2, focalLength * 3, Number(p.objectDistance) * 1.5);
+      const cacheKey = JSON.stringify([
+        radius, p.apertureRatio, p.objectDistance, p.objectHeight, p.concaveModel, p.experimentMode,
+        p.beamMode, p.flashlightHeight, p.flashlightAngle, p.beamOpening
+      ]);
+      let curve = concaveImageGraphCache.get(cacheKey);
+      if (!curve) {
+        const points = Array.from({ length: 161 }, (_, index) => {
+          const objectDistance = xMin + (xMax - xMin) * index / 160;
+          const sample = opticalModelFor(id, { ...p, objectDistance }, 0).values;
+          const imageDistance = sample.imageDistance;
+          return Number.isFinite(imageDistance) && Math.abs(imageDistance) <= 12 * radius
+            ? { x: objectDistance, y: imageDistance }
+            : null;
+        });
+        const modelLabel = p.concaveModel === "exact" ? "Traçado esférico · foco geométrico de melhor ajuste" : "Equação paraxial do espelho";
+        curve = { xLabel: "Distância do objeto p (m)", yLabel: "Distância da imagem q (m)", xMin, xMax, modelLabel, points };
+        concaveImageGraphCache.set(cacheKey, curve);
+        if (concaveImageGraphCache.size > 8) concaveImageGraphCache.delete(concaveImageGraphCache.keys().next().value);
+      }
+      const current = opticalModelFor(id, p, 0).values;
+      return {
+        xLabel: curve.xLabel,
+        yLabel: curve.yLabel,
+        xMin: curve.xMin,
+        xMax: curve.xMax,
+        series: [{ label: curve.modelLabel, points: curve.points, cursor: Number.isFinite(current.imageDistance) ? { x: Number(p.objectDistance), y: current.imageDistance } : null }],
+        reference: { y: focalLength, label: "f = R/2" }
+      };
+    }
     return opticalGraphFor(id, p, time);
   }
   if (["mru", "muv", "newton", "energy", "collision", "spring"].includes(id)) {

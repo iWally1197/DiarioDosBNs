@@ -33,8 +33,37 @@ function reflect(direction, normal) {
   return unit({ x: direction.x - 2 * projection * normal.x, y: direction.y - 2 * projection * normal.y });
 }
 
+function paraxialReflectedDirection(incomingDirection, hit, focalLength) {
+  const incidentSlope = incomingDirection.y / incomingDirection.x;
+  const reflectedSlope = -incidentSlope + hit.y / focalLength;
+  return unit({ x: -1, y: -reflectedSlope });
+}
+
 function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+function bestFitRayFocus(interactions) {
+  const rays = interactions.filter((item) => item?.hit && item?.reflectedDirection);
+  if (rays.length < 2) return null;
+  let a = 0, b = 0, c = 0, u = 0, v = 0;
+  for (const ray of rays) {
+    const nx = -ray.reflectedDirection.y;
+    const ny = ray.reflectedDirection.x;
+    const projection = nx * ray.hit.x + ny * ray.hit.y;
+    a += nx * nx; b += nx * ny; c += ny * ny;
+    u += nx * projection; v += ny * projection;
+  }
+  const determinant = a * c - b * b;
+  if (Math.abs(determinant) < 1e-10) return null;
+  const point = { x: (u * c - b * v) / determinant, y: (a * v - b * u) / determinant };
+  const rms = Math.sqrt(rays.reduce((sum, ray) => {
+    const nx = -ray.reflectedDirection.y;
+    const ny = ray.reflectedDirection.x;
+    const distanceToLine = nx * (point.x - ray.hit.x) + ny * (point.y - ray.hit.y);
+    return sum + distanceToLine * distanceToLine;
+  }, 0) / rays.length);
+  return { point, rms, rayCount: rays.length };
 }
 
 function addScaled(origin, direction, amount) {
@@ -184,30 +213,34 @@ function sphericalMirror(id, p) {
   const sign = id === "optics-concave-mirror" ? 1 : -1;
   const signedRadius = sign * radius;
   const focalLength = signedRadius / 2;
-  const surfaceProfile = sign > 0 ? "parabolic" : "spherical";
+  const surfaceProfile = "spherical";
+  const apertureRatio = id === "optics-concave-mirror" ? Number(p.apertureRatio ?? 0.4) : 0.52;
+  if (!(apertureRatio > 0 && apertureRatio < 1)) throw new RangeError("A semiabertura deve satisfazer 0 < a/R < 1.");
+  const aperture = radius * apertureRatio;
+  const rayModel = id === "optics-concave-mirror" ? (p.concaveModel === "exact" ? "exact" : "paraxial") : "exact";
   const denominator = 1 / focalLength - 1 / objectDistance;
   const imageDistance = Math.abs(denominator) < 1e-10 ? Infinity : 1 / denominator;
   const magnification = Number.isFinite(imageDistance) ? -imageDistance / objectDistance : -Infinity;
   const imageX = Number.isFinite(imageDistance) ? -imageDistance : null;
   const imageY = Number.isFinite(magnification) ? magnification * objectHeight : null;
   const center = { x: -signedRadius, y: 0 };
-  const aperture = radius * 0.52;
   const xMin = Math.min(-objectDistance * 1.15, -radius * 1.25, imageX !== null && imageX < 0 ? Math.max(-8, imageX * 1.08) : -0.45);
   const xMax = Math.max(0.45, radius * 1.25, imageX !== null && imageX > 0 ? Math.min(8, imageX * 1.08) : 0.45);
   const yExtent = Math.max(aperture * 1.5, objectHeight * 1.5, Math.abs(imageY ?? 0) > 0 ? Math.min(Math.abs(imageY), 7) * 1.12 : 0.5);
   const bounds = { xMin, xMax, yMin: -yExtent, yMax: yExtent };
   const object = { x: -objectDistance, y: objectHeight };
   const sampleHeights = [-0.78, -0.28, 0.28, 0.78].map((factor) => factor * aperture);
-  const surfaceX = (y) => surfaceProfile === "parabolic" ? -(y ** 2) / (4 * focalLength) : -signedRadius + sign * Math.sqrt(Math.max(0, radius ** 2 - y ** 2));
+  const surfaceX = (y) => -signedRadius + sign * Math.sqrt(Math.max(0, radius ** 2 - y ** 2));
   const rays = [];
   const particlePaths = [];
   for (const y of sampleHeights) {
     const hit = { x: surfaceX(y), y };
     const incomingDirection = unit({ x: hit.x - object.x, y: hit.y - object.y });
-    const surfaceNormal = surfaceProfile === "parabolic"
-      ? unit({ x: 1, y: y / (2 * focalLength) })
-      : unit({ x: hit.x - center.x, y: hit.y - center.y });
-    const outgoingDirection = reflect(incomingDirection, surfaceNormal);
+    const radialNormal = unit({ x: hit.x - center.x, y: hit.y - center.y });
+    const surfaceNormal = sign > 0 ? { x: -radialNormal.x, y: -radialNormal.y } : radialNormal;
+    const outgoingDirection = id === "optics-concave-mirror" && rayModel === "paraxial"
+      ? paraxialReflectedDirection(incomingDirection, hit, focalLength)
+      : reflect(incomingDirection, surfaceNormal);
     const end = rayToBounds(hit, outgoingDirection, bounds);
     const virtualEnd = rayToBounds(hit, { x: -outgoingDirection.x, y: -outgoingDirection.y }, bounds);
     const interaction = { hit, normal: surfaceNormal, incomingDirection, reflectedDirection: outgoingDirection };
@@ -223,11 +256,14 @@ function sphericalMirror(id, p) {
   const primarySegments = particlePaths[Math.floor(particlePaths.length / 2)];
   const canDisplayImage = imageX !== null && Number.isFinite(imageY) && Math.abs(imageX) <= 8 && Math.abs(imageY) <= 7;
   const objectBase = { x: -objectDistance, y: 0 };
+  const exactFocus = id === "optics-concave-mirror" && rayModel === "exact"
+    ? bestFitRayFocus(rays.filter((ray) => ray.role === "refletido").map((ray) => ray.interaction))
+    : null;
   return {
-    kind: "spherical-mirror", bounds, center, radius, signedRadius, focalLength, objectBase, object, surfaceProfile,
+    kind: "spherical-mirror", bounds, center, radius, signedRadius, focalLength, objectBase, object, surfaceProfile, rayModel, apertureRatio,
     image: canDisplayImage ? { x: imageX, y: imageY } : null,
     imageBase: canDisplayImage ? { x: imageX, y: 0 } : null,
-    imageDistance, magnification, surfacePoints, rays, segments: primarySegments, particlePaths, aperture,
+    imageDistance, magnification, surfacePoints, rays, segments: primarySegments, particlePaths, aperture, exactFocus,
     view: null, sign, imageType: imageDistance === Infinity ? "no infinito" : imageDistance > 0 ? "real" : "virtual"
   };
 }
@@ -301,31 +337,6 @@ function intersectPlaneRay(origin, direction, geometry) {
 }
 
 function intersectSphericalRay(origin, direction, geometry) {
-  if (geometry.surfaceProfile === "parabolic") {
-    const focalLength = geometry.focalLength;
-    const a = direction.y ** 2;
-    const b = 4 * focalLength * direction.x + 2 * origin.y * direction.y;
-    const c = 4 * focalLength * origin.x + origin.y ** 2;
-    const roots = [];
-    if (Math.abs(a) < 1e-12) {
-      if (Math.abs(b) < 1e-12) return null;
-      roots.push(-c / b);
-    } else {
-      const discriminant = b ** 2 - 4 * a * c;
-      if (discriminant < 0) return null;
-      const root = Math.sqrt(Math.max(0, discriminant));
-      roots.push((-b - root) / (2 * a), (-b + root) / (2 * a));
-    }
-    for (const rayDistance of roots.filter((value) => value > 1e-7).sort((x, y) => x - y)) {
-      const hit = addScaled(origin, direction, rayDistance);
-      if (Math.abs(hit.y) > geometry.aperture + 1e-8) continue;
-      const expectedX = -(hit.y ** 2) / (4 * focalLength);
-      if (Math.abs(hit.x - expectedX) > 1e-5) continue;
-      const normal = unit({ x: 1, y: hit.y / (2 * focalLength) });
-      return { hit, normal, incomingDirection: direction, reflectedDirection: reflect(direction, normal) };
-    }
-    return null;
-  }
   const relative = { x: origin.x - geometry.center.x, y: origin.y - geometry.center.y };
   const projection = dot(relative, direction);
   const discriminant = projection * projection - (dot(relative, relative) - geometry.radius ** 2);
@@ -336,7 +347,8 @@ function intersectSphericalRay(origin, direction, geometry) {
     if (Math.abs(hit.y) > geometry.aperture + 1e-8) continue;
     const surfaceX = -geometry.signedRadius + geometry.sign * Math.sqrt(Math.max(0, geometry.radius ** 2 - hit.y ** 2));
     if (Math.abs(hit.x - surfaceX) > 1e-5) continue;
-    const normal = unit({ x: hit.x - geometry.center.x, y: hit.y - geometry.center.y });
+    const radialNormal = unit({ x: hit.x - geometry.center.x, y: hit.y - geometry.center.y });
+    const normal = geometry.sign > 0 ? { x: -radialNormal.x, y: -radialNormal.y } : radialNormal;
     return { hit, normal, incomingDirection: direction, reflectedDirection: reflect(direction, normal) };
   }
   return null;
@@ -350,124 +362,8 @@ function directionToTarget(origin, target, fallback = { x: 1, y: 0 }) {
   return { x: dx / length, y: dy / length };
 }
 
-function parabolicSurfacePoint(y, geometry) {
-  return { x: -(y ** 2) / (4 * geometry.focalLength), y };
-}
-
-function parabolicHitAtAngle(source, angle, geometry, apertureLimit) {
-  const direction = { x: Math.cos(angle), y: Math.sin(angle) };
-  const focalLength = geometry.focalLength;
-  const a = direction.y ** 2 / (4 * focalLength);
-  const b = direction.x + source.y * direction.y / (2 * focalLength);
-  const c = source.x + source.y ** 2 / (4 * focalLength);
-  const roots = [];
-  if (Math.abs(a) < 1e-12) {
-    if (Math.abs(b) > 1e-12) roots.push(-c / b);
-  } else {
-    const discriminant = b ** 2 - 4 * a * c;
-    if (discriminant >= -1e-10) {
-      const root = Math.sqrt(Math.max(0, discriminant));
-      roots.push((-b - root) / (2 * a), (-b + root) / (2 * a));
-    }
-  }
-  const travel = roots.filter((value) => value > 1e-8).sort((left, right) => left - right)[0];
-  if (!Number.isFinite(travel)) return null;
-  const hit = { x: source.x + direction.x * travel, y: source.y + direction.y * travel };
-  if (Math.abs(hit.y) > apertureLimit + 1e-7) return null;
-  return hit;
-}
-
-function idealizedFocusMirror(p, geometry, source, settings) {
-  const focus = {
-    x: -geometry.focalLength + finite(p.focusOffsetX ?? 0, "Deslocamento horizontal do foco"),
-    y: finite(p.focusOffsetY ?? 0, "Deslocamento vertical do foco")
-  };
-  const padding = 0.7;
-  geometry.bounds = {
-    xMin: Math.min(geometry.bounds.xMin, focus.x - padding),
-    xMax: Math.max(geometry.bounds.xMax, focus.x + padding),
-    yMin: Math.min(geometry.bounds.yMin, focus.y - padding),
-    yMax: Math.max(geometry.bounds.yMax, focus.y + padding)
-  };
-
-  // Mantém as sete direções dentro da abertura refletora, mesmo nas posições extremas da fonte.
-  const sourceDistance = Math.abs(source.x);
-  const reachableAperture = Math.sqrt(4 * geometry.focalLength * Math.max(sourceDistance - 1e-6, 1e-6));
-  const apertureLimit = Math.min(geometry.aperture * 0.96, reachableAperture * 0.98);
-  const lowerHit = parabolicSurfacePoint(-apertureLimit, geometry);
-  const upperHit = parabolicSurfacePoint(apertureLimit, geometry);
-  const lowerAngle = Math.atan2(lowerHit.y - source.y, lowerHit.x - source.x);
-  const upperAngle = Math.atan2(upperHit.y - source.y, upperHit.x - source.x);
-  const allowedMin = Math.min(lowerAngle, upperAngle);
-  const allowedMax = Math.max(lowerAngle, upperAngle);
-  const opening = Math.min(settings.opening, allowedMax - allowedMin);
-  const requestedCenterAngle = settings.beamAngle ?? 0;
-  const centerAngle = clamp(requestedCenterAngle, allowedMin + opening / 2, allowedMax - opening / 2);
-  const firstAngle = centerAngle - opening / 2;
-  const rayCount = 7;
-  const rays = [];
-  const particlePaths = [];
-  const coneHits = [];
-
-  for (let index = 0; index < rayCount; index += 1) {
-    const fraction = rayCount === 1 ? 0 : index / (rayCount - 1);
-    const angle = firstAngle + fraction * opening;
-    const fallbackY = -apertureLimit + fraction * 2 * apertureLimit;
-    const hit = parabolicHitAtAngle(source, angle, geometry, apertureLimit)
-      || parabolicSurfacePoint(fallbackY, geometry);
-    coneHits.push(hit);
-
-    const direction = directionToTarget(hit, focus, { x: -Math.cos(angle), y: -Math.sin(angle) });
-    const end = rayToBounds(addScaled(focus, direction, 1e-8), direction, geometry.bounds);
-    const path = [
-      { start: source, end: hit, index: 1 },
-      { start: hit, end: focus, index: 1 },
-      { start: focus, end, index: 1 }
-    ];
-    particlePaths.push(path);
-    rays.push({ role: "raio incidente do cone", points: [source, hit], index: 1, color: "beam" });
-    rays.push({ role: "reflexão idealizada até F*", points: [hit, focus], index: 1, color: "beam" });
-    rays.push({ role: "continuação após F*", points: [focus, end], index: 1, color: "beam" });
-  }
-
-  const centralDirection = { x: Math.cos(centerAngle), y: Math.sin(centerAngle) };
-  geometry.source = source;
-  geometry.focus = focus;
-  geometry.rays = rays;
-  geometry.particlePaths = particlePaths;
-  geometry.segments = particlePaths[0] || [];
-  geometry.mode = "lantern";
-  geometry.flashlight = {
-    source,
-    focus,
-    direction: centralDirection,
-    rayCount,
-    actualRayCount: particlePaths.length,
-    particleCount: settings.particleCount,
-    parallel: false,
-    focusAligned: true,
-    idealized: true,
-    opticsMode: "idealized",
-    beamAngle: centerAngle,
-    opening,
-    requestedOpening: settings.opening,
-    emissionRate: settings.emissionRate,
-    visualSpeed: settings.visualSpeed,
-    intensity: settings.intensity,
-    conePoints: [source, ...coneHits, source],
-    primaryInteraction: null,
-    showRays: p.showRays !== false,
-    showNormal: p.showNormal !== false,
-    showAngles: p.showAngles !== false,
-    showTrails: p.showTrails !== false,
-    showParticles: p.showParticles !== false,
-    showImage: p.showLanternImage !== false
-  };
-  return geometry;
-}
-
 function flashlightMirror(id, p, geometry) {
-  const focusAligned = geometry.surfaceProfile === "parabolic" && p.beamMode === "parallel";
+  const focusAligned = false;
   const beamAngle = (focusAligned ? 0 : finite(p.flashlightAngle ?? 0, "Orientação da lanterna")) * Math.PI / 180;
   const opening = finite(p.beamOpening ?? 20, "Abertura do feixe") * Math.PI / 180;
   const emissionRate = positive(p.emissionRate ?? 0.65, "Frequência visual de emissão");
@@ -481,8 +377,6 @@ function flashlightMirror(id, p, geometry) {
   const particleCount = Math.round(finite(p.particleCount ?? 8, "Quantidade de pontos luminosos"));
   if (particleCount < 1 || particleCount > 32) throw new RangeError("A quantidade de pontos luminosos deve ficar entre 1 e 32.");
 
-  // A reflexão geométrica real continua sendo calculada pelo traçador abaixo.
-  // A convergência idealizada é uma representação didática independente da lei de reflexão.
   const parallel = p.beamMode === "parallel";
   const rayCount = 7;
   const baseAngle = geometry.kind === "plane-mirror" ? Math.atan2(geometry.incomingDirection.y, geometry.incomingDirection.x) : 0;
@@ -492,9 +386,6 @@ function flashlightMirror(id, p, geometry) {
   const source = geometry.kind === "plane-mirror"
     ? addScaled(geometry.hit, { x: -geometry.incomingDirection.x, y: -geometry.incomingDirection.y }, positive(p.sourceDistance ?? 1.8, "Distância da lanterna"))
     : { x: -positive(p.objectDistance, "Distância da lanterna"), y: finite(p.flashlightHeight ?? 0.6, "Altura da lanterna") };
-  if (geometry.surfaceProfile === "parabolic" && id === "optics-concave-mirror" && p.lanternOpticsMode === "idealized" && p.lightMode !== "parallel") {
-    return idealizedFocusMirror(p, geometry, source, { opening, beamAngle, emissionRate, visualSpeed, intensity, particleCount });
-  }
   if (geometry.kind === "plane-mirror") {
     const image = reflectedPointAcrossPlane(source, geometry.center, geometry.normal);
     const pad = 0.8;
@@ -512,9 +403,9 @@ function flashlightMirror(id, p, geometry) {
   const perpendicular = { x: -central.y, y: central.x };
   const requestedSpread = (geometry.kind === "spherical-mirror" ? positive(p.objectDistance, "Distância da lanterna") : Number(p.sourceDistance ?? 1.8)) * Math.tan(opening / 2);
   const sourceSpread = parallel
-    ? geometry.surfaceProfile === "parabolic"
-      ? Math.max(0, Math.min(requestedSpread, geometry.aperture - Math.abs(source.y) - 0.015))
-      : clamp(requestedSpread, 0.08, geometry.kind === "spherical-mirror" ? geometry.aperture * 0.9 : 0.55)
+    ? geometry.kind === "spherical-mirror"
+      ? Math.max(0, Math.min(requestedSpread, geometry.aperture * 0.9))
+      : clamp(requestedSpread, 0.08, 0.55)
     : 0;
   const rays = [];
   const particlePaths = [];
@@ -525,10 +416,16 @@ function flashlightMirror(id, p, geometry) {
     const direction = unit({ x: Math.cos(angle), y: Math.sin(angle) });
     const offset = parallel ? fraction * sourceSpread : 0;
     const origin = { x: source.x + perpendicular.x * offset, y: source.y + perpendicular.y * offset };
-    const interaction = geometry.kind === "plane-mirror"
+    let interaction = geometry.kind === "plane-mirror"
       ? intersectPlaneRay(origin, direction, geometry)
       : intersectSphericalRay(origin, direction, geometry);
     if (!interaction) continue;
+    if (id === "optics-concave-mirror" && geometry.rayModel === "paraxial") {
+      interaction = {
+        ...interaction,
+        reflectedDirection: paraxialReflectedDirection(interaction.incomingDirection, interaction.hit, geometry.focalLength)
+      };
+    }
     const end = rayToBounds(addScaled(interaction.hit, interaction.reflectedDirection, 1e-5), interaction.reflectedDirection, geometry.bounds);
     const virtualEnd = rayToBounds(addScaled(interaction.hit, { x: -interaction.reflectedDirection.x, y: -interaction.reflectedDirection.y }, 1e-5), { x: -interaction.reflectedDirection.x, y: -interaction.reflectedDirection.y }, geometry.bounds);
     const incidentAngle = Math.acos(clamp(Math.abs(dot(interaction.incomingDirection, interaction.normal)), 0, 1));
@@ -552,8 +449,9 @@ function flashlightMirror(id, p, geometry) {
   geometry.flashlight = {
     source, direction: central, rayCount, actualRayCount: hits.length,
     parallel, focusAligned, beamAngle, opening, emissionRate, visualSpeed, intensity, particleCount,
-    idealized: false, opticsMode: "realistic", focus: null,
+    opticsMode: geometry.rayModel || "exact", focus: null,
     primaryInteraction: hits[Math.floor(hits.length / 2)] || null,
+    interactions: hits,
     showRays: p.showRays !== false,
     showNormal: p.showNormal !== false,
     showAngles: p.showAngles !== false,
@@ -630,6 +528,29 @@ export function opticalModelFor(id, parameters, time = 0) {
     geometry = sphericalMirror(id, opticalParameters);
     geometry.mode = experimentMode;
     if (experimentMode === "lantern") geometry = flashlightMirror(id, parameters, geometry);
+    if (id === "optics-concave-mirror") {
+      geometry.rayModel = parameters.concaveModel === "exact" ? "exact" : "paraxial";
+      geometry.paraxialImageDistance = geometry.imageDistance;
+      geometry.paraxialMagnification = geometry.magnification;
+      const interactions = geometry.flashlight?.interactions || geometry.rays.filter((ray) => ray.role === "refletido").map((ray) => ray.interaction);
+      const exactFocus = geometry.rayModel === "exact" ? bestFitRayFocus(interactions) : null;
+      geometry.exactFocus = exactFocus;
+      if (geometry.flashlight?.parallel) {
+        geometry.paraxialImageDistance = geometry.focalLength;
+        geometry.paraxialMagnification = 0;
+        geometry.imageDistance = geometry.rayModel === "exact" && exactFocus ? -exactFocus.point.x : geometry.focalLength;
+        geometry.magnification = 0;
+        geometry.imageType = "real";
+        geometry.image = exactFocus?.point && geometry.rayModel === "exact" ? exactFocus.point : { x: -geometry.focalLength, y: 0 };
+        geometry.imageBase = { x: geometry.image.x, y: 0 };
+      } else if (geometry.rayModel === "exact" && exactFocus) {
+        geometry.image = exactFocus.point;
+        geometry.imageBase = { x: exactFocus.point.x, y: 0 };
+        geometry.imageDistance = -exactFocus.point.x;
+        geometry.magnification = objectHeight > 0 ? exactFocus.point.y / objectHeight : NaN;
+        geometry.imageType = geometry.imageDistance > 0 ? "real" : "virtual";
+      }
+    }
     const lambda = wavelengthInfo(parameters);
     const primaryInteraction = geometry.flashlight?.primaryInteraction;
     const objectDistance = Number(parameters.objectDistance);
@@ -638,13 +559,18 @@ export function opticalModelFor(id, parameters, time = 0) {
     const incidentAngle = primaryInteraction ? Math.acos(clamp(Math.abs(dot(primaryInteraction.incomingDirection, primaryInteraction.normal)), 0, 1)) * 180 / Math.PI : null;
     const reflectedAngle = primaryInteraction ? Math.acos(clamp(Math.abs(dot(primaryInteraction.reflectedDirection, primaryInteraction.normal)), 0, 1)) * 180 / Math.PI : null;
     values = {
-      time: t, radius: geometry.signedRadius, focalLength: geometry.focalLength, objectDistance: Number(parameters.objectDistance),
+      time: t, radius: geometry.signedRadius, focalLength: geometry.focalLength, objectDistance: geometry.flashlight?.parallel ? Infinity : Number(parameters.objectDistance),
       imageDistance: geometry.imageDistance, magnification: geometry.magnification, image: geometry.imageType, angleIncident: incidentAngle, angleReflected: reflectedAngle,
       objectHeight, imageHeight,
-      focusX: geometry.flashlight?.idealized ? geometry.flashlight.focus.x : null,
-      focusY: geometry.flashlight?.idealized ? geometry.flashlight.focus.y : null,
+      aperture: geometry.aperture, apertureRatio: geometry.apertureRatio,
+      rayModel: geometry.rayModel === "paraxial" ? "Paraxial" : "Traçado exato",
+      exactImageBlurRadius: geometry.exactFocus?.rms ?? null,
+      paraxialImageDistance: id === "optics-concave-mirror" ? geometry.paraxialImageDistance : geometry.imageDistance,
+      paraxialMagnification: id === "optics-concave-mirror" ? geometry.paraxialMagnification : geometry.magnification,
+      focusX: geometry.flashlight?.focus ? geometry.flashlight.focus.x : null,
+      focusY: geometry.flashlight?.focus ? geometry.flashlight.focus.y : null,
       imageNature: geometry.imageType,
-      orientation: geometry.magnification >= 0 ? "direita" : "invertida",
+      orientation: geometry.flashlight?.parallel ? "feixe paralelo" : geometry.magnification >= 0 ? "direita" : "invertida",
       imageScale: imageClassification(geometry.magnification),
       objectImageSeparation: Number.isFinite(geometry.imageDistance) ? Math.abs(geometry.imageDistance - objectDistance) : Infinity,
       wavelengthVacuumNm: lambda.wavelengthVacuumNm, wavelengthMediumNm: lambda.wavelengthVacuumNm,

@@ -1,4 +1,4 @@
-import { experiments } from "./laboratorio-catalogo.js?v=lab-publication-20261012-3";
+import { experiments } from "./laboratorio-catalogo.js?v=concave-spherical-20261016-1";
 import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-20261013-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
