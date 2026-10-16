@@ -9,7 +9,7 @@ if(shell&&scene&&chart){
   const controls=[...shell.querySelectorAll("[data-param]")];
   const defaults={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:.25};
   const parameters={...defaults};
-  let time=0,playing=false,raf=0,lastFrame=0,mode="2d";
+  let time=0,playing=false,raf=0,lastFrame=0,mode="2d",sceneZoom=1;
   let yaw=-.42,pitch=-.16,drag=null;
   const format=(value,digits=2)=>Number(value).toLocaleString("pt-BR",{minimumFractionDigits:digits,maximumFractionDigits:digits});
   const numberText=(value,digits=3)=>`${format(value,digits)}`;
@@ -36,7 +36,7 @@ if(shell&&scene&&chart){
     const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
     const x=cy*point[0]+sy*point[2],z=-sy*point[0]+cy*point[2];
     const y=cp*point[1]-sp*z,z2=sp*point[1]+cp*z;
-    const scale=Math.min(width,height)*.34/(3.8+z2);
+    const scale=Math.min(width,height)*.34*sceneZoom/(3.8+z2);
     return [width*.5+x*scale,height*.54-y*scale];
   }
   function drawScene(){
@@ -156,6 +156,8 @@ if(shell&&scene&&chart){
     try{if(!document.fullscreenElement)await shell.requestFullscreen();else await document.exitFullscreen();}
     catch{shell.querySelector("#faraday-help").textContent="A tela cheia não está disponível neste navegador. A simulação continua funcionando nesta página.";}
   });
+  window.addEventListener("diario-lab-zoom",(event)=>{if(document.fullscreenElement!==shell)return;sceneZoom=Math.max(.65,Math.min(2.5,sceneZoom*Number(event.detail?.factor||1)));draw();});
+  window.addEventListener("diario-lab-seek",(event)=>{if(document.fullscreenElement!==shell)return;const frequency=Number(parameters.frequency);if(!(frequency>0))return;pause();time=Math.max(0,Math.min(1/frequency,Number(event.detail?.time)||0));draw();});
   document.addEventListener("fullscreenchange",()=>{const full=document.fullscreenElement===shell;fullscreen.setAttribute("aria-pressed",String(full));if(panelToggle){panelToggle.hidden=!full;if(!full)panel.classList.remove("is-open");panelToggle.setAttribute("aria-expanded",String(panel.classList.contains("is-open")));}if(panelPlay)panelPlay.hidden=!full;syncPanelPlay();});
   scene.addEventListener("pointerdown",(event)=>{if(mode!=="3d")return;drag={x:event.clientX,y:event.clientY};scene.setPointerCapture(event.pointerId);});
   scene.addEventListener("pointermove",(event)=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag={x:event.clientX,y:event.clientY};yaw+=dx*.008;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.008));draw();});

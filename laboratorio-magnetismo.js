@@ -96,6 +96,7 @@ function prepareElectromagnetKit() {
     state.coilConnected = false; state.coilPowerRequested = false; state.powerPlug = plugNearCoil();
   }
 }
+let magnetZoom = 1;
 let view = { width: 0, height: 0, scale: 1, dpr: 1 };
 let drag = null;
 let redrawFrame = 0;
@@ -529,7 +530,7 @@ function canvasSize() {
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  view = { width, height, dpr, scale: Math.min((width - 58) / 0.82, (height - 56) / 0.52) };
+  view = { width, height, dpr, scale: Math.min((width - 58) / 0.82, (height - 56) / 0.52) * magnetZoom };
   return true;
 }
 
@@ -1237,6 +1238,11 @@ function placeFullscreenPanels(active) {
     });
   }
 }
+window.addEventListener("diario-lab-zoom", (event) => {
+  if (document.fullscreenElement !== workspace) return;
+  magnetZoom = clamp(magnetZoom * Number(event.detail?.factor || 1), 0.65, 2.5);
+  queueDraw();
+});
 byId("fullscreen-toggle").addEventListener("click", async () => {
   try {
     if (document.fullscreenElement === workspace) await document.exitFullscreen();
