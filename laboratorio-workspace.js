@@ -1,10 +1,10 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=concave-spherical-20261016-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=concave-spherical-20261016-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=concave-spherical-20261016-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=concave-spherical-20261016-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=concave-dual-20261016-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=concave-dual-20261016-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=concave-dual-20261016-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
 
 const $ = (selector) => document.querySelector(selector);
-const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-convex-mirror"]);
+const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
 const requestedId = new URLSearchParams(location.search).get("topico");
 if ($("[data-lab-experiment-page]")) initializeExperimentPage(requestedId);
 initializeSpecialExperimentFullscreen();
@@ -276,6 +276,10 @@ function initializeExperimentPage(topicId) {
         : "aproximação paraxial próxima do eixo; os raios selecionados representam o limite de pequenos ângulos.";
       return base + method + " A óptica geométrica não mostra difração nem interferência.";
     }
+    if (state.id === "optics-concave-parabolic-mirror") {
+      const modeLabel = state.mode === "human" ? "Objeto e imagem na parábola" : state.mode === "parallel" ? "Feixe paralelo na parábola" : "Cone da lanterna na parábola";
+      return modeLabel + ": cada raio intersecta x=−y²/(4f) e reflete pela normal local; raios paralelos ao eixo convergem no foco. A óptica geométrica não mostra difração nem interferência.";
+    }
     if (state.mode === "parallel") {
       return "Raios colimados chegam paralelos à superfície e são refletidos pela normal local. O gráfico e as medidas acompanham o mesmo modelo.";
     }
@@ -290,7 +294,7 @@ function initializeExperimentPage(topicId) {
     stop();
     state.id = id;
     state.opticalBounds = null;
-    state.mode = MIRROR_EXPERIMENTS.has(id) ? (id === "optics-concave-mirror" ? "parallel" : "lantern") : "human";
+    state.mode = MIRROR_EXPERIMENTS.has(id) ? (id === "optics-concave-mirror" || id === "optics-concave-parabolic-mirror" ? "parallel" : "lantern") : "human";
     state.time = 0;
     state.records = [];
     state.parameters = initialParameters(experiment);
@@ -343,6 +347,7 @@ function initializeExperimentPage(topicId) {
       "optics-reflection": "Espelho, normal e feixe são calculados pela geometria do raio. Arraste o centro para reposicionar o espelho, uma extremidade para girá-lo ou use os controles para mover o ponto de incidência.",
       "optics-refraction": "A direção do raio atravessando a interface é calculada pela lei de Snell. Se o ângulo crítico for ultrapassado, o modelo mostra reflexão interna total.",
       "optics-concave-mirror": "A calota é esférica. Compare a aproximação paraxial com a interseção exata dos raios na esfera e a lei vetorial da reflexão.",
+      "optics-concave-parabolic-mirror": "A superfície é parabólica; cada raio é refletido pela normal local e o feixe paralelo converge no foco da parábola.",
       "optics-convex-mirror": "O espelho convexo espalha os raios; seus prolongamentos tracejados localizam a imagem virtual. A posição calculada usa a aproximação paraxial.",
       "lens-diverging": "A distância focal é negativa; os raios emergem divergentes e seus prolongamentos localizam uma imagem virtual, direita e menor. O modelo usa a equação das lentes delgadas na aproximação paraxial."
     };
@@ -355,7 +360,9 @@ function initializeExperimentPage(topicId) {
       ? (state.parameters.concaveModel === "exact"
         ? "Interseção raio–esfera e reflexão vetorial na normal local; foco mostrado como melhor ajuste do feixe."
         : "Equação de conjugação do espelho esférico na aproximação paraxial; válida para pequenos ângulos e raios próximos ao eixo.")
-      : `Modelo analítico · unidades SI · ${experiment.assumptions}`;
+      : state.id === "optics-concave-parabolic-mirror"
+        ? "Interseção com a parábola x=−y²/(4f) e reflexão vetorial pela normal local; para objeto finito, a posição de imagem é a previsão paraxial."
+        : `Modelo analítico · unidades SI · ${experiment.assumptions}`;
     $("#workspace-question").textContent = experiment.question;
     $("#workspace-independent").textContent = experiment.independent;
     $("#workspace-dependent").textContent = experiment.dependent;
@@ -454,6 +461,7 @@ function initializeExperimentPage(topicId) {
     });
     const isMirror = MIRROR_EXPERIMENTS.has(state.id);
     const isConcave = state.id === "optics-concave-mirror";
+    const isParabolic = state.id === "optics-concave-parabolic-mirror";
     const currentMode = state.mode === "human" ? "Corpo humano" : state.mode === "parallel" ? "Lançamento paralelo" : "Lançamento de lanterna";
     if (mirrorModeToggleButton) {
       mirrorModeToggleButton.textContent = state.mode === "human" ? "Modo: Corpo humano" : "Luz: " + (state.mode === "parallel" ? "Paralela" : "Lanterna");
@@ -467,7 +475,9 @@ function initializeExperimentPage(topicId) {
     const modelLabel = state.parameters.concaveModel === "exact" ? "traçado geométrico exato" : "aproximação paraxial";
     $("#mirror-mode-description").textContent = isConcave
       ? currentMode + " · " + modelLabel + ". A esfera é a mesma nos dois modelos; muda o cálculo das trajetórias."
-      : state.mode === "parallel"
+      : isParabolic
+        ? currentMode + " · parábola côncava; os raios são traçados com interseção e reflexão pela normal local."
+        : state.mode === "parallel"
         ? "Raios colimados chegam paralelos ao espelho e são refletidos pela normal local."
         : state.mode === "lantern"
           ? "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
@@ -517,7 +527,9 @@ function initializeExperimentPage(topicId) {
       ? (state.parameters.concaveModel === "exact"
         ? "Traçado exato ativo: os raios intersectam a superfície esférica e refletem pela normal local. O menor espalhamento indica o foco geométrico de melhor ajuste."
         : "Modelo paraxial ativo: usa 1/f = 1/p + 1/q e dᵣ = dᵢ − 2(dᵢ·n)n na aproximação próxima do eixo.")
-      : mode === "parallel"
+      : state.id === "optics-concave-parabolic-mirror"
+        ? "Espelho parabólico ativo: a interseção e a reflexão vetorial usam a superfície x=−y²/(4f)."
+        : mode === "parallel"
         ? "Lançamento paralelo: raios colimados são refletidos pela superfície."
         : mode === "lantern"
           ? "Lançamento de lanterna: trajetórias, normais e reflexões são calculadas para cada raio."
@@ -670,12 +682,12 @@ function initializeExperimentPage(topicId) {
     stop();
     if (MIRROR_EXPERIMENTS.has(state.id)) {
       const experiment = experimentById.get(state.id);
-      state.mode = state.id === "optics-concave-mirror" ? "parallel" : "lantern";
+      state.mode = state.id === "optics-concave-mirror" || state.id === "optics-concave-parabolic-mirror" ? "parallel" : "lantern";
       state.parameters = initialParameters(experiment);
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
         showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
-        beamMode: state.id === "optics-concave-mirror" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
+        beamMode: state.id === "optics-concave-mirror" || state.id === "optics-concave-parabolic-mirror" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
       });
       if (state.id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
       else state.parameters.objectHeight = 1.7;
@@ -1139,6 +1151,7 @@ function initializeExperimentPage(topicId) {
     "optics-reflection": [["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem ao espelho", "m"], ["objectImageSeparation", "Corpo ↔ imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["angleIncident", "Ângulo de incidência", "°"], ["angleReflected", "Ângulo refletido", "°"]],
     "optics-refraction": [["angleIncident", "Ângulo no meio 1", "°"], ["angleTransmitted", "Ângulo no meio 2", "°"], ["speed1", "Velocidade no meio 1", "m/s"], ["speed2", "Velocidade no meio 2", "m/s"], ["wavelength1Nm", "Comprimento de onda no meio 1", "nm"], ["wavelength2Nm", "Comprimento de onda no meio 2", "nm"], ["frequencyTHz", "Frequência constante", "THz"], ["criticalAngle", "Ângulo crítico", "°"]],
     "optics-concave-mirror": [["radius", "Raio de curvatura", "m"], ["focalLength", "Distância focal", "m"], ["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["magnification", "Aumento linear", "adimensional"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["objectImageSeparation", "Corpo ↔ imagem", "m"]],
+    "optics-concave-parabolic-mirror": [["radius", "Raio de curvatura no vértice Rᵥ", "m"], ["focalLength", "Distância focal", "m"], ["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["magnification", "Aumento linear", "adimensional"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""]],
     "optics-convex-mirror": [["radius", "Raio de curvatura", "m"], ["focalLength", "Distância focal", "m"], ["objectDistance", "Distância do corpo/lanterna", "m"], ["imageDistance", "Distância da imagem", "m"], ["objectHeight", "Altura do corpo", "m"], ["imageHeight", "Altura da imagem", "m"], ["magnification", "Aumento linear", "adimensional"], ["imageNature", "Natureza da imagem", ""], ["orientation", "Orientação", ""], ["imageScale", "Tamanho relativo", ""], ["objectImageSeparation", "Corpo ↔ imagem", "m"]],
     calorimetry: [["temperature1", "Temperatura do corpo quente", "°C"], ["temperature2", "Temperatura do corpo frio", "°C"], ["equilibrium", "Equilíbrio previsto", "°C"], ["energyBalance", "Balanço de energia", "J"]],
     field: [["electricField", "Campo elétrico Eₓ", "N/C"], ["xProbe", "Posição do marcador", "m"], ["q1", "Carga 1", "nC"], ["q2", "Carga 2", "nC"]]
@@ -1156,7 +1169,7 @@ function initializeExperimentPage(topicId) {
           : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo" : label,
       unit
     ]);
-    if (state.id === "optics-concave-mirror") {
+    if (state.id === "optics-concave-mirror" || state.id === "optics-concave-parabolic-mirror") {
       definitions.push(["aperture", "Semiabertura a", "m"], ["rayModel", "Modelo dos raios", ""]);
       if (values.rayModel === "Traçado exato") definitions.push(["exactImageBlurRadius", "Raio RMS do melhor foco", "m"], ["paraxialImageDistance", "Distância paraxial prevista", "m"]);
     }
@@ -1192,7 +1205,7 @@ function initializeExperimentPage(topicId) {
 
   function graphSelection(x) {
     const id = state.id;
-    if (["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry", "optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(id)) {
+    if (["mru", "muv", "newton", "energy", "collision", "spring", "calorimetry", "optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"].includes(id)) {
       state.time = Math.max(0, Math.min(durationFor(id, state.parameters), x)); stop(false); updateTimeControls();
     } else {
       const key = { wave: "xProbe", lens: "objectDistance", field: "xProbe", ohm: "voltage" }[id];

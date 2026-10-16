@@ -1,4 +1,4 @@
-import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=concave-spherical-20261016-1";
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
 
 const concaveImageGraphCache = new Map();
 const G = 9.81;
@@ -43,6 +43,7 @@ export function durationFor(id, p) {
     case "optics-reflection":
     case "optics-refraction":
     case "optics-concave-mirror":
+    case "optics-concave-parabolic-mirror":
     case "optics-convex-mirror": return opticalDurationFor();
     case "calorimetry": {
       const c1 = positive(p.mass1, "Massa 1") * 4186;
@@ -84,6 +85,7 @@ export function stateAt(id, p, time = 0) {
     case "optics-reflection":
     case "optics-refraction":
     case "optics-concave-mirror":
+    case "optics-concave-parabolic-mirror":
     case "optics-convex-mirror": return opticalModelFor(id, p, t);
     case "mru": {
       const x = finite(p.x0 ?? 0, "Posição inicial") + finite(p.velocity, "Velocidade") * t;
@@ -221,8 +223,8 @@ function line(id, p, time, yKey, yLabel, yUnit, count = 121) {
 }
 
 export function graphFor(id, p, time = 0, chart = "") {
-  if (["optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-convex-mirror"].includes(id)) {
-    if (id === "optics-concave-mirror" && chart === "image") {
+  if (["optics-reflection", "optics-refraction", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"].includes(id)) {
+    if ((id === "optics-concave-mirror" || id === "optics-concave-parabolic-mirror") && chart === "image") {
       const radius = positive(p.radius, "Raio de curvatura");
       const focalLength = radius / 2;
       const xMin = Math.max(0.1, Math.min(focalLength * 0.25, Number(p.objectDistance) * 0.5));
@@ -241,7 +243,9 @@ export function graphFor(id, p, time = 0, chart = "") {
             ? { x: objectDistance, y: imageDistance }
             : null;
         });
-        const modelLabel = p.concaveModel === "exact" ? "Traçado esférico · foco geométrico de melhor ajuste" : "Equação paraxial do espelho";
+        const modelLabel = id === "optics-concave-parabolic-mirror"
+          ? "Equação paraxial parabólica"
+          : p.concaveModel === "exact" ? "Traçado esférico · foco geométrico de melhor ajuste" : "Equação paraxial do espelho";
         curve = { xLabel: "Distância do objeto p (m)", yLabel: "Distância da imagem q (m)", xMin, xMax, modelLabel, points };
         concaveImageGraphCache.set(cacheKey, curve);
         if (concaveImageGraphCache.size > 8) concaveImageGraphCache.delete(concaveImageGraphCache.keys().next().value);

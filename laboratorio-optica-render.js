@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=concave-spherical-20261016-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
 
 // Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
 const VISUAL_METERS_PER_NS = 0.3;
@@ -434,14 +434,16 @@ function drawSphericalMirror(context, geometry, values, p, view, palette) {
   const center = view.toScreen(geometry.center);
   const focus = view.toScreen({ x: -geometry.focalLength, y: 0 });
   const vertex = view.toScreen({ x: 0, y: 0 });
-  for (const [point, label] of [[center, "C"], [focus, "F"], [vertex, "V"]]) {
+  const centerLabel = geometry.surfaceProfile === "parabolic" ? "Cᵥ" : "C";
+  for (const [point, label] of [[center, centerLabel], [focus, "F"], [vertex, "V"]]) {
     context.fillStyle = palette.text;
     context.beginPath(); context.arc(point.x, point.y, 3.5, 0, 2 * Math.PI); context.fill();
     context.font = "10px system-ui"; context.fillText(label, point.x + 5, point.y + 14);
   }
   context.fillStyle = palette.text;
   context.font = "12px system-ui";
-  context.fillText(`${geometry.sign > 0 ? "Côncavo" : "Convexo"} · f=${values.focalLength.toFixed(2)} m · R=${Math.abs(values.radius).toFixed(2)} m`, 12, 20);
+  const mirrorLabel = geometry.surfaceProfile === "parabolic" ? "Côncavo parabólico · Rᵥ" : geometry.sign > 0 ? "Côncavo esférico · R" : "Convexo esférico · R";
+  context.fillText(`${mirrorLabel}=${Math.abs(values.radius).toFixed(2)} m · f=${values.focalLength.toFixed(2)} m`, 12, 20);
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
   context.fillText(`Equação paraxial: p′=${Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞"} m · m=${Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"}`, 12, 39);
@@ -494,13 +496,16 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
     context.restore();
   }
   context.fillStyle = palette.text; context.font = "12px system-ui";
-  context.fillText(label + " · superfície esférica · f = " + values.focalLength.toFixed(2) + " m · R = " + Math.abs(values.radius).toFixed(2) + " m · a = " + geometry.aperture.toFixed(2) + " m", 12, 20, Math.max(80, context.canvas.width - 24));
+  const surfaceLabel = geometry.surfaceProfile === "parabolic" ? "superfície parabólica · Rᵥ" : "superfície esférica · R";
+  context.fillText(label + " · " + surfaceLabel + " = " + Math.abs(values.radius).toFixed(2) + " m · f = " + values.focalLength.toFixed(2) + " m · a = " + geometry.aperture.toFixed(2) + " m", 12, 20, Math.max(80, context.canvas.width - 24));
   context.fillStyle = palette.muted; context.font = "11px system-ui";
   const paraxialLine = "Paraxial: q = " + (Number.isFinite(values.paraxialImageDistance) ? values.paraxialImageDistance.toFixed(2) : "∞") + " m · m = " + (Number.isFinite(values.paraxialMagnification) ? values.paraxialMagnification.toFixed(2) : "∞");
   context.fillText(paraxialLine, 12, 39, Math.max(80, context.canvas.width - 24));
-  const modelLine = geometry.rayModel === "exact"
-    ? "Traçado exato: menor dispersão RMS = " + (Number.isFinite(values.exactImageBlurRadius) ? values.exactImageBlurRadius.toFixed(4) : "—") + " m"
-    : "Trajetórias paraxiais · aproximação para raios próximos do eixo e pequenos ângulos";
+  const modelLine = geometry.surfaceProfile === "parabolic"
+    ? "Reflexão exata pela normal local; raios paralelos ao eixo convergem no foco paraxial da parábola."
+    : geometry.rayModel === "exact"
+      ? "Traçado exato: menor dispersão RMS = " + (Number.isFinite(values.exactImageBlurRadius) ? values.exactImageBlurRadius.toFixed(4) : "—") + " m"
+      : "Trajetórias paraxiais · aproximação para raios próximos do eixo e pequenos ângulos";
   context.fillText(modelLine, 12, 58, Math.max(80, context.canvas.width - 24));
 }
 
@@ -586,13 +591,15 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     context.fillStyle = palette.text; context.font = "10px system-ui";
     context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
-  const beamLabel = (geometry.sign > 0 ? "Espelho côncavo esférico" : "Espelho convexo esférico")
-    + " · feixe " + (flashlight.parallel ? "colimado" : "divergente");
+  const surfaceName = geometry.surfaceProfile === "parabolic" ? "Espelho côncavo parabólico" : geometry.sign > 0 ? "Espelho côncavo esférico" : "Espelho convexo esférico";
+  const beamLabel = surfaceName + " · feixe " + (flashlight.parallel ? "colimado" : "divergente");
   drawSphericalLandmarks(context, geometry, values, view, palette, beamLabel);
   context.fillStyle = palette.muted; context.font = "10px system-ui";
-  const explanation = geometry.rayModel === "exact"
-    ? "Cada raio cruza a esfera e reflete pela normal local; a separação focal mostra aberração esférica."
-    : "Modelo paraxial próximo ao eixo; a esfera continua sendo a superfície física do espelho.";
+  const explanation = geometry.surfaceProfile === "parabolic"
+    ? "Cada raio intersecta a parábola e reflete pela normal local; no feixe colimado, as reflexões se encontram no foco."
+    : geometry.rayModel === "exact"
+      ? "Cada raio cruza a esfera e reflete pela normal local; a separação focal mostra aberração esférica."
+      : "Modelo paraxial próximo ao eixo; a esfera continua sendo a superfície física do espelho.";
   context.fillText(explanation, 12, 78, Math.max(80, context.canvas.width - 24));
 }
 
