@@ -24,7 +24,7 @@ if (!lab || !sceneContext || !chartContext) {
   const panelToggle = $("#freefall-panel-toggle");
   const panel = $("#freefall-controls");
   const panelPlay = $("#freefall-panel-play");
-  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height", loopDelayUntil: 0 };
+  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height", loopDelayUntil: 0, zoom: 1 };
   const initial = { height: 20, gravity: 9.81, massA: 0.2, massB: 2, playback: 0.25 };
   const readParameters = () => ({
     height: Number(inputs.height.value),
@@ -117,6 +117,10 @@ if (!lab || !sceneContext || !chartContext) {
     for (let y = 22; y < height; y += 44) { ctx.moveTo(0, y + 0.5); ctx.lineTo(width, y + 0.5); }
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(state.zoom, state.zoom);
+    ctx.translate(-width / 2, -height / 2);
 
     const top = 55;
     const floor = height - 48;
@@ -200,6 +204,7 @@ if (!lab || !sceneContext || !chartContext) {
     ctx.fillText("Eixo vertical positivo para baixo", 18, height - 15);
     ctx.textAlign = "right";
     ctx.fillText("t = " + fmt(at.time, 2) + " s", width - 18, height - 15);
+    ctx.restore();
   }
 
   function drawGraph() {
@@ -288,6 +293,7 @@ if (!lab || !sceneContext || !chartContext) {
     $("#freefall-velocity").textContent = fmt(at.velocity, 2) + " m/s";
     $("#freefall-gravity").textContent = fmt(p.gravity, 2) + " m/s²";
     $("#freefall-impact").textContent = fmt(at.impactTime, 2) + " s";
+    lab.dataset.simulationDuration = String(at.impactTime);
     $('[data-out="height"]').textContent = fmt(p.height, 0) + " m";
     $('[data-out="gravity"]').textContent = fmt(p.gravity, 2) + " m/s²";
     $('[data-out="massA"]').textContent = fmt(p.massA, 1) + " kg";
@@ -417,6 +423,8 @@ if (!lab || !sceneContext || !chartContext) {
       status.textContent = "A tela cheia não está disponível neste navegador.";
     }
   });
+  window.addEventListener("diario-lab-zoom", (event) => { if (document.fullscreenElement !== lab) return; state.zoom = Math.max(0.65, Math.min(2.5, state.zoom * Number(event.detail?.factor || 1))); drawScene(); });
+  window.addEventListener("diario-lab-seek", (event) => { if (document.fullscreenElement !== lab) return; const time = Number(event.detail?.time); if (!Number.isFinite(time)) return; stopAnimation(); seek(time); status.textContent = "Instante ajustado para t = " + fmt(state.time, 2) + " s."; });
   document.addEventListener("fullscreenchange", () => { const full = document.fullscreenElement === lab; panelToggle.hidden = !full; panelPlay.hidden = !full; if (!full) panel.classList.remove("is-open"); panelToggle.setAttribute("aria-expanded", String(panel.classList.contains("is-open"))); drawAll(); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && state.running) {

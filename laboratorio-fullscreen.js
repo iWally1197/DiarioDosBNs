@@ -48,7 +48,8 @@
     .priority-lab.lab-standard-fullscreen-active .priority-header-actions,
     .priority-lab.lab-standard-fullscreen-active .priority-stage-toolbar,
     .magnet-workspace.lab-standard-fullscreen-active .magnet-scene-toolbar,
-    #faraday-lab.lab-standard-fullscreen-active .faraday-toolbar { display:none!important; }
+    #faraday-lab.lab-standard-fullscreen-active .faraday-toolbar,
+    .freefall-lab.lab-standard-fullscreen-active .freefall-toolbar { display:none!important; }
     .lab-standard-fullscreen-active #fullscreen-toggle,
     .lab-standard-fullscreen-active #faraday-panel-toggle { display:none!important; }
     .lab-standard-fullscreen-toolbar > .mru-fullscreen-time,
@@ -109,6 +110,10 @@
     {
       selector: "#faraday-lab", kind: "faraday", play: "[data-play]", time: "#faraday-time",
       controls: "#faraday-panel-toggle", zoomEvent: true, modeButtons: true
+    },
+    {
+      selector: ".freefall-lab", kind: "freefall", play: "[data-play]", time: "#freefall-time",
+      controls: "#freefall-panel-toggle", step: "[data-step=\"0.1\"]", reset: "[data-reset]", zoomEvent: true
     }
   ];
 
@@ -160,7 +165,9 @@
             ? Number(profile.root.dataset.simulationDuration)
             : profile.kind === "faraday"
               ? (Number(byId("faraday-frequency")?.value) > 0 ? 1 / Number(byId("faraday-frequency").value) : 0)
-              : 0;
+              : profile.kind === "freefall"
+                ? Number(profile.root.dataset.simulationDuration)
+                : 0;
           input.min = "0";
           input.max = String(Number.isFinite(duration) ? duration : 0);
           input.step = "any";
@@ -321,6 +328,7 @@
       let available = !!range && !range.disabled && Number(range.max) > Number(range.min);
       if (profile.kind === "priority") available = Number(profile.root.dataset.simulationDuration) > 0;
       if (profile.kind === "faraday") available = Number(byId("faraday-frequency")?.value) > 0;
+      if (profile.kind === "freefall") available = Number(profile.root.dataset.simulationDuration) > 0;
       current.choose.disabled = !available;
       current.choose.title = available ? "Escolher instante da animação" : "Este experimento não oferece uma linha do tempo ajustável.";
     }
