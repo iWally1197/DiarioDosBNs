@@ -273,7 +273,10 @@ async function protectTeacherResources() {
   const page = document.querySelector('[data-teacher-only]') || main;
   if (page) page.hidden = true;
   const showAccessMessage = (title, message, links = '') => {
-    if (page) page.hidden = false;
+    if (page) {
+      page.hidden = false;
+      page.style.removeProperty('display');
+    }
     routeMessage(title, message, links);
   };
 
