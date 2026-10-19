@@ -1213,10 +1213,11 @@ chart.addEventListener("keydown", (event) => { if (event.key === "Enter" || even
 
 const actionMenuButton = byId("action-menu-toggle");
 const actionMenuPanel = byId("action-menu-panel");
+actionMenuButton.setAttribute("aria-label", "Adicionar, remover e configurar objetos");
 function setActionMenuOpen(open) {
   actionMenuPanel.hidden = !open;
   actionMenuButton.setAttribute("aria-expanded", String(open));
-  actionMenuButton.textContent = open ? "Fechar controles" : "☰ Controles";
+  actionMenuButton.textContent = open ? "Fechar objetos" : "Objetos";
 }
 actionMenuButton.addEventListener("click", () => setActionMenuOpen(actionMenuPanel.hidden));
 document.addEventListener("pointerdown", (event) => {
@@ -1258,7 +1259,7 @@ byId("fullscreen-menu-toggle").addEventListener("click", () => {
 document.addEventListener("fullscreenchange", () => {
   const active = document.fullscreenElement === workspace;
   workspace.classList.toggle("is-fullscreen", active);
-  if (active) workspace.classList.remove("magnet-controls-collapsed");
+  if (active) workspace.classList.add("magnet-controls-collapsed");
   setActionMenuOpen(false);
   placeFullscreenPanels(active);
   updateModeUI(); queueDraw();

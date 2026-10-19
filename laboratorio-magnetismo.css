@@ -88,7 +88,7 @@
 .magnet-controls-collapsed .magnet-controls{display:none!important}
 .magnet-workspace:fullscreen,.magnet-workspace.is-fullscreen{
   position:fixed;inset:0;z-index:9999;width:100vw;height:100dvh;max-width:none;margin:0;padding:12px;
-  background:#08101f;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,370px);gap:12px;overflow:hidden;
+  background:#08101f;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px;overflow:hidden;
 }
 .magnet-workspace:fullscreen .magnet-scene-column,.magnet-workspace.is-fullscreen .magnet-scene-column{
   min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden
@@ -97,7 +97,9 @@
   flex:1;min-height:0;height:auto
 }
 .magnet-workspace:fullscreen .magnet-controls,.magnet-workspace.is-fullscreen .magnet-controls{
-  min-width:0;max-height:calc(100dvh - 24px);overflow:auto;margin:0;padding:14px
+  position:absolute;top:74px;right:12px;bottom:12px;z-index:30;box-sizing:border-box;
+  width:min(390px,calc(100vw - 24px));min-width:0;max-height:none;overflow:auto;margin:0;padding:14px;
+  align-content:start;overscroll-behavior:contain
 }
 .magnet-workspace:fullscreen .magnet-readings,.magnet-workspace.is-fullscreen .magnet-readings,
 .magnet-workspace:fullscreen .magnet-graphs,.magnet-workspace.is-fullscreen .magnet-graphs{
@@ -112,8 +114,10 @@
 .magnet-workspace:fullscreen.magnet-controls-collapsed .magnet-controls,.magnet-workspace.is-fullscreen.magnet-controls-collapsed .magnet-controls{display:none}
 .magnet-workspace:fullscreen .magnet-scene-actions .button,.magnet-workspace.is-fullscreen .magnet-scene-actions .button{white-space:nowrap}
 @media(max-width:900px){
-  .magnet-workspace:fullscreen,.magnet-workspace.is-fullscreen{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(260px,1fr) minmax(180px,40dvh);overflow:auto}
-  .magnet-workspace:fullscreen .magnet-controls,.magnet-workspace.is-fullscreen .magnet-controls{max-height:none}
+  .magnet-workspace:fullscreen,.magnet-workspace.is-fullscreen{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);overflow:hidden}
+  .magnet-workspace:fullscreen .magnet-controls,.magnet-workspace.is-fullscreen .magnet-controls{
+    top:70px;right:8px;bottom:8px;width:min(430px,calc(100vw - 16px));max-height:none
+  }
 }
 @media(max-width:620px){
   .magnet-scene-actions{gap:6px}

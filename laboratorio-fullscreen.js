@@ -7,6 +7,7 @@
       gap: 8px; padding: 8px 10px; border: 1px solid rgba(228,196,119,.72); border-radius: 12px;
       background: rgba(7,15,29,.96); color: #f3f5fb; box-shadow: 0 8px 28px rgba(0,0,0,.24);
       font: 500 14px/1.2 system-ui, sans-serif; pointer-events: auto;
+      max-height: min(34dvh, 190px); overflow-y: auto; overscroll-behavior: contain; align-content: flex-start;
     }
     .lab-standard-fullscreen-toolbar > button {
       box-sizing: border-box; min-height: 42px; padding: 9px 13px; border: 1px solid rgba(228,196,119,.52);
@@ -35,6 +36,11 @@
     .lab-standard-fullscreen-time-picker > button { min-height:40px; padding:8px 11px; border:1px solid rgba(228,196,119,.52); border-radius:7px; background:#111c2d; color:#f4f5fa; font:inherit; cursor:pointer; }
     .lab-standard-fullscreen-time-picker > .lab-standard-picker-go { background:#326d58; border-color:#68bd91; }
     .lab-standard-fullscreen-toolbar .lab-standard-extra { border-color: rgba(129,179,255,.6); }
+    .lab-standard-fullscreen-toolbar > .lab-standard-panel-button { border-color: rgba(129,179,255,.62); }
+    .lab-standard-fullscreen-toolbar > .lab-standard-panel-button[aria-pressed="true"] { background:#1c3550; border-color:#e4c477; }
+    .lab-standard-fullscreen-active .lab-standard-source-control { display:none!important; }
+    .lab-standard-fullscreen-toolbar .magnet-action-menu { position:relative; flex:0 0 auto; z-index:3; }
+    .lab-standard-fullscreen-toolbar .magnet-scene-actions { position:fixed; top:70px; right:12px; max-height:calc(100dvh - 82px); }
     #lab-workspace.lab-standard-fullscreen-active > .lab-standard-fullscreen-toolbar {
       position: relative; inset: auto; flex: 0 0 auto; align-self: stretch; margin: 0 0 7px;
     }
@@ -46,7 +52,10 @@
     .lab-standard-fullscreen-active #workspace-fullscreen,
     .lab-standard-fullscreen-active #workspace-controls-toggle,
     .lab-standard-fullscreen-active #workspace-play,
-    .lab-standard-fullscreen-active #mirror-mode-toggle { display:none!important; }
+    .lab-standard-fullscreen-active #mirror-mode-toggle,
+    .lab-standard-fullscreen-active #mru-fullscreen-menu,
+    .lab-standard-fullscreen-active #mruv-fullscreen-menu,
+    .lab-standard-fullscreen-active #fullscreen-menu-toggle { display:none!important; }
     .priority-lab.lab-standard-fullscreen-active .priority-header-actions,
     .priority-lab.lab-standard-fullscreen-active .priority-stage-toolbar,
     .magnet-workspace.lab-standard-fullscreen-active .magnet-scene-toolbar,
@@ -64,7 +73,7 @@
     .lab-standard-fullscreen-toolbar > .mru-fullscreen-time-picker,
     .lab-standard-fullscreen-toolbar > .mruv-fullscreen-time-picker { position:absolute; top:calc(100% + 8px); left:8px; z-index:2; }
     @media (max-width: 680px) {
-      .lab-standard-fullscreen-toolbar { gap: 5px; padding: 6px; }
+      .lab-standard-fullscreen-toolbar { gap: 5px; padding: 6px; max-height:min(38dvh,220px); }
       .lab-standard-fullscreen-toolbar > button { min-height: 38px; padding: 7px 9px; font-size: 12px; }
       .lab-standard-fullscreen-toolbar > .lab-standard-time { min-height: 38px; padding: 7px 10px; font-size: 12px; }
       .lab-standard-fullscreen-active:not(#lab-workspace) > .lab-standard-fullscreen-toolbar { top: 7px; left: 7px; right: 7px; }
@@ -93,20 +102,23 @@
     },
     {
       selector: ".mru-stage", kind: "mru", play: "#mru-fullscreen-play", time: "#mru-fullscreen-time",
-      controls: "#mru-fullscreen-menu", timeToggle: "#mru-fullscreen-time-toggle",
+      controls: "#mru-fullscreen-menu", drawer: "#mru-fullscreen-drawer", objectEditor: "#mru-editor-details",
+      parameterTarget: "#mru-properties", objectTarget: "#mru-add-type", objectFocus: "#mru-add-type", timeToggle: "#mru-fullscreen-time-toggle",
       timePicker: "#mru-fullscreen-time-picker", zoomIn: "#mru-fullscreen-zoom-in",
       zoomOut: "#mru-fullscreen-zoom-out", exit: "#mru-fullscreen-exit", extra: "#mru-step-forward",
       extraLabel: "Avançar passo", bar: "#mru-fullscreen-tools"
     },
     {
       selector: ".mruv-stage", kind: "mruv", play: "#mruv-fullscreen-play", time: "#mruv-fullscreen-time",
-      controls: "#mruv-fullscreen-menu", timeToggle: "#mruv-fullscreen-time-toggle",
+      controls: "#mruv-fullscreen-menu", drawer: "#mruv-fullscreen-drawer", objectEditor: "#mruv-editor-details",
+      parameterTarget: "#mruv-properties", objectTarget: "#mruv-add-type", objectFocus: "#mruv-add-type", timeToggle: "#mruv-fullscreen-time-toggle",
       timePicker: "#mruv-fullscreen-time-picker", zoomIn: "#mruv-fullscreen-zoom-in",
       zoomOut: "#mruv-fullscreen-zoom-out", exit: "#mruv-fullscreen-exit", extra: "#mruv-step-forward",
       extraLabel: "Avançar passo", bar: "#mruv-fullscreen-tools"
     },
     {
       selector: ".magnet-workspace", kind: "magnet", play: "#simulation-pause", controls: "#fullscreen-menu-toggle",
+      objects: "#action-menu-toggle", objectMenu: ".magnet-action-menu", objectInToolbar: true,
       zoomEvent: true, extra: "#interaction-motion-toggle", extraLabel: "Simular movimento do ímã livre"
     },
     {
@@ -252,6 +264,114 @@
     }
   }
 
+  function setPanelView(profile, view) {
+    const sharedDrawer = Boolean(profile.objectEditor && profile.drawer);
+    const source = q(profile.root, sharedDrawer || view === "parameters" ? profile.controls : profile.objects);
+    if (!source) return;
+
+    if (sharedDrawer) {
+      const isOpen = attr(source, "aria-expanded") === "true";
+      if (current.panelView === view && isOpen) {
+        source.click();
+        current.panelView = null;
+        update();
+        return;
+      }
+      if (!isOpen) source.click();
+      current.panelView = view;
+      focusPanelSection(profile, view);
+      update();
+      return;
+    }
+
+    source.click();
+    current.panelView = attr(source, "aria-expanded") === "true" ? view : null;
+    update();
+  }
+
+  function focusPanelSection(profile, view) {
+    const editor = q(profile.root, profile.objectEditor);
+    if (editor) editor.open = true;
+    const selector = view === "objects" ? profile.objectTarget : profile.parameterTarget;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const target = q(profile.root, selector);
+      target?.scrollIntoView({ block: "start", behavior: "smooth" });
+      const focusTarget = view === "objects"
+        ? q(profile.root, profile.objectFocus)
+        : target?.querySelector("input, select, textarea, button");
+      focusTarget?.focus({ preventScroll: true });
+    }));
+  }
+
+  function configurePanelButtons(profile, bar) {
+    let parameters = bar.querySelector('[data-lab-panel-button="parameters"]');
+    if (!parameters) {
+      parameters = button("Parâmetros", "lab-standard-panel-button", () => setPanelView(profile, "parameters"));
+      parameters.dataset.labPanelButton = "parameters";
+      parameters.setAttribute("aria-expanded", "false");
+      parameters.setAttribute("aria-pressed", "false");
+      const controlsId = profile.drawer || attr(q(profile.root, profile.controls), "aria-controls");
+      if (controlsId) parameters.setAttribute("aria-controls", controlsId.replace(/^#/, ""));
+      const exit = bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit");
+      bar.insertBefore(parameters, exit || null);
+    }
+
+    let objects = null;
+    if (profile.objectEditor) {
+      objects = bar.querySelector('[data-lab-panel-button="objects"]');
+      if (!objects) {
+        objects = button("Objetos", "lab-standard-panel-button", () => setPanelView(profile, "objects"));
+        objects.dataset.labPanelButton = "objects";
+        objects.setAttribute("aria-expanded", "false");
+        objects.setAttribute("aria-pressed", "false");
+        if (profile.drawer) objects.setAttribute("aria-controls", profile.drawer.replace(/^#/, ""));
+        const exit = bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit");
+        bar.insertBefore(objects, exit || null);
+      }
+    } else if (profile.objectInToolbar) {
+      objects = q(profile.root, profile.objects);
+      if (objects) {
+        objects.classList.add("lab-standard-object-source");
+        objects.setAttribute("aria-label", "Abrir controles para adicionar ou remover objetos");
+      }
+    }
+
+    if (profile.bar) q(profile.root, profile.controls)?.classList.add("lab-standard-source-control");
+    return { parameters, objects };
+  }
+
+  function dockObjectMenu(profile, bar) {
+    if (!profile.objectMenu) return null;
+    const node = q(profile.root, profile.objectMenu);
+    if (!node || bar.contains(node)) return null;
+    const panel = q(profile.root, "#action-menu-panel");
+    const location = {
+      node, parent: node.parentNode, next: node.nextSibling,
+      panel, panelStyle: panel?.getAttribute("style")
+    };
+    const exit = bar.querySelector(".lab-standard-exit");
+    bar.insertBefore(node, exit || null);
+    return location;
+  }
+
+  function syncDrawerPosition(currentState) {
+    const { profile, bar } = currentState;
+    const rootRect = profile.root.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    if (profile.drawer) {
+      const drawer = q(profile.root, profile.drawer);
+      if (drawer && !drawer.hidden) drawer.style.top = Math.max(58, Math.ceil(barRect.bottom - rootRect.top + 10)) + "px";
+    }
+    const menu = currentState.movedObjectMenu;
+    if (menu?.panel && !menu.panel.hidden) {
+      const top = Math.min(Math.ceil(barRect.bottom + 8), Math.max(58, window.innerHeight - 150));
+      menu.panel.style.position = "fixed";
+      menu.panel.style.top = top + "px";
+      menu.panel.style.right = "12px";
+      menu.panel.style.maxHeight = Math.max(120, window.innerHeight - top - 12) + "px";
+    }
+  }
+
   function mount(root, profile) {
     profile.root = root;
     root.classList.add("lab-standard-fullscreen-active");
@@ -259,7 +379,8 @@
     if (bar) {
       bar.classList.add("lab-standard-fullscreen-toolbar");
       if (!bar.querySelector("[data-lab-standard-extra]")) configureExtras(profile, bar);
-      return { bar, profile, owned: false };
+      const panels = configurePanelButtons(profile, bar);
+      return { bar, profile, owned: false, ...panels };
     }
 
     bar = document.createElement("div");
@@ -283,18 +404,15 @@
     zoomIn.setAttribute("aria-label", "Aproximar a animação");
     bar.append(zoomOut, zoomIn);
 
-    const controls = button("☰ Controles", "", () => q(root, profile.controls)?.click());
-    controls.setAttribute("aria-expanded", "false");
-    controls.dataset.labStandardControls = "true";
-    bar.append(controls);
-
     const exit = button("Sair da tela cheia", "lab-standard-exit", () => {
       if (document.fullscreenElement) document.exitFullscreen();
     });
     bar.append(exit);
     configureExtras(profile, bar);
+    const panels = configurePanelButtons(profile, bar);
     root.insertBefore(bar, root.firstChild);
-    return { bar, profile, owned: true, play, time, choose, form, controls };
+    const movedObjectMenu = dockObjectMenu(profile, bar);
+    return { bar, profile, owned: true, play, time, choose, form, ...panels, movedObjectMenu };
   }
 
   function zoom(profile, factor) {
@@ -334,11 +452,23 @@
       current.choose.disabled = !available;
       current.choose.title = available ? "Escolher instante da animação" : "Este experimento não oferece uma linha do tempo ajustável.";
     }
-    if (current.controls) {
-      const sourceControls = q(profile.root, profile.controls);
-      const expanded = attr(sourceControls, "aria-expanded") === "true";
-      setCommonButtonState(current.controls, expanded ? "Fechar controles" : "☰ Controles", expanded);
+    const sourceControls = q(profile.root, profile.controls);
+    const controlsExpanded = attr(sourceControls, "aria-expanded") === "true";
+    if (current.parameters) {
+      const active = profile.objectEditor
+        ? controlsExpanded && current.panelView === "parameters"
+        : controlsExpanded;
+      setCommonButtonState(current.parameters, active ? "Fechar parâmetros" : "Parâmetros", active);
+      current.parameters.setAttribute("aria-expanded", String(active));
     }
+    if (current.objects) {
+      const objectExpanded = profile.objectEditor
+        ? controlsExpanded && current.panelView === "objects"
+        : attr(current.objects, "aria-expanded") === "true";
+      setCommonButtonState(current.objects, objectExpanded ? "Fechar objetos" : "Objetos", objectExpanded);
+      if (profile.objectEditor) current.objects.setAttribute("aria-expanded", String(objectExpanded));
+    }
+    syncDrawerPosition(current);
     if (profile.extraButton && profile.extraSource) {
       const active = attr(profile.extraSource, "aria-pressed") === "true";
       let label = profile.extraLabel || profile.extraSource.textContent.trim();
@@ -354,6 +484,18 @@
 
   function onFullscreenChange() {
     if (timer) { clearInterval(timer); timer = 0; }
+    if (current?.movedObjectMenu?.parent) {
+      const { node, parent, next, panel, panelStyle } = current.movedObjectMenu;
+      parent.insertBefore(node, next?.parentNode === parent ? next : null);
+      if (panel) {
+        if (panelStyle === null) panel.removeAttribute("style");
+        else panel.setAttribute("style", panelStyle);
+      }
+    }
+    if (current?.profile.drawer) {
+      const drawer = q(current.profile.root, current.profile.drawer);
+      if (drawer) drawer.style.top = "";
+    }
     if (current?.owned) current.bar.remove();
     if (current) current.profile.root.classList.remove("lab-standard-fullscreen-active");
     current = null;
@@ -368,4 +510,5 @@
 
   document.addEventListener("fullscreenchange", onFullscreenChange);
   window.addEventListener("diario-lab-fullscreen-refresh", update);
+  window.addEventListener("resize", () => { if (current) syncDrawerPosition(current); });
 })();
