@@ -2,6 +2,55 @@
   if (window.diarioQuickMenuLoaded) return;
   window.diarioQuickMenuLoaded = true;
 
+  const trimTrailingSlash = (value) => {
+    while (value.length > 1 && value.endsWith('/')) value = value.slice(0, -1);
+    return value;
+  };
+  const teacherResourcePath = trimTrailingSlash(new URL('/professores/', document.baseURI).pathname);
+  let teacherAccessAllowed = false;
+  const isTeacherResourceLink = (link) => {
+    try {
+      const url = new URL(link.getAttribute('href'), document.baseURI);
+      return url.origin === location.origin && trimTrailingSlash(url.pathname) === teacherResourcePath;
+    } catch { return false; }
+  };
+  const markTeacherLinks = () => {
+    document.querySelectorAll('a[href]').forEach((link) => {
+      if (isTeacherResourceLink(link)) link.dataset.teacherOnly = 'true';
+    });
+  };
+  const applyTeacherVisibility = (allowed) => {
+    teacherAccessAllowed = Boolean(allowed);
+    document.querySelectorAll('[data-teacher-only]').forEach((element) => {
+      element.hidden = !teacherAccessAllowed;
+      if (teacherAccessAllowed) element.style.removeProperty('display');
+      else element.style.setProperty('display', 'none', 'important');
+    });
+  };
+  markTeacherLinks();
+  applyTeacherVisibility(false);
+  const checkTeacherAccess = async () => {
+    try {
+      const { supabasePromise, supabaseReady } = await import('./src-supabase.js?v=auth-fix-20261008');
+      if (!supabaseReady) return;
+      const client = await supabasePromise;
+      if (!client) return;
+      const { data: sessionData, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !sessionData?.session?.user?.id) return;
+      const { data: role, error: roleError } = await client
+        .from('user_roles')
+        .select('role,status')
+        .eq('user_id', sessionData.session.user.id)
+        .maybeSingle();
+      if (roleError) return;
+      applyTeacherVisibility(Boolean(
+        role?.role === 'professor' && role.status !== 'blocked' ||
+        role?.role === 'admin' && role.status === 'active'
+      ));
+    } catch { /* Se a sessão ou o serviço não puder ser validado, mantenha a área oculta. */ }
+  };
+  void checkTeacherAccess();
+
   const essentials = [
     ['Início', '/'],
     ['Física', '/#animacoes'],
@@ -11,7 +60,7 @@
     ['Aprender Blender', '/blender/'],
     ['Laboratório', '/laboratorio/'],
     ['Assistente de Física', '/ia/'],
-    ['Professores', '/professores/'],
+    ['Professores', '/professores/', true],
     ['Pesquisa', '/pesquisa/'],
     ['Apoiar com Pix', '/apoie/'],
     ['Contato', '/#contato'],
@@ -56,6 +105,7 @@
       .quick-access-panel { display: none !important; }
       .quick-menu-extra { display: block !important; }
     }
+    [data-teacher-only][hidden] { display: none !important; }
     @media (min-width: 1451px) { .quick-menu-extra { display: none !important; } }
     .bnzinho-widget, .bnzinho-restore {
       position: fixed; right: max(14px, env(safe-area-inset-right)); z-index: 10010;
@@ -173,7 +223,7 @@
     }
     if (!nav.id) nav.id = `quick-site-nav-${headerIndex + 1}`;
 
-    essentials.forEach(([label, href]) => {
+    essentials.forEach(([label, href, teacherOnly = false]) => {
       let target;
       try { target = new URL(href, document.baseURI); } catch { return; }
       const exists = Array.from(nav.querySelectorAll('a')).some((link) => {
@@ -187,6 +237,7 @@
       link.className = 'quick-menu-extra';
       link.href = href;
       link.textContent = label;
+      if (teacherOnly) link.dataset.teacherOnly = 'true';
       nav.append(link);
     });
 
@@ -217,16 +268,19 @@
       quickPanel.className = 'quick-access-panel';
       quickPanel.setAttribute('aria-label', 'Acesso rápido ao site');
       quickPanel.id = `quick-access-panel-${headerIndex + 1}`;
-      essentials.forEach(([label, href]) => {
+      essentials.forEach(([label, href, teacherOnly = false]) => {
         const link = document.createElement('a');
         link.href = href;
         link.textContent = label;
+        if (teacherOnly) link.dataset.teacherOnly = 'true';
         quickPanel.append(link);
       });
       header.append(quickPanel);
     } else if (!quickPanel.id) {
       quickPanel.id = `quick-access-panel-${headerIndex + 1}`;
     }
+    markTeacherLinks();
+    applyTeacherVisibility(teacherAccessAllowed);
     toggle.setAttribute('aria-controls', `${nav.id} ${quickPanel.id}`);
 
     const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';

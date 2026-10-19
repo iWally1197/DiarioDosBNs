@@ -269,6 +269,56 @@ async function renderCallback() {
 
 function routeMessage(title,message,links='') { replaceMain(title,`<section class="auth-card"><div class="section-kicker">DIÁRIO DOS BNs</div><h1>${title}</h1><p>${message}</p>${links}</section>`); }
 
+async function protectTeacherResources() {
+  const page = document.querySelector('[data-teacher-only]') || main;
+  if (page) page.hidden = true;
+  const showAccessMessage = (title, message, links = '') => {
+    if (page) page.hidden = false;
+    routeMessage(title, message, links);
+  };
+
+  if (!supabaseReady) {
+    showAccessMessage(
+      'Área para professores',
+      'Entre com uma conta de professor para abrir estes materiais.',
+      '<a href="/login/">Fazer login</a>'
+    );
+    return;
+  }
+
+  try {
+    const user = await getSignedUser();
+    if (!user) {
+      navigate('/login/?next=professores', true);
+      return;
+    }
+    const role = await getRole(user);
+    if (role?.role === 'aluno') {
+      navigate('/aluno/', true);
+      return;
+    }
+    const allowed = role?.status !== 'blocked' && (
+      role?.role === 'professor' ||
+      role?.role === 'admin' && role.status === 'active'
+    );
+    if (!allowed) {
+      showAccessMessage(
+        'Área restrita',
+        'Este conteúdo está disponível para contas de professor ou administrador.',
+        '<a href="/">Voltar ao início</a>'
+      );
+      return;
+    }
+    if (page) page.hidden = false;
+  } catch (error) {
+    showAccessMessage(
+      'Não foi possível validar o acesso',
+      'Entre novamente e tente abrir a área. ' + safeText(error?.message || ''),
+      '<a href="/login/">Fazer login</a>'
+    );
+  }
+}
+
 async function protectRoute() {
   if(!supabaseReady){configRequired('Acessar minha área');return;}
   try {
@@ -837,6 +887,7 @@ async function hydrateAnimationDetails() {
 }
 
 async function attachAuthNavigation() {
+  setTeacherOnlyVisibility(null);
   const nav=document.querySelector('.site-header .nav');if(!nav)return;
   let links=nav.querySelector('[data-account-links]');
   if(!links){
@@ -875,9 +926,22 @@ async function attachAuthNavigation() {
     if(data.session){
       const role=await getRole(data.session.user).catch(()=>null);
       setAccountMenu(data.session.user,role);
+      setTeacherOnlyVisibility(role);
       wireLogout();
     }
   } catch {} finally { document.documentElement.classList.add('auth-nav-ready'); }
+}
+
+function setTeacherOnlyVisibility(role) {
+  const allowed = Boolean(
+    role?.role === 'professor' && role.status !== 'blocked' ||
+    role?.role === 'admin' && role.status === 'active'
+  );
+  document.querySelectorAll('[data-teacher-only]').forEach((element) => {
+    element.hidden = !allowed;
+    if (allowed) element.style.removeProperty('display');
+    else element.style.setProperty('display', 'none', 'important');
+  });
 }
 
 function youtubeLiveMarkup(raw,title='Transmissão ao vivo do Diário dos BNs') {
@@ -966,6 +1030,7 @@ if (main) {
   if (isAuthEntry) renderAuthEntry();
   else if (route==='/recuperar-senha') renderRecovery();
   else if (route==='/auth/callback') renderCallback();
+  else if (route==='/professores') protectTeacherResources();
   else if (route==='/turmas') renderClassroomHub();
   else if (protectedRoutes.includes(route)) protectRoute();
 }
