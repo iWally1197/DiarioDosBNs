@@ -1,4 +1,4 @@
-import { experiments } from "./laboratorio-catalogo.js?v=concave-dual-20261016-1";
+import { experiments } from "./laboratorio-catalogo.js?v=mirror-catalog-tabs-20261023-1";
 import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-dual-20261016-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
@@ -13,7 +13,22 @@ function withDeadline(promise, timeoutMs, message) {
 }
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
-const allowedExperiments = experiments.filter((item) => laboratoryPublicationByExperimentId.has(item.id));
+const mirrorTopicIds = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
+const allowedExperiments = experiments.filter((item) => {
+  if (item.id === "optics-mirrors") return true;
+  if (mirrorTopicIds.has(item.id) || item.hiddenFromCatalog) return false;
+  return laboratoryPublicationByExperimentId.has(item.id);
+});
+function isPublishedCatalogExperiment(item, publishedSlugs) {
+  if (item.id === "optics-mirrors") {
+    return [...mirrorTopicIds].some((id) => {
+      const publication = laboratoryPublicationByExperimentId.get(id);
+      return publication && publishedSlugs.has(publication.slug);
+    });
+  }
+  const publication = laboratoryPublicationByExperimentId.get(item.id);
+  return Boolean(publication && publishedSlugs.has(publication.slug));
+}
 export const experimentPageUrl = (id) => id === "lab-magnetic-field" ? "/laboratorio-magnetismo/" : id === "mru" ? "/laboratorio-mru/" : id === "muv" ? "/laboratorio-mruv/" : id === "freefall" ? "/laboratorio-queda-livre/" : id === "faraday-induction" ? "/laboratorio-faraday/" : `/laboratorio-experimento/?topico=${encodeURIComponent(id)}`;
 if (catalog) initializeCatalog();
 
@@ -27,6 +42,7 @@ function initializeCatalog() {
   const status = document.querySelector("#lab-publication-status");
 
   const diagrams = {
+    "optics-mirrors": '<path d="M39 10q18 28 0 56"/><path class="secondary" d="M10 25h30m0 0-7-6m7 6-7 6M10 51h30m0 0-7-6m7 6-7 6M51 17l17 21-17 21"/><circle cx="30" cy="38" r="3"/>',
     "lab-magnetic-field": '<path d="M23 30h38v18H23z"/><path class="secondary" d="M42 30v18M12 31c6-19 55-25 62 0M12 47c6 19 55 25 62 0M31 36h5m12 6h5"/>',
     "optics-reflection": '<path d="M51 12v52"/><path class="secondary" d="M12 39h36m0 0-7-6m7 6-7 6M51 21l21 18-21 18"/>',
     "optics-concave-mirror": '<path d="M27 11q22 27 0 54"/><path class="secondary" d="M9 23h32m0 0-8-6m8 6-8 6M9 53h32m0 0-8-6m8 6-8 6M41 23 27 38M41 53 27 38"/><circle cx="27" cy="38" r="3"/>',
@@ -86,7 +102,7 @@ function initializeCatalog() {
       );
       if (error) throw error;
       const published = new Set((data || []).map((row) => row.slug));
-      visibleExperiments = allowedExperiments.filter((item) => published.has(laboratoryPublicationByExperimentId.get(item.id)?.slug));
+      visibleExperiments = allowedExperiments.filter((item) => isPublishedCatalogExperiment(item, published));
       status.textContent = visibleExperiments.length
         ? "Esta lista acompanha os laboratórios marcados como “No ar” no painel administrativo."
         : "Nenhum laboratório está no ar no momento. Ative os que deseja exibir no painel administrativo.";
