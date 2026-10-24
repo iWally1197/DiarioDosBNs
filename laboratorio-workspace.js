@@ -373,6 +373,7 @@ function initializeExperimentPage(topicId) {
     $("#workspace-hypothesis").value = "";
     $("#workspace-chart").innerHTML = (experiment.charts || []).map((chart) => `<option value="${chart.id}">${chart.label}</option>`).join("");
     buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    syncMirrorModeButtons();
     syncProbeRange();
     updateTimeControls();
     updateRecords();
@@ -558,6 +559,7 @@ function initializeExperimentPage(topicId) {
     canvas.setAttribute("aria-label", experiment.title + ". " + mirrorSceneCaption());
     syncMirrorModeButtons();
     buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    syncMirrorModeButtons();
     updateTimeControls();
     try { render(); } catch (error) { showError(error); }
     $("#workspace-status").textContent = state.id === "optics-concave-mirror"
@@ -744,6 +746,7 @@ function initializeExperimentPage(topicId) {
       else state.parameters.objectHeight = 1.7;
       syncMirrorModeButtons();
       buildControls({ ...experiment, controls: controlsForExperiment(experiment) });
+    syncMirrorModeButtons();
     }
     state.time = 0; state.records = []; updateRecords(); updateTimeControls();
     $("#workspace-status").textContent = "Valores iniciais restaurados e tabela de medições limpa.";
