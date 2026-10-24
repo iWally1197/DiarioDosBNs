@@ -19,9 +19,9 @@ const [catalogHtml, detailHtml, catalogScript, detailScript, physicsScript, mruH
 test("catálogo lista links para páginas individuais e não hospeda animações", () => {
   assert.match(catalogHtml, /laboratorio-catalogo-ui\.js/);
   assert.doesNotMatch(catalogHtml, /workspace-canvas|projectile-canvas|pendulum-canvas/);
-  assert.match(catalogScript, /laboratorio-mru\.html/);
-  assert.match(catalogScript, /laboratorio-mruv\.html/);
-  assert.match(catalogScript, /laboratorio-experimento\.html\?topico=/);
+  assert.match(catalogScript, /\/laboratorio-mru\//);
+  assert.match(catalogScript, /\/laboratorio-mruv\//);
+  assert.match(catalogScript, /laboratorio-experimento\/\?topico=/);
   assert.match(catalogScript, /<a class="lab-card" href=/);
 });
 
@@ -32,8 +32,8 @@ test("cada tópico do catálogo possui rota de página individual reconhecida pe
   assert.match(detailScript, /experimentById\.has\(topicId\)/);
   const urls = experiments.map((experiment) => experimentPageUrl(experiment.id));
   assert.equal(new Set(urls).size, experiments.length);
-  const dedicatedRoutes = new Map([["mru", "laboratorio-mru.html"], ["muv", "laboratorio-mruv.html"], ["lab-magnetic-field", "laboratorio-magnetismo.html"], ["freefall", "laboratorio-queda-livre.html"], ["faraday-induction", "laboratorio-faraday.html"]]);
-  experiments.forEach((experiment, index) => assert.equal(urls[index], dedicatedRoutes.get(experiment.id) || `laboratorio-experimento.html?topico=${encodeURIComponent(experiment.id)}`));
+  const dedicatedRoutes = new Map([["mru", "/laboratorio-mru/"], ["muv", "/laboratorio-mruv/"], ["lab-magnetic-field", "/laboratorio-magnetismo/"], ["freefall", "/laboratorio-queda-livre/"], ["faraday-induction", "/laboratorio-faraday/"]]);
+  experiments.forEach((experiment, index) => assert.equal(urls[index], dedicatedRoutes.get(experiment.id) || `/laboratorio-experimento/?topico=${encodeURIComponent(experiment.id)}`));
   assert.match(mruHtml, /Movimento retilíneo uniforme/);
   assert.match(mruHtml, /mru-chart-position/);
   assert.match(mruScript, /mruAt/);
