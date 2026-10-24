@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-categories-20261023-1";
 
 // Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
 const VISUAL_METERS_PER_NS = 0.3;

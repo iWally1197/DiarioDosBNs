@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=concave-dual-20261016-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=concave-dual-20261016-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=concave-dual-20261016-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-categories-20261023-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-categories-20261023-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-categories-20261023-1";
+import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-categories-20261023-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
@@ -303,7 +303,7 @@ function initializeExperimentPage(topicId) {
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
         showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
-        concaveModel: "paraxial", particleCount: 8, lightMode: state.mode,
+        concaveModel: "exact", particleCount: 8, lightMode: state.mode,
         beamMode: state.mode === "parallel" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
       });
       if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });

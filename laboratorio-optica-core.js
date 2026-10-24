@@ -217,7 +217,7 @@ function sphericalMirror(id, p) {
   const apertureRatio = id === "optics-concave-mirror" ? Number(p.apertureRatio ?? 0.4) : 0.52;
   if (!(apertureRatio > 0 && apertureRatio < 1)) throw new RangeError("A semiabertura deve satisfazer 0 < a/R < 1.");
   const aperture = radius * apertureRatio;
-  const rayModel = id === "optics-concave-mirror" ? (p.concaveModel === "exact" ? "exact" : "paraxial") : "exact";
+  const rayModel = id === "optics-concave-mirror" ? (p.concaveModel === "paraxial" ? "paraxial" : "exact") : "exact";
   const denominator = 1 / focalLength - 1 / objectDistance;
   const imageDistance = Math.abs(denominator) < 1e-10 ? Infinity : 1 / denominator;
   const magnification = Number.isFinite(imageDistance) ? -imageDistance / objectDistance : -Infinity;
