@@ -1,5 +1,5 @@
 import { experiments } from "./laboratorio-catalogo.js?v=mirror-catalog-tabs-20261023-1";
-import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=lab-publication-dual-20261016-1";
+import { laboratoryPublicationByExperimentId, laboratoryPublicationSlugs } from "./laboratorio-publicacao.js?v=laboratory-publication-sync-20261023-1";
 import { supabasePromise } from "./src-supabase.js?v=auth-fix-20261008";
 
 function withDeadline(promise, timeoutMs, message) {

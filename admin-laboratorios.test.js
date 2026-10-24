@@ -17,7 +17,7 @@ test("painel possui rota estática protegida para administradores",()=>{
   assert.match(app,/'\/admin\/laboratorios':'admin-laboratorios\.html'/);
   assert.match(app,/const protectedRoutes = \[[^\]]*'\/admin\/laboratorios'/);
   assert.match(app,/route==='\/admin\/laboratorios'\?'admin'/);
-  assert.match(page,/src-app\.js/);
+  assert.match(page,/src-app\.js\?v=laboratory-publication-sync-20261023-1/);
 });
 
 test("painel permite selecionar todos, resultados filtrados e seleção individual",()=>{
@@ -25,13 +25,13 @@ test("painel permite selecionar todos, resultados filtrados e seleção individu
   assert.match(panel,/data-select-visible/);
   assert.match(panel,/data-admin-lab-select/);
   assert.match(panel,/selected\.clear\(\)/);
-  assert.match(panel,/selected\.add\(item\.id\)/);
+  assert.match(panel,/selected\.add\(slug\)/);
 });
 
 test("publicar e retirar do ar pede confirmação e grava o estado no Supabase",()=>{
   assert.match(panel,/window\.confirm\(/);
   assert.match(panel,/update\(\{is_published:publish\}\)/);
-  assert.match(panel,/\.in\('id',batch\)/);
+  assert.match(panel,/\.in\('slug',batch\)/);
   assert.match(panel,/messageIsError=true/);
   assert.match(app,/retry-admin-labs/);
 });
@@ -44,10 +44,12 @@ test("banco impede alteração direta por quem não é administrador",()=>{
   assert.match(migration,/security invoker/i);
 });
 
-test("aba Laboratórios publica apenas os sete temas selecionados e sincroniza com o Supabase",()=>{
-  assert.deepEqual(laboratoryPublicationRecords.map((item)=>item.id),["mru","muv","projectile","optics-reflection","optics-convex-mirror","lens-diverging","lab-magnetic-field"]);
+test("aba Laboratórios conecta todos os nove experimentos gerenciáveis ao Supabase",()=>{
+  assert.deepEqual(laboratoryPublicationRecords.map((item)=>item.id),["mru","muv","projectile","optics-reflection","optics-concave-mirror","optics-concave-parabolic-mirror","optics-convex-mirror","lens-diverging","lab-magnetic-field"]);
   assert.deepEqual(experiments.filter((item)=>laboratoryPublicationRecords.some((record)=>record.id===item.id)).map((item)=>item.id),laboratoryPublicationRecords.map((item)=>item.id));
   assert.match(ui,/from\("animations"\)\.select\("slug"\)\.in\("slug", laboratoryPublicationSlugs\)/);
-  assert.match(panel,/upsert\(seeds,\{onConflict:'slug',ignoreDuplicates:true\}\)/);
+  assert.match(panel,/\.insert\(seeds\)/);
   assert.match(panel,/data-admin-lab-action/);
+  assert.match(app,/laboratorio-publicacao\.js\?v=laboratory-publication-sync-20261023-1/);
+  assert.match(ui,/laboratorio-publicacao\.js\?v=laboratory-publication-sync-20261023-1/);
 });
