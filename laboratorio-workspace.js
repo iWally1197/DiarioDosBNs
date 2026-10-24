@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-1";
-import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-4";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-4";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-4";
+import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-4";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
@@ -387,6 +387,7 @@ function initializeExperimentPage(topicId) {
 
   function opticsControlLevel(id) {
     if (["flashlightAngle", "beamOpening", "particleCount", "visualSpeed", "beamIntensity", "wavelengthNm"].includes(id)) return "advanced";
+    if (id === "beamWidth") return "intermediate";
     if (["apertureRatio", "mirrorTilt", "mirrorX", "mirrorY", "incidenceAngle", "showAngles", "showNormal", "showTrails", "showParticles", "showMeasures", "showReferences"].includes(id)) return "intermediate";
     return "basic";
   }
@@ -428,6 +429,7 @@ function initializeExperimentPage(topicId) {
     const sourceControls = [
       { id: "flashlightAngle", label: "Orientação da lanterna", unit: "°", min: -50, max: 50, step: 1, value: 0 },
       { id: "beamOpening", label: "Abertura do feixe", unit: "°", min: 2, max: 50, step: 1, value: 20 },
+      { id: "beamWidth", label: "Largura do feixe colimado", unit: "m", min: 0.1, max: 2.4, step: 0.05, value: 0.8 },
       { id: "particleCount", label: "Quantidade de pontos luminosos por raio", unit: "pontos", min: 1, max: 24, step: 1, value: 8 },
       { id: "visualSpeed", label: "Velocidade visual (didática)", unit: "× base visual", min: 0.25, max: 2, step: 0.25, value: 1 },
       { id: "beamIntensity", label: "Intensidade visual do feixe", unit: "0–1", min: 0.1, max: 1, step: 0.05, value: 0.8 }
@@ -503,15 +505,23 @@ function initializeExperimentPage(topicId) {
     const modelSelector = $("#mirror-concave-model");
     if (modelSelector) modelSelector.value = state.parameters.concaveModel === "exact" ? "exact" : "paraxial";
     const modelLabel = state.parameters.concaveModel === "exact" ? "traçado geométrico exato" : "aproximação paraxial";
+    const beamModel = state.parameters.beamMode || "divergent";
+    const beamDescription = beamModel === "parallel"
+      ? "Raios paralelos chegam ao espelho e refletem pela normal local."
+      : beamModel === "focus"
+        ? "A fonte está no foco; os raios refletidos saem paralelos ao eixo."
+        : beamModel === "single"
+          ? "Um raio luminoso individual é traçado pela interseção real e reflexão na normal local."
+          : "Ajuste o cone divergente da lanterna e acompanhe as reflexões calculadas.";
     $("#mirror-mode-description").textContent = isConcave
-      ? currentMode + " · " + modelLabel + ". A esfera é a mesma nos dois modelos; muda o cálculo das trajetórias."
+      ? currentMode + " · " + modelLabel + ". " + beamDescription + " A esfera é a mesma nos dois modelos; muda o cálculo das trajetórias."
       : isParabolic
-        ? currentMode + " · parábola côncava; os raios são traçados com interseção e reflexão pela normal local."
+        ? currentMode + " · parábola côncava; " + beamDescription
         : state.mode === "parallel"
-        ? "Raios colimados chegam paralelos ao espelho e são refletidos pela normal local."
-        : state.mode === "lantern"
-          ? "Ajuste a emissão da lanterna e acompanhe as trajetórias divergentes e refletidas."
-          : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
+          ? beamDescription
+          : state.mode === "lantern"
+            ? beamDescription
+            : "Posicione o corpo e compare a altura e a distância da imagem calculada.";
     const lanternCardDescription = document.querySelector('[data-mirror-mode="lantern"] small');
     if (lanternCardDescription) lanternCardDescription.textContent = isConcave
       ? "Escolha o modelo paraxial ou o traçado por reflexão na esfera."
@@ -542,6 +552,8 @@ function initializeExperimentPage(topicId) {
       if (state.parameters.beamMode === "focus" && !(isConcave || isParabolic)) state.parameters.beamMode = "divergent";
       beamMode.value = state.parameters.beamMode || "divergent";
     }
+    const beamWidthLabel = $("#control-beamWidth")?.closest("label");
+    if (beamWidthLabel) beamWidthLabel.hidden = !isMirror || state.mode === "human" || state.parameters.beamMode !== "parallel" || didacticRank[didacticMode] < didacticRank.intermediate;
   }
   function setMirrorMode(mode) {
     if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "parallel", "lantern"].includes(mode)) return;
@@ -623,7 +635,7 @@ function initializeExperimentPage(topicId) {
       return;
     }
     setMirrorMode("lantern");
-    state.parameters.beamMode = selected === "focus" ? "focus" : "divergent";
+    state.parameters.beamMode = selected === "focus" ? "focus" : selected === "single" ? "single" : "divergent";
     syncMirrorModeButtons();
     state.time = 0;
     try { render(); } catch (error) { showError(error); }

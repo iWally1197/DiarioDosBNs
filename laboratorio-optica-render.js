@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-4";
 
 // Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
 const VISUAL_METERS_PER_NS = 0.3;
@@ -299,7 +299,7 @@ function drawPlaneLantern(context, geometry, values, p, view, palette) {
   drawLantern(context, geometry, view, palette);
   drawLanternImage(context, geometry, view, palette);
   context.fillStyle = palette.text; context.font = "12px system-ui";
-  drawLabel(context, "Espelho plano · " + (flashlight.parallel ? "feixe aproximadamente paralelo" : "feixe divergente") + " · " + values.rayCount + " raios válidos", 12, 20);
+  drawLabel(context, "Espelho plano · " + (flashlight.singleRay ? "raio único" : flashlight.parallel ? "feixe aproximadamente paralelo" : "feixe divergente") + " · " + values.rayCount + " raios válidos", 12, 20);
   context.fillStyle = palette.muted; context.font = "11px system-ui";
   if (interaction && flashlight.showAngles) {
     const hit = view.toScreen(interaction.hit);
@@ -596,7 +596,7 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     drawLabel(context, "θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
   const surfaceName = geometry.surfaceProfile === "parabolic" ? "Espelho côncavo parabólico" : geometry.sign > 0 ? "Espelho côncavo esférico" : "Espelho convexo esférico";
-  const beamLabel = surfaceName + " · feixe " + (flashlight.parallel ? "colimado" : "divergente");
+  const beamLabel = surfaceName + " · " + (flashlight.singleRay ? "raio único" : flashlight.focusSource ? "fonte no foco" : flashlight.parallel ? "feixe colimado" : "feixe divergente");
   drawSphericalLandmarks(context, geometry, values, view, palette, beamLabel);
   context.fillStyle = palette.muted; context.font = "10px system-ui";
   const explanation = geometry.surfaceProfile === "parabolic"

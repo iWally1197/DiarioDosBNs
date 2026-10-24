@@ -158,6 +158,34 @@ test("lei de Snell e reflexão interna total continuam corretas", () => {
   assert.equal(total.values.angleTransmitted, null);
 });
 
+test("9 — modo de raio único traça apenas uma incidência e uma reflexão físicas", () => {
+  const model = opticalModelFor("optics-concave-mirror", {
+    experimentMode: "lantern", beamMode: "single", radius: 1,
+    apertureRatio: 0.6, objectDistance: 2, objectHeight: 0,
+    flashlightHeight: 0, beamOpening: 24, concaveModel: "exact", ...wave
+  });
+  assert.equal(model.geometry.flashlight.singleRay, true);
+  assert.equal(model.geometry.flashlight.actualRayCount, 1);
+  assert.equal(model.geometry.flashlight.interactions.length, 1);
+  assert.equal(model.geometry.rays.filter((ray) => ray.role === "raio incidente").length, 1);
+  assert.equal(model.geometry.rays.filter((ray) => ray.role === "raio refletido").length, 1);
+  for (const value of Object.values(model.geometry.flashlight.interactions[0].hit)) assert.ok(Number.isFinite(value));
+});
+
+test("10 — largura do feixe colimado altera o espaçamento dos impactos sem exceder a abertura", () => {
+  const parameters = {
+    experimentMode: "lantern", beamMode: "parallel", focalLength: 0.5,
+    apertureRatio: 0.6, objectDistance: 3, objectHeight: 0,
+    flashlightHeight: 0, beamOpening: 20, ...wave
+  };
+  const narrow = opticalModelFor("optics-concave-parabolic-mirror", { ...parameters, beamWidth: 0.4 });
+  const wide = opticalModelFor("optics-concave-parabolic-mirror", { ...parameters, beamWidth: 1.4 });
+  const maxImpact = (model) => Math.max(...model.geometry.flashlight.interactions.map((item) => Math.abs(item.hit.y)));
+  assert.ok(maxImpact(wide) > maxImpact(narrow), "o feixe largo deve atingir regiões mais afastadas do eixo");
+  assert.ok(maxImpact(wide) <= wide.geometry.aperture + 1e-8, "os impactos devem respeitar a abertura do espelho");
+  assert.ok(wide.geometry.flashlight.interactions.length <= 7);
+});
+
 test("zoom e tamanho da tela não mudam as coordenadas físicas", () => {
   const geometry = sphere("optics-concave-mirror").geometry;
   const point = { x: -0.5, y: 0 };
@@ -175,6 +203,8 @@ test("página expõe quatro superfícies, modos didáticos e controles de foco e
   for (const id of ["optics-reflection", "optics-concave-mirror", "optics-convex-mirror", "optics-concave-parabolic-mirror"]) assert.match(readFileSync(new URL("./laboratorio-espelhos.html", import.meta.url), "utf8"), new RegExp(id));
   assert.match(html, /mirror-didactic-mode/);
   assert.match(html, /value="focus"/);
+  assert.match(html, /value="single"/);
+  assert.match(workspace, /Largura do feixe colimado/);
   assert.match(html, /mirror-show-grid/);
   assert.match(html, /mirror-show-labels/);
   assert.match(html, /mirror-high-contrast/);

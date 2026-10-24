@@ -459,9 +459,11 @@ function flashlightMirror(id, p, geometry) {
   if (particleCount < 1 || particleCount > 32) throw new RangeError("A quantidade de pontos luminosos deve ficar entre 1 e 32.");
 
   const parallel = p.beamMode === "parallel";
+  const singleRay = p.beamMode === "single";
   const focusCapable = id === "optics-concave-mirror" || id === "optics-concave-parabolic-mirror";
   const focusSource = p.beamMode === "focus" && focusCapable && geometry.kind === "spherical-mirror";
-  const rayCount = 7;
+  const rayCount = singleRay ? 1 : 7;
+  const beamWidth = positive(p.beamWidth ?? 0.8, "Largura do feixe colimado");
   const baseAngle = geometry.kind === "plane-mirror" ? Math.atan2(geometry.incomingDirection.y, geometry.incomingDirection.x) : 0;
   const centralAngle = baseAngle + beamAngle;
   const central = unit({ x: Math.cos(centralAngle), y: Math.sin(centralAngle) });
@@ -492,7 +494,9 @@ function flashlightMirror(id, p, geometry) {
     };
   }
   const perpendicular = { x: -central.y, y: central.x };
-  const requestedSpread = (geometry.kind === "spherical-mirror" ? positive(p.objectDistance, "Distância da lanterna") : Number(p.sourceDistance ?? 1.8)) * Math.tan(opening / 2);
+  const requestedSpread = parallel
+    ? beamWidth / 2
+    : (geometry.kind === "spherical-mirror" ? positive(p.objectDistance, "Distância da lanterna") : Number(p.sourceDistance ?? 1.8)) * Math.tan(opening / 2);
   const sourceSpread = parallel
     ? geometry.surfaceProfile === "parabolic"
       ? Math.max(0, Math.min(requestedSpread, geometry.aperture - Math.abs(source.y) - 0.015))
@@ -504,7 +508,7 @@ function flashlightMirror(id, p, geometry) {
   const particlePaths = [];
   const hits = [];
   for (let index = 0; index < rayCount; index += 1) {
-    const fraction = (index / (rayCount - 1)) * 2 - 1;
+    const fraction = rayCount === 1 ? 0 : (index / (rayCount - 1)) * 2 - 1;
     let angle;
     if (focusSource) {
       const targetY = fraction * geometry.aperture * 0.92;
@@ -544,7 +548,7 @@ function flashlightMirror(id, p, geometry) {
   geometry.mode = "lantern";
   geometry.flashlight = {
     source, direction: central, rayCount, actualRayCount: hits.length,
-    parallel, focusSource, beamAngle, opening, emissionRate, visualSpeed, intensity, particleCount,
+    parallel, singleRay, focusSource, beamWidth, beamAngle, opening, emissionRate, visualSpeed, intensity, particleCount,
     opticsMode: geometry.rayModel || "exact", focus: focusSource ? { ...source } : null,
     primaryInteraction: hits[Math.floor(hits.length / 2)] || null,
     interactions: hits,
