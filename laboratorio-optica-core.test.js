@@ -1,290 +1,188 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { stateAt } from "./laboratorio-advanced-core.js";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=lantern-cone-reflection-20261012-2";
+import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js";
 
-const degrees = (radians) => radians * 180 / Math.PI;
-const closeTo = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} deve estar próximo de ${expected}`);
-
-test("reflexão plana conserva o ângulo medido a partir da normal", () => {
-  const parameters = { incidenceAngle: 37, mirrorTilt: 0, impactOffset: 0.2, wavelengthNm: 550 };
-  const model = stateAt("optics-reflection", parameters, 4);
-  closeTo(model.values.angleIncident, 37, 1e-8);
-  closeTo(model.values.angleReflected, 37, 1e-8);
-  const { incomingDirection: incoming, reflectedDirection: reflected, normal } = model.geometry;
-  const incomingNormal = Math.acos(Math.abs(incoming.x * normal.x + incoming.y * normal.y));
-  const reflectedNormal = Math.acos(Math.abs(reflected.x * normal.x + reflected.y * normal.y));
-  closeTo(incomingNormal, reflectedNormal, 1e-10);
+const closeTo = (actual, expected, tolerance = 1e-8) =>
+  assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} deve estar próximo de ${expected} (±${tolerance})`);
+const wave = { wavelengthNm: 550 };
+const sphere = (id, overrides = {}) => opticalModelFor(id, {
+  experimentMode: "human", radius: 1, apertureRatio: 0.6,
+  objectDistance: 1.5, objectHeight: 0.2, ...wave, ...overrides
 });
+const reflectedInteractions = (model) => {
+  const traced = model.geometry.flashlight?.interactions;
+  if (traced?.length) return traced;
+  return model.geometry.rays.filter((ray) => ray.role === "refletido" && ray.interaction).map((ray) => ray.interaction);
+};
+const cross = (a, b) => a.x * b.y - a.y * b.x;
+const dot = (a, b) => a.x * b.x + a.y * b.y;
 
-test("girar o espelho gira o raio refletido pelo dobro do ângulo", () => {
-  const base = stateAt("optics-reflection", { incidenceAngle: 0, mirrorTilt: 0, impactOffset: 0, wavelengthNm: 550 }).geometry;
-  const tilted = stateAt("optics-reflection", { incidenceAngle: 0, mirrorTilt: 10, impactOffset: 0, wavelengthNm: 550 }).geometry;
-  const directionAngle = (direction) => Math.atan2(direction.y, direction.x);
-  const rawDelta = Math.abs(degrees(directionAngle(tilted.reflectedDirection) - directionAngle(base.reflectedDirection))) % 360;
-  closeTo(Math.min(rawDelta, 360 - rawDelta), 20, 1e-8);
-});
-
-test("lei de Snell, frequência constante e mudança de velocidade e comprimento de onda", () => {
-  const values = stateAt("optics-refraction", { incidenceAngle: 35, index1: 1, index2: 1.5, wavelengthNm: 550, impactOffset: 0 }, 2).values;
-  closeTo(values.index1 * Math.sin(values.angleIncident * Math.PI / 180), values.index2 * Math.sin(values.angleTransmitted * Math.PI / 180), 1e-10);
-  closeTo(values.wavelength2Nm / values.wavelength1Nm, values.index1 / values.index2, 1e-10);
-  closeTo(values.speed2 / values.speed1, values.index1 / values.index2, 1e-10);
-  closeTo(values.frequencyTHz, 299_792_458 / (550e-9) / 1e12, 1e-8);
-});
-
-test("reflexão interna total ocorre apenas acima do ângulo crítico", () => {
-  const params = { incidenceAngle: 60, index1: 1.5, index2: 1, wavelengthNm: 500, impactOffset: 0 };
-  const model = stateAt("optics-refraction", params, 3);
-  assert.equal(model.values.totalInternalReflection, true);
-  assert.equal(model.values.angleTransmitted, null);
-  assert.equal(model.geometry.rays.at(-1).role.startsWith("refletido"), true);
-  const belowCritical = stateAt("optics-refraction", { ...params, incidenceAngle: 40 }, 3);
-  assert.equal(belowCritical.values.totalInternalReflection, false);
-});
-
-test("equação de espelhos esféricos usa f=R/2 com sinais coerentes", () => {
-  const concave = stateAt("optics-concave-mirror", { radius: 2, objectDistance: 3, objectHeight: 0.6, wavelengthNm: 550 }, 1).values;
-  closeTo(concave.focalLength, 1);
-  closeTo(concave.imageDistance, 1.5);
-  closeTo(concave.magnification, -0.5);
-  const convex = stateAt("optics-convex-mirror", { radius: 2, objectDistance: 3, objectHeight: 0.6, wavelengthNm: 550 }, 1).values;
-  closeTo(convex.focalLength, -1);
-  closeTo(convex.imageDistance, -0.75);
-  closeTo(convex.magnification, 0.25);
-  assert.equal(convex.image, "virtual");
-});
-
-test("raios no espelho côncavo parabólico refletem pela normal local", () => {
-  const geometry = stateAt("optics-concave-mirror", { radius: 2, objectDistance: 3, objectHeight: 0.6, wavelengthNm: 550 }, 0).geometry;
-  assert.equal(geometry.surfaceProfile, "parabolic");
-  const reflectedRays = geometry.rays.filter((ray) => ray.role === "refletido");
-  assert.equal(reflectedRays.length, 4);
-  for (const ray of reflectedRays) {
-    const { incomingDirection: incoming, reflectedDirection: outgoing, normal } = ray.interaction;
-    const tangent = { x: -normal.y, y: normal.x };
-    closeTo(incoming.x * tangent.x + incoming.y * tangent.y, outgoing.x * tangent.x + outgoing.y * tangent.y, 1e-10);
-  }
-});
-
-test("comprimento de onda visível fora dos limites e índices inválidos são rejeitados", () => {
-  assert.throws(() => stateAt("optics-reflection", { incidenceAngle: 0, mirrorTilt: 0, impactOffset: 0, wavelengthNm: 760 }), /entre 380 nm e 700 nm/);
-  assert.throws(() => stateAt("optics-refraction", { incidenceAngle: 30, index1: 0, index2: 1.5, wavelengthNm: 550, impactOffset: 0 }), /maior que zero/);
-});
-
-test("modo corpo humano calcula imagem e medidas nos três espelhos", () => {
-  const plane = stateAt("optics-reflection", {
-    experimentMode: "human", incidenceAngle: 0, mirrorTilt: 0, mirrorX: 2.65, mirrorY: 1.5,
-    sourceDistance: 1.8, impactOffset: 0, wavelengthNm: 550, objectDistance: 1.4, objectHeight: 1.6
-  }).values;
-  closeTo(plane.imageDistance, 1.4);
-  closeTo(plane.objectImageSeparation, 2.8);
-  closeTo(plane.imageHeight, 1.6);
-  assert.equal(plane.imageNature, "virtual");
-  assert.equal(plane.orientation, "direita");
-
-  const concave = stateAt("optics-concave-mirror", { experimentMode: "human", radius: 2, objectDistance: 3, objectHeight: 1.7, wavelengthNm: 550 }).values;
-  closeTo(concave.imageDistance, 1.5);
-  closeTo(concave.imageHeight, 0.85);
-  closeTo(concave.objectImageSeparation, 1.5);
-  assert.equal(concave.orientation, "invertida");
-  assert.equal(concave.imageScale, "reduzida");
-
-  const convex = stateAt("optics-convex-mirror", { experimentMode: "human", radius: 2, objectDistance: 3, objectHeight: 1.7, wavelengthNm: 550 }).values;
-  closeTo(convex.imageDistance, -0.75);
-  closeTo(convex.imageHeight, 0.425);
-  closeTo(convex.objectImageSeparation, 3.75);
-  assert.equal(convex.imageNature, "virtual");
-  assert.equal(convex.orientation, "direita");
-  assert.equal(convex.imageScale, "reduzida");
-});
-
-test("lanterna faz as bolinhas seguirem raios refletidos pelas normais locais", () => {
-  const examples = [
-    ["optics-reflection", { incidenceAngle: 0, mirrorTilt: 0, mirrorX: 2.65, mirrorY: 1.5, sourceDistance: 1.8, impactOffset: 0 }],
-    ["optics-concave-mirror", { radius: 2, objectDistance: 3, flashlightHeight: 0.2 }],
-    ["optics-convex-mirror", { radius: 2, objectDistance: 3, flashlightHeight: 0.2 }]
-  ];
-  for (const [id, specific] of examples) {
-    const model = stateAt(id, {
-      ...specific, experimentMode: "lantern", objectHeight: 0.6, wavelengthNm: 550,
-      flashlightAngle: 0, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1,
-      beamMode: "divergent", showParticles: true, beamIntensity: 0.4
-    }, 12);
-    const geometry = model.geometry;
-    assert.ok(geometry.flashlight.actualRayCount >= 3, id + " deve encontrar o espelho com vários raios");
-    assert.ok(geometry.particlePaths.length >= 3, id + " deve ter trajetórias animáveis");
-    assert.equal(geometry.flashlight.intensity, 0.4);
-    assert.equal(geometry.flashlight.showImage, true);
-    assert.ok(geometry.image, id + " deve calcular a imagem da fonte independente do corpo humano");
-    for (const ray of geometry.rays.filter((item) => item.role === "raio incidente")) {
-      const hit = ray.interaction.hit;
-      const normal = ray.interaction.normal;
-      const incoming = ray.interaction.incomingDirection;
-      const outgoing = ray.interaction.reflectedDirection;
-      closeTo(Math.hypot(outgoing.x, outgoing.y), 1, 1e-9);
-      const angleIn = Math.acos(Math.abs(incoming.x * normal.x + incoming.y * normal.y));
-      const angleOut = Math.acos(Math.abs(outgoing.x * normal.x + outgoing.y * normal.y));
-      closeTo(angleIn, angleOut, 1e-9);
-      assert.ok(Number.isFinite(hit.x) && Number.isFinite(hit.y));
-    }
-  }
-});
-
-test("feixe colimado mantém direções paralelas e modo divergente parte da lanterna", () => {
-  const base = { radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", objectHeight: 0.6, wavelengthNm: 550, flashlightAngle: 0, beamOpening: 24, emissionRate: 0.65, visualSpeed: 1 };
-  const parallel = stateAt("optics-concave-mirror", { ...base, beamMode: "parallel" }).geometry;
-  const incidentParallel = parallel.rays.filter((ray) => ray.role === "raio incidente");
-  assert.ok(incidentParallel.length >= 3);
-  for (const ray of incidentParallel.slice(1)) {
-    closeTo(ray.interaction.incomingDirection.x, incidentParallel[0].interaction.incomingDirection.x);
-    closeTo(ray.interaction.incomingDirection.y, incidentParallel[0].interaction.incomingDirection.y);
-  }
-  assert.equal(parallel.flashlight.parallel, true);
-
-  const divergent = stateAt("optics-convex-mirror", { ...base, beamMode: "divergent" }).geometry;
-  const incidentDivergent = divergent.rays.filter((ray) => ray.role === "raio incidente");
-  assert.ok(incidentDivergent.length >= 3);
-  assert.ok(incidentDivergent.some((ray) => Math.abs(ray.interaction.incomingDirection.y - incidentDivergent[0].interaction.incomingDirection.y) > 1e-3));
-  assert.equal(divergent.flashlight.parallel, false);
-});
-
-test("lanterna idealizada emite cone que toca o espelho, passa por F* e continua", () => {
-  const geometry = stateAt("optics-concave-mirror", {
-    radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", lightMode: "lantern",
-    lanternOpticsMode: "idealized", focusOffsetX: 0.35, focusOffsetY: -0.2, particleCount: 12,
-    objectHeight: 0.6, wavelengthNm: 550, beamOpening: 42, visualSpeed: 1.5,
-    beamMode: "divergent", showParticles: true, beamIntensity: 0.8
-  }, 0).geometry;
-  const focus = { x: -geometry.focalLength + 0.35, y: -0.2 };
-  assert.equal(geometry.flashlight.idealized, true);
-  assert.equal(geometry.flashlight.opticsMode, "idealized");
-  assert.equal(geometry.flashlight.actualRayCount, 7);
-  assert.equal(geometry.flashlight.particleCount, 12);
-  assert.ok(geometry.flashlight.opening > 0 && geometry.flashlight.opening <= 42 * Math.PI / 180);
-  closeTo(geometry.flashlight.focus.x, focus.x, 1e-12);
-  closeTo(geometry.flashlight.focus.y, focus.y, 1e-12);
-  assert.equal(geometry.particlePaths.length, 7);
-  assert.equal(geometry.rays.length, 21);
-  assert.equal(geometry.flashlight.conePoints.length, 9);
-  closeTo(geometry.flashlight.conePoints[0].x, geometry.source.x, 1e-12);
-  closeTo(geometry.flashlight.conePoints[0].y, geometry.source.y, 1e-12);
-  closeTo(geometry.flashlight.conePoints.at(-1).x, geometry.source.x, 1e-12);
-  assert.ok(geometry.flashlight.direction.x > 0, "a lanterna deve apontar para o espelho");
-  for (const path of geometry.particlePaths) {
-    assert.equal(path.length, 3);
-    const [incident, reflected, continued] = path;
-    closeTo(incident.start.x, geometry.source.x, 1e-12);
-    closeTo(incident.start.y, geometry.source.y, 1e-12);
-    closeTo(incident.end.x + incident.end.y ** 2 / (4 * geometry.focalLength), 0, 1e-10);
-    assert.ok(Math.abs(incident.end.y) <= geometry.aperture);
-    closeTo(reflected.start.x, incident.end.x, 1e-12);
-    closeTo(reflected.start.y, incident.end.y, 1e-12);
-    closeTo(reflected.end.x, focus.x, 1e-12);
-    closeTo(reflected.end.y, focus.y, 1e-12);
-    closeTo(continued.start.x, focus.x, 1e-12);
-    closeTo(continued.start.y, focus.y, 1e-12);
-    const dx = focus.x - reflected.start.x;
-    const dy = focus.y - reflected.start.y;
-    const continuationDx = continued.end.x - continued.start.x;
-    const continuationDy = continued.end.y - continued.start.y;
-    closeTo(Math.abs(dx * continuationDy - dy * continuationDx), 0, 1e-9);
-    assert.ok(dx * continuationDx + dy * continuationDy > 0, "o raio deve continuar no mesmo sentido depois de F*");
-  }
-});
-
-
-test("fonte coincidente com o foco não causa divisão por zero", () => {
-  const geometry = stateAt("optics-concave-mirror", {
-    radius: 2, objectDistance: 1, flashlightHeight: 0.6, experimentMode: "lantern", lightMode: "lantern",
-    lanternOpticsMode: "idealized", focusOffsetX: 0, focusOffsetY: 0.6, objectHeight: 0.6, wavelengthNm: 550, beamOpening: 20
-  }, 3).geometry;
-  assert.equal(geometry.flashlight.actualRayCount, 7);
-  for (const path of geometry.particlePaths) {
-    for (const segment of path) {
-      assert.ok(Number.isFinite(segment.start.x) && Number.isFinite(segment.start.y));
-      assert.ok(Number.isFinite(segment.end.x) && Number.isFinite(segment.end.y));
-    }
-  }
-});
-
-test("modo realista mantém a lei da reflexão e não força o foco didático", () => {
-  const geometry = stateAt("optics-concave-mirror", {
-    radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", lightMode: "lantern",
-    lanternOpticsMode: "realistic", objectHeight: 0.6, wavelengthNm: 550,
-    beamOpening: 24, beamMode: "divergent", showParticles: true
-  }, 0).geometry;
-  assert.equal(geometry.flashlight.idealized, false);
-  assert.equal(geometry.flashlight.opticsMode, "realistic");
-  assert.equal(geometry.flashlight.parallel, false);
-  const reflected = geometry.rays.filter((ray) => ray.role === "raio refletido");
-  assert.ok(reflected.length >= 3);
-  for (const ray of reflected) {
-    const { incomingDirection, reflectedDirection, normal } = ray.interaction;
-    const tangent = { x: -normal.y, y: normal.x };
-    closeTo(incomingDirection.x * tangent.x + incomingDirection.y * tangent.y,
-      reflectedDirection.x * tangent.x + reflectedDirection.y * tangent.y, 1e-10);
-  }
-  const physicalFocus = { x: -geometry.focalLength, y: 0 };
-  const deviations = reflected.map((ray) => {
-    const start = ray.points[0], end = ray.points[1];
-    return Math.abs((end.x - start.x) * (physicalFocus.y - start.y) - (end.y - start.y) * (physicalFocus.x - start.x));
+test("1 — espelho plano forma imagem virtual simétrica e com di = -do", () => {
+  const model = opticalModelFor("optics-reflection", {
+    experimentMode: "human", incidenceAngle: 0, mirrorTilt: 0,
+    mirrorX: 2.65, mirrorY: 1.5, sourceDistance: 1.8,
+    impactOffset: 0, objectDistance: 1, objectHeight: 1, ...wave
   });
-  assert.ok(deviations.some((error) => error > 1e-4), "a fonte finita fora do foco não deve ser forçada a convergir em F");
+  closeTo(model.values.imageDistance, -1);
+  closeTo(model.values.magnification, 1);
+  closeTo(model.values.imageHeight, 1);
+  closeTo(model.values.objectImageSeparation, 2);
+  closeTo(model.values.imageX, 2 * model.geometry.center.x - model.values.objectX);
+  closeTo(model.values.imageY, model.values.objectY);
+  assert.equal(model.values.imageNature, "virtual");
+  assert.equal(model.values.orientation, "direita");
 });
 
-test("a posição focal permanece estável ao redimensionar o canvas", () => {
-  const geometry = stateAt("optics-concave-mirror", {
-    radius: 2, objectDistance: 3, flashlightHeight: 0.2, experimentMode: "lantern", lightMode: "lantern",
-    lanternOpticsMode: "idealized", focusOffsetX: 0.4, focusOffsetY: 0.3, objectHeight: 0.6, wavelengthNm: 550
-  }).geometry;
-  const focus = geometry.flashlight.focus;
+test("2 — espelho côncavo além do centro aplica f=R/2 e a equação paraxial", () => {
+  const model = sphere("optics-concave-mirror", { radius: 1, objectDistance: 1.5, concaveModel: "paraxial" });
+  closeTo(model.values.focalLength, 0.5);
+  closeTo(model.values.imageDistance, 0.75);
+  closeTo(model.values.magnification, -0.5);
+  closeTo(model.values.imageHeight, -0.1);
+  assert.equal(model.values.imageNature, "real");
+  assert.equal(model.values.orientation, "invertida");
+});
+
+test("3 — objeto côncavo dentro do foco gera imagem virtual direita e ampliada", () => {
+  const model = sphere("optics-concave-mirror", { radius: 1, objectDistance: 0.25, concaveModel: "paraxial" });
+  closeTo(model.values.focalLength, 0.5);
+  closeTo(model.values.imageDistance, -0.5);
+  closeTo(model.values.magnification, 2);
+  closeTo(model.values.imageHeight, 0.4);
+  assert.equal(model.values.imageNature, "virtual");
+  assert.equal(model.values.orientation, "direita");
+  assert.equal(model.values.imageScale, "ampliada");
+});
+
+test("4 — espelho convexo mantém R e f negativos e imagem virtual reduzida", () => {
+  const model = sphere("optics-convex-mirror", { radius: 1, objectDistance: 1 });
+  closeTo(model.values.radius, -1);
+  closeTo(model.values.focalLength, -0.5);
+  closeTo(model.values.imageDistance, -1 / 3);
+  closeTo(model.values.magnification, 1 / 3);
+  assert.equal(model.values.imageNature, "virtual");
+  assert.equal(model.values.orientation, "direita");
+  assert.equal(model.values.imageScale, "reduzida");
+});
+
+test("5 — parábola focaliza feixe axial e colima fonte colocada no foco", () => {
+  const parameters = {
+    experimentMode: "lantern", beamMode: "parallel", focalLength: 0.5,
+    apertureRatio: 0.6, objectDistance: 3, flashlightHeight: 0,
+    objectHeight: 0, beamOpening: 20, flashlightAngle: 0, ...wave
+  };
+  const parallel = opticalModelFor("optics-concave-parabolic-mirror", parameters);
+  closeTo(parallel.geometry.flashlight.focus.x, -0.5);
+  closeTo(parallel.geometry.flashlight.focus.y, 0);
+  assert.ok(parallel.geometry.flashlight.interactions.length >= 5);
+  for (const interaction of parallel.geometry.flashlight.interactions) {
+    const toFocus = { x: -0.5 - interaction.hit.x, y: -interaction.hit.y };
+    closeTo(cross(interaction.reflectedDirection, toFocus), 0, 1e-8);
+  }
+  const fromFocus = opticalModelFor("optics-concave-parabolic-mirror", { ...parameters, beamMode: "focus" });
+  assert.equal(fromFocus.geometry.flashlight.focusSource, true);
+  for (const interaction of fromFocus.geometry.flashlight.interactions) {
+    closeTo(interaction.reflectedDirection.y, 0, 1e-8);
+    assert.ok(interaction.reflectedDirection.x < 0);
+  }
+});
+
+test("6 — toda reflexão usa a normal local e conserva os ângulos", () => {
+  const examples = [
+    ["optics-reflection", {
+      experimentMode: "lantern", beamMode: "divergent", incidenceAngle: 0,
+      sourceDistance: 1.8, mirrorX: 2.65, mirrorY: 1.5, mirrorTilt: 0,
+      impactOffset: 0, flashlightHeight: 0.2, beamOpening: 24, ...wave
+    }],
+    ["optics-concave-mirror", { ...wave, experimentMode: "lantern", beamMode: "divergent", radius: 1, apertureRatio: 0.55, objectDistance: 1.5, objectHeight: 0.3, flashlightHeight: 0.2 }],
+    ["optics-convex-mirror", { ...wave, experimentMode: "lantern", beamMode: "divergent", radius: 1, objectDistance: 1.5, objectHeight: 0.3, flashlightHeight: 0.2 }],
+    ["optics-concave-parabolic-mirror", { ...wave, experimentMode: "lantern", beamMode: "parallel", focalLength: 0.5, apertureRatio: 0.6, objectDistance: 3, objectHeight: 0, flashlightHeight: 0 }]
+  ];
+  for (const [id, parameters] of examples) {
+    const interactions = reflectedInteractions(opticalModelFor(id, parameters));
+    assert.ok(interactions.length >= 3, `${id}: faltam raios com colisão`);
+    for (const item of interactions) {
+      const { incomingDirection: d, normal: n, reflectedDirection: r } = item;
+      const expected = { x: d.x - 2 * dot(d, n) * n.x, y: d.y - 2 * dot(d, n) * n.y };
+      closeTo(r.x, expected.x, 1e-10);
+      closeTo(r.y, expected.y, 1e-10);
+      closeTo(Math.acos(Math.min(1, Math.abs(dot(d, n)))), Math.acos(Math.min(1, Math.abs(dot(r, n)))), 1e-8);
+    }
+  }
+});
+
+test("7 — abertura esférica ampla mostra aberração sem forçar o foco paraxial", () => {
+  const model = opticalModelFor("optics-concave-mirror", {
+    experimentMode: "lantern", beamMode: "parallel", radius: 1,
+    apertureRatio: 0.8, objectDistance: 3, objectHeight: 0,
+    flashlightHeight: 0, concaveModel: "exact", ...wave
+  });
+  assert.equal(model.values.rayModel, "Traçado exato");
+  assert.ok(model.geometry.exactFocus);
+  assert.ok(Math.abs(model.geometry.exactFocus.point.x + model.values.focalLength) > 1e-3);
+  assert.ok(model.values.exactImageBlurRadius > 0);
+});
+
+test("8 — foco no infinito, limites e coordenadas inválidas são tratados com segurança", () => {
+  const atFocus = sphere("optics-concave-mirror", { radius: 1, objectDistance: 0.5, concaveModel: "paraxial" });
+  assert.equal(atFocus.values.imageDistance, Infinity);
+  assert.equal(atFocus.geometry.image, null);
+  assert.equal(atFocus.values.imageX, null);
+  const convex = sphere("optics-convex-mirror", { radius: 1, objectDistance: 1 });
+  assert.equal(convex.values.imageNature, "virtual");
+  const assertNoNaN = (value, path = "modelo", seen = new Set()) => {
+    if (typeof value === "number") assert.ok(!Number.isNaN(value), `NaN em ${path}`);
+    if (!value || typeof value !== "object" || seen.has(value)) return;
+    seen.add(value);
+    for (const [key, child] of Object.entries(value)) assertNoNaN(child, `${path}.${key}`, seen);
+  };
+  for (const model of [atFocus, convex]) {
+    assertNoNaN(model.values);
+    assertNoNaN(model.geometry);
+    for (const ray of model.geometry.rays) for (const point of ray.points) {
+      assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y));
+    }
+  }
+  assert.throws(() => opticalModelFor("optics-concave-parabolic-mirror", {
+    focalLength: 0, apertureRatio: 0.5, objectDistance: 3, objectHeight: 0, ...wave
+  }), RangeError);
+});
+
+test("lei de Snell e reflexão interna total continuam corretas", () => {
+  const refracted = opticalModelFor("optics-refraction", { incidenceAngle: 35, index1: 1, index2: 1.5, impactOffset: 0, ...wave });
+  closeTo(refracted.values.index1 * Math.sin(refracted.values.angleIncident * Math.PI / 180),
+    refracted.values.index2 * Math.sin(refracted.values.angleTransmitted * Math.PI / 180), 1e-10);
+  const total = opticalModelFor("optics-refraction", { incidenceAngle: 60, index1: 1.5, index2: 1, impactOffset: 0, ...wave });
+  assert.equal(total.values.totalInternalReflection, true);
+  assert.equal(total.values.angleTransmitted, null);
+});
+
+test("zoom e tamanho da tela não mudam as coordenadas físicas", () => {
+  const geometry = sphere("optics-concave-mirror").geometry;
+  const point = { x: -0.5, y: 0 };
   for (const [width, height] of [[320, 240], [768, 1024], [1440, 900]]) {
     const view = opticalViewFor(geometry.bounds, width, height);
-    const roundTrip = view.toWorld(view.toScreen(focus));
-    closeTo(roundTrip.x, focus.x, 1e-10);
-    closeTo(roundTrip.y, focus.y, 1e-10);
+    const roundTrip = view.toWorld(view.toScreen(point));
+    closeTo(roundTrip.x, point.x, 1e-10);
+    closeTo(roundTrip.y, point.y, 1e-10);
   }
 });
 
-test("recalcular a simulação repetidamente não acumula raios ou partículas", () => {
-  for (let index = 0; index < 120; index += 1) {
-    const geometry = stateAt("optics-concave-mirror", {
-      radius: 2, objectDistance: 2.5 + index * 0.001, flashlightHeight: 0.2, objectHeight: 0.6, wavelengthNm: 550,
-      experimentMode: "lantern", lightMode: "lantern", lanternOpticsMode: "idealized",
-      focusOffsetX: index % 5 * 0.03, focusOffsetY: index % 7 * 0.02, particleCount: 16
-    }).geometry;
-    assert.equal(geometry.rays.length, 21);
-    assert.equal(geometry.particlePaths.length, 7);
-    assert.equal(geometry.flashlight.particleCount, 16);
-  }
-});
-
-test("página expõe seletor de modos e controles para luz e corpo", () => {
+test("página expõe quatro superfícies, modos didáticos e controles de foco e visualização", () => {
   const html = readFileSync(new URL("./laboratorio-experimento.html", import.meta.url), "utf8");
   const workspace = readFileSync(new URL("./laboratorio-workspace.js", import.meta.url), "utf8");
-  assert.match(html, /data-mirror-mode="human"/);
-  assert.match(html, /data-mirror-mode="lantern"/);
-  assert.match(html, /mirror-show-image/);
-  assert.match(html, /mirror-show-lantern-image/);
-  assert.match(html, /mirror-beam-mode/);
-  assert.match(html, /mirror-lantern-optics-mode/);
-  assert.match(workspace, /function setMirrorMode/);
+  for (const id of ["optics-reflection", "optics-concave-mirror", "optics-convex-mirror", "optics-concave-parabolic-mirror"]) assert.match(readFileSync(new URL("./laboratorio-espelhos.html", import.meta.url), "utf8"), new RegExp(id));
+  assert.match(html, /mirror-didactic-mode/);
+  assert.match(html, /value="focus"/);
+  assert.match(html, /mirror-show-grid/);
+  assert.match(html, /mirror-show-labels/);
+  assert.match(html, /mirror-high-contrast/);
+  assert.match(html, /mirror-reduced-motion/);
+  assert.match(html, /mirror-comparison-spherical/);
+  assert.match(html, /mirror-comparison-parabolic/);
+  assert.match(workspace, /function drawMirrorComparison/);
+  assert.match(workspace, /mirror-comparison-toggle/);
   assert.match(workspace, /function controlsForExperiment/);
-  assert.match(workspace, /beamIntensity/);
-  assert.match(workspace, /focusOffsetX/);
-  assert.match(workspace, /particleCount/);
-  assert.match(workspace, /Velocidade visual \(didática\)/);
-  assert.match(workspace, /body-height/);
-  assert.match(workspace, /function setParameter/);
-  assert.match(workspace, /Posição horizontal de F\*/);
-  assert.match(workspace, /Imagem paraxial do espelho × fonte/);
-  const catalog = readFileSync(new URL("./laboratorio-catalogo.js", import.meta.url), "utf8");
-  assert.match(catalog, /Convergência idealizada é um recurso didático/);
-  assert.doesNotMatch(catalog, /lanterna colimada produz raios refletidos/);
-  assert.match(workspace, /state\.mode = MIRROR_EXPERIMENTS\.has\(id\) \? \(id === "optics-concave-mirror" \? "parallel" : "lantern"\)/);
-  const suite = readFileSync(new URL("./laboratorio-suite.css", import.meta.url), "utf8");
-  assert.match(suite, /lab-workspace-panels,.lab-existing-panels\s*\{\s*grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(workspace, /data-optics-level/);
 });
-

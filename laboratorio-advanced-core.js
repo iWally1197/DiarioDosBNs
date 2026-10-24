@@ -1,4 +1,4 @@
-import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=concave-dual-20261016-1";
+import { opticalDurationFor, opticalGraphFor, opticalModelFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-1";
 
 const concaveImageGraphCache = new Map();
 const G = 9.81;

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <base href="./">
+  <base href="/">
   <script defer src="/clean-links.js?v=clean-routes-20261013-2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f">
@@ -10,12 +10,12 @@
   <title>Laboratórios de espelhos — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
-  <link rel="stylesheet" href="laboratorio-suite.css?v=lab-mirror-choice-20261011">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=mirror-optics-physics-20261023-1">
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=teacher-visibility-20261019-1" defer></script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>
   <style>
-    .mirror-category-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:4px 0 22px}
+    .mirror-category-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 22px}
     .mirror-category-tab{min-height:54px;padding:13px 18px;border:1px solid var(--line,#334155);border-radius:12px;background:var(--panel,#111b2d);color:var(--text,#f8fafc);font:inherit;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
     .mirror-category-tab:hover{border-color:var(--accent,#e6c477);transform:translateY(-1px)}
     .mirror-category-tab[aria-selected=true]{border-color:var(--accent,#e6c477);background:rgba(230,196,119,.12);color:var(--accent,#e6c477)}
@@ -23,7 +23,7 @@
     .mirror-physics-note,.mirror-physics-scope{margin:18px 0;padding:16px 18px;border-left:3px solid var(--accent,#e6c477);background:rgba(255,255,255,.035);color:var(--muted,#b9c5d7);line-height:1.65}
     .mirror-physics-note strong{color:var(--text,#f8fafc)}
     .mirror-physics-note p{margin:6px 0 0}
-    .mirror-category-panel{padding-top:8px}
+    .mirror-category-panel{padding-top:8px}.mirror-category-panel[hidden]{display:none}
     .mirror-category-panel h2,.mirror-plane-lab h2{margin:10px 0 8px}
     .mirror-category-intro{max-width:1000px;margin:0 0 20px;color:var(--muted,#b9c5d7);line-height:1.7}
     .mirror-lab-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -32,7 +32,7 @@
     .mirror-plane-lab>div p{color:var(--muted,#b9c5d7);line-height:1.6}
     .mirror-back{margin-top:24px}
     .mirror-physics-scope{font-size:.92rem}
-    @media(max-width:760px){.mirror-category-tabs{grid-template-columns:1fr}.mirror-lab-cards,.mirror-lab-cards-single{grid-template-columns:1fr}.mirror-plane-lab{grid-template-columns:1fr;gap:10px}}
+    @media(max-width:760px){.mirror-category-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.mirror-lab-cards,.mirror-lab-cards-single{grid-template-columns:1fr}.mirror-plane-lab{grid-template-columns:1fr;gap:10px}}@media(max-width:420px){.mirror-category-tabs{grid-template-columns:1fr}.mirror-category-tab{min-height:46px;padding:10px 12px}}
   </style>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
@@ -49,33 +49,35 @@
   <main id="conteudo" class="section-wrap tool-page physics-lab">
     <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório Virtual</a><span aria-hidden="true">/</span><span>Espelhos</span></nav>
     <section class="tool-heading">
-      <div class="section-kicker">ÓPTICA GEOMÉTRICA · DOIS MODELOS DE CURVATURA</div>
+      <div class="section-kicker">ÓPTICA GEOMÉTRICA · QUATRO SUPERFÍCIES REFLETORAS</div>
       <h1>Laboratórios de <span>espelhos</span></h1>
-      <p>Escolha entre espelhos esféricos e parabólicos. Cada cartão abre uma simulação própria com raios, imagem, parâmetros e modelo físico identificado.</p>
+      <p>Escolha um dos quatro espelhos. Cada laboratório abre sua simulação com raios traçados pela geometria física da superfície.</p>
     </section>
     <section class="lab-catalog mirror-catalog" aria-label="Categorias de laboratórios de espelhos">
-      <div class="mirror-category-tabs" role="tablist" aria-label="Tipo de espelho">
-        <button class="mirror-category-tab" id="tab-esfericos" type="button" role="tab" aria-selected="true" aria-controls="painel-esfericos" tabindex="0">Espelhos esféricos</button>
-        <button class="mirror-category-tab" id="tab-parabolicos" type="button" role="tab" aria-selected="false" aria-controls="painel-parabolicos" tabindex="-1">Espelhos parabólicos</button>
+      <div class="mirror-category-tabs" role="tablist" aria-label="Escolha um dos quatro espelhos">
+        <button class="mirror-category-tab" id="tab-plano" type="button" role="tab" aria-selected="true" aria-controls="painel-plano" tabindex="0">Plano</button>
+        <button class="mirror-category-tab" id="tab-concavo" type="button" role="tab" aria-selected="false" aria-controls="painel-concavo" tabindex="-1">Côncavo esférico</button>
+        <button class="mirror-category-tab" id="tab-convexo" type="button" role="tab" aria-selected="false" aria-controls="painel-convexo" tabindex="-1">Convexo esférico</button>
+        <button class="mirror-category-tab" id="tab-parabolico" type="button" role="tab" aria-selected="false" aria-controls="painel-parabolico" tabindex="-1">Parabólico côncavo</button>
       </div>
-      <div class="mirror-physics-note">
-        <strong>Regra comum aos dois modelos</strong>
-        <p>O espelho ideal reflete a luz: o ângulo de incidência é igual ao de reflexão, medidos pela normal local (<b>θᵢ = θᵣ</b>). Não há refração na superfície refletora opaca; refração ocorre quando a luz atravessa meios transparentes, como numa lente.</p>
-      </div>
-      <section class="mirror-category-panel" id="painel-esfericos" role="tabpanel" aria-labelledby="tab-esfericos" tabindex="0">
-        <h2>Espelhos esféricos</h2>
-        <p class="mirror-category-intro">A calota é parte de uma esfera. No modelo paraxial, <b>f = ±R/2</b>, <b>1/f = 1/p + 1/q</b> e <b>m = −q/p</b>. O traçado exato calcula cada interseção e reflete pela normal radial; em aberturas maiores, o côncavo mostra aberração esférica.</p>
-        <div class="lab-cards mirror-lab-cards"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-concave-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M27 10q23 28 0 56M9 22h34M9 54h34M9 38h34M43 22 28 38M43 54 28 38M43 38H28"/><circle cx="28" cy="38" r="2.5" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho esférico côncavo<small>Foco paraxial e aberração</small></span><span class="lab-card-meta">Compare a aproximação paraxial com os raios refletidos pela calota esférica real.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a><a class="lab-card" href="/laboratorio-experimento/?topico=optics-convex-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M48 10q-23 28 0 56M10 22h33M10 38h34M10 54h33M43 22l22-9M44 38l24 0M43 54l22 9"/><path d="M43 22 65 31M44 38 68 38M43 54 65 45" class="secondary" stroke-dasharray="4 4"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho esférico convexo<small>Foco virtual e imagem reduzida</small></span><span class="lab-card-meta">Veja os raios refletidos divergirem e seus prolongamentos formarem uma imagem virtual.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
+      <div class="mirror-physics-note"><strong>Lei da reflexão e modelo</strong><p>Em cada superfície, o motor encontra a colisão real, calcula a normal local e aplica <b>dᵣ = dᵢ − 2(dᵢ·n)n</b>. O ângulo de incidência é igual ao de reflexão. Espelhos ideais refletem: não há refração na superfície opaca. A Óptica Geométrica não representa difração nem interferência.</p></div>
+      <section class="mirror-category-panel" id="painel-plano" role="tabpanel" aria-labelledby="tab-plano" tabindex="0">
+        <h2>Espelho plano</h2><p class="mirror-category-intro">A imagem é virtual, direita e do mesmo tamanho. Para um objeto real, <b>dᵢ = −dₒ</b> e <b>m = +1</b>; a posição é simétrica em relação à superfície.</p>
+        <div class="lab-cards mirror-lab-cards mirror-lab-cards-single"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-reflection"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M43 10v56M10 38h29m4 0 27-20M43 38l27 20"/><path d="M37 18l6-8 6 8" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho plano<small>Ângulos iguais e imagem virtual</small></span><span class="lab-card-meta">Confira a lei da reflexão e compare a posição simétrica do objeto e da imagem.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
       </section>
-      <section class="mirror-category-panel" id="painel-parabolicos" role="tabpanel" aria-labelledby="tab-parabolicos" tabindex="0" hidden>
-        <h2>Espelhos parabólicos</h2>
-        <p class="mirror-category-intro">Para o perfil <b>x = −y²/(4f)</b>, o foco é <b>F = (−f, 0)</b> e o raio de curvatura no vértice é <b>Rᵥ = 2f</b>. Um feixe colimado paralelo ao eixo converge exatamente em F. Uma fonte finita ou fora do eixo não faz, em geral, todos os raios passarem pelo foco.</p>
+      <section class="mirror-category-panel" id="painel-concavo" role="tabpanel" aria-labelledby="tab-concavo" tabindex="0" hidden>
+        <h2>Espelho esférico côncavo</h2><p class="mirror-category-intro">A calota é uma parte de esfera. A aproximação paraxial usa <b>f = R/2</b>, <b>1/f = 1/dₒ + 1/dᵢ</b> e <b>m = −dᵢ/dₒ</b>. O modo exato reflete cada raio pela normal da esfera e deixa visível a aberração para aberturas maiores.</p>
+        <div class="lab-cards mirror-lab-cards mirror-lab-cards-single"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-concave-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M27 10q23 28 0 56M9 22h34M9 54h34M9 38h34M43 22 28 38M43 54 28 38M43 38H28"/><circle cx="28" cy="38" r="2.5" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho esférico côncavo<small>Foco paraxial e aberração</small></span><span class="lab-card-meta">Compare a aproximação paraxial com os raios refletidos pela calota esférica real.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
+      </section>
+      <section class="mirror-category-panel" id="painel-convexo" role="tabpanel" aria-labelledby="tab-convexo" tabindex="0" hidden>
+        <h2>Espelho esférico convexo</h2><p class="mirror-category-intro">O módulo do raio geométrico é positivo; na convenção paraxial, <b>R &lt; 0</b> e <b>f = R/2 &lt; 0</b>. Para um objeto real, a imagem é virtual, direita e reduzida, atrás do espelho; os prolongamentos são tracejados.</p>
+        <div class="lab-cards mirror-lab-cards mirror-lab-cards-single"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-convex-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M48 10q-23 28 0 56M10 22h33M10 38h34M10 54h33M43 22l22-9M44 38l24 0M43 54l22 9"/><path d="M43 22 65 31M44 38 68 38M43 54 65 45" class="secondary" stroke-dasharray="4 4"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho esférico convexo<small>Foco virtual e imagem reduzida</small></span><span class="lab-card-meta">Veja os raios refletidos divergirem e seus prolongamentos formarem uma imagem virtual.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
+      </section>
+      <section class="mirror-category-panel" id="painel-parabolico" role="tabpanel" aria-labelledby="tab-parabolico" tabindex="0" hidden>
+        <h2>Espelho parabólico côncavo</h2><p class="mirror-category-intro">A superfície verdadeira é <b>x = −y²/(4f)</b>, com foco <b>F = (−f, 0)</b>; <b>f</b> é independente da abertura. Raios paralelos ao eixo convergem no foco; uma fonte no foco emerge colimada. Raios fora do eixo são calculados pela normal local.</p>
         <div class="lab-cards mirror-lab-cards mirror-lab-cards-single"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-concave-parabolic-mirror"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M27 10Q52 38 27 66M9 22h38M9 38h38M9 54h38M47 22 30 38M47 38H30M47 54 30 38"/><circle cx="30" cy="38" r="2.5" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho côncavo parabólico<small>Feixe paralelo e foco exato</small></span><span class="lab-card-meta">Explore a parábola real: raios paralelos ao eixo refletem e se encontram no foco F.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
       </section>
-      <section class="mirror-plane-lab" aria-labelledby="espelho-plano-title">
-        <div><h2 id="espelho-plano-title">Espelho plano</h2><p>O laboratório de reflexão plana continua disponível como experimento complementar.</p></div>
-        <a class="lab-card" href="/laboratorio-experimento/?topico=optics-reflection"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M43 10v56M10 38h29m4 0 27-20M43 38l27 20"/><path d="M37 18l6-8 6 8" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho plano<small>Ângulos iguais e imagem virtual</small></span><span class="lab-card-meta">Confira a lei da reflexão e compare a posição simétrica do objeto e da imagem.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a>
-      </section>
+      <p class="mirror-physics-scope">As previsões de imagem esférica indicam quando se usa a aproximação paraxial. Raios de grande abertura continuam obedecendo à reflexão na superfície real.</p>
       <p class="mirror-back"><a class="button button-outline" href="/laboratorio/#lab-cards">← Voltar aos laboratórios</a></p>
       <p class="mirror-physics-scope">Os traçados representam Óptica Geométrica especular. Eles não modelam difração nem interferência.</p>
     </section>

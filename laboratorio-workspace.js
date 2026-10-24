@@ -1,7 +1,7 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-categories-20261023-1";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-categories-20261023-1";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-categories-20261023-1";
-import { opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-categories-20261023-1";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-1";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-1";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-1";
+import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
@@ -303,11 +303,13 @@ function initializeExperimentPage(topicId) {
       Object.assign(state.parameters, {
         experimentMode: "lantern", showImage: true, showReferences: true, showMeasures: true,
         showRays: true, showNormal: true, showAngles: true, showTrails: true, showParticles: true, showLanternImage: true,
+        showGrid: true, showLabels: true, highContrast: false, reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || false, didacticMode: "intermediate", compareMirrors: false,
         concaveModel: "exact", particleCount: 8, lightMode: state.mode,
         beamMode: state.mode === "parallel" ? "parallel" : "divergent", flashlightAngle: 0, flashlightHeight: 0.6, beamOpening: 20, emissionRate: 0.65, visualSpeed: 1, beamIntensity: 0.8
       });
       if (id === "optics-reflection") Object.assign(state.parameters, { objectDistance: 1.2, objectHeight: 1.7 });
       else state.parameters.objectHeight = 1.7;
+      if (id === "optics-concave-parabolic-mirror") state.parameters.focalLength = Number(state.parameters.radius ?? 2) / 2;
     }
     mirrorModeSelector.hidden = true;
     mirrorModeToggleButton.hidden = !isMirror;
@@ -382,9 +384,15 @@ function initializeExperimentPage(topicId) {
     workspace.focus({ preventScroll: true });
   }
 
+  function opticsControlLevel(id) {
+    if (["flashlightAngle", "beamOpening", "particleCount", "visualSpeed", "beamIntensity", "wavelengthNm"].includes(id)) return "advanced";
+    if (["apertureRatio", "mirrorTilt", "mirrorX", "mirrorY", "incidenceAngle", "showAngles", "showNormal", "showTrails", "showParticles", "showMeasures", "showReferences"].includes(id)) return "intermediate";
+    return "basic";
+  }
+
   function buildControls(experiment) {
     const container = $("#workspace-controls");
-    container.innerHTML = (experiment.controls || []).map((control) => `<label class="lab-dynamic-control" for="control-${control.id}"><span class="lab-control-header"><span>${control.label}</span><output id="control-out-${control.id}"></output></span><span class="lab-control-row"><input id="control-${control.id}" type="range" min="${control.min}" max="${control.max}" step="${control.step}" value="${control.value}" aria-label="${control.label}"><input id="control-number-${control.id}" type="number" min="${control.min}" max="${control.max}" step="${control.step}" value="${control.value}" aria-label="${control.label} em ${control.unit}"></span><span class="lab-control-unit">Unidade: ${control.unit}</span></label>`).join("");
+    container.innerHTML = (experiment.controls || []).map((control) => `<label class="lab-dynamic-control" data-control-id="${control.id}" data-optics-level="${opticsControlLevel(control.id)}" for="control-${control.id}"><span class="lab-control-header"><span>${control.label}</span><output id="control-out-${control.id}"></output></span><span class="lab-control-row"><input id="control-${control.id}" type="range" min="${control.min}" max="${control.max}" step="${control.step}" value="${control.value}" aria-label="${control.label}"><input id="control-number-${control.id}" type="number" min="${control.min}" max="${control.max}" step="${control.step}" value="${control.value}" aria-label="${control.label} em ${control.unit}"></span><span class="lab-control-unit">Unidade: ${control.unit}</span></label>`).join("");
     for (const control of experiment.controls || []) {
       const range = $(`#control-${control.id}`);
       const numeric = $(`#control-number-${control.id}`);
@@ -411,11 +419,12 @@ function initializeExperimentPage(topicId) {
     if (!MIRROR_EXPERIMENTS.has(experiment.id)) return experiment.controls || [];
     const defaults = experiment.controls || [];
     const plane = experiment.id === "optics-reflection";
+    const parabolic = experiment.id === "optics-concave-parabolic-mirror";
     const bodyControls = [
       { id: "objectDistance", label: "Distância do corpo ao espelho", unit: "m", min: 0.4, max: 2.5, step: 0.05, value: 1.2 },
       { id: "objectHeight", label: "Altura do corpo", unit: "m", min: 0.5, max: 2.2, step: 0.05, value: 1.7 }
     ];
-    const lanternControls = [
+    const sourceControls = [
       { id: "flashlightAngle", label: "Orientação da lanterna", unit: "°", min: -50, max: 50, step: 1, value: 0 },
       { id: "beamOpening", label: "Abertura do feixe", unit: "°", min: 2, max: 50, step: 1, value: 20 },
       { id: "particleCount", label: "Quantidade de pontos luminosos por raio", unit: "pontos", min: 1, max: 24, step: 1, value: 8 },
@@ -424,35 +433,34 @@ function initializeExperimentPage(topicId) {
     ];
     let controls;
     if (state.mode === "human") {
-      controls = plane
-        ? [...bodyControls, ...defaults.filter((item) => ["mirrorTilt", "mirrorX", "mirrorY"].includes(item.id))]
-        : defaults.filter((item) => ["radius", "apertureRatio", "objectDistance", "objectHeight"].includes(item.id)).map((item) => ({
-          ...item,
-          label: item.id === "objectDistance" ? "Distância do corpo ao espelho" : item.id === "objectHeight" ? "Altura do corpo" : item.label,
-          min: item.id === "objectHeight" ? 0.5 : item.min,
-          max: item.id === "objectHeight" ? 2.2 : item.max,
-          value: item.id === "objectHeight" ? 1.7 : item.value
-        }));
+      if (plane) controls = [...bodyControls, ...defaults.filter((item) => ["mirrorTilt", "mirrorX", "mirrorY"].includes(item.id))];
+      else if (parabolic) controls = [
+        { id: "focalLength", label: "Distância focal f", unit: "m", min: 0.4, max: 2, step: 0.05, value: 1 },
+        ...defaults.filter((item) => ["apertureRatio", "objectDistance", "objectHeight"].includes(item.id))
+      ];
+      else controls = defaults.filter((item) => ["radius", "apertureRatio", "objectDistance", "objectHeight"].includes(item.id)).map((item) =>
+        item.id === "radius" && experiment.id === "optics-convex-mirror" ? { ...item, label: "Módulo do raio geométrico |R|" } : item
+      );
     } else if (plane) {
       const ids = ["incidenceAngle", "sourceDistance", "mirrorTilt", "mirrorX", "mirrorY", "wavelengthNm", "impactOffset"];
       controls = [
         ...defaults.filter((item) => ids.includes(item.id)).map((item) => item.id === "sourceDistance" ? { ...item, label: "Distância da lanterna ao espelho" } : item),
-        ...lanternControls
+        ...sourceControls
       ];
     } else {
+      const geometryControls = parabolic
+        ? [
+            { id: "focalLength", label: "Distância focal f", unit: "m", min: 0.4, max: 2, step: 0.05, value: 1 },
+            ...defaults.filter((item) => ["apertureRatio", "objectDistance"].includes(item.id))
+          ]
+        : defaults.filter((item) => ["radius", "apertureRatio", "objectDistance", "wavelengthNm"].includes(item.id));
       controls = [
-        ...defaults.filter((item) => ["radius", "apertureRatio", "objectDistance", "wavelengthNm"].includes(item.id)).map((item) => ({
-          ...item,
-          label: item.id === "objectDistance" ? "Distância da lanterna ao espelho" : item.label
-        })),
-        { id: "flashlightHeight", label: "Altura da lanterna", unit: "m", min: 0.1, max: 2.2, step: 0.05, value: 0.6 },
-        ...lanternControls
+        ...geometryControls.map((item) => ({ ...item, label: item.id === "objectDistance" ? "Distância da lanterna ao espelho" : item.label })),
+        { id: "flashlightHeight", label: "Altura da lanterna", unit: "m", min: 0, max: 2.2, step: 0.05, value: 0.6 },
+        ...sourceControls
       ];
     }
-    const normalized = controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
-    return state.id === "optics-concave-mirror" && state.mode !== "human"
-      ? normalized.filter((item) => item.id !== "flashlightAngle")
-      : normalized;
+    return controls.map((item) => ({ ...item, value: state.parameters[item.id] ?? item.value }));
   }
 
   function syncMirrorModeButtons() {
@@ -470,6 +478,26 @@ function initializeExperimentPage(topicId) {
     $("#mirror-human-options").hidden = !isMirror || state.mode !== "human";
     $("#mirror-lantern-options").hidden = !isMirror || state.mode === "human";
     $("#mirror-concave-model-options").hidden = !isConcave;
+    $("#mirror-visual-options").hidden = !isMirror;
+    const didacticSelector = $("#mirror-didactic-mode");
+    const didacticMode = ["basic", "intermediate", "advanced"].includes(state.parameters.didacticMode) ? state.parameters.didacticMode : "intermediate";
+    if (didacticSelector) { didacticSelector.closest("label").hidden = !isMirror; didacticSelector.value = didacticMode; }
+    const didacticRank = { basic: 0, intermediate: 1, advanced: 2 };
+    const comparisonEligible = isConcave || isParabolic;
+    if (!comparisonEligible || didacticMode === "basic") state.parameters.compareMirrors = false;
+    document.querySelectorAll("[data-optics-level]").forEach((element) => {
+      const required = element.dataset.opticsLevel || "basic";
+      const unavailableComparison = element.hasAttribute("data-mirror-comparison-only") && !comparisonEligible;
+      element.hidden = !isMirror || didacticRank[required] > didacticRank[didacticMode] || unavailableComparison;
+    });
+    const comparisonToggle = $("#mirror-comparison-toggle");
+    if (comparisonToggle) comparisonToggle.checked = state.parameters.compareMirrors === true;
+    const comparisonLabel = $("#mirror-comparison-label");
+    if (comparisonLabel) comparisonLabel.hidden = !comparisonEligible || didacticMode === "basic";
+    const comparisonPanel = $("#mirror-comparison");
+    if (comparisonPanel) comparisonPanel.hidden = !comparisonEligible || state.parameters.compareMirrors !== true;
+    const primaryScenePanel = $("#workspace-scene-panel");
+    if (primaryScenePanel) primaryScenePanel.hidden = comparisonEligible && state.parameters.compareMirrors === true;
     const modelSelector = $("#mirror-concave-model");
     if (modelSelector) modelSelector.value = state.parameters.concaveModel === "exact" ? "exact" : "paraxial";
     const modelLabel = state.parameters.concaveModel === "exact" ? "traçado geométrico exato" : "aproximação paraxial";
@@ -489,7 +517,8 @@ function initializeExperimentPage(topicId) {
     const bindings = {
       "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
       "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
-      "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles"
+      "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles",
+      "mirror-show-grid": "showGrid", "mirror-show-labels": "showLabels", "mirror-high-contrast": "highContrast", "mirror-reduced-motion": "reducedMotion"
     };
     for (const [elementId, key] of Object.entries(bindings)) {
       const input = document.getElementById(elementId);
@@ -502,7 +531,15 @@ function initializeExperimentPage(topicId) {
     const beamMode = $("#mirror-beam-mode");
     const beamModeLabel = beamMode?.closest("label");
     if (beamModeLabel) beamModeLabel.hidden = !isMirror || state.mode === "human";
-    if (beamMode) beamMode.value = state.parameters.beamMode || "divergent";
+    if (beamMode) {
+      const focusOption = beamMode.querySelector('option[value="focus"]');
+      if (focusOption) {
+        focusOption.disabled = !(isConcave || isParabolic);
+        focusOption.hidden = !(isConcave || isParabolic);
+      }
+      if (state.parameters.beamMode === "focus" && !(isConcave || isParabolic)) state.parameters.beamMode = "divergent";
+      beamMode.value = state.parameters.beamMode || "divergent";
+    }
   }
   function setMirrorMode(mode) {
     if (!MIRROR_EXPERIMENTS.has(state.id) || !["human", "parallel", "lantern"].includes(mode)) return;
@@ -549,7 +586,8 @@ function initializeExperimentPage(topicId) {
   const mirrorOptionBindings = {
     "mirror-show-image": "showImage", "mirror-show-reference": "showReferences", "mirror-show-measures": "showMeasures",
     "mirror-show-lantern-image": "showLanternImage", "mirror-show-rays": "showRays", "mirror-show-normal": "showNormal", "mirror-show-angles": "showAngles",
-    "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles"
+    "mirror-show-trails": "showTrails", "mirror-show-particles": "showParticles",
+    "mirror-show-grid": "showGrid", "mirror-show-labels": "showLabels", "mirror-high-contrast": "highContrast", "mirror-reduced-motion": "reducedMotion"
   };
   for (const [elementId, key] of Object.entries(mirrorOptionBindings)) {
     document.getElementById(elementId)?.addEventListener("change", (event) => {
@@ -576,13 +614,26 @@ function initializeExperimentPage(topicId) {
     try { render(); } catch (error) { showError(error); }
   });
   $("#mirror-beam-mode")?.addEventListener("change", (event) => {
-    if (state.id === "optics-concave-mirror" && state.mode === "lantern") {
-      state.parameters.beamMode = event.currentTarget.value === "parallel" ? "parallel" : "divergent";
-      state.time = 0;
-      try { render(); } catch (error) { showError(error); }
+    const selected = event.currentTarget.value;
+    if (selected === "parallel") {
+      setMirrorMode("parallel");
       return;
     }
-    setMirrorMode(event.currentTarget.value === "parallel" ? "parallel" : "lantern");
+    setMirrorMode("lantern");
+    state.parameters.beamMode = selected === "focus" ? "focus" : "divergent";
+    syncMirrorModeButtons();
+    state.time = 0;
+    try { render(); } catch (error) { showError(error); }
+  });
+  $("#mirror-didactic-mode")?.addEventListener("change", (event) => {
+    state.parameters.didacticMode = ["basic", "intermediate", "advanced"].includes(event.currentTarget.value) ? event.currentTarget.value : "intermediate";
+    syncMirrorModeButtons();
+    render();
+  });
+  $("#mirror-comparison-toggle")?.addEventListener("change", (event) => {
+    state.parameters.compareMirrors = event.currentTarget.checked;
+    syncMirrorModeButtons();
+    render();
   });
 
   function setParameter(control, rawValue) {
@@ -1166,20 +1217,72 @@ function initializeExperimentPage(topicId) {
             : key === "imageHeight" ? "Altura da imagem da fonte"
               : key === "objectImageSeparation" ? "Fonte ↔ imagem" : label
         : MIRROR_EXPERIMENTS.has(state.id) && key === "objectDistance" ? "Distância do corpo"
-          : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo" : label,
+          : MIRROR_EXPERIMENTS.has(state.id) && key === "objectHeight" ? "Altura do corpo"
+            : state.id === "optics-convex-mirror" && key === "radius" ? "Raio assinado R"
+              : label,
       unit
     ]);
+    const plane = state.id === "optics-reflection";
+    if (plane) definitions.push(
+      ["objectX", "Objeto x", "m"], ["objectY", "Objeto y", "m"], ["imageX", "Imagem x", "m"], ["imageY", "Imagem y", "m"],
+      ["hitX", "Incidência x", "m"], ["hitY", "Incidência y", "m"], ["normalX", "Normal nₓ", ""], ["normalY", "Normal nᵧ", ""],
+      ["reflectedDirectionX", "Raio refletido dₓ", ""], ["reflectedDirectionY", "Raio refletido dᵧ", ""]
+    );
+    else definitions.push(
+      ["focusX", "Foco paraxial x", "m"], ["focusY", "Foco paraxial y", "m"], ["centerX", "Centro x", "m"], ["centerY", "Centro y", "m"],
+      ["imageX", "Imagem x", "m"], ["imageY", "Imagem y", "m"], ["hitX", "Incidência x", "m"], ["hitY", "Incidência y", "m"],
+      ["normalX", "Normal nₓ", ""], ["normalY", "Normal nᵧ", ""], ["reflectedDirectionX", "Raio refletido dₓ", ""], ["reflectedDirectionY", "Raio refletido dᵧ", ""],
+      ["angleIncident", "Ângulo de incidência", "°"], ["angleReflected", "Ângulo de reflexão", "°"]
+    );
     if (state.id === "optics-concave-mirror" || state.id === "optics-concave-parabolic-mirror") {
       definitions.push(["aperture", "Semiabertura a", "m"], ["rayModel", "Modelo dos raios", ""]);
       if (values.rayModel === "Traçado exato") definitions.push(["exactImageBlurRadius", "Raio RMS do melhor foco", "m"], ["paraxialImageDistance", "Distância paraxial prevista", "m"]);
     }
-    $("#workspace-readouts").innerHTML = definitions.map(([key, label, unit]) => `<div><span>${label}</span><b>${fmt(values[key])} ${unit}</b></div>`).join("");
+    const levelOrder = { basic: 0, intermediate: 1, advanced: 2 };
+    const level = state.parameters.didacticMode || "intermediate";
+    const levelForReadout = (key) => ["imageDistance", "imageHeight", "imageNature", "orientation", "imageScale"].includes(key) ? "basic"
+      : ["objectDistance", "objectHeight", "magnification", "focalLength", "radius"].includes(key) ? "intermediate" : "advanced";
+    $("#workspace-readouts").innerHTML = definitions
+      .filter(([key]) => !MIRROR_EXPERIMENTS.has(state.id) || levelOrder[levelForReadout(key)] <= levelOrder[level])
+      .map(([key, label, unit]) => `<div><span>${label}</span><b>${fmt(values[key])} ${unit}</b></div>`).join("");
     $("#workspace-time-label").textContent = durationFor(state.id, state.parameters) ? `t = ${fmt(state.time)} ${currentTimeUnit()}` : "modelo estático";
+  }
+
+  function drawMirrorComparison() {
+    const sphericalCanvas = $("#mirror-comparison-spherical");
+    const parabolicCanvas = $("#mirror-comparison-parabolic");
+    if (!sphericalCanvas || !parabolicCanvas) return;
+    const current = state.parameters;
+    const focalLength = state.id === "optics-concave-mirror"
+      ? Number(current.radius) / 2
+      : Number(current.focalLength);
+    const radius = focalLength * 2;
+    const apertureRatio = Number(current.apertureRatio ?? 0.55);
+    const common = {
+      experimentMode: "lantern", beamMode: "parallel", objectDistance: Math.max(Number(current.objectDistance) || 0, radius * 2 + 1, 3),
+      objectHeight: 0, flashlightHeight: 0, flashlightAngle: 0, beamOpening: 20, particleCount: 1,
+      wavelengthNm: Number(current.wavelengthNm ?? 550), apertureRatio, concaveModel: "exact",
+      showGrid: current.showGrid !== false, showLabels: current.showLabels !== false,
+      highContrast: current.highContrast === true, showParticles: false, showRays: true,
+      showNormal: false, showAngles: false, showTrails: false, showLanternImage: false, beamIntensity: 1
+    };
+    const scenes = [
+      { canvas: sphericalCanvas, id: "optics-concave-mirror", parameters: { ...common, radius } },
+      { canvas: parabolicCanvas, id: "optics-concave-parabolic-mirror", parameters: { ...common, radius, focalLength } }
+    ];
+    const colors = palette();
+    for (const scene of scenes) {
+      const context = scene.canvas.getContext("2d");
+      const size = prepareCanvas(scene.canvas, context);
+      const model = opticalModelFor(scene.id, scene.parameters, state.time);
+      drawOpticalScene(context, size.width, size.height, scene.id, scene.parameters, model, colors);
+    }
   }
 
   function render(options = {}) {
     const model = stateAt(state.id, state.parameters, state.time);
     drawScene(state.id, state.parameters, model);
+    if (state.parameters.compareMirrors && (state.id === "optics-concave-mirror" || state.id === "optics-concave-parabolic-mirror")) drawMirrorComparison();
     if (!options.skipGraph) drawGraph(state.id, state.parameters, state.time);
     if (!options.skipReadouts) renderReadouts(model.values);
     if (!options.skipTimeControls) updateTimeControls();

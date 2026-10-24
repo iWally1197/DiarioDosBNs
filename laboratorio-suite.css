@@ -426,3 +426,18 @@ body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
   .mirror-mode-heading { min-width:0; }
   .mirror-mode-cards { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Controles acessíveis dos laboratórios de espelhos */
+.mirror-mode-choice{display:grid;gap:6px;margin:0 0 10px;padding:10px 11px;border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:650}
+.mirror-mode-choice select{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--text);font:inherit}
+.mirror-model-note{margin:0;color:var(--muted);font-size:10px;line-height:1.55}
+[data-optics-level][hidden]{display:none!important}
+.mirror-category-panel[hidden]{display:none!important}
+@media(max-width:560px){.mirror-category-tabs{gap:7px}.mirror-category-tab{font-size:13px}}
+
+.mirror-comparison{margin:14px 0}
+.mirror-comparison h3{margin:0 0 6px;font-size:16px}
+.mirror-comparison>p{margin:0 0 12px;color:var(--muted);font-size:11px;line-height:1.6}
+.mirror-comparison-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mirror-comparison .lab-workspace-canvas-wrap{min-height:260px}
+@media(max-width:760px){.mirror-comparison-grid{grid-template-columns:1fr}}

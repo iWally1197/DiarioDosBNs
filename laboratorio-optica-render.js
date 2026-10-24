@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-categories-20261023-1";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-1";
 
 // Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
 const VISUAL_METERS_PER_NS = 0.3;
@@ -15,6 +15,10 @@ function line(context, a, b, color, width = 1.5, dash = []) {
   context.restore();
 }
 
+function drawLabel(context, ...args) {
+  if (context.__opticalLabelsVisible !== false) context.fillText(...args);
+}
+
 function drawArrow(context, a, b, color, label = "", textColor = color) {
   line(context, a, b, color, 2);
   const angle = Math.atan2(b.y - a.y, b.x - a.x);
@@ -29,7 +33,7 @@ function drawArrow(context, a, b, color, label = "", textColor = color) {
   if (label) {
     context.fillStyle = textColor;
     context.font = "11px system-ui";
-    context.fillText(label, (a.x + b.x) / 2 + 7, (a.y + b.y) / 2 - 7);
+    drawLabel(context, label, (a.x + b.x) / 2 + 7, (a.y + b.y) / 2 - 7);
   }
   context.restore();
 }
@@ -52,7 +56,7 @@ function pointOnPath(path, distanceAlong) {
 }
 
 function drawParticles(context, geometry, p, time, view) {
-  if (geometry.mode !== "lantern" || !geometry.flashlight?.showParticles) return;
+  if (geometry.mode !== "lantern" || !geometry.flashlight?.showParticles || p.reducedMotion) return;
   const wavelengthNm = Number(p.wavelengthNm);
   const color = wavelengthColor(wavelengthNm);
   const paths = geometry.particlePaths || [geometry.segments];
@@ -217,7 +221,7 @@ function drawLanternImage(context, geometry, view, palette) {
   context.setLineDash([]);
   context.beginPath(); context.arc(point.x, point.y, 3, 0, 2 * Math.PI); context.fill();
   context.font = "10px system-ui";
-  context.fillText("imagem " + (virtual ? "virtual" : "real") + " da fonte", point.x + 10, point.y - 8);
+  drawLabel(context, "imagem " + (virtual ? "virtual" : "real") + " da fonte", point.x + 10, point.y - 8);
   context.restore();
 }
 
@@ -236,7 +240,7 @@ function drawDistance(context, a, b, label, color, view) {
   context.fillStyle = color;
   context.font = "10px system-ui";
   context.textAlign = "center";
-  context.fillText(label, (from.x + to.x) / 2, (from.y + to.y) / 2 - 6);
+  drawLabel(context, label, (from.x + to.x) / 2, (from.y + to.y) / 2 - 6);
   context.restore();
 }
 
@@ -259,10 +263,10 @@ function drawPlaneHuman(context, geometry, values, p, view, palette) {
   }
   context.fillStyle = palette.text;
   context.font = "12px system-ui";
-  context.fillText("Espelho plano · imagem virtual, direita e do mesmo tamanho", 12, 20);
+  drawLabel(context, "Espelho plano · imagem virtual, direita e do mesmo tamanho", 12, 20);
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
-  context.fillText("p′ = p · h′ = h · m = 1 · h = " + values.objectHeight.toFixed(2) + " m", 12, 39);
+  drawLabel(context, "p′ = p · h′ = h · m = 1 · h = " + values.objectHeight.toFixed(2) + " m", 12, 39);
 }
 
 function drawPlaneLantern(context, geometry, values, p, view, palette) {
@@ -289,19 +293,19 @@ function drawPlaneLantern(context, geometry, values, p, view, palette) {
     const screenEnd = view.toScreen(end);
     line(context, view.toScreen(interaction.hit), screenEnd, palette.text, 1.3, [5, 4]);
     context.fillStyle = palette.text; context.font = "10px system-ui";
-    context.fillText("normal local", screenEnd.x + 4, screenEnd.y - 4);
+    drawLabel(context, "normal local", screenEnd.x + 4, screenEnd.y - 4);
   }
   drawParticles(context, geometry, p, values.time, view);
   drawLantern(context, geometry, view, palette);
   drawLanternImage(context, geometry, view, palette);
   context.fillStyle = palette.text; context.font = "12px system-ui";
-  context.fillText("Espelho plano · " + (flashlight.parallel ? "feixe aproximadamente paralelo" : "feixe divergente") + " · " + values.rayCount + " raios válidos", 12, 20);
+  drawLabel(context, "Espelho plano · " + (flashlight.parallel ? "feixe aproximadamente paralelo" : "feixe divergente") + " · " + values.rayCount + " raios válidos", 12, 20);
   context.fillStyle = palette.muted; context.font = "11px system-ui";
   if (interaction && flashlight.showAngles) {
     const hit = view.toScreen(interaction.hit);
-    context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "° · medidos pela normal", hit.x + 8, hit.y - 8);
+    drawLabel(context, "θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "° · medidos pela normal", hit.x + 8, hit.y - 8);
   }
-  context.fillText("A reflexão plana conserva o módulo da velocidade; as linhas tracejadas mostram prolongamentos aparentes.", 12, 39);
+  drawLabel(context, "A reflexão plana conserva o módulo da velocidade; as linhas tracejadas mostram prolongamentos aparentes.", 12, 39);
 }
 
 function drawAxes(context, width, height, bounds, view, palette, concise = false) {
@@ -323,7 +327,7 @@ function drawAxes(context, width, height, bounds, view, palette, concise = false
   }
   context.fillStyle = palette.muted;
   context.font = "9px system-ui";
-  context.fillText("Escala geométrica em metros · bolinhas com espaçamento visual ampliado", 12, height - 10);
+  drawLabel(context, "Escala geométrica em metros · bolinhas com espaçamento visual ampliado", 12, height - 10);
   context.restore();
 }
 
@@ -342,7 +346,7 @@ function drawReflection(context, geometry, values, p, view, palette) {
   context.restore();
   context.fillStyle = palette.text;
   context.font = "10px system-ui";
-  context.fillText("Fonte", source.x + 9, source.y - 7);
+  drawLabel(context, "Fonte", source.x + 9, source.y - 7);
   const normalEnd = view.toScreen({ x: geometry.hit.x + geometry.normal.x * 0.72, y: geometry.hit.y + geometry.normal.y * 0.72 });
   line(context, hit, normalEnd, palette.muted, 1.3, [5, 4]);
   for (const ray of geometry.rays) {
@@ -352,10 +356,10 @@ function drawReflection(context, geometry, values, p, view, palette) {
   drawParticles(context, geometry, p, values.time, view);
   context.fillStyle = palette.text;
   context.font = "12px system-ui";
-  context.fillText("Espelho e fonte manipuláveis · arraste o centro, as pontas ou a fonte", 12, 20);
+  drawLabel(context, "Espelho e fonte manipuláveis · arraste o centro, as pontas ou a fonte", 12, 20);
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
-  context.fillText(`θᵢ = ${values.angleIncident.toFixed(1)}° · θᵣ = ${values.angleReflected.toFixed(1)}° · medidos em relação à normal`, 12, 39);
+  drawLabel(context, `θᵢ = ${values.angleIncident.toFixed(1)}° · θᵣ = ${values.angleReflected.toFixed(1)}° · medidos em relação à normal`, 12, 39);
   context.fillStyle = palette.gold;
   context.beginPath(); context.arc(hit.x, hit.y, 5.5, 0, 2 * Math.PI); context.fill();
 }
@@ -375,7 +379,7 @@ function drawRefraction(context, geometry, values, p, view, palette, width) {
   context.restore();
   context.fillStyle = palette.text;
   context.font = "10px system-ui";
-  context.fillText("Fonte", source.x + 9, source.y - 7);
+  drawLabel(context, "Fonte", source.x + 9, source.y - 7);
   const normalEnd = view.toScreen({ x: geometry.hit.x, y: geometry.hit.y + 0.68 });
   line(context, hit, normalEnd, palette.muted, 1.3, [5, 4]);
   for (const ray of geometry.rays) {
@@ -385,12 +389,12 @@ function drawRefraction(context, geometry, values, p, view, palette, width) {
   drawParticles(context, geometry, p, values.time, view);
   context.fillStyle = palette.text;
   context.font = "12px system-ui";
-  context.fillText(`Meio 1 · n₁=${values.index1.toFixed(2)} · λ₁=${values.wavelength1Nm.toFixed(0)} nm`, 12, 20);
-  context.fillText(`Meio 2 · n₂=${values.index2.toFixed(2)} · λ₂=${values.wavelength2Nm.toFixed(0)} nm`, 12, 40);
+  drawLabel(context, `Meio 1 · n₁=${values.index1.toFixed(2)} · λ₁=${values.wavelength1Nm.toFixed(0)} nm`, 12, 20);
+  drawLabel(context, `Meio 2 · n₂=${values.index2.toFixed(2)} · λ₂=${values.wavelength2Nm.toFixed(0)} nm`, 12, 40);
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
   const angle2 = values.totalInternalReflection ? "θ₂ inexistente: reflexão interna total" : `θ₂=${values.angleTransmitted.toFixed(1)}°`;
-  context.fillText(`θ₁=${values.angleIncident.toFixed(1)}° · ${angle2}`, 12, 60);
+  drawLabel(context, `θ₁=${values.angleIncident.toFixed(1)}° · ${angle2}`, 12, 60);
 }
 
 function drawSphericalMirror(context, geometry, values, p, view, palette) {
@@ -438,15 +442,15 @@ function drawSphericalMirror(context, geometry, values, p, view, palette) {
   for (const [point, label] of [[center, centerLabel], [focus, "F"], [vertex, "V"]]) {
     context.fillStyle = palette.text;
     context.beginPath(); context.arc(point.x, point.y, 3.5, 0, 2 * Math.PI); context.fill();
-    context.font = "10px system-ui"; context.fillText(label, point.x + 5, point.y + 14);
+    context.font = "10px system-ui"; drawLabel(context, label, point.x + 5, point.y + 14);
   }
   context.fillStyle = palette.text;
   context.font = "12px system-ui";
   const mirrorLabel = geometry.surfaceProfile === "parabolic" ? "Côncavo parabólico · Rᵥ" : geometry.sign > 0 ? "Côncavo esférico · R" : "Convexo esférico · R";
-  context.fillText(`${mirrorLabel}=${Math.abs(values.radius).toFixed(2)} m · f=${values.focalLength.toFixed(2)} m`, 12, 20);
+  drawLabel(context, `${mirrorLabel}=${Math.abs(values.radius).toFixed(2)} m · f=${values.focalLength.toFixed(2)} m`, 12, 20);
   context.fillStyle = palette.muted;
   context.font = "11px system-ui";
-  context.fillText(`Equação paraxial: p′=${Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞"} m · m=${Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"}`, 12, 39);
+  drawLabel(context, `Equação paraxial: p′=${Number.isFinite(values.imageDistance) ? values.imageDistance.toFixed(2) : "∞"} m · m=${Number.isFinite(values.magnification) ? values.magnification.toFixed(2) : "∞"}`, 12, 39);
 }
 
 function drawSphericalSurface(context, geometry, view, palette) {
@@ -476,7 +480,7 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
     }
     context.fillStyle = isFocus ? palette.gold : palette.text;
     context.font = isFocus ? "700 12px system-ui" : "10px system-ui";
-    context.fillText(text, point.x + 7, point.y + 14);
+    drawLabel(context, text, point.x + 7, point.y + 14);
   }
   const apertureEdge = geometry.surfacePoints[geometry.surfacePoints.length - 1];
   if (apertureEdge) {
@@ -484,7 +488,7 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
     context.fillStyle = palette.gold;
     context.beginPath(); context.arc(edge.x, edge.y, 3, 0, 2 * Math.PI); context.fill();
     context.font = "10px system-ui";
-    context.fillText("a", edge.x + 5, edge.y - 3);
+    drawLabel(context, "a", edge.x + 5, edge.y - 3);
   }
   if (geometry.rayModel === "exact" && geometry.exactFocus?.point && Number.isFinite(geometry.exactFocus.rms)) {
     const spot = view.toScreen(geometry.exactFocus.point);
@@ -497,16 +501,16 @@ function drawSphericalLandmarks(context, geometry, values, view, palette, label)
   }
   context.fillStyle = palette.text; context.font = "12px system-ui";
   const surfaceLabel = geometry.surfaceProfile === "parabolic" ? "superfície parabólica · Rᵥ" : "superfície esférica · R";
-  context.fillText(label + " · " + surfaceLabel + " = " + Math.abs(values.radius).toFixed(2) + " m · f = " + values.focalLength.toFixed(2) + " m · a = " + geometry.aperture.toFixed(2) + " m", 12, 20, Math.max(80, context.canvas.width - 24));
+  drawLabel(context, label + " · " + surfaceLabel + " = " + Math.abs(values.radius).toFixed(2) + " m · f = " + values.focalLength.toFixed(2) + " m · a = " + geometry.aperture.toFixed(2) + " m", 12, 20, Math.max(80, context.canvas.width - 24));
   context.fillStyle = palette.muted; context.font = "11px system-ui";
   const paraxialLine = "Paraxial: q = " + (Number.isFinite(values.paraxialImageDistance) ? values.paraxialImageDistance.toFixed(2) : "∞") + " m · m = " + (Number.isFinite(values.paraxialMagnification) ? values.paraxialMagnification.toFixed(2) : "∞");
-  context.fillText(paraxialLine, 12, 39, Math.max(80, context.canvas.width - 24));
+  drawLabel(context, paraxialLine, 12, 39, Math.max(80, context.canvas.width - 24));
   const modelLine = geometry.surfaceProfile === "parabolic"
     ? "Reflexão exata pela normal local; raios paralelos ao eixo convergem no foco paraxial da parábola."
     : geometry.rayModel === "exact"
       ? "Traçado exato: menor dispersão RMS = " + (Number.isFinite(values.exactImageBlurRadius) ? values.exactImageBlurRadius.toFixed(4) : "—") + " m"
       : "Trajetórias paraxiais · aproximação para raios próximos do eixo e pequenos ângulos";
-  context.fillText(modelLine, 12, 58, Math.max(80, context.canvas.width - 24));
+  drawLabel(context, modelLine, 12, 58, Math.max(80, context.canvas.width - 24));
 }
 
 function drawSphericalHuman(context, geometry, values, p, view, palette) {
@@ -536,7 +540,7 @@ function drawSphericalHuman(context, geometry, values, p, view, palette) {
   drawSphericalLandmarks(context, geometry, values, view, palette, geometry.sign > 0 ? "Côncavo · imagem " + values.image : "Convexo · imagem virtual reduzida");
   if (geometry.imageDistance !== Infinity && !geometry.image && p.showImage !== false) {
     context.fillStyle = palette.muted; context.font = "10px system-ui";
-    context.fillText("Imagem calculada fora do limite de escala; aproxime o objeto do foco.", 12, 58);
+    drawLabel(context, "Imagem calculada fora do limite de escala; aproxime o objeto do foco.", 12, 58);
   }
 }
 
@@ -584,12 +588,12 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     const hit = view.toScreen(interaction.hit), normalEnd = view.toScreen(end);
     line(context, hit, normalEnd, palette.text, 1.3, [5, 4]);
     context.fillStyle = palette.text; context.font = "10px system-ui";
-    context.fillText("normal local", normalEnd.x + 4, normalEnd.y - 4);
+    drawLabel(context, "normal local", normalEnd.x + 4, normalEnd.y - 4);
   }
   if (interaction && flashlight.showAngles) {
     const hit = view.toScreen(interaction.hit);
     context.fillStyle = palette.text; context.font = "10px system-ui";
-    context.fillText("θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
+    drawLabel(context, "θᵢ = " + values.angleIncident.toFixed(1) + "° · θᵣ = " + values.angleReflected.toFixed(1) + "°", hit.x + 7, hit.y - 8);
   }
   const surfaceName = geometry.surfaceProfile === "parabolic" ? "Espelho côncavo parabólico" : geometry.sign > 0 ? "Espelho côncavo esférico" : "Espelho convexo esférico";
   const beamLabel = surfaceName + " · feixe " + (flashlight.parallel ? "colimado" : "divergente");
@@ -600,7 +604,7 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
     : geometry.rayModel === "exact"
       ? "Cada raio cruza a esfera e reflete pela normal local; a separação focal mostra aberração esférica."
       : "Modelo paraxial próximo ao eixo; a esfera continua sendo a superfície física do espelho.";
-  context.fillText(explanation, 12, 78, Math.max(80, context.canvas.width - 24));
+  drawLabel(context, explanation, 12, 78, Math.max(80, context.canvas.width - 24));
 }
 
 function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {
@@ -623,15 +627,28 @@ export function drawOpticalScene(context, width, height, id, parameters, model, 
   const geometry = model.geometry;
   const view = viewOverride?.toScreen ? viewOverride : opticalViewFor(viewOverride || geometry.bounds, width, height);
   geometry.view = view;
+  const activePalette = parameters.highContrast ? {
+    ...palette, text: "#ffffff", muted: "#f0f4fa", subtle: "#d8e1ed",
+    line: "#a5b3c6", gold: "#ffe17a", blue: "#78c9ff"
+  } : palette;
   context.save();
   context.fillStyle = palette.bg;
   context.fillRect(0, 0, width, height);
-  drawOpticalBackgroundGrid(context, width, height, palette.line);
-  drawAxes(context, width, height, geometry.bounds, view, palette, geometry.kind === "spherical-mirror");
-  if (geometry.kind === "plane-mirror") drawReflection(context, geometry, model.values, parameters, view, palette);
-  else if (geometry.kind === "interface") drawRefraction(context, geometry, model.values, parameters, view, palette, width);
-  else drawSphericalMirror(context, geometry, model.values, parameters, view, palette);
-  context.restore();
+  const oldLabelVisibility = context.__opticalLabelsVisible;
+  context.__opticalLabelsVisible = parameters.showLabels !== false;
+  try {
+    if (parameters.showGrid !== false) {
+      drawOpticalBackgroundGrid(context, width, height, activePalette.line);
+      drawAxes(context, width, height, geometry.bounds, view, activePalette, geometry.kind === "spherical-mirror");
+    }
+    if (geometry.kind === "plane-mirror") drawReflection(context, geometry, model.values, parameters, view, activePalette);
+    else if (geometry.kind === "interface") drawRefraction(context, geometry, model.values, parameters, view, activePalette, width);
+    else drawSphericalMirror(context, geometry, model.values, parameters, view, activePalette);
+  } finally {
+    if (oldLabelVisibility === undefined) delete context.__opticalLabelsVisible;
+    else context.__opticalLabelsVisible = oldLabelVisibility;
+    context.restore();
+  }
 }
 
 export function opticalPointerToWorld(event, canvas, view) {
