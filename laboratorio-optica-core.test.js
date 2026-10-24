@@ -179,9 +179,11 @@ test("página expõe quatro superfícies, modos didáticos e controles de foco e
   assert.match(html, /mirror-show-labels/);
   assert.match(html, /mirror-high-contrast/);
   assert.match(html, /mirror-reduced-motion/);
+  assert.match(html, /mirror-keyboard-hint/);
   assert.match(html, /mirror-comparison-spherical/);
   assert.match(html, /mirror-comparison-parabolic/);
   assert.match(workspace, /function drawMirrorComparison/);
+  assert.match(workspace, /canvas.addEventListener\("keydown"/);
   assert.match(workspace, /mirror-comparison-toggle/);
   assert.match(workspace, /function controlsForExperiment/);
   assert.match(workspace, /data-optics-level/);

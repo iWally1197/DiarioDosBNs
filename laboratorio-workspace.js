@@ -480,6 +480,7 @@ function initializeExperimentPage(topicId) {
     $("#mirror-lantern-options").hidden = !isMirror || state.mode === "human";
     $("#mirror-concave-model-options").hidden = !isConcave;
     $("#mirror-visual-options").hidden = !isMirror;
+    $("#mirror-keyboard-hint").hidden = !isMirror;
     const didacticSelector = $("#mirror-didactic-mode");
     const didacticMode = ["basic", "intermediate", "advanced"].includes(state.parameters.didacticMode) ? state.parameters.didacticMode : "intermediate";
     if (didacticSelector) { didacticSelector.closest("label").hidden = !isMirror; didacticSelector.value = didacticMode; }
@@ -636,6 +637,29 @@ function initializeExperimentPage(topicId) {
     state.parameters.compareMirrors = event.currentTarget.checked;
     syncMirrorModeButtons();
     render();
+  });
+
+  canvas.addEventListener("keydown", (event) => {
+    if (!MIRROR_EXPERIMENTS.has(state.id)) return;
+    const direction = event.key === "ArrowLeft" || event.key === "ArrowDown" ? -1
+      : event.key === "ArrowRight" || event.key === "ArrowUp" ? 1 : 0;
+    if (!direction) return;
+    const horizontal = event.key === "ArrowLeft" || event.key === "ArrowRight";
+    const plane = state.id === "optics-reflection";
+    let controlId;
+    if (state.mode === "human") controlId = horizontal ? "objectDistance" : "objectHeight";
+    else if (plane) controlId = horizontal ? "sourceDistance" : "impactOffset";
+    else if (state.parameters.beamMode === "focus") controlId = horizontal ? "apertureRatio" : "beamOpening";
+    else controlId = horizontal ? (state.mode === "parallel" ? "apertureRatio" : "objectDistance") : "flashlightHeight";
+    const experiment = experimentById.get(state.id);
+    const control = controlsForExperiment(experiment).find((item) => item.id === controlId);
+    if (!control) return;
+    const input = $(`#control-${controlId}`);
+    const step = Number(input?.step || control.step || 0.05) * (event.shiftKey ? 5 : 1);
+    const current = Number(state.parameters[controlId] ?? control.value);
+    if (!Number.isFinite(current)) return;
+    event.preventDefault();
+    setParameter(control, current + direction * step);
   });
 
   function setParameter(control, rawValue) {

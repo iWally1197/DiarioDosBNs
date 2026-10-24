@@ -21,7 +21,7 @@
       import("./physics-topic-labs.js?v=loop-long-20261011-1");
     } else {
       import("/laboratorio.js?v=loop-long-20261011-1");
-      import("/laboratorio-workspace.js?v=mirror-optics-physics-20261023-2");
+      import("/laboratorio-workspace.js?v=mirror-optics-physics-20261023-3");
     }
   </script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>
@@ -66,7 +66,7 @@
       <div class="lab-workspace-grid">
         <div class="lab-workspace-visuals">
           <div class="lab-workspace-panels">
-            <div class="lab-workspace-panel" id="workspace-scene-panel"><div class="lab-panel-heading"><b>Objeto e referencial</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" tabindex="0" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" role="img" aria-label="Animação do experimento com o referencial indicado" aria-describedby="workspace-scene-caption"></canvas></div><p id="workspace-scene-caption" class="lab-scene-caption"></p></div>
+            <div class="lab-workspace-panel" id="workspace-scene-panel"><div class="lab-panel-heading"><b>Objeto e referencial</b><span id="workspace-time-label"></span></div><div class="lab-workspace-canvas-wrap"><canvas id="workspace-canvas" tabindex="0" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown" role="img" aria-label="Animação do experimento com o referencial indicado" aria-describedby="workspace-scene-caption"></canvas></div><p id="workspace-scene-caption" class="lab-scene-caption"></p><p id="mirror-keyboard-hint" class="lab-graph-hint" hidden>Com a cena selecionada, use as setas para ajustar objeto ou fonte; segure Shift para passos maiores.</p></div>
             <div class="lab-workspace-panel"><div class="lab-panel-heading"><label for="workspace-chart"><b>Gráfico sincronizado</b></label><select id="workspace-chart" aria-label="Escolher grandeza no gráfico"></select></div><div class="lab-workspace-canvas-wrap lab-graph-canvas-wrap"><canvas id="workspace-graph" role="img" aria-label="Gráfico calculado pelo mesmo modelo. Clique para selecionar um instante ou posição." tabindex="0"></canvas></div><p class="lab-graph-hint">Clique no gráfico ou use as setas para consultar um ponto e sincronizar a simulação.</p></div>
           </div>
           <div id="mirror-comparison" class="mirror-comparison" hidden><h3>Comparação com feixe paralelo axial</h3><p>Os dois espelhos recebem raios paralelos ao eixo e usam as mesmas distância focal e semiabertura. As trajetórias são calculadas separadamente por suas superfícies.</p><div class="lab-workspace-panels mirror-comparison-grid"><section class="lab-workspace-panel"><div class="lab-panel-heading"><b>Esférico côncavo</b><span>traçado exato</span></div><div class="lab-workspace-canvas-wrap"><canvas id="mirror-comparison-spherical" role="img" aria-label="Raios paralelos refletidos na superfície esférica côncava"></canvas></div></section><section class="lab-workspace-panel"><div class="lab-panel-heading"><b>Parabólico côncavo</b><span>foco geométrico</span></div><div class="lab-workspace-canvas-wrap"><canvas id="mirror-comparison-parabolic" role="img" aria-label="Raios paralelos refletidos na superfície parabólica côncava"></canvas></div></section></div></div>
