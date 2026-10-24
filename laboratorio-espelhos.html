@@ -6,7 +6,7 @@
   <script defer src="/clean-links.js?v=clean-routes-20261013-2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f">
-  <meta name="description" content="Escolha entre quatro laboratórios interativos de espelhos planos, côncavos e convexos.">
+  <meta name="description" content="Laboratórios interativos de espelhos planos, esféricos e parabólicos.">
   <title>Laboratórios de espelhos — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=accessibility-20261013-1">
@@ -14,8 +14,9 @@
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=teacher-visibility-20261019-1" defer></script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>
+  <script type="module" src="/laboratorio-espelhos-publicacao.js?v=mirror-publication-live-20261023-1"></script>
   <style>
-    .mirror-category-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 22px}
+    .mirror-category-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:4px 0 22px}.mirror-category-tabs[hidden]{display:none}.mirror-category-tab[hidden]{display:none}.mirror-publication-status{margin:12px 0 18px;color:var(--muted,#b9c5d7);line-height:1.55}
     .mirror-category-tab{min-height:54px;padding:13px 18px;border:1px solid var(--line,#334155);border-radius:12px;background:var(--panel,#111b2d);color:var(--text,#f8fafc);font:inherit;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
     .mirror-category-tab:hover{border-color:var(--accent,#e6c477);transform:translateY(-1px)}
     .mirror-category-tab[aria-selected=true]{border-color:var(--accent,#e6c477);background:rgba(230,196,119,.12);color:var(--accent,#e6c477)}
@@ -49,19 +50,21 @@
   <main id="conteudo" class="section-wrap tool-page physics-lab">
     <nav class="breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/laboratorio/">Laboratório Virtual</a><span aria-hidden="true">/</span><span>Espelhos</span></nav>
     <section class="tool-heading">
-      <div class="section-kicker">ÓPTICA GEOMÉTRICA · QUATRO SUPERFÍCIES REFLETORAS</div>
+      <div class="section-kicker">ÓPTICA GEOMÉTRICA · ESPELHOS PLANOS, ESFÉRICOS E PARABÓLICOS</div>
       <h1>Laboratórios de <span>espelhos</span></h1>
-      <p>Escolha um dos quatro espelhos. Cada laboratório abre sua simulação com raios traçados pela geometria física da superfície.</p>
+      <p>Escolha um dos espelhos publicados. Cada laboratório abre sua simulação com raios traçados pela geometria física da superfície.</p>
     </section>
     <section class="lab-catalog mirror-catalog" aria-label="Categorias de laboratórios de espelhos">
-      <div class="mirror-category-tabs" role="tablist" aria-label="Escolha um dos quatro espelhos">
-        <button class="mirror-category-tab" id="tab-plano" type="button" role="tab" aria-selected="true" aria-controls="painel-plano" tabindex="0">Plano</button>
-        <button class="mirror-category-tab" id="tab-concavo" type="button" role="tab" aria-selected="false" aria-controls="painel-concavo" tabindex="-1">Côncavo esférico</button>
-        <button class="mirror-category-tab" id="tab-convexo" type="button" role="tab" aria-selected="false" aria-controls="painel-convexo" tabindex="-1">Convexo esférico</button>
-        <button class="mirror-category-tab" id="tab-parabolico" type="button" role="tab" aria-selected="false" aria-controls="painel-parabolico" tabindex="-1">Parabólico côncavo</button>
+      <p class="mirror-publication-status" id="mirror-publication-status" role="status" aria-live="polite">Verificando quais laboratórios de espelhos estão publicados…</p>
+      <button class="button button-outline" id="mirror-publication-retry" type="button" hidden>Tentar novamente</button>
+      <div class="mirror-category-tabs" id="mirror-category-tabs" role="tablist" aria-label="Espelhos publicados" hidden>
+        <button class="mirror-category-tab" id="tab-plano" type="button" role="tab" aria-selected="false" aria-controls="painel-plano" tabindex="-1" hidden>Plano</button>
+        <button class="mirror-category-tab" id="tab-concavo" type="button" role="tab" aria-selected="false" aria-controls="painel-concavo" tabindex="-1" hidden>Côncavo esférico</button>
+        <button class="mirror-category-tab" id="tab-convexo" type="button" role="tab" aria-selected="false" aria-controls="painel-convexo" tabindex="-1" hidden>Convexo esférico</button>
+        <button class="mirror-category-tab" id="tab-parabolico" type="button" role="tab" aria-selected="false" aria-controls="painel-parabolico" tabindex="-1" hidden>Parabólico côncavo</button>
       </div>
       <div class="mirror-physics-note"><strong>Lei da reflexão e modelo</strong><p>Em cada superfície, o motor encontra a colisão real, calcula a normal local e aplica <b>dᵣ = dᵢ − 2(dᵢ·n)n</b>. O ângulo de incidência é igual ao de reflexão. Espelhos ideais refletem: não há refração na superfície opaca. A Óptica Geométrica não representa difração nem interferência.</p></div>
-      <section class="mirror-category-panel" id="painel-plano" role="tabpanel" aria-labelledby="tab-plano" tabindex="0">
+      <section class="mirror-category-panel" id="painel-plano" role="tabpanel" aria-labelledby="tab-plano" tabindex="0" hidden>
         <h2>Espelho plano</h2><p class="mirror-category-intro">A imagem é virtual, direita e do mesmo tamanho. Para um objeto real, <b>dᵢ = −dₒ</b> e <b>m = +1</b>; a posição é simétrica em relação à superfície.</p>
         <div class="lab-cards mirror-lab-cards mirror-lab-cards-single"><a class="lab-card" href="/laboratorio-experimento/?topico=optics-reflection"><span class="lab-card-art"><svg viewBox="0 0 86 76" aria-hidden="true"><path d="M43 10v56M10 38h29m4 0 27-20M43 38l27 20"/><path d="M37 18l6-8 6 8" class="secondary"/></svg></span><span class="lab-card-body"><span class="lab-card-title">Espelho plano<small>Ângulos iguais e imagem virtual</small></span><span class="lab-card-meta">Confira a lei da reflexão e compare a posição simétrica do objeto e da imagem.</span><span class="lab-card-cta">Abrir laboratório →</span></span></a></div>
       </section>
@@ -88,8 +91,10 @@
     const tablist = document.querySelector('.mirror-category-tabs');
     if (!tablist) return;
     const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+    const availableTabs = () => tabs.filter((tab) => !tab.hidden);
     const activate = (tab, focus = false) => {
-      tabs.forEach((item) => {
+      if (!tab || tab.hidden) return;
+      availableTabs().forEach((item) => {
         const selected = item === tab;
         item.setAttribute('aria-selected', String(selected));
         item.tabIndex = selected ? 0 : -1;
@@ -98,21 +103,28 @@
       });
       if (focus) tab.focus();
     };
+    window.addEventListener('mirror-labs-available', (event) => {
+      const visible = availableTabs();
+      if (!visible.length) return;
+      tablist.hidden = false;
+      activate(visible.find((tab) => tab.id === event.detail?.selectedTabId) || visible[0]);
+    });
     tablist.addEventListener('click', (event) => {
       const tab = event.target.closest('[role="tab"]');
-      if (tab && tabs.includes(tab)) activate(tab);
+      if (tab && tabs.includes(tab) && !tab.hidden) activate(tab);
     });
     tablist.addEventListener('keydown', (event) => {
-      const current = tabs.indexOf(event.target.closest('[role="tab"]'));
-      if (current < 0) return;
+      const visible = availableTabs();
+      const current = visible.indexOf(event.target.closest('[role="tab"]'));
+      if (current < 0 || visible.length < 2) return;
       let next = current;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (current + 1) % tabs.length;
-      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (current - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (current + 1) % visible.length;
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (current - 1 + visible.length) % visible.length;
       else if (event.key === 'Home') next = 0;
-      else if (event.key === 'End') next = tabs.length - 1;
+      else if (event.key === 'End') next = visible.length - 1;
       else return;
       event.preventDefault();
-      activate(tabs[next], true);
+      activate(visible[next], true);
     });
   })();
 </script>
