@@ -1,3 +1,5 @@
+import { createCamera, resetCamera, panCameraBy } from "./laboratorio-camera.js?v=lab-camera-20261023-1";
+import { magnetScreenToWorld, magnetViewScale, magnetWorldToScreen, zoomMagnetCameraAt } from "./laboratorio-magnetismo-view.js?v=camera-20261023-1";
 import {
   buildCoilSegments,
   finiteCoilFieldAt,
@@ -96,7 +98,7 @@ function prepareElectromagnetKit() {
     state.coilConnected = false; state.coilPowerRequested = false; state.powerPlug = plugNearCoil();
   }
 }
-let magnetZoom = 1;
+const camera = createCamera();
 let view = { width: 0, height: 0, scale: 1, dpr: 1 };
 let drag = null;
 let redrawFrame = 0;
@@ -530,33 +532,35 @@ function canvasSize() {
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  view = { width, height, dpr, scale: Math.min((width - 58) / 0.82, (height - 56) / 0.52) * magnetZoom };
+  view = { width, height, dpr, scale: magnetViewScale({ width, height }, camera.zoom) };
   return true;
 }
 
-const toScreen = (point) => ({ x: view.width / 2 + point.x * view.scale, y: view.height / 2 - point.y * view.scale });
-const toWorld = (point) => ({ x: (point.x - view.width / 2) / view.scale, y: (view.height / 2 - point.y) / view.scale });
+const toScreen = (point) => magnetWorldToScreen(point, view, camera);
+const toWorld = (point) => magnetScreenToWorld(point, view, camera);
 
 function drawGrid() {
   if (!state.showGrid) return;
   const spacing = 0.05 * view.scale;
+  const originX = view.width / 2 + camera.x, originY = view.height / 2 + camera.y;
+  const modulo = (value, divisor) => ((value % divisor) + divisor) % divisor;
   ctx.save();
   ctx.lineWidth = 1;
-  for (let x = view.width / 2 % spacing; x < view.width; x += spacing) {
-    const major = Math.abs((x - view.width / 2) / spacing % 2) < 0.03;
+  for (let x = modulo(originX, spacing); x < view.width; x += spacing) {
+    const index = Math.round((x - originX) / spacing), major = Math.abs(index % 2) === 0;
     ctx.strokeStyle = major ? "rgba(130,157,192,.19)" : "rgba(130,157,192,.085)";
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, view.height); ctx.stroke();
-    if (major && x > 28 && x < view.width - 10) { ctx.fillStyle = "#99a9c0"; ctx.font = "10px system-ui"; ctx.fillText(formatter(1).format((x - view.width / 2) / view.scale), x + 3, view.height / 2 + 14); }
+    if (major && x > 28 && x < view.width - 10) { ctx.fillStyle = "#99a9c0"; ctx.font = "10px system-ui"; ctx.fillText(formatter(1).format((x - originX) / view.scale), x + 3, originY + 14); }
   }
-  for (let y = view.height / 2 % spacing; y < view.height; y += spacing) {
-    const major = Math.abs((y - view.height / 2) / spacing % 2) < 0.03;
+  for (let y = modulo(originY, spacing); y < view.height; y += spacing) {
+    const index = Math.round((y - originY) / spacing), major = Math.abs(index % 2) === 0;
     ctx.strokeStyle = major ? "rgba(130,157,192,.19)" : "rgba(130,157,192,.085)";
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(view.width, y); ctx.stroke();
-    if (major && y > 12 && y < view.height - 10) { ctx.fillStyle = "#99a9c0"; ctx.font = "10px system-ui"; ctx.fillText(formatter(1).format((view.height / 2 - y) / view.scale), view.width / 2 + 5, y - 3); }
+    if (major && y > 12 && y < view.height - 10) { ctx.fillStyle = "#99a9c0"; ctx.font = "10px system-ui"; ctx.fillText(formatter(1).format((originY - y) / view.scale), originX + 5, y - 3); }
   }
   ctx.strokeStyle = "rgba(202,215,236,.38)"; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(0, view.height / 2); ctx.lineTo(view.width, view.height / 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(view.width / 2, 0); ctx.lineTo(view.width / 2, view.height); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(view.width, originY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, view.height); ctx.stroke();
   ctx.restore();
 }
 
@@ -994,6 +998,118 @@ function localPointer(event) {
   const rect = canvas.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
+function zoomMagnetAt(point, factor) {
+  if (!canvasSize()) return;
+  zoomMagnetCameraAt(camera, factor, point, view);
+  queueDraw();
+}
+
+function installMagnetViewControls() {
+  const frame = canvas.parentElement;
+  if (!frame) return;
+  frame.style.position = frame.style.position || "relative";
+  const controls = document.createElement("div");
+  controls.className = "magnet-view-controls";
+  controls.setAttribute("role", "group");
+  controls.setAttribute("aria-label", "Controles da perspectiva do campo magnético");
+  const button = (label, aria, cls = "button button-outline") => {
+    const element = document.createElement("button");
+    element.type = "button"; element.className = cls; element.textContent = label; element.setAttribute("aria-label", aria);
+    return element;
+  };
+  const move = button("Mover", "Ativar ferramenta para mover a vista", "button button-outline magnet-view-pan-toggle");
+  move.setAttribute("aria-pressed", "false");
+  const out = button("−", "Afastar a perspectiva"), zoom = document.createElement("output");
+  zoom.setAttribute("aria-live", "polite"); zoom.setAttribute("aria-label", "Nível de zoom");
+  const into = button("+", "Aproximar a perspectiva");
+  const center = button("Centralizar", "Centralizar o campo mantendo o zoom");
+  const fit = button("Enquadrar tudo", "Enquadrar todo o experimento");
+  const restore = button("Restaurar zoom", "Restaurar o enquadramento inicial");
+  controls.append(move, out, zoom, into, center, fit, restore);
+  frame.append(controls);
+  const refresh = () => { zoom.textContent = Math.round(camera.zoom * 100) + "%"; queueDraw(); };
+  const centerPoint = () => ({ x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 });
+  move.addEventListener("click", () => {
+    const active = canvas.classList.toggle("magnet-view-pan-mode");
+    move.setAttribute("aria-pressed", String(active));
+    move.setAttribute("aria-label", active ? "Desativar ferramenta para mover a vista" : "Ativar ferramenta para mover a vista");
+  });
+  out.addEventListener("click", () => zoomMagnetAt(centerPoint(), 1 / 1.2));
+  into.addEventListener("click", () => zoomMagnetAt(centerPoint(), 1.2));
+  center.addEventListener("click", () => { camera.x = 0; camera.y = 0; refresh(); });
+  fit.addEventListener("click", () => { resetCamera(camera); refresh(); });
+  restore.addEventListener("click", () => { resetCamera(camera); refresh(); });
+
+  const local = localPointer;
+  const pointerPoints = new Map();
+  let pinch = null, pan = null, space = false, inside = false;
+  const intercept = (event) => { event.preventDefault(); event.stopImmediatePropagation(); };
+  canvas.addEventListener("pointerenter", () => { inside = true; });
+  canvas.addEventListener("pointerleave", () => { inside = false; });
+  document.addEventListener("keydown", (event) => {
+    if (event.code !== "Space" || !inside || event.repeat || event.target.closest?.("input,textarea,select,button,[contenteditable=true]")) return;
+    space = true; event.preventDefault();
+  });
+  document.addEventListener("keyup", (event) => { if (event.code === "Space") space = false; });
+  canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const point = local(event), unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+    const dx = clamp(event.deltaX * unit, -240, 240), dy = clamp(event.deltaY * unit, -240, 240);
+    if (event.ctrlKey || event.metaKey) zoomMagnetAt(point, Math.exp(-dy * 0.002));
+    else { panCameraBy(camera, -dx, -dy); refresh(); }
+  }, { passive: false });
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch") {
+      pointerPoints.set(event.pointerId, local(event));
+      if (pointerPoints.size >= 2) {
+        const pair = [...pointerPoints.entries()].slice(-2), first = pair[0][1], second = pair[1][1];
+        pinch = { ids: pair.map(([id]) => id), center: { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 }, distance: Math.max(1, Math.hypot(first.x - second.x, first.y - second.y)) };
+        drag = null; canvas.classList.remove("is-dragging"); canvas.classList.add("magnet-view-multitouch");
+        pair.forEach(([id]) => { try { canvas.setPointerCapture(id); } catch {} });
+        intercept(event); return;
+      }
+    }
+    const shouldPan = event.pointerType === "touch"
+      ? canvas.classList.contains("magnet-view-pan-mode")
+      : event.button === 1 || event.button === 2 || event.shiftKey || space || (canvas.classList.contains("magnet-view-pan-mode") && event.button === 0);
+    if (!shouldPan) return;
+    pan = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    canvas.classList.add("magnet-view-panning");
+    try { canvas.setPointerCapture(event.pointerId); } catch {}
+    intercept(event);
+  }, true);
+  canvas.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch" && pointerPoints.has(event.pointerId)) pointerPoints.set(event.pointerId, local(event));
+    if (pinch?.ids.includes(event.pointerId)) {
+      const first = pointerPoints.get(pinch.ids[0]), second = pointerPoints.get(pinch.ids[1]);
+      if (first && second) {
+        const centerNow = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+        const distance = Math.max(1, Math.hypot(first.x - second.x, first.y - second.y));
+        const oldCenter = pinch.center, oldDistance = pinch.distance;
+        zoomMagnetCameraAt(camera, distance / oldDistance, oldCenter, view);
+        panCameraBy(camera, centerNow.x - oldCenter.x, centerNow.y - oldCenter.y);
+        if (!Number.isFinite(camera.x) || !Number.isFinite(camera.y)) { camera.x = 0; camera.y = 0; }
+        pinch.center = centerNow; pinch.distance = distance;
+        queueDraw(); intercept(event); return;
+      }
+    }
+    if (!pan || pan.id !== event.pointerId) return;
+    panCameraBy(camera, event.clientX - pan.x, event.clientY - pan.y);
+    pan.x = event.clientX; pan.y = event.clientY;
+    refresh(); event.preventDefault();
+  }, true);
+  const finishViewGesture = (event) => {
+    if (event.pointerType === "touch") pointerPoints.delete(event.pointerId);
+    if (pan?.id === event.pointerId) { pan = null; canvas.classList.remove("magnet-view-panning"); }
+    if (pinch?.ids.includes(event.pointerId)) { pinch = null; if (!pointerPoints.size) canvas.classList.remove("magnet-view-multitouch"); }
+  };
+  canvas.addEventListener("pointerup", finishViewGesture, true);
+  canvas.addEventListener("pointercancel", finishViewGesture, true);
+  canvas.addEventListener("lostpointercapture", finishViewGesture, true);
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  refresh();
+}
+
 function beginDrag(event) {
   const p = localPointer(event), world = toWorld(p), model = activeFieldModel();
   const items = [{ type: "sensor", point: state.sensor }, ...state.compasses.map((point, index) => ({ type: "compass", index, point })),
@@ -1241,8 +1357,8 @@ function placeFullscreenPanels(active) {
 }
 window.addEventListener("diario-lab-zoom", (event) => {
   if (document.fullscreenElement !== workspace) return;
-  magnetZoom = clamp(magnetZoom * Number(event.detail?.factor || 1), 0.65, 2.5);
-  queueDraw();
+  const rect = canvas.getBoundingClientRect();
+  zoomMagnetAt({ x: rect.width / 2, y: rect.height / 2 }, Number(event.detail?.factor || 1));
 });
 byId("fullscreen-toggle").addEventListener("click", async () => {
   try {
@@ -1266,6 +1382,7 @@ document.addEventListener("fullscreenchange", () => {
 });
 window.addEventListener("resize", queueDraw);
 if ("ResizeObserver" in window) new ResizeObserver(queueDraw).observe(canvas.parentElement);
+installMagnetViewControls();
 updateModeUI(); render();
 
 

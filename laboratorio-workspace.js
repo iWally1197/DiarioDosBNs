@@ -1,7 +1,8 @@
-import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-4";
-import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-4";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-4";
-import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-4";
+import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-5";
+import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-5";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-5";
+import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-5";
+import { createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./laboratorio-camera.js?v=lab-camera-20261023-1";
 
 const $ = (selector) => document.querySelector(selector);
 const MIRROR_EXPERIMENTS = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
@@ -12,143 +13,159 @@ initializeCanvasViewControls();
 
 function initializeCanvasViewControls() {
   const topicId = new URLSearchParams(location.search).get("topico") || "";
-  document.querySelectorAll("#workspace-canvas, #projectile-canvas, #pendulum-canvas").forEach((canvas) => {
+  document.querySelectorAll("#workspace-canvas, #projectile-canvas, #pendulum-canvas, #freefall-scene").forEach((canvas) => {
     const wrapper = canvas.parentElement;
     if (!wrapper || wrapper.dataset.viewControlsReady === "true") return;
     wrapper.dataset.viewControlsReady = "true";
-    const camera = { zoom: 1, x: 0, y: 0 };
+    wrapper.style.position = wrapper.style.position || "relative";
+    const camera = createCamera();
     const isOpticalScene = canvas.id === "workspace-canvas" && topicId.startsWith("optics-");
     const isPendulumScene = canvas.id === "pendulum-canvas";
     const controls = document.createElement("div");
     controls.className = "lab-view-controls-overlay";
     controls.setAttribute("role", "group");
     controls.setAttribute("aria-label", "Controles da perspectiva da animação");
+    Object.assign(controls.style, { width: "min(760px, calc(100% - 20px))", flexWrap: "wrap", justifyContent: "flex-end" });
     const label = document.createElement("span");
     label.className = "lab-view-controls-label";
     label.textContent = "Perspectiva";
-    const moveToggle = document.createElement("button");
-    moveToggle.type = "button";
-    moveToggle.className = "lab-view-pan-toggle";
+    const makeButton = (className, text, labelText) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = className;
+      button.textContent = text;
+      button.setAttribute("aria-label", labelText);
+      return button;
+    };
+    const moveToggle = makeButton("lab-view-pan-toggle", "Mover", "Ativar ferramenta para mover a vista");
     moveToggle.setAttribute("aria-pressed", "false");
-    moveToggle.setAttribute("aria-label", "Ativar movimento da vista");
-    moveToggle.textContent = "Mover vista";
-    moveToggle.hidden = !(isOpticalScene || isPendulumScene);
-    const zoomOut = document.createElement("button");
-    zoomOut.type = "button";
-    zoomOut.className = "lab-view-control-button";
-    zoomOut.setAttribute("aria-label", "Afastar a perspectiva");
-    zoomOut.textContent = "−";
+    const zoomOut = makeButton("lab-view-control-button", "−", "Afastar a perspectiva");
     const zoomValue = document.createElement("output");
     zoomValue.className = "lab-view-zoom";
     zoomValue.setAttribute("aria-live", "polite");
-    const zoomIn = document.createElement("button");
-    zoomIn.type = "button";
-    zoomIn.className = "lab-view-control-button";
-    zoomIn.setAttribute("aria-label", "Aproximar a perspectiva");
-    zoomIn.textContent = "+";
-    const reset = document.createElement("button");
-    reset.type = "button";
-    reset.className = "lab-view-reset";
-    reset.setAttribute("aria-label", "Restaurar perspectiva inicial");
-    reset.title = "Restaurar perspectiva inicial";
-    reset.textContent = "Recentrar";
-    controls.append(label, moveToggle, zoomOut, zoomValue, zoomIn, reset);
+    const zoomIn = makeButton("lab-view-control-button", "+", "Aproximar a perspectiva");
+    const center = makeButton("lab-view-reset", "Centralizar", "Centralizar o experimento");
+    const fitAll = makeButton("lab-view-reset", "Enquadrar tudo", "Enquadrar todos os objetos e restaurar a perspectiva");
+    const resetZoom = makeButton("lab-view-reset", "Restaurar zoom", "Restaurar apenas o zoom");
+    controls.append(label, moveToggle, zoomOut, zoomValue, zoomIn, center, fitAll, resetZoom);
     const hint = document.createElement("span");
     hint.className = "lab-view-hint";
     hint.textContent = isOpticalScene
-      ? "Arraste os elementos para ajustar o espelho. Use Mover vista ou dois dedos para deslocar; +/− ou pinça ajustam o zoom."
+      ? "Arraste o espelho, a fonte ou o objeto. Para mover a vista, ative Mover, use o botão central ou segure Espaço; dois dedos deslocam e fazem pinça."
       : isPendulumScene
-        ? "Arraste para girar o pêndulo. Use Mover vista ou dois dedos para deslocar; +/− ou pinça ajustam o zoom."
-        : "Arraste para mover a vista; dois dedos deslocam e fazem pinça para zoom.";
+        ? "Arraste o pêndulo. Para mover a vista, ative Mover, use o botão central ou segure Espaço; dois dedos deslocam e fazem pinça."
+        : "Arraste objetos com o botão esquerdo. Para mover a vista, ative Mover, use o botão central ou segure Espaço; no touchpad, use dois dedos.";
     wrapper.append(controls, hint);
 
+    canvas.style.transformOrigin = "0 0";
+    canvas.style.touchAction = "none";
     const apply = () => {
       if (camera.zoom === 1 && camera.x === 0 && camera.y === 0) canvas.style.removeProperty("transform");
       else canvas.style.transform = `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
       zoomValue.textContent = `${Math.round(camera.zoom * 100)}%`;
     };
-    const zoomBy = (factor) => {
-      camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * factor));
-      apply();
+    const wrapperPoint = (clientX, clientY) => {
+      const rect = wrapper.getBoundingClientRect();
+      return { x: clientX - rect.left, y: clientY - rect.top };
     };
-    const clearView = () => {
-      camera.zoom = 1;
-      camera.x = 0;
-      camera.y = 0;
-      apply();
+    const canvasOrigin = () => {
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      return { x: canvasRect.left - wrapperRect.left - camera.x, y: canvasRect.top - wrapperRect.top - camera.y };
+    };
+    const zoomAt = (point, factor) => { zoomCameraAtPoint(camera, factor, point, canvasOrigin()); apply(); };
+    const zoomAtCenter = (factor) => {
+      const origin = canvasOrigin();
+      zoomAt({ x: origin.x + canvas.clientWidth / 2, y: origin.y + canvas.clientHeight / 2 }, factor);
     };
     moveToggle.addEventListener("click", () => {
       const enabled = canvas.classList.toggle("lab-view-pan-mode");
       moveToggle.setAttribute("aria-pressed", String(enabled));
-      moveToggle.setAttribute("aria-label", enabled ? "Desativar movimento da vista" : "Ativar movimento da vista");
+      moveToggle.setAttribute("aria-label", enabled ? "Desativar ferramenta para mover a vista" : "Ativar ferramenta para mover a vista");
     });
-    zoomOut.addEventListener("click", () => zoomBy(1 / 1.2));
-    zoomIn.addEventListener("click", () => zoomBy(1.2));
-    reset.addEventListener("click", clearView);
+    zoomOut.addEventListener("click", () => zoomAtCenter(1 / 1.2));
+    zoomIn.addEventListener("click", () => zoomAtCenter(1.2));
+    center.addEventListener("click", () => { resetCamera(camera, { position: true, zoom: false }); apply(); });
+    fitAll.addEventListener("click", () => { resetCamera(camera); apply(); });
+    resetZoom.addEventListener("click", () => { resetCamera(camera, { position: false, zoom: true }); apply(); });
+
     canvas.addEventListener("wheel", (event) => {
-      // Deixa a rolagem comum navegar pela página; só usa Ctrl+roda para zoom.
-      if (!event.ctrlKey) return;
+      const point = wrapperPoint(event.clientX, event.clientY);
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (wrapper.clientHeight || 600) : 1;
+      const deltaX = Math.max(-240, Math.min(240, event.deltaX * unit));
+      const deltaY = Math.max(-240, Math.min(240, event.deltaY * unit));
       event.preventDefault();
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (canvas.clientHeight || 600) : 1;
-      const delta = Math.max(-240, Math.min(240, event.deltaY * unit));
-      camera.zoom = Math.max(0.55, Math.min(3, camera.zoom * Math.exp(-delta * 0.002)));
-      apply();
+      if (event.ctrlKey || event.metaKey) zoomAt(point, Math.exp(-deltaY * 0.002));
+      else { panCameraBy(camera, -deltaX, -deltaY); apply(); }
     }, { passive: false });
 
     let drag = null;
+    let spacePressed = false;
+    let pointerInside = false;
     const touchPoints = new Map();
     let touchGesture = null;
-    const startTouchGesture = () => {
-      const points = [...touchPoints.entries()].slice(0, 2);
+    wrapper.addEventListener("pointerenter", () => { pointerInside = true; });
+    wrapper.addEventListener("pointerleave", () => { pointerInside = false; });
+    document.addEventListener("keydown", (event) => {
+      if (event.code !== "Space" || !pointerInside || event.repeat || event.target.closest?.("input,textarea,select,button,[contenteditable=true]")) return;
+      spacePressed = true;
+      event.preventDefault();
+    });
+    document.addEventListener("keyup", (event) => {
+      if (event.code === "Space") spacePressed = false;
+    });
+    const capture = (event) => { try { canvas.setPointerCapture(event.pointerId); } catch {} };
+    const intercept = (event) => { event.preventDefault(); event.stopImmediatePropagation(); };
+    const beginTouchGesture = () => {
+      const points = [...touchPoints.entries()].slice(-2);
       if (points.length < 2) return;
       const [[firstId, first], [secondId, second]] = points;
-      const centerX = (first.x + second.x) / 2;
-      const centerY = (first.y + second.y) / 2;
-      const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+      const centerPoint = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
       touchGesture = {
-        ids: [firstId, secondId], centerX, centerY, distance,
-        x: camera.x, y: camera.y, zoom: camera.zoom
+        ids: [firstId, secondId],
+        start: centerPoint,
+        distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+        camera: { ...camera }
       };
       drag = null;
       canvas.classList.remove("is-view-dragging");
       canvas.classList.add("lab-view-multitouch");
-      for (const pointerId of touchGesture.ids) {
-        try { canvas.setPointerCapture(pointerId); } catch {}
-      }
+      points.forEach(([id]) => { try { canvas.setPointerCapture(id); } catch {} });
     };
     canvas.addEventListener("pointerdown", (event) => {
       if (event.pointerType === "touch") {
-        touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        touchPoints.set(event.pointerId, wrapperPoint(event.clientX, event.clientY));
         if (touchPoints.size >= 2) {
-          event.preventDefault();
-          startTouchGesture();
+          beginTouchGesture();
+          intercept(event);
           return;
         }
+        if (!canvas.classList.contains("lab-view-pan-mode")) return;
       }
-      if (!event.isPrimary) return;
-      const shouldPan = isOpticalScene || isPendulumScene
-        ? (event.button === 1 || event.button === 2 || event.shiftKey || event.altKey
-          || (canvas.classList.contains("lab-view-pan-mode") && event.button === 0))
-        : (event.button === 0 || event.button === 1 || event.button === 2);
+      const shouldPan = event.pointerType === "touch"
+        ? canvas.classList.contains("lab-view-pan-mode")
+        : event.button === 1 || event.button === 2 || event.shiftKey || spacePressed
+          || (canvas.classList.contains("lab-view-pan-mode") && event.button === 0);
       if (!shouldPan) return;
-      event.preventDefault();
-      drag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, x: camera.x, y: camera.y };
+      intercept(event);
+      drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
       canvas.classList.add("is-view-dragging");
-      try { canvas.setPointerCapture(event.pointerId); } catch {}
-    });
+      capture(event);
+    }, true);
     canvas.addEventListener("pointermove", (event) => {
       if (event.pointerType === "touch" && touchPoints.has(event.pointerId)) {
-        touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        touchPoints.set(event.pointerId, wrapperPoint(event.clientX, event.clientY));
         if (touchGesture?.ids.includes(event.pointerId)) {
           const first = touchPoints.get(touchGesture.ids[0]);
           const second = touchPoints.get(touchGesture.ids[1]);
           if (first && second) {
-            const centerX = (first.x + second.x) / 2;
-            const centerY = (first.y + second.y) / 2;
+            const midpoint = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
             const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
-            camera.x = touchGesture.x + centerX - touchGesture.centerX;
-            camera.y = touchGesture.y + centerY - touchGesture.centerY;
-            camera.zoom = Math.max(0.55, Math.min(3, touchGesture.zoom * distance / touchGesture.distance));
+            camera.x = touchGesture.camera.x;
+            camera.y = touchGesture.camera.y;
+            camera.zoom = touchGesture.camera.zoom;
+            zoomCameraAtPoint(camera, distance / touchGesture.distance, touchGesture.start, canvasOrigin());
+            panCameraBy(camera, midpoint.x - touchGesture.start.x, midpoint.y - touchGesture.start.y);
             apply();
             event.preventDefault();
             return;
@@ -156,23 +173,32 @@ function initializeCanvasViewControls() {
         }
       }
       if (!drag || event.pointerId !== drag.pointerId) return;
-      camera.x = drag.x + event.clientX - drag.startX;
-      camera.y = drag.y + event.clientY - drag.startY;
+      panCameraBy(camera, event.clientX - drag.x, event.clientY - drag.y);
+      drag.x = event.clientX;
+      drag.y = event.clientY;
       apply();
-    });
-    const finishDrag = (event) => {
+    }, true);
+    const finishGesture = (event) => {
       if (event.pointerType === "touch") {
         touchPoints.delete(event.pointerId);
-        if (touchGesture?.ids.includes(event.pointerId)) touchGesture = null;
+        if (touchGesture?.ids.includes(event.pointerId)) {
+          const remaining = [...touchPoints.entries()];
+          if (remaining.length) {
+            const [id, point] = remaining[0];
+            touchGesture = null;
+            drag = { pointerId: id, x: point.x + wrapper.getBoundingClientRect().left, y: point.y + wrapper.getBoundingClientRect().top };
+          } else touchGesture = null;
+        }
         if (touchPoints.size === 0) canvas.classList.remove("lab-view-multitouch");
       }
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      drag = null;
-      canvas.classList.remove("is-view-dragging");
+      if (drag?.pointerId === event.pointerId) {
+        drag = null;
+        canvas.classList.remove("is-view-dragging");
+      }
     };
-    canvas.addEventListener("pointerup", finishDrag);
-    canvas.addEventListener("pointercancel", finishDrag);
-    canvas.addEventListener("lostpointercapture", finishDrag);
+    canvas.addEventListener("pointerup", finishGesture, true);
+    canvas.addEventListener("pointercancel", finishGesture, true);
+    canvas.addEventListener("lostpointercapture", finishGesture, true);
     canvas.addEventListener("contextmenu", (event) => event.preventDefault());
     canvas.classList.add("lab-view-canvas");
     if (isOpticalScene) canvas.classList.add("lab-view-canvas--optics");
@@ -180,7 +206,6 @@ function initializeCanvasViewControls() {
     apply();
   });
 }
-
 function initializeSpecialExperimentFullscreen() {
   document.querySelectorAll("[data-lab-special]").forEach((section) => {
     const fullscreenButton = section.querySelector("[data-lab-special-fullscreen]");

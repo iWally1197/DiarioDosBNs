@@ -1,4 +1,5 @@
 import { freeFallAtTime, freeFallImpactTime } from "./physics-freefall-model.js?v=freefall-20261011-1";
+import { cameraScreenPoint, cameraWorldPoint, createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./laboratorio-camera.js?v=lab-camera-20261023-1";
 
 const $ = (selector) => document.querySelector(selector);
 const lab = $("#freefall-lab");
@@ -24,7 +25,7 @@ if (!lab || !sceneContext || !chartContext) {
   const panelToggle = $("#freefall-panel-toggle");
   const panel = $("#freefall-controls");
   const panelPlay = $("#freefall-panel-play");
-  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height", loopDelayUntil: 0, zoom: 1 };
+  const state = { time: 0, running: false, lastFrame: 0, frame: 0, started: false, graph: "height", loopDelayUntil: 0, camera: createCamera(), selectedBody: "" };
   const initial = { height: 20, gravity: 9.81, massA: 0.2, massB: 2, playback: 0.25 };
   const readParameters = () => ({
     height: Number(inputs.height.value),
@@ -78,13 +79,14 @@ if (!lab || !sceneContext || !chartContext) {
     context.fill();
   }
 
-  function drawObject(context, x, y, fill, mass, velocity, palette) {
+  function drawObject(context, x, y, fill, mass, velocity, palette, selected = false) {
     const radius = 13;
     context.beginPath();
     context.arc(x, y, radius, 0, Math.PI * 2);
     context.fillStyle = fill;
     context.fill();
     context.lineWidth = 2;
+    if (selected) { context.beginPath(); context.arc(x, y, radius + 5, 0, Math.PI * 2); context.strokeStyle = palette.gold; context.lineWidth = 2.5; context.stroke(); }
     context.strokeStyle = palette.text;
     context.stroke();
     context.fillStyle = palette.text;
@@ -109,6 +111,9 @@ if (!lab || !sceneContext || !chartContext) {
     const { width, height } = size;
     ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, width, height);
+    ctx.save();
+    ctx.translate(state.camera.x, state.camera.y);
+    ctx.scale(state.camera.zoom, state.camera.zoom);
     ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.58;
@@ -117,19 +122,17 @@ if (!lab || !sceneContext || !chartContext) {
     for (let y = 22; y < height; y += 44) { ctx.moveTo(0, y + 0.5); ctx.lineTo(width, y + 0.5); }
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.scale(state.zoom, state.zoom);
-    ctx.translate(-width / 2, -height / 2);
 
     const top = 55;
-    const floor = height - 48;
-    const scale = Math.max(1, (floor - top - 18) / p.height);
+    const floorY = height - 48;
+    const radius = 13;
+    const maximumHeight = Math.max(p.height, Number(inputs.height.max) || p.height);
+    const scale = Math.max(1, (floorY - radius - top) / maximumHeight);
     const leftX = width * 0.37;
     const rightX = width * 0.63;
-    const startY = top;
-    const currentY = (top + at.displacement * scale);
-    const floorY = floor;
+    const startY = floorY - radius - p.height * scale;
+    const currentY = floorY - radius - at.height * scale;
+    const floor = floorY;
     ctx.strokeStyle = palette.muted;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -156,13 +159,13 @@ if (!lab || !sceneContext || !chartContext) {
     ctx.textAlign = "left";
     ctx.fillText("h₀ = " + fmt(p.height, 1) + " m", 16, startY - 10);
 
-    const stepMeters = Math.max(1, Math.ceil(p.height / 8));
+    const stepMeters = Math.max(1, Math.ceil(maximumHeight / 8));
     ctx.strokeStyle = palette.muted;
     ctx.fillStyle = palette.muted;
     ctx.font = "10px system-ui, sans-serif";
     ctx.textAlign = "right";
-    for (let meter = 0; meter <= p.height; meter += stepMeters) {
-      const y = startY + meter * scale;
+    for (let meter = 0; meter <= maximumHeight; meter += stepMeters) {
+      const y = floorY - radius - meter * scale;
       ctx.globalAlpha = 0.65;
       ctx.beginPath();
       ctx.moveTo(53, y);
@@ -190,8 +193,8 @@ if (!lab || !sceneContext || !chartContext) {
     ctx.fillStyle = palette.gold;
     ctx.fillText("OBJETO B", rightX, 24);
 
-    drawObject(ctx, leftX, Math.min(currentY, floorY - 13), palette.blue, p.massA, at.velocity, palette);
-    drawObject(ctx, rightX, Math.min(currentY, floorY - 13), palette.gold, p.massB, at.velocity, palette);
+    drawObject(ctx, leftX, currentY, palette.blue, p.massA, at.velocity, palette, state.selectedBody === "A");
+    drawObject(ctx, rightX, currentY, palette.gold, p.massB, at.velocity, palette, state.selectedBody === "B");
 
     drawArrow(ctx, width - 54, 62, width - 54, 100, palette.blue);
     ctx.fillStyle = palette.blue;
@@ -423,7 +426,7 @@ if (!lab || !sceneContext || !chartContext) {
       status.textContent = "A tela cheia não está disponível neste navegador.";
     }
   });
-  window.addEventListener("diario-lab-zoom", (event) => { if (document.fullscreenElement !== lab) return; state.zoom = Math.max(0.65, Math.min(2.5, state.zoom * Number(event.detail?.factor || 1))); drawScene(); });
+  window.addEventListener("diario-lab-zoom", (event) => { if (document.fullscreenElement !== lab) return; zoomFreefallAt({ x: scene.clientWidth / 2, y: scene.clientHeight / 2 }, Number(event.detail?.factor || 1)); });
   window.addEventListener("diario-lab-seek", (event) => { if (document.fullscreenElement !== lab) return; const time = Number(event.detail?.time); if (!Number.isFinite(time)) return; stopAnimation(); seek(time); status.textContent = "Instante ajustado para t = " + fmt(state.time, 2) + " s."; });
   document.addEventListener("fullscreenchange", () => { const full = document.fullscreenElement === lab; panelToggle.hidden = !full; panelPlay.hidden = !full; if (!full) panel.classList.remove("is-open"); panelToggle.setAttribute("aria-expanded", String(panel.classList.contains("is-open"))); drawAll(); });
   document.addEventListener("visibilitychange", () => {
@@ -432,11 +435,122 @@ if (!lab || !sceneContext || !chartContext) {
       status.textContent = "Simulação pausada porque a página ficou oculta.";
     }
   });
+  function zoomFreefallAt(point, factor) { zoomCameraAtPoint(state.camera, factor, point); drawScene(); }
+  function installFreefallViewControls() {
+    const host = scene.parentElement;
+    if (!host) return;
+    host.style.position = host.style.position || "relative";
+    const controls = document.createElement("div");
+    controls.className = "lab-view-controls-overlay";
+    controls.setAttribute("role", "group");
+    controls.setAttribute("aria-label", "Controles da perspectiva da queda livre");
+    Object.assign(controls.style, { position: "absolute", top: "54px", right: "8px", zIndex: "4", width: "min(720px, calc(100% - 16px))", flexWrap: "wrap", justifyContent: "flex-end" });
+    const button = (text, label, cls = "lab-view-reset") => { const item = document.createElement("button"); item.type = "button"; item.className = cls; item.textContent = text; item.setAttribute("aria-label", label); return item; };
+    const move = button("Mover", "Ativar ferramenta para mover a vista", "lab-view-pan-toggle");
+    move.setAttribute("aria-pressed", "false");
+    const out = button("−", "Afastar perspectiva", "lab-view-control-button");
+    const zoom = document.createElement("output"); zoom.className = "lab-view-zoom"; zoom.setAttribute("aria-live", "polite");
+    const into = button("+", "Aproximar perspectiva", "lab-view-control-button");
+    const center = button("Centralizar", "Centralizar a queda");
+    const fit = button("Enquadrar tudo", "Enquadrar objetos e restaurar perspectiva");
+    const restore = button("Restaurar zoom", "Restaurar apenas o zoom");
+    controls.append(move, out, zoom, into, center, fit, restore); host.append(controls);
+    const updateZoom = () => { zoom.textContent = Math.round(state.camera.zoom * 100) + "%"; drawScene(); };
+    const centerPoint = () => ({ x: scene.clientWidth / 2, y: scene.clientHeight / 2 });
+    move.addEventListener("click", () => { const active = scene.classList.toggle("lab-view-pan-mode"); move.setAttribute("aria-pressed", String(active)); move.setAttribute("aria-label", active ? "Desativar ferramenta para mover a vista" : "Ativar ferramenta para mover a vista"); });
+    out.addEventListener("click", () => zoomFreefallAt(centerPoint(), 1 / 1.2));
+    into.addEventListener("click", () => zoomFreefallAt(centerPoint(), 1.2));
+    center.addEventListener("click", () => { state.camera.x = 0; state.camera.y = 0; updateZoom(); });
+    fit.addEventListener("click", () => { resetCamera(state.camera); updateZoom(); });
+    restore.addEventListener("click", () => { resetCamera(state.camera, { position: false, zoom: true }); updateZoom(); });
+    let drag = null, space = false, inside = false, pointers = new Map(), pinch = null;
+    const local = (event) => { const rect = scene.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
+    const intercept = (event) => { event.preventDefault(); event.stopImmediatePropagation(); };
+    const isBody = (point) => {
+      const p = readParameters(), at = freeFallAtTime(state.time, p), size = resizeCanvas(scene, sceneContext);
+      const floorY = size.height - 48, radius = 13, maxHeight = Math.max(p.height, Number(inputs.height.max) || p.height);
+      const scale = Math.max(1, (floorY - radius - 55) / maxHeight);
+      const y = floorY - radius - at.height * scale;
+      const a = cameraScreenPoint(state.camera, { x: size.width * 0.37, y });
+      const b = cameraScreenPoint(state.camera, { x: size.width * 0.63, y });
+      const da = Math.hypot(a.x - point.x, a.y - point.y), db = Math.hypot(b.x - point.x, b.y - point.y);
+      return da <= 24 ? "A" : db <= 24 ? "B" : "";
+    };
+    scene.addEventListener("pointerenter", () => { inside = true; });
+    scene.addEventListener("pointerleave", () => { inside = false; });
+    document.addEventListener("keydown", (event) => { if (event.code !== "Space" || !inside || event.repeat || event.target.closest?.("input,textarea,select,button,[contenteditable=true]")) return; space = true; event.preventDefault(); });
+    document.addEventListener("keyup", (event) => { if (event.code === "Space") space = false; });
+    scene.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const point = local(event), factor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scene.clientHeight : 1;
+      const dx = Math.max(-240, Math.min(240, event.deltaX * factor)), dy = Math.max(-240, Math.min(240, event.deltaY * factor));
+      if (event.ctrlKey || event.metaKey) zoomFreefallAt(point, Math.exp(-dy * 0.002));
+      else { panCameraBy(state.camera, -dx, -dy); updateZoom(); }
+    }, { passive: false });
+    scene.addEventListener("pointerdown", (event) => {
+      const point = local(event);
+      if (event.pointerType === "touch") {
+        pointers.set(event.pointerId, point);
+        if (pointers.size >= 2) {
+          const pair = [...pointers.entries()].slice(-2), a = pair[0][1], b = pair[1][1];
+          pinch = { ids: pair.map(([id]) => id), center: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), camera: { ...state.camera } };
+          drag = null; scene.classList.add("lab-view-multitouch"); pair.forEach(([id]) => { try { scene.setPointerCapture(id); } catch {} }); intercept(event); return;
+        }
+      }
+      const body = isBody(point);
+      if (!state.running && body && event.button === 0 && !scene.classList.contains("lab-view-pan-mode")) {
+        state.selectedBody = body; state.time = 0; state.started = false; state.loopDelayUntil = 0;
+        const p = readParameters(), floorY = scene.clientHeight - 48, radius = 13;
+        const maxHeight = Math.max(p.height, Number(inputs.height.max) || p.height);
+        const scale = Math.max(1, (floorY - radius - 55) / maxHeight);
+        const heldWorldPoint = cameraWorldPoint(state.camera, point);
+        const objectCenterY = floorY - radius - p.height * scale;
+        drag = { type: "object", id: event.pointerId, offsetY: heldWorldPoint.y - objectCenterY };
+        scene.classList.add("is-view-dragging"); try { scene.setPointerCapture(event.pointerId); } catch {} intercept(event); drawScene(); return;
+      }
+      if (state.running && body) { status.textContent = "Pause a simulação antes de reposicionar os objetos."; intercept(event); return; }
+      const shouldPan = event.pointerType === "touch" ? scene.classList.contains("lab-view-pan-mode")
+        : event.button === 1 || event.button === 2 || event.shiftKey || space || (scene.classList.contains("lab-view-pan-mode") && event.button === 0);
+      if (!shouldPan) return;
+      drag = { type: "camera", id: event.pointerId, x: event.clientX, y: event.clientY }; scene.classList.add("is-view-dragging"); try { scene.setPointerCapture(event.pointerId); } catch {} intercept(event);
+    }, true);
+    scene.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch" && pointers.has(event.pointerId)) pointers.set(event.pointerId, local(event));
+      if (pinch?.ids.includes(event.pointerId)) {
+        const a = pointers.get(pinch.ids[0]), b = pointers.get(pinch.ids[1]);
+        if (a && b) {
+          const centerNow = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+          Object.assign(state.camera, pinch.camera); zoomCameraAtPoint(state.camera, distance / pinch.distance, pinch.center);
+          panCameraBy(state.camera, centerNow.x - pinch.center.x, centerNow.y - pinch.center.y); updateZoom(); event.preventDefault(); return;
+        }
+      }
+      if (!drag || drag.id !== event.pointerId) return;
+      if (drag.type === "camera") { panCameraBy(state.camera, event.clientX - drag.x, event.clientY - drag.y); drag.x = event.clientX; drag.y = event.clientY; updateZoom(); return; }
+      const p = readParameters(), maxHeight = Math.max(p.height, Number(inputs.height.max) || p.height);
+      const floorY = scene.clientHeight - 48, radius = 13, scale = Math.max(1, (floorY - radius - 55) / maxHeight);
+      const world = cameraWorldPoint(state.camera, local(event));
+      const objectCenterY = world.y - (drag.offsetY || 0);
+      const minHeight = Number(inputs.height.min) || 0, maxInputHeight = Number(inputs.height.max) || maxHeight;
+      const step = Number(inputs.height.step) || 1;
+      const requestedHeight = (floorY - radius - objectCenterY) / scale;
+      const height = Math.max(minHeight, Math.min(maxInputHeight, minHeight + Math.round((requestedHeight - minHeight) / step) * step));
+      inputs.height.value = String(height); state.time = 0; state.lastFrame = 0; state.loopDelayUntil = 0; drawAll();
+    }, true);
+    const finish = (event) => {
+      if (event.pointerType === "touch") pointers.delete(event.pointerId);
+      if (drag?.id === event.pointerId) { drag = null; scene.classList.remove("is-view-dragging"); drawAll(); }
+      if (pinch?.ids.includes(event.pointerId)) { pinch = null; if (!pointers.size) scene.classList.remove("lab-view-multitouch"); }
+    };
+    scene.addEventListener("pointerup", finish, true); scene.addEventListener("pointercancel", finish, true); scene.addEventListener("lostpointercapture", finish, true);
+    scene.addEventListener("contextmenu", (event) => event.preventDefault());
+    updateZoom();
+  }
   window.addEventListener("resize", drawAll);
   if (typeof ResizeObserver !== "undefined") {
     const observer = new ResizeObserver(drawAll);
     observer.observe(scene);
     observer.observe(chart);
   }
+  installFreefallViewControls();
   drawAll();
 }

@@ -1,3 +1,4 @@
+import { createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./laboratorio-camera.js?v=lab-camera-20261023-1";
 (function(){
   "use strict";
   const MU0=4*Math.PI*1e-7;
@@ -9,7 +10,7 @@
   const scene=document.getElementById("lab-scene"), graph=document.getElementById("lab-graph");
   const sc=scene.getContext("2d"), gc=graph.getContext("2d");
   const $=(id)=>document.getElementById(id);
-  const state={time:0,running:false,last:0,raf:0,zoom:1};
+  const state={time:0,running:false,last:0,raf:0,camera:createCamera()};
   const specs={
     "friction-incline":{title:"Atrito e plano inclinado",summary:"Observe quando o atrito estático mantém o bloco em repouso e quando o atrito cinético permite que ele deslize pela rampa.",equation:"a = g(sen θ − μₖ cos θ) · repouso se tan θ ≤ μₛ",note:"O bloco começa em repouso. Antes de deslizar, o atrito estático se ajusta até seu máximo μₛN. Se tan θ ultrapassa μₛ, usamos o atrito cinético constante μₖN. Resistência do ar e deformações são desprezadas.",duration:5,params:[{id:"angle",label:"Ângulo da rampa",unit:"°",min:10,max:60,step:1,value:30},{id:"muS",label:"Coeficiente de atrito estático",unit:"",min:0.05,max:0.8,step:0.01,value:0.45},{id:"muK",label:"Coeficiente de atrito cinético",unit:"",min:0.02,max:0.6,step:0.01,value:0.3},{id:"mass",label:"Massa do bloco",unit:"kg",min:0.5,max:8,step:0.1,value:2}],derive(p,t){const th=p.angle*Math.PI/180, g=9.81, staticNeeded=p.mass*g*Math.sin(th), staticMax=p.muS*p.mass*g*Math.cos(th), sliding=staticNeeded>staticMax+1e-9, a=sliding?Math.max(0,g*(Math.sin(th)-p.muK*Math.cos(th))):0;return{sliding,a,distance:0.5*a*t*t,velocity:a*t,friction:sliding?p.muK*p.mass*g*Math.cos(th):staticNeeded,normal:p.mass*g*Math.cos(th),weight:p.mass*g};},readouts(p,t){const d=this.derive(p,t);return[["Estado",d.sliding?"Deslizando":"Repouso"],["Aceleração na rampa",fmt(d.a,2)+" m/s²"],["Deslocamento",fmt(d.distance,2)+" m"],["Velocidade",fmt(d.velocity,2)+" m/s"]];},graph(p,t){const a=this.derive(p,0).a;return{xLabel:"t (s)",yLabel:"s (m)",xMin:0,xMax:this.duration,yMin:0,yMax:Math.max(1,0.5*a*this.duration*this.duration*1.12),markerX:t,value:x=>0.5*a*x*x};}},
     "circular-motion":{title:"Movimento circular e aceleração centrípeta",summary:"Acompanhe um carrinho em uma pista circular e compare a velocidade tangencial com a aceleração dirigida ao centro.",equation:"a꜀ = v²/r · ω = v/r · T = 2πr/v",note:"Movimento circular uniforme: o módulo da velocidade é constante; sua direção muda continuamente. A aceleração centrípeta aponta para o centro e tem módulo v²/r. A pista é desenhada em escala visual, sem atrito nem variação de velocidade.",duration:12,params:[{id:"speed",label:"Velocidade do carrinho",unit:"m/s",min:0.5,max:15,step:0.1,value:4},{id:"radius",label:"Raio da pista",unit:"m",min:0.5,max:5,step:0.1,value:2}],derive(p,t){const omega=p.speed/p.radius;return{omega,centripetal:p.speed*p.speed/p.radius,period:2*Math.PI/omega,angle:omega*t};},readouts(p,t){const d=this.derive(p,t);return[["Velocidade",fmt(p.speed,2)+" m/s"],["Aceleração centrípeta",fmt(d.centripetal,2)+" m/s²"],["Período",fmt(d.period,2)+" s"],["Ângulo",fmt((d.angle*180/Math.PI)%360,0)+"°"]];},graph(p,t){const a=p.speed*p.speed/p.radius;return{xLabel:"t (s)",yLabel:"a꜀ (m/s²)",xMin:0,xMax:this.duration,yMin:0,yMax:a*1.35||1,markerX:t,value:()=>a};}},
@@ -42,7 +43,56 @@
   function grid(ctx,w,h,pal){ctx.fillStyle=pal.bg;ctx.fillRect(0,0,w,h);ctx.strokeStyle=pal.line;ctx.lineWidth=1;ctx.globalAlpha=.55;ctx.beginPath();for(let x=22;x<w;x+=42){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,h);}for(let y=22;y<h;y+=42){ctx.moveTo(0,y+.5);ctx.lineTo(w,y+.5);}ctx.stroke();ctx.globalAlpha=1;}
   function label(ctx,text,x,y,color,align){ctx.fillStyle=color||"#eff3fb";ctx.font="600 12px system-ui,sans-serif";ctx.textAlign=align||"left";ctx.textBaseline="alphabetic";ctx.fillText(text,x,y);}
   function arrow(ctx,x1,y1,x2,y2,color,text){const a=Math.atan2(y2-y1,x2-x1),size=9;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-size*Math.cos(a-.45),y2-size*Math.sin(a-.45));ctx.lineTo(x2-size*Math.cos(a+.45),y2-size*Math.sin(a+.45));ctx.closePath();ctx.fill();if(text)label(ctx,text,(x1+x2)/2+5,(y1+y2)/2-6,color);}
-  function drawScene(){const size=resize(scene,sc),w=size.w,h=size.h,p=readParameters(),t=state.time,pal=colors();grid(sc,w,h,pal);sc.save();sc.translate(w/2,h/2);sc.scale(state.zoom,state.zoom);sc.translate(-w/2,-h/2);sc.lineCap="round";sc.lineJoin="round";
+  function zoomViewAt(point,factor){zoomCameraAtPoint(state.camera,factor,point,{x:scene.clientWidth/2,y:scene.clientHeight/2});drawScene();}
+  function installViewControls(){
+    const host=scene.parentElement;
+    if(!host)return;
+    host.style.position=host.style.position||"relative";
+    const controls=document.createElement("div");
+    controls.className="lab-view-controls-overlay";
+    controls.setAttribute("role","group");
+    controls.setAttribute("aria-label","Controles da perspectiva do experimento");
+    Object.assign(controls.style,{position:"absolute",top:"58px",right:"8px",zIndex:"5",width:"min(720px, calc(100% - 16px))",flexWrap:"wrap",justifyContent:"flex-end"});
+    const button=(label,aria,cls="lab-view-reset")=>{const el=document.createElement("button");el.type="button";el.className=cls;el.textContent=label;el.setAttribute("aria-label",aria);return el;};
+    const move=button("Mover","Ativar ferramenta para mover a vista","lab-view-pan-toggle");
+    move.setAttribute("aria-pressed","false");
+    const out=button("−","Afastar perspectiva","lab-view-control-button"),zoom=document.createElement("output");
+    zoom.className="lab-view-zoom";zoom.setAttribute("aria-live","polite");
+    const into=button("+","Aproximar perspectiva","lab-view-control-button");
+    const center=button("Centralizar","Centralizar experimento");
+    const fit=button("Enquadrar tudo","Enquadrar todos os objetos");
+    const restore=button("Restaurar zoom","Restaurar apenas o zoom");
+    controls.append(move,out,zoom,into,center,fit,restore);host.append(controls);
+    scene.style.touchAction="none";
+    const apply=()=>{zoom.textContent=Math.round(state.camera.zoom*100)+"%";drawScene();};
+    const zoomViewAt=(point,factor)=>{zoomCameraAtPoint(state.camera,factor,point,{x:scene.clientWidth/2,y:scene.clientHeight/2});apply();};
+    const centerPoint=()=>({x:scene.clientWidth/2,y:scene.clientHeight/2});
+    move.addEventListener("click",()=>{const active=scene.classList.toggle("lab-view-pan-mode");move.setAttribute("aria-pressed",String(active));move.setAttribute("aria-label",active?"Desativar ferramenta para mover a vista":"Ativar ferramenta para mover a vista");});
+    out.addEventListener("click",()=>zoomViewAt(centerPoint(),1/1.2));
+    into.addEventListener("click",()=>zoomViewAt(centerPoint(),1.2));
+    center.addEventListener("click",()=>{state.camera.x=0;state.camera.y=0;apply();});
+    fit.addEventListener("click",()=>{resetCamera(state.camera);apply();});
+    restore.addEventListener("click",()=>{resetCamera(state.camera,{position:false,zoom:true});apply();});
+    const local=(event)=>{const r=scene.getBoundingClientRect();return{x:event.clientX-r.left,y:event.clientY-r.top};};
+    scene.addEventListener("wheel",(event)=>{event.preventDefault();const unit=event.deltaMode===1?16:event.deltaMode===2?scene.clientHeight:1;const dx=Math.max(-240,Math.min(240,event.deltaX*unit)),dy=Math.max(-240,Math.min(240,event.deltaY*unit));if(event.ctrlKey||event.metaKey)zoomViewAt(local(event),Math.exp(-dy*.002));else{panCameraBy(state.camera,-dx,-dy);apply();}},{passive:false});
+    let drag=null,space=false,inside=false,pointers=new Map(),pinch=null;
+    scene.addEventListener("pointerenter",()=>{inside=true});scene.addEventListener("pointerleave",()=>{inside=false});
+    document.addEventListener("keydown",event=>{if(event.code!=="Space"||!inside||event.repeat||event.target.closest?.("input,textarea,select,button,[contenteditable=true]"))return;space=true;event.preventDefault();});
+    document.addEventListener("keyup",event=>{if(event.code==="Space")space=false;});
+    scene.addEventListener("pointerdown",event=>{
+      if(event.pointerType==="touch"){pointers.set(event.pointerId,local(event));if(pointers.size>=2){const pair=[...pointers.entries()].slice(-2),a=pair[0][1],b=pair[1][1],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={ids:pair.map(([id])=>id),origin:mid,distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),camera:{...state.camera}};drag=null;scene.classList.add("lab-view-multitouch");pair.forEach(([id])=>{try{scene.setPointerCapture(id)}catch{}});event.preventDefault();event.stopImmediatePropagation();return;}if(!scene.classList.contains("lab-view-pan-mode"))return;}
+      const should=event.pointerType==="touch"?scene.classList.contains("lab-view-pan-mode"):event.button===1||event.button===2||event.shiftKey||space||(scene.classList.contains("lab-view-pan-mode")&&event.button===0);
+      if(!should)return;event.preventDefault();event.stopImmediatePropagation();drag={id:event.pointerId,x:event.clientX,y:event.clientY};scene.classList.add("is-view-dragging");try{scene.setPointerCapture(event.pointerId)}catch{}
+    },true);
+    scene.addEventListener("pointermove",event=>{
+      if(event.pointerType==="touch"&&pointers.has(event.pointerId)){pointers.set(event.pointerId,local(event));if(pinch?.ids.includes(event.pointerId)){const a=pointers.get(pinch.ids[0]),b=pointers.get(pinch.ids[1]);if(a&&b){const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2},distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y));Object.assign(state.camera,pinch.camera);zoomCameraAtPoint(state.camera,distance/pinch.distance,pinch.origin,{x:scene.clientWidth/2,y:scene.clientHeight/2});panCameraBy(state.camera,mid.x-pinch.origin.x,mid.y-pinch.origin.y);apply();event.preventDefault();return;}}}
+      if(!drag||drag.id!==event.pointerId)return;panCameraBy(state.camera,event.clientX-drag.x,event.clientY-drag.y);drag.x=event.clientX;drag.y=event.clientY;apply();
+    },true);
+    const finish=event=>{if(event.pointerType==="touch"){pointers.delete(event.pointerId);if(pinch?.ids.includes(event.pointerId)){const rest=[...pointers.entries()];pinch=null;if(rest.length){const[id,p]=rest[0];drag={id,x:p.x+scene.getBoundingClientRect().left,y:p.y+scene.getBoundingClientRect().top};}else drag=null;}if(!pointers.size)scene.classList.remove("lab-view-multitouch");}if(drag?.id===event.pointerId){drag=null;scene.classList.remove("is-view-dragging");}};
+    scene.addEventListener("pointerup",finish,true);scene.addEventListener("pointercancel",finish,true);scene.addEventListener("lostpointercapture",finish,true);
+    scene.addEventListener("contextmenu",event=>event.preventDefault());
+  }
+  function drawScene(){const size=resize(scene,sc),w=size.w,h=size.h,p=readParameters(),t=state.time,pal=colors();grid(sc,w,h,pal);sc.save();sc.translate(w/2+state.camera.x,h/2+state.camera.y);sc.scale(state.camera.zoom,state.camera.zoom);sc.translate(-w/2,-h/2);sc.lineCap="round";sc.lineJoin="round";
     if(id==="friction-incline")drawIncline(sc,w,h,p,t,pal);
     else if(id==="circular-motion")drawCircle(sc,w,h,p,t,pal);
     else if(id==="hydrostatics")drawHydro(sc,w,h,p,t,pal);
@@ -78,10 +128,11 @@
   $("panel-toggle").addEventListener("click",(event)=>{const hidden=root.classList.toggle("panel-hidden");event.currentTarget.setAttribute("aria-expanded",String(!hidden));event.currentTarget.textContent=hidden?"Gráficos e parâmetros":"Ocultar gráficos e parâmetros";requestAnimationFrame(drawAll);});
   panelPlay?.addEventListener("click",()=>play.click());
   $("fullscreen-toggle").addEventListener("click",async()=>{try{if(document.fullscreenElement===root)await document.exitFullscreen();else await root.requestFullscreen();}catch{status.textContent="A tela cheia não está disponível neste navegador.";}});
-  window.addEventListener("diario-lab-zoom",(event)=>{if(document.fullscreenElement!==root)return;state.zoom=Math.max(.65,Math.min(2.5,state.zoom*Number(event.detail?.factor||1)));drawScene();});
+  window.addEventListener("diario-lab-zoom",(event)=>{if(document.fullscreenElement!==root)return;zoomViewAt({x:scene.clientWidth/2,y:scene.clientHeight/2},Number(event.detail?.factor||1));});
   document.addEventListener("fullscreenchange",()=>{const isFullscreen=document.fullscreenElement===root;if(panelPlay)panelPlay.hidden=!isFullscreen;panelToggle.textContent=root.classList.contains("panel-hidden")?"Gráficos e parâmetros":"Ocultar gráficos e parâmetros";requestAnimationFrame(drawAll);});
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.running){stop();status.textContent="Simulação pausada porque a página ficou oculta.";}});
   window.addEventListener("resize",drawAll);if(typeof ResizeObserver!=="undefined"){const observer=new ResizeObserver(drawAll);observer.observe(scene);observer.observe(graph);}
+  installViewControls();
   drawAll();
 })();
 

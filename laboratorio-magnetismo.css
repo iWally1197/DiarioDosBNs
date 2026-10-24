@@ -169,3 +169,18 @@
 .magnet-energy-control{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:8px 10px;border:1px solid var(--line,rgba(206,218,240,.16));border-radius:8px;color:var(--text,#e9edf5);font-size:.85rem}
 .magnet-energy-control output{color:var(--gold,#e0bd69);font-variant-numeric:tabular-nums}
 .magnet-energy-control input{grid-column:1/-1;width:100%;accent-color:var(--gold,#e0bd69)}
+
+.magnet-view-controls{
+  position:absolute;top:8px;right:8px;z-index:8;display:flex;align-items:center;justify-content:flex-end;
+  flex-wrap:wrap;gap:6px;max-width:calc(100% - 16px);padding:7px;border:1px solid rgba(214,184,122,.55);
+  border-radius:10px;background:rgba(8,16,31,.92);box-shadow:0 6px 22px rgba(0,0,0,.28)
+}
+.magnet-view-controls .button{min-height:38px;padding:7px 10px;font-size:.82rem}
+.magnet-view-controls output{min-width:48px;text-align:center;font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--text,#f4f5f8)}
+#magnet-canvas.magnet-view-pan-mode{cursor:grab}
+#magnet-canvas.magnet-view-panning{cursor:grabbing}
+#magnet-canvas.magnet-view-multitouch{cursor:move}
+@media(max-width:620px){
+  .magnet-view-controls{left:6px;right:6px;top:6px;justify-content:center;gap:4px;padding:5px}
+  .magnet-view-controls .button{min-height:40px;padding:6px 8px;font-size:.75rem}
+}
