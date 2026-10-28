@@ -47,8 +47,8 @@
     .lab-standard-fullscreen-active:not(#lab-workspace) > .lab-standard-fullscreen-toolbar {
       position: absolute; top: 10px; left: 10px; right: 10px;
     }
-    .lab-standard-fullscreen-active #mru-fullscreen-tools,
-    .lab-standard-fullscreen-active #mruv-fullscreen-tools { display: flex !important; }
+    .lab-standard-fullscreen-active:not(.lab-standard-controls-collapsed) #mru-fullscreen-tools,
+    .lab-standard-fullscreen-active:not(.lab-standard-controls-collapsed) #mruv-fullscreen-tools { display: flex !important; }
     .lab-standard-fullscreen-active #workspace-fullscreen,
     .lab-standard-fullscreen-active #workspace-controls-toggle,
     .lab-standard-fullscreen-active #workspace-play,
@@ -77,6 +77,36 @@
       .lab-standard-fullscreen-toolbar > button { min-height: 38px; padding: 7px 9px; font-size: 12px; }
       .lab-standard-fullscreen-toolbar > .lab-standard-time { min-height: 38px; padding: 7px 10px; font-size: 12px; }
       .lab-standard-fullscreen-active:not(#lab-workspace) > .lab-standard-fullscreen-toolbar { top: 7px; left: 7px; right: 7px; }
+    }
+
+    .lab-standard-collapse-button { margin-left:auto; border-color:rgba(129,179,255,.72)!important; }
+    .lab-standard-fullscreen-handle {
+      position:fixed; top:max(10px,env(safe-area-inset-top)); right:max(12px,env(safe-area-inset-right));
+      z-index:10050; display:none; align-items:center; justify-content:center; gap:8px;
+      min-width:48px; min-height:48px; padding:10px 14px; border:1px solid rgba(228,196,119,.82);
+      border-radius:999px; background:rgba(7,15,29,.97); color:#f4f5fa; box-shadow:0 8px 24px rgba(0,0,0,.38);
+      font:700 13px/1.1 system-ui,sans-serif; cursor:grab; touch-action:none; user-select:none;
+    }
+    .lab-standard-fullscreen-handle:active { cursor:grabbing; }
+    .lab-standard-fullscreen-active.lab-standard-controls-collapsed .lab-standard-fullscreen-toolbar { display:none!important; }
+    .lab-standard-fullscreen-active.lab-standard-controls-collapsed .lab-standard-fullscreen-handle { display:inline-flex; }
+    .lab-infinite-grid-overlay {
+      position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.32; mix-blend-mode:screen;
+      background-image:
+        linear-gradient(to right,rgba(164,188,220,.18) 1px,transparent 1px),
+        linear-gradient(to bottom,rgba(164,188,220,.18) 1px,transparent 1px),
+        linear-gradient(to right,rgba(164,188,220,.09) 1px,transparent 1px),
+        linear-gradient(to bottom,rgba(164,188,220,.09) 1px,transparent 1px);
+      background-size:128px 128px,128px 128px,32px 32px,32px 32px;
+      background-position:center center;
+    }
+    .lab-infinite-grid-overlay[hidden] { display:none!important; }
+    @media (max-width: 680px) {
+      .lab-standard-fullscreen-handle { min-height:46px; min-width:46px; padding:9px 12px; font-size:12px; }
+      .lab-standard-collapse-button { margin-left:0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lab-standard-fullscreen-toolbar { transition:none!important; }
     }
   `;
 
@@ -372,6 +402,109 @@
     }
   }
 
+
+  function findGridControl(root) {
+    const controls = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+    return controls.find((input) => {
+      const labels = Array.from(input.labels || []).map((label) => label.textContent || "").join(" ");
+      const searchable = [input.id, input.name, input.getAttribute("aria-label"), labels].join(" ");
+      return /grid|grade|quadriculado/i.test(searchable) && (!root || root.contains(input) || input.id === "mru-show-grid" || input.id === "mruv-show-grid");
+    }) || null;
+  }
+
+  function closeFullscreenPanels(state) {
+    const selectors = [state.profile.controls, state.profile.objects].filter(Boolean);
+    const seen = new Set();
+    selectors.forEach((selector) => {
+      const source = q(state.root, selector);
+      if (source && !seen.has(source) && attr(source, "aria-expanded") === "true") {
+        seen.add(source);
+        source.click();
+      }
+    });
+    const picker = state.bar.querySelector(".lab-standard-fullscreen-time-picker:not([hidden])");
+    picker?.querySelector(".lab-standard-picker-close")?.click();
+  }
+
+  function setFullscreenControlsCollapsed(state, collapsed) {
+    if (!state || state.root.classList.contains("lab-standard-controls-collapsed") === collapsed) return;
+    if (collapsed) closeFullscreenPanels(state);
+    state.root.classList.toggle("lab-standard-controls-collapsed", collapsed);
+    state.bar.toggleAttribute("inert", collapsed);
+    if (collapsed) state.bar.setAttribute("aria-hidden", "true");
+    else state.bar.removeAttribute("aria-hidden");
+    state.collapseToggle.setAttribute("aria-expanded", String(!collapsed));
+    state.collapseToggle.textContent = collapsed ? "☰ Mostrar opções" : "☰ Ocultar opções";
+    state.handle.setAttribute("aria-expanded", String(!collapsed));
+    state.handle.setAttribute("aria-label", collapsed ? "Mostrar controles do laboratório. Puxe para baixo ou toque." : "Recolher controles do laboratório");
+    if (collapsed) state.handle.focus({ preventScroll: true });
+    else state.collapseToggle.focus({ preventScroll: true });
+  }
+
+  function attachFullscreenOptions(root, profile, bar) {
+    const exit = bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit");
+    const collapseToggle = document.createElement("button");
+    collapseToggle.type = "button";
+    collapseToggle.className = "lab-standard-collapse-button";
+    collapseToggle.textContent = "☰ Ocultar opções";
+    collapseToggle.dataset.labFullscreenCollapse = "true";
+    collapseToggle.setAttribute("aria-expanded", "true");
+    if (!bar.id) bar.id = "lab-fullscreen-toolbar-" + profile.kind;
+    collapseToggle.setAttribute("aria-controls", bar.id);
+    bar.insertBefore(collapseToggle, exit || null);
+
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "lab-standard-fullscreen-handle";
+    handle.textContent = "☰ Opções";
+    handle.setAttribute("aria-expanded", "false");
+    handle.setAttribute("aria-label", "Mostrar controles do laboratório. Puxe para baixo ou toque.");
+    handle.title = "Puxe para baixo ou toque para mostrar as opções";
+
+    const overlay = document.createElement("div");
+    overlay.className = "lab-infinite-grid-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+    const gridControl = findGridControl(root);
+    const onGridChange = () => { overlay.hidden = Boolean(gridControl && !gridControl.checked); };
+    if (gridControl) {
+      gridControl.addEventListener("change", onGridChange);
+      onGridChange();
+    }
+
+    const state = { root, profile, bar, collapseToggle, handle, overlay, gridControl, onGridChange };
+    collapseToggle.addEventListener("click", () => setFullscreenControlsCollapsed(state, true));
+    let startY = null;
+    let ignoreNextClick = false;
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.isPrimary === false) return;
+      startY = event.clientY;
+      try { handle.setPointerCapture(event.pointerId); } catch {}
+    });
+    handle.addEventListener("pointerup", (event) => {
+      if (startY === null) return;
+      const pullDistance = event.clientY - startY;
+      startY = null;
+      if (pullDistance > 24) {
+        ignoreNextClick = true;
+        setFullscreenControlsCollapsed(state, false);
+        window.setTimeout(() => { ignoreNextClick = false; }, 0);
+      }
+    });
+    handle.addEventListener("pointercancel", () => { startY = null; });
+    handle.addEventListener("click", (event) => {
+      if (ignoreNextClick) {
+        ignoreNextClick = false;
+        event.preventDefault();
+        return;
+      }
+      setFullscreenControlsCollapsed(state, !root.classList.contains("lab-standard-controls-collapsed"));
+    });
+
+    root.insertBefore(overlay, root.firstChild);
+    root.append(handle);
+    return state;
+  }
+
   function mount(root, profile) {
     profile.root = root;
     root.classList.add("lab-standard-fullscreen-active");
@@ -380,7 +513,8 @@
       bar.classList.add("lab-standard-fullscreen-toolbar");
       if (!bar.querySelector("[data-lab-standard-extra]")) configureExtras(profile, bar);
       const panels = configurePanelButtons(profile, bar);
-      return { bar, profile, owned: false, ...panels };
+      const fullscreenOptions = attachFullscreenOptions(root, profile, bar);
+      return { bar, profile, owned: false, ...panels, ...fullscreenOptions };
     }
 
     bar = document.createElement("div");
@@ -412,7 +546,8 @@
     const panels = configurePanelButtons(profile, bar);
     root.insertBefore(bar, root.firstChild);
     const movedObjectMenu = dockObjectMenu(profile, bar);
-    return { bar, profile, owned: true, play, time, choose, form, ...panels, movedObjectMenu };
+    const fullscreenOptions = attachFullscreenOptions(root, profile, bar);
+    return { bar, profile, owned: true, play, time, choose, form, ...panels, movedObjectMenu, ...fullscreenOptions };
   }
 
   function zoom(profile, factor) {
@@ -495,6 +630,15 @@
     if (current?.profile.drawer) {
       const drawer = q(current.profile.root, current.profile.drawer);
       if (drawer) drawer.style.top = "";
+    }
+    if (current) {
+      current.gridControl?.removeEventListener("change", current.onGridChange);
+      current.handle.remove();
+      current.overlay.remove();
+      current.collapseToggle.remove();
+      current.bar.toggleAttribute("inert", false);
+      current.bar.removeAttribute("aria-hidden");
+      current.profile.root.classList.remove("lab-standard-controls-collapsed");
     }
     if (current?.owned) current.bar.remove();
     if (current) current.profile.root.classList.remove("lab-standard-fullscreen-active");
