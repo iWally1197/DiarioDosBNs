@@ -30,3 +30,5 @@ Disallow: /auth/
 Disallow: /auth-callback/
 Disallow: /auth-callback.html
 Disallow: /supabase/
+
+Sitemap: https://diariodosbns.com.br/sitemap.xml
