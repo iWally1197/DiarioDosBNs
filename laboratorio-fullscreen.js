@@ -576,6 +576,13 @@
     return selector ? q(root, selector) : null;
   }
 
+  const CONTEXT_OBJECTS = {"optics-mirrors":[["mirror-plane","Espelho plano","mirror"],["lantern","Lanterna","lantern"],["human","Objeto humano","human"],["screen","Tela de observação","screen"]],"optics-reflection":[["mirror-plane","Espelho plano","mirror"],["lantern","Lanterna","lantern"],["human","Objeto humano","human"],["screen","Tela de observação","screen"]],"optics-concave-mirror":[["mirror-concave","Espelho côncavo esférico","mirror"],["lantern","Lanterna","lantern"],["human","Objeto humano","human"],["screen","Tela de observação","screen"]],"optics-concave-parabolic-mirror":[["mirror-parabolic","Espelho côncavo parabólico","mirror"],["lantern","Lanterna","lantern"],["human","Objeto humano","human"],["screen","Tela de observação","screen"]],"optics-convex-mirror":[["mirror-convex","Espelho convexo esférico","mirror"],["lantern","Lanterna","lantern"],["human","Objeto humano","human"],["screen","Tela de observação","screen"]],"optics-refraction":[["light-source","Fonte de luz","lantern"],["lens-interface","Interface óptica","lens"],["screen","Tela de observação","screen"],["human","Objeto humano","human"]],"lens":[["lens-converging","Lente convergente","lens"],["light-source","Fonte de luz","lantern"],["screen","Tela de observação","screen"],["human","Objeto humano","human"]],"lens-diverging":[["lens-diverging","Lente divergente","lens"],["light-source","Fonte de luz","lantern"],["screen","Tela de observação","screen"],["human","Objeto humano","human"]],"newton":[["block","Bloco","block"],["dynamometer","Dinamômetro","instrument"],["ramp","Plano inclinado","ramp"],["force-vector","Vetor de força","vector"]],"freefall":[["sphere","Esfera","sphere"],["feather","Pena","feather"],["timer","Cronômetro","instrument"],["platform","Plataforma","ramp"]],"projectile":[["projectile","Projétil","sphere"],["launcher","Lançador","ramp"],["target","Alvo","screen"],["velocity-vector","Vetor de velocidade","vector"]],"friction-incline":[["block","Bloco","block"],["ramp","Plano inclinado","ramp"],["force-vector","Vetor de força","vector"],["dynamometer","Dinamômetro","instrument"]],"circular-motion":[["sphere","Corpo móvel","sphere"],["circular-track","Trajetória circular","track"],["centripetal-vector","Vetor centrípeto","vector"],["timer","Cronômetro","instrument"]],"energy":[["cart","Carrinho","cart"],["ramp","Rampa","ramp"],["spring","Mola","spring"],["energy-meter","Medidor de energia","instrument"]],"collision":[["cart","Carrinho","cart"],["sphere","Esfera","sphere"],["barrier","Barreira","screen"],["momentum-vector","Vetor de movimento","vector"]],"spring":[["spring","Mola","spring"],["block","Massa","block"],["timer","Cronômetro","instrument"],["ruler","Régua","instrument"]],"hydrostatics":[["fluid-column","Coluna de líquido","fluid"],["submerged-body","Corpo imerso","sphere"],["pressure-gauge","Medidor de pressão","instrument"],["container","Recipiente","fluid"]],"calorimetry":[["calorimeter","Calorímetro","fluid"],["thermometer","Termômetro","instrument"],["hot-body","Corpo aquecido","block"],["cold-body","Corpo frio","sphere"]],"gas-thermodynamics":[["gas-particles","Partículas de gás","particles"],["piston","Pistão","block"],["thermometer","Termômetro","instrument"],["manometer","Manômetro","instrument"]],"wave":[["wave-source","Fonte de ondas","speaker"],["fixed-end","Extremidade fixa","screen"],["wave-probe","Sensor de onda","instrument"],["ruler","Régua","instrument"]],"sound-resonance":[["speaker","Fonte sonora","speaker"],["tuning-fork","Diapasão","speaker"],["resonator","Ressonador","fluid"],["microphone","Microfone","instrument"]],"doppler-effect":[["speaker","Fonte sonora","speaker"],["observer","Observador","human"],["wavefront","Frentes de onda","waves"],["microphone","Microfone","instrument"]],"interference-diffraction":[["light-source","Fonte de luz","lantern"],["slit","Fenda","screen"],["screen","Tela de observação","screen"],["wavefront","Frentes de onda","waves"]],"field":[["positive-charge","Carga positiva","charge"],["negative-charge","Carga negativa","charge"],["test-charge","Carga de prova","charge"],["field-vector","Vetor de campo","vector"]],"ohm":[["battery","Fonte elétrica","charge"],["resistor","Resistor","block"],["ammeter","Amperímetro","instrument"],["voltmeter","Voltímetro","instrument"]],"radioactivity":[["isotope","Fonte radioativa","particles"],["detector","Detector","instrument"],["shield","Blindagem","block"],["emitted-particles","Partículas emitidas","particles"]]};
+
+  function currentLabTopic() {
+    const params = new URLSearchParams(location.search);
+    return String(params.get("topico") || params.get("topic") || "").trim().toLowerCase().replace(/^lab-/, "");
+  }
+
   function paletteItems(profile) {
     if (profile.kind === "mru" || profile.kind === "mruv") {
       const select = byId(profile.kind + "-add-type");
@@ -588,30 +595,58 @@
         }));
       }
     }
-    if (profile.kind === "magnet") {
-      return [
-        { kind: "metal-ball", label: "Esfera de metal", icon: "sphere", physical: true },
-        { kind: "compass", label: "Bússola", icon: "compass", physical: true }
-      ];
-    }
-    return [
-      { kind: "sphere", label: "Esfera · marcador visual", icon: "sphere", physical: false },
-      { kind: "block", label: "Bloco · marcador visual", icon: "block", physical: false },
-      { kind: "cart", label: "Carrinho · marcador visual", icon: "cart", physical: false }
+    if (profile.kind === "magnet") return [
+      { kind: "metal-ball", label: "Esfera de metal", icon: "sphere", physical: true },
+      { kind: "compass", label: "Bússola", icon: "compass", physical: true },
+      { kind: "extra-magnet", label: "Ímã adicional · visual", icon: "magnet", physical: false },
+      { kind: "extra-coil", label: "Bobina adicional · visual", icon: "coil", physical: false },
+      { kind: "electromagnet", label: "Eletroímã · visual", icon: "magnet", physical: false }
     ];
+    if (profile.kind === "faraday") return [
+      { kind: "faraday-magnet", label: "Ímã · visual", icon: "magnet", physical: false },
+      { kind: "faraday-coil", label: "Bobina · visual", icon: "coil", physical: false },
+      { kind: "galvanometer", label: "Galvanômetro · visual", icon: "instrument", physical: false },
+      { kind: "metal-ball", label: "Esfera de metal · visual", icon: "sphere", physical: false }
+    ];
+    const topic = currentLabTopic();
+    const definitions = CONTEXT_OBJECTS[topic] || (profile.kind === "freefall"
+      ? CONTEXT_OBJECTS.freefall
+      : profile.kind === "priority"
+        ? CONTEXT_OBJECTS.newton
+        : [["sphere", "Corpo de teste", "sphere"], ["source", "Fonte do experimento", "instrument"], ["instrument", "Instrumento de medida", "instrument"]]);
+    return definitions.map(([kind, label, icon]) => ({ kind, label: label + " · visual", icon, physical: false }));
   }
 
   function objectIcon(kind) {
-    if (kind === "sphere" || kind === "metal-ball") {
+    if (kind === "sphere" || kind === "metal-ball" || kind === "submerged-body" || kind === "projectile") {
       return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#c99f51" stroke="#f6d792" stroke-width="1.5"/><circle cx="19" cy="13" r="3.5" fill="#fff3c4" opacity=".8"/></svg>';
     }
     if (kind === "cart" || /cart/i.test(kind)) {
-      return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M7 23h34l-4-11H15l-3-4H6" fill="none" stroke="#d6b87a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="13" y="13" width="25" height="10" rx="2" fill="#4f86d9" stroke="#a9c7ff"/><circle cx="19" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/><circle cx="33" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/></svg>';
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M7 23h34l-4-11H15l-3-4H6" fill="none" stroke="#d6b87a" stroke-width="3" stroke-linecap="round"/><rect x="13" y="13" width="25" height="10" rx="2" fill="#4f86d9" stroke="#a9c7ff"/><circle cx="19" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/><circle cx="33" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/></svg>';
     }
-    if (kind === "compass") {
-      return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#13233b" stroke="#d6b87a" stroke-width="2"/><path d="m28 11-3 8-6 6 3-8z" fill="#f26c6c" stroke="#ffe1a3" stroke-width="1"/></svg>';
+    if (kind === "compass") return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#13233b" stroke="#d6b87a" stroke-width="2"/><path d="m28 11-3 8-6 6 3-8z" fill="#f26c6c" stroke="#ffe1a3" stroke-width="1"/></svg>';
+    if (/mirror/.test(kind)) {
+      const path = kind === "mirror-plane" ? "M24 4v28" : kind === "mirror-convex" ? "M20 4q12 14 0 28" : "M28 4q-12 14 0 28";
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="' + path + '" fill="none" stroke="#b9d9ff" stroke-width="6"/><path d="' + path + '" fill="none" stroke="#f4f8ff" stroke-width="2"/><path d="M8 9h8m-8 9h8m-8 9h8" stroke="#e4c477" stroke-width="1.8"/></svg>';
     }
-    return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 7h24v22H12z" rx="3" fill="#4f86d9" stroke="#a9c7ff" stroke-width="1.5"/><path d="M17 12h14v12H17z" fill="#77a8f2" opacity=".45"/></svg>';
+    if (kind === "lantern" || kind === "light-source" || kind === "source") return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="m8 13 12-5v20L8 23z" fill="#d6b87a" stroke="#fff0bd" stroke-width="1.5"/><path d="M20 11 43 4v28l-23-7z" fill="#f5d56d" opacity=".3"/><path d="M20 11 43 4M20 25l23 7" stroke="#f5d56d" stroke-width="1.5"/></svg>';
+    if (/lens/.test(kind)) {
+      const path = /diverging/.test(kind) ? "M21 4q8 14 0 28M27 4q-8 14 0 28" : "M18 4q16 14 0 28M30 4q-16 14 0 28";
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="' + path + '" fill="none" stroke="#78c9ff" stroke-width="3"/><path d="M3 18h11m20 0h11" stroke="#dce7f7" stroke-width="1.5"/></svg>';
+    }
+    if (/magnet|electromagnet/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 7v12a12 12 0 0 0 24 0V7" fill="none" stroke="#4f86d9" stroke-width="8"/><path d="M12 7v7m24-7v7" stroke="#f0cc79" stroke-width="8"/></svg>';
+    if (/coil/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M5 18h6c0-13 8-13 8 0s8 13 8 0 8-13 8 0 8 13 8 0h2" fill="none" stroke="#d6b87a" stroke-width="3"/><path d="M7 8v20m34-20v20" stroke="#9bb1cf" stroke-width="2"/></svg>';
+    if (/human|observer/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="7" r="4" fill="#e5c47c"/><path d="M24 12v13m0-8-9 6m9-6 9 6m-9 2-7 8m7-8 7 8" fill="none" stroke="#78c9ff" stroke-width="3" stroke-linecap="round"/></svg>';
+    if (/ramp|platform/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M5 29 41 7v22z" fill="#304665" stroke="#d6b87a" stroke-width="2"/></svg>';
+    if (/spring/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M5 18h5l4-9 7 18 7-18 7 18 5-9h4" fill="none" stroke="#78c9ff" stroke-width="2.5"/><rect x="39" y="11" width="7" height="14" rx="1" fill="#c99f51"/></svg>';
+    if (/vector/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M7 27 37 8m-7 0h7v7" fill="none" stroke="#8bd250" stroke-width="3"/></svg>';
+    if (/instrument|gauge|meter|thermometer|microphone|detector|ruler|timer|voltmeter|ammeter/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><rect x="9" y="4" width="30" height="28" rx="5" fill="#15243a" stroke="#d6b87a" stroke-width="2"/><circle cx="24" cy="16" r="8" fill="#091321" stroke="#9fc5f5" stroke-width="1.5"/><path d="m24 16 5-5M15 27h18" stroke="#f4f7fc" stroke-width="1.5"/></svg>';
+    if (/screen|target|slit|barrier/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><rect x="9" y="4" width="30" height="23" rx="2" fill="#101d30" stroke="#dce7f7" stroke-width="2"/><path d="M24 27v5m-8 0h16" stroke="#d6b87a" stroke-width="2"/><path d="M13 15h22" stroke="#78c9ff" stroke-width="2"/></svg>';
+    if (/fluid|container|calorimeter|resonator/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 5v24h24V5m-23 9h22" fill="none" stroke="#dce7f7" stroke-width="2.5"/><path d="M14 15h20v12H14z" fill="#398ac0" opacity=".55"/></svg>';
+    if (/particles|isotope|wavefront|waves/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="5" fill="#e4c477"/><circle cx="12" cy="9" r="3" fill="#78c9ff"/><circle cx="37" cy="10" r="3" fill="#78c9ff"/><circle cx="14" cy="28" r="3" fill="#78c9ff"/><circle cx="36" cy="27" r="3" fill="#78c9ff"/><path d="M16 11 21 16m11-4-5 4m-10 10 6-6m9 6-5-6" stroke="#9bb1cf" stroke-width="1.5"/></svg>';
+    if (/speaker|tuning-fork/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M8 13h8l10-7v24l-10-7H8z" fill="#4f86d9" stroke="#a9c7ff" stroke-width="1.5"/><path d="M31 12q8 6 0 12m4-17q13 11 0 22" fill="none" stroke="#d6b87a" stroke-width="2"/></svg>';
+    if (/charge|battery/.test(kind)) return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#13233b" stroke="#d6b87a" stroke-width="2"/><path d="M24 11v14m-7-7h14" stroke="#e7eef9" stroke-width="2"/></svg>';
+    return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 7h24v22H12z" fill="#4f86d9" stroke="#a9c7ff" stroke-width="1.5"/><path d="M17 12h14v12H17z" fill="#77a8f2" opacity=".45"/></svg>';
   }
 
   function markerStorageKey(profile) {
@@ -620,11 +655,13 @@
     return "diario-lab-markers:" + profile.kind + ":" + location.pathname + ":" + topic;
   }
 
+  const VISUAL_MARKER_KINDS = new Set(["mirror-plane","lantern","human","screen","mirror-concave","mirror-parabolic","mirror-convex","light-source","lens-interface","lens-converging","lens-diverging","block","dynamometer","ramp","force-vector","sphere","feather","timer","platform","projectile","launcher","target","velocity-vector","circular-track","centripetal-vector","cart","spring","energy-meter","barrier","momentum-vector","ruler","fluid-column","submerged-body","pressure-gauge","container","calorimeter","thermometer","hot-body","cold-body","gas-particles","piston","manometer","wave-source","fixed-end","wave-probe","speaker","tuning-fork","resonator","microphone","observer","wavefront","slit","positive-charge","negative-charge","test-charge","field-vector","battery","resistor","ammeter","voltmeter","isotope","detector","shield","emitted-particles","extra-magnet","extra-coil","electromagnet","faraday-magnet","faraday-coil","galvanometer","metal-ball","compass","source","instrument"]);
+
   function readMarkers(profile) {
     try {
       const value = JSON.parse(localStorage.getItem(markerStorageKey(profile)) || "[]");
       if (!Array.isArray(value)) return [];
-      return value.filter((item) => item && ["sphere", "block", "cart"].includes(item.kind))
+      return value.filter((item) => item && VISUAL_MARKER_KINDS.has(item.kind))
         .map((item) => ({
           id: String(item.id || ("marker-" + Math.random().toString(36).slice(2, 9))),
           kind: item.kind,
@@ -716,15 +753,16 @@
     state.markerCount.textContent = n + (n === 1 ? " marcador na cena" : " marcadores na cena");
   }
 
-  function addVisualMarker(state, kind, clientX, clientY) {
+  function addVisualMarker(state, item, clientX, clientY) {
     const rect = state.scene.getBoundingClientRect();
     if (!(rect.width > 0) || !(rect.height > 0)) return false;
-    const count = state.markers.filter((item) => item.kind === kind).length + 1;
-    const labels = { sphere: "Esfera", block: "Bloco", cart: "Carrinho" };
+    const kind = item.kind;
+    const count = state.markers.filter((entry) => entry.kind === kind).length + 1;
+    const baseName = String(item.label || kind).replace(/\s*[·•]\s*visual$/i, "").trim();
     state.markers.push({
       id: "marker-" + Math.random().toString(36).slice(2, 11),
       kind,
-      name: labels[kind] + " " + count,
+      name: baseName + " " + count,
       x: Math.max(.03, Math.min(.97, (clientX - rect.left) / rect.width)),
       y: Math.max(.05, Math.min(.95, (clientY - rect.top) / rect.height))
     });
@@ -744,7 +782,7 @@
       }));
       return true;
     }
-    return addVisualMarker(state, item.kind, clientX, clientY);
+    return addVisualMarker(state, item, clientX, clientY);
   }
 
   function installObjectPalette(state) {
@@ -766,10 +804,12 @@
     const note = document.createElement("p");
     note.className = "lab-object-palette-note";
     note.textContent = state.profile.kind === "mru" || state.profile.kind === "mruv"
-      ? "Arraste um carrinho ou instrumento até o quadriculado; ele será adicionado à simulação."
+      ? "Carrinhos e instrumentos são adicionados à simulação. As opções acompanham o modelo de movimento."
       : state.profile.kind === "magnet"
-        ? "Arraste uma esfera ou bússola até o campo; o objeto participará da simulação magnética."
-        : "Neste experimento, itens extras são marcadores visuais e não alteram os cálculos físicos.";
+        ? "Esferas e bússolas participam do modelo magnético. Ímãs e bobinas extras são referências visuais; o cálculo usa os componentes ativos do painel."
+        : state.profile.kind === "faraday"
+          ? "Os extras ficam visíveis e podem ser posicionados. A medição continua ligada à bobina e ao ímã do modelo principal."
+          : "Os objetos disponíveis acompanham o experimento. Itens extras podem ser arrastados e organizados; eles não alteram os cálculos do modelo principal.";
     const count = document.createElement("output");
     count.className = "lab-object-palette-count";
     const grid = document.createElement("div");
@@ -844,7 +884,7 @@
     hint.className = "lab-object-palette-hint";
     hint.textContent = items.every((item) => item.physical)
       ? "Depois de inserir um item, arraste-o na cena para reposicionar. Use os controles do laboratório para removê-lo."
-      : "Arraste os marcadores para reposicionar; toque no × junto ao objeto para removê-lo.";
+      : "Arraste os objetos para reposicionar. Toque no × junto a qualquer item visual para removê-lo.";
     panel.append(heading, note, count, grid, hint);
     close.addEventListener("click", () => { panel.hidden = true; toggle.setAttribute("aria-expanded", "false"); });
     toggle.addEventListener("click", () => {
