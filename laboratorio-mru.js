@@ -585,13 +585,12 @@ function renderMode(){
     svg.addEventListener("dblclick",event=>{const target=event.target instanceof Element?event.target:null;if(!target?.closest("[data-entity-id]")){event.preventDefault();resetCamera();}},true);
     svg.addEventListener("wheel",event=>{
       const point=pointAt(event),rect=svg.getBoundingClientRect(),factor=event.deltaMode===1?16:event.deltaMode===2?rect.height:1;
-      if(event.ctrlKey||event.metaKey){zoomAt(point,Math.exp(event.deltaY*factor*.0008));}
-      else{
+      if(event.shiftKey){
         if(state.follow)state.cameraFollowOffset+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
         else state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
         state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-500,500);
         drawScene();updatePendingSave();
-      }
+      }else zoomAt(point,Math.exp(event.deltaY*factor*.0008));
       event.preventDefault();
     },{passive:false});
   }

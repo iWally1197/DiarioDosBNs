@@ -484,8 +484,8 @@ if (!lab || !sceneContext || !chartContext) {
       event.preventDefault();
       const point = local(event), factor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scene.clientHeight : 1;
       const dx = Math.max(-240, Math.min(240, event.deltaX * factor)), dy = Math.max(-240, Math.min(240, event.deltaY * factor));
-      if (event.ctrlKey || event.metaKey) zoomFreefallAt(point, Math.exp(-dy * 0.002));
-      else { panCameraBy(state.camera, -dx, -dy); updateZoom(); }
+      if (event.shiftKey) { panCameraBy(state.camera, -dx, -dy); updateZoom(); }
+      else zoomFreefallAt(point, Math.exp(-dy * 0.002));
     }, { passive: false });
     scene.addEventListener("pointerdown", (event) => {
       const point = local(event);

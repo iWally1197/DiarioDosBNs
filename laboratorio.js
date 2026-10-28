@@ -48,8 +48,41 @@ function resizeCanvas(canvas, context) {
   return { width, height };
 }
 
+function installCanvasWheelZoom(canvas, view, redraw) {
+  if (!canvas) return;
+  canvas.addEventListener("wheel", (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
+    const dx = Math.max(-240, Math.min(240, event.deltaX * unit));
+    const dy = Math.max(-240, Math.min(240, event.deltaY * unit));
+    event.preventDefault();
+    if (event.shiftKey) {
+      if (dx) view.x -= dx;
+      else view.y -= dy;
+    } else {
+      const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const next = Math.max(.65, Math.min(4, view.zoom * Math.exp(-dy * .002)));
+      const ratio = next / view.zoom;
+      view.x = point.x - (point.x - view.x) * ratio;
+      view.y = point.y - (point.y - view.y) * ratio;
+      view.zoom = next;
+    }
+    redraw();
+  }, { passive: false });
+}
+function applyCanvasView(context, width, height, view) {
+  context.save();
+  context.beginPath();
+  context.rect(0, 0, width, height);
+  context.clip();
+  context.translate(view.x, view.y);
+  context.scale(view.zoom, view.zoom);
+}
+
 const projectileCanvas = byId("projectile-canvas");
 const projectileContext = canvasContext(projectileCanvas);
+const projectileView = { zoom: 1, x: 0, y: 0 };
+installCanvasWheelZoom(projectileCanvas, projectileView, drawProjectile);
 const projectileChart = byId("projectile-chart");
 const projectileChartContext = canvasContext(projectileChart);
 const projectileGraphSelect = byId("projectile-graph");
@@ -134,6 +167,7 @@ function drawProjectile() {
   backdrop.addColorStop(0, color.surface); backdrop.addColorStop(0.72, color.surface); backdrop.addColorStop(1, "#182b2c");
   context.fillStyle = backdrop;
   context.fillRect(0, 0, width, height);
+  applyCanvasView(context, width, height, projectileView);
   drawCanvasGrid(context, width, height, color.line);
   context.font = "12px system-ui, sans-serif";
   context.lineWidth = 1;
@@ -194,6 +228,7 @@ function drawProjectile() {
     if (Math.abs(vyPixels) > 1) drawVector(context, ballX + 5, ballY - 7, ballX + 5, ballY - 7 + vyPixels, color.text, "vᵧ");
   }
 
+  context.restore();
   byId("projectile-time").textContent = number(elapsed, 2) + " s";
   byId("projectile-x").textContent = number(point.x, 1) + " m";
   byId("projectile-y").textContent = number(Math.max(0, point.y), 1) + " m";
@@ -359,6 +394,8 @@ projectilePlayback.addEventListener("input", drawProjectile);
 
 const pendulumCanvas = byId("pendulum-canvas");
 const pendulumContext = canvasContext(pendulumCanvas);
+const pendulumView = { zoom: 1, x: 0, y: 0 };
+installCanvasWheelZoom(pendulumCanvas, pendulumView, drawPendulumModel);
 const pendulumChart = byId("pendulum-chart");
 const pendulumChartContext = canvasContext(pendulumChart);
 const pendulumTimeScrubber = byId("pendulum-time-scrubber");
@@ -432,6 +469,7 @@ function drawPendulumModel() {
   const scale = Math.max(24, Math.min((width - 76) / (2.55 * length), (height - 92) / (1.72 * length)));
   context.fillStyle = color.surface;
   context.fillRect(0, 0, width, height);
+  applyCanvasView(context, width, height, pendulumView);
   drawCanvasGrid(context, width, height, color.line, 44, 0.32);
 
   const point = (x, y, z) => project3D(x, y, z, originX, originY, scale);
@@ -504,6 +542,7 @@ function drawPendulumModel() {
   context.fillStyle = color.muted;
   context.font = "11px system-ui, sans-serif";
   context.fillText("Plano de referência z = −L", 12, height - 14);
+  context.restore();
   pendulumCanvas.setAttribute("aria-label", "Projeção espacial 2D interativa de um pêndulo com comprimento " + number(length, 2) + " metros e ângulo " + number(theta * 180 / Math.PI, 1) + " graus.");
 }
 

@@ -74,7 +74,7 @@ import { createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./lab
     fit.addEventListener("click",()=>{resetCamera(state.camera);apply();});
     restore.addEventListener("click",()=>{resetCamera(state.camera,{position:false,zoom:true});apply();});
     const local=(event)=>{const r=scene.getBoundingClientRect();return{x:event.clientX-r.left,y:event.clientY-r.top};};
-    scene.addEventListener("wheel",(event)=>{event.preventDefault();const unit=event.deltaMode===1?16:event.deltaMode===2?scene.clientHeight:1;const dx=Math.max(-240,Math.min(240,event.deltaX*unit)),dy=Math.max(-240,Math.min(240,event.deltaY*unit));if(event.ctrlKey||event.metaKey)zoomViewAt(local(event),Math.exp(-dy*.002));else{panCameraBy(state.camera,-dx,-dy);apply();}},{passive:false});
+    scene.addEventListener("wheel",(event)=>{event.preventDefault();const unit=event.deltaMode===1?16:event.deltaMode===2?scene.clientHeight:1;const dx=Math.max(-240,Math.min(240,event.deltaX*unit)),dy=Math.max(-240,Math.min(240,event.deltaY*unit));if(event.shiftKey){panCameraBy(state.camera,-dx,-dy);apply();}else zoomViewAt(local(event),Math.exp(-dy*.002));},{passive:false});
     let drag=null,space=false,inside=false,pointers=new Map(),pinch=null;
     scene.addEventListener("pointerenter",()=>{inside=true});scene.addEventListener("pointerleave",()=>{inside=false});
     document.addEventListener("keydown",event=>{if(event.code!=="Space"||!inside||event.repeat||event.target.closest?.("input,textarea,select,button,[contenteditable=true]"))return;space=true;event.preventDefault();});

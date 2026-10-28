@@ -18,10 +18,10 @@
   <script type="module">
     const topic = new URLSearchParams(location.search).get("topico") || "";
     if (topic.startsWith("lab-")) {
-      import("./physics-topic-labs.js?v=camera-20261023-1");
+      import("./physics-topic-labs.js?v=wheel-zoom-20261028-1");
     } else {
-      import("/laboratorio.js?v=loop-long-20261011-1");
-      import("/laboratorio-workspace.js?v=mirror-optics-physics-20261023-5");
+      import("/laboratorio.js?v=wheel-zoom-20261028-1");
+      import("/laboratorio-workspace.js?v=wheel-zoom-20261028-1");
     }
   </script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>

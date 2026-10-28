@@ -95,8 +95,8 @@ function initializeCanvasViewControls() {
       const deltaX = Math.max(-240, Math.min(240, event.deltaX * unit));
       const deltaY = Math.max(-240, Math.min(240, event.deltaY * unit));
       event.preventDefault();
-      if (event.ctrlKey || event.metaKey) zoomAt(point, Math.exp(-deltaY * 0.002));
-      else { panCameraBy(camera, -deltaX, -deltaY); apply(); }
+      if (event.shiftKey) { panCameraBy(camera, -deltaX, -deltaY); apply(); }
+      else zoomAt(point, Math.exp(-deltaY * 0.002));
     }, { passive: false });
 
     let drag = null;

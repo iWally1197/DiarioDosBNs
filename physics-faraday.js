@@ -148,6 +148,13 @@ if(shell&&scene&&chart){
     draw();
   }));
   const fullscreen=shell.querySelector("[data-fullscreen]");
+  scene.addEventListener("wheel",(event)=>{
+    event.preventDefault();
+    const unit=event.deltaMode===1?16:event.deltaMode===2?scene.clientHeight:1;
+    const dy=Math.max(-240,Math.min(240,event.deltaY*unit));
+    sceneZoom=Math.max(.65,Math.min(2.5,sceneZoom*Math.exp(-dy*.002)));
+    draw();
+  },{passive:false});
   const panelToggle=shell.querySelector("#faraday-panel-toggle");
   const panel=shell.querySelector("#faraday-controls");
   const panelPlay=shell.querySelector("#faraday-panel-play");

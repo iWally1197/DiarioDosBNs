@@ -1055,8 +1055,8 @@ function installMagnetViewControls() {
     event.preventDefault();
     const point = local(event), unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
     const dx = clamp(event.deltaX * unit, -240, 240), dy = clamp(event.deltaY * unit, -240, 240);
-    if (event.ctrlKey || event.metaKey) zoomMagnetAt(point, Math.exp(-dy * 0.002));
-    else { panCameraBy(camera, -dx, -dy); refresh(); }
+    if (event.shiftKey) { panCameraBy(camera, -dx, -dy); refresh(); }
+    else zoomMagnetAt(point, Math.exp(-dy * 0.002));
   }, { passive: false });
   canvas.addEventListener("pointerdown", (event) => {
     if (event.pointerType === "touch") {
