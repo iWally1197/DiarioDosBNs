@@ -84,10 +84,8 @@ function initializeCatalog() {
     });
     catalog.innerHTML = filtered.map((item) => {
       const cardBody = `<span class="lab-card-art">${svgFor(item.id)}</span><span class="lab-card-body"><span class="lab-card-title">${item.title}<small>${item.status}</small></span><span class="lab-card-meta">${item.category} · ${item.level} · ${item.mode}</span><span class="lab-card-meta">${item.description}</span></span>`;
-      const pageUrl = new URL(item.destination || experimentPageUrl(item.id), window.location.href);
-      pageUrl.searchParams.set("janela", "simulacao");
-      const href = `${pageUrl.pathname}${pageUrl.search}${pageUrl.hash}`;
-      return `<a class="lab-card" href="${href}" target="_blank" rel="noopener" aria-label="Abrir simulação: ${item.title} em nova aba">${cardBody}<span class="lab-card-cta">Abrir experimento →</span></a>`;
+      const href = item.destination || experimentPageUrl(item.id);
+      return `<a class="lab-card" href="${href}" aria-label="Abrir simulação: ${item.title}">${cardBody}<span class="lab-card-cta">Abrir experimento →</span></a>`;
     }).join("");
     count.textContent = `${filtered.length} ${filtered.length === 1 ? "laboratório disponível" : "laboratórios disponíveis"}.`;
     empty.hidden = filtered.length !== 0;

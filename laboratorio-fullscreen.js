@@ -149,25 +149,6 @@
   style.textContent = STYLE;
   document.head.append(style);
 
-  const simulationWindowMode = new URLSearchParams(window.location.search).get("janela") === "simulacao";
-  if (simulationWindowMode) {
-    const path = window.location.pathname.toLowerCase();
-    const topic = new URLSearchParams(window.location.search).get("topico") || "";
-    let kind = "workspace";
-    if (path.includes("laboratorio-mruv")) kind = "mruv";
-    else if (path.includes("laboratorio-mru")) kind = "mru";
-    else if (path.includes("laboratorio-magnetismo")) kind = "magnet";
-    else if (path.includes("laboratorio-queda-livre")) kind = "freefall";
-    else if (path.includes("laboratorio-faraday")) kind = "faraday";
-    else if (path.includes("laboratorio-experimento") && topic.startsWith("lab-")) kind = "topic";
-    document.documentElement.dataset.labSimulationWindow = "true";
-    document.documentElement.dataset.labSimulationKind = kind;
-    const presentationStyles = document.createElement("link");
-    presentationStyles.rel = "stylesheet";
-    presentationStyles.href = "/laboratorio-apresentacao.css?v=fullscreen-lab-window-20261028-1";
-    document.head.append(presentationStyles);
-  }
-
   const q = (root, selector) => selector ? root.querySelector(selector) : null;
   const byId = (id) => document.getElementById(id);
   const attr = (node, name) => node?.getAttribute(name) || "";
