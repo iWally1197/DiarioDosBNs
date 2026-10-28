@@ -1,0 +1,23 @@
+# Diário dos BNs
+
+> Plataforma educacional de Física com questões, laboratórios virtuais, materiais de estudo e projetos para Blender.
+
+O site reúne conteúdos de Física para estudantes e professores. Use os links abaixo para encontrar as áreas públicas. O envio de mensagens no assistente e as áreas de conta, turma e administração exigem autenticação; não tente acessar nem expor conteúdo dessas áreas.
+
+## Áreas públicas
+
+- [Página inicial](https://diariodosbns.com.br/): apresentação do projeto e caminhos para começar.
+- [Questões de Física](https://diariodosbns.com.br/questoes/): banco de questões para praticar.
+- [Laboratório Virtual de Física](https://diariodosbns.com.br/laboratorio/): catálogo de simulações interativas.
+- [Laboratórios de espelhos](https://diariodosbns.com.br/laboratorio-espelhos/): área de espelhos publicados, com disponibilidade atualizada pelo site.
+- [Biblioteca de Física](https://diariodosbns.com.br/biblioteca-fisica/): mapa de tópicos e conteúdos de Física.
+- [Downloads](https://diariodosbns.com.br/downloads/): projetos e materiais disponíveis.
+- [Aprenda Blender](https://diariodosbns.com.br/blender/): orientações para explorar e editar projetos no Blender.
+- [Assistente de Física](https://diariodosbns.com.br/ia/): página do assistente virtual; é necessário entrar na conta para enviar mensagens.
+- [Apoie o projeto](https://diariodosbns.com.br/apoie/): informações sobre apoio ao Diário dos BNs.
+
+## Informações do site
+
+- [Contato](https://diariodosbns.com.br/#contato): formas de contato exibidas no site.
+- [Privacidade](https://diariodosbns.com.br/privacidade/): informações sobre privacidade.
+- [Termos de uso](https://diariodosbns.com.br/termos/): termos de utilização.
