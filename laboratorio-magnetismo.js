@@ -1243,8 +1243,27 @@ byId("second-magnet-toggle").addEventListener("click", () => {
   state.inductionLastFlux = null; state.inductionLastTime = 0; state.inductionMeterVoltage = 0;
   updateModeUI(); syncSimulationLoop(); queueDraw();
 });
+window.addEventListener("diario-lab-object-drop", (event) => {
+  const data = event.detail || {};
+  if (data.labKind !== "magnet" || !["metal-ball", "compass"].includes(data.kind)) return;
+  if (!canvasSize()) return;
+  const rect = canvas.getBoundingClientRect();
+  const local = { x: Number(data.clientX) - rect.left, y: Number(data.clientY) - rect.top };
+  const world = toWorld(local);
+  if (!Number.isFinite(world.x) || !Number.isFinite(world.y)) return;
+  if (data.kind === "metal-ball") {
+    state.metalBalls.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.19, 0.19), radius: 0.012, vx: 0, vy: 0 });
+    state.selectedMetalBall = state.metalBalls.length - 1;
+  } else {
+    state.compasses.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.2, 0.2) });
+    state.selectedCompass = state.compasses.length - 1;
+  }
+  byId("sensor-action-status").textContent = "";
+  syncKeyboardPositionControls();
+  syncSimulationLoop();
+  queueDraw();
+});
 byId("add-metal-ball").addEventListener("click", () => {
-  if (state.metalBalls.length >= 8) { byId("sensor-action-status").textContent = "O laboratório permite até oito esferas metálicas."; return; }
   const index = state.metalBalls.length;
   state.metalBalls.push({
     x: clamp(state.magnet.x - state.magnet.length / 2 - 0.04 - Math.floor(index / 3) * 0.035, -0.34, 0.34),
@@ -1285,7 +1304,7 @@ byId("reduce-motion").addEventListener("change", (event) => {
   syncSimulationLoop(); queueDraw();
 });
 for (const [id, key] of [["show-lines", "showLines"], ["show-vectors", "showVectors"], ["show-heatmap", "showHeatmap"], ["show-current", "showCurrent"], ["show-grid", "showGrid"], ["show-numbers", "showNumbers"], ["show-interior", "showInterior"], ["earth-compass", "earth"], ["earth-field", "earth"], ["show-magnet-source", "showMagnetSource"], ["show-coil-source", "showCoilSource"]]) byId(id).addEventListener("change", (e) => { state[key] = e.target.checked; queueDraw(); });
-byId("add-compass").addEventListener("click", () => { if (state.compasses.length >= 5) { byId("sensor-action-status").textContent = "O laboratório permite até cinco bússolas simultâneas."; return; } state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; byId("sensor-action-status").textContent = ""; syncKeyboardPositionControls(); queueDraw(); });
+byId("add-compass").addEventListener("click", () => { state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; byId("sensor-action-status").textContent = ""; syncKeyboardPositionControls(); queueDraw(); });
 byId("remove-compass").addEventListener("click", () => { if (!state.compasses.length) return; state.compasses.splice(state.selectedCompass, 1); state.selectedCompass = Math.max(0, Math.min(state.selectedCompass, state.compasses.length - 1)); syncKeyboardPositionControls(); queueDraw(); });
 byId("reset-lab").addEventListener("click", () => { state = initial(); graphComparison = null; chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; updateModeUI(); syncSimulationLoop(); queueDraw(); });
 byId("complexity-toggle").addEventListener("click", (e) => { state.advanced = !state.advanced; e.currentTarget.setAttribute("aria-pressed", String(state.advanced)); e.currentTarget.textContent = state.advanced ? "Modo básico" : "Modo avançado"; document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; }); });

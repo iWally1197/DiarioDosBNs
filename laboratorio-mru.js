@@ -73,7 +73,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
     const valid=validateExperiment(config), allowed=new Set(Object.keys(names));
     state.duration=valid.duration;state.sampleInterval=valid.sampleInterval;
     state.carts=config.carts.map((car,i)=>({id:String(car.id),kind:car.kind==="sport-cart"?"sport-cart":"scientific-cart",name:String(car.name||("Carrinho "+String.fromCharCode(65+i))).trim().slice(0,42)||"Carrinho",x0:Number(car.x0),v:Number(car.v),color:validColor(car.color,colorSet[i%colorSet.length]),wheelColor:validColor(car.wheelColor,"#202935"),size:clamp(Number(car.size)||1,.55,1.7),wheelRadius:clamp(Number(car.wheelRadius)||.03,.01,.15),opacity:clamp(Number(car.opacity??1),.2,1),details:car.details!==false,vector:car.vector!==false,trail:car.trail!==false,visible:car.visible!==false,locked:car.locked===true}));
-    state.fixtures=Array.isArray(config.fixtures)?config.fixtures.slice(0,50).filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
+    state.fixtures=Array.isArray(config.fixtures)?config.fixtures.filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
     state.playbackRate=[.25,.5,1,2,4].includes(Number(config.playbackRate))?Number(config.playbackRate):1;state.loop=config.loop!==false;
     state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.cameraFollowOffset=clamp(Number(config.cameraFollowOffset)||0,-1000000,1000000);state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-500,500);state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration===true,displacement:config.vectors?.displacement===true};state.reduceMotion=config.reduceMotion===true;
     if(!state.carts.some((car)=>car.id===state.selectedId))state.selectedId=state.carts[0]?.id||null;
@@ -441,10 +441,10 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   }
   function addObject(kind){
     if(kind==="scientific-cart"||kind==="sport-cart"){
-      if(state.carts.length>=5){status("A bancada comporta até cinco carrinhos.","error");return;}
+      
       historyPush();const i=state.carts.length,ref=currentCart(),car=newCart(i);car.kind=kind;car.x0=ref?mruAt(ref,state.time).x+2:0;car.vector=state.vectors.velocity;state.carts.push(car);select(car.id);
     }else{
-      if(state.fixtures.length>=50){status("A bancada comporta até cinquenta referências.","error");return;}
+      
       historyPush();const i=state.fixtures.filter(item=>item.kind===kind).length+1,car=currentCart();
       const item={id:uid("obj"),kind,name:names[kind]+(kind==="time-marker"?"":" "+i),x:car?mruAt(car,state.time).x+4:0,color:kind==="position-sensor"?"#f0c66e":"#79a8ff",interval:state.sampleInterval,visible:true,locked:false};
       state.fixtures.push(item);select(item.id);
@@ -453,7 +453,7 @@ import { crossingTime, meetEvents, mruAt, mruMetrics, sampleTimes, validateExper
   }
   function duplicateSelection(){
     const selected=state.selectedIds.map(id=>entity(id)).filter(Boolean),cars=selected.filter(isCart).length;
-    if(!selected.length)return;if(state.carts.length+cars>5){status("Há espaço para até cinco carrinhos.","error");return;}
+    if(!selected.length)return;
     historyPush();const copies=[];
     selected.forEach(item=>{const copy=clone(item);copy.id=uid(isCart(item)?"cart":"obj");copy.name=String(item.name+" cópia").slice(0,42);if(isCart(item)){copy.x0+=1.5;state.carts.push(copy);}else{copy.x+=1.5;state.fixtures.push(copy);}copies.push(copy);});
     state.selectedId=copies.at(-1).id;state.selectedIds=copies.map(item=>item.id);changedParameter();renderAll();status("Cópia criada e selecionada.");
@@ -669,6 +669,33 @@ function renderMode(){
   }
 
   $("mru-object-list").addEventListener("click",event=>{const button=event.target.closest("[data-select-id]");if(button)select(button.dataset.selectId,event.shiftKey);});
+  window.addEventListener("diario-lab-object-drop", (event) => {
+    const data = event.detail || {};
+    if (data.labKind !== "mru") return;
+    const kind = String(data.kind || "");
+    const select = $("mru-add-type");
+    const cartKinds = ["scientific-cart","sport-cart"];
+    if (!cartKinds.includes(kind) && !Array.from(select.options).some((option) => option.value === kind)) return;
+    const clientX = Number(data.clientX), clientY = Number(data.clientY);
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+    const worldX = pointerWorld({ clientX, clientY });
+    if (!Number.isFinite(worldX)) return;
+    addObject(kind);
+    const item = entity(state.selectedId);
+    if (!item) return;
+    if (isCart(item)) {
+      const delta = worldX - mruAt(item, state.time).x;
+      item.x0 += delta;
+      state.follow = false;
+      state.cameraFollowOffset = 0;
+      state.cameraCenter += delta;
+    } else if (state.fixtures.includes(item)) {
+      item.x = worldX;
+    }
+    changedParameter();
+    renderAll();
+    updatePendingSave();
+  });
   $("mru-add-object").addEventListener("click",()=>addObject($("mru-add-type").value));
   $("mru-duplicate").addEventListener("click",duplicateSelection);$("mru-remove").addEventListener("click",removeSelection);
   $("mru-restore-object").addEventListener("click",restoreSelected);$("mru-layer-up").addEventListener("click",()=>moveLayer(1));$("mru-layer-down").addEventListener("click",()=>moveLayer(-1));

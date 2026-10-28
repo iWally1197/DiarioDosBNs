@@ -108,6 +108,47 @@
     @media (prefers-reduced-motion: reduce) {
       .lab-standard-fullscreen-toolbar { transition:none!important; }
     }
+
+    .lab-standard-object-palette-toggle { border-color:rgba(129,179,255,.72)!important; }
+    .lab-object-palette {
+      position:fixed; top:76px; right:12px; z-index:10040; box-sizing:border-box;
+      width:min(320px,calc(100vw - 24px)); max-height:calc(100dvh - 88px); overflow:auto;
+      padding:14px; border:1px solid rgba(228,196,119,.72); border-radius:14px;
+      background:rgba(7,15,29,.98); color:#f3f5fb; box-shadow:0 18px 50px rgba(0,0,0,.46);
+      font:500 13px/1.45 system-ui,sans-serif; overscroll-behavior:contain;
+    }
+    .lab-object-palette[hidden] { display:none!important; }
+    .lab-object-palette-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .lab-object-palette-heading strong { font-size:15px; }
+    .lab-object-palette-heading button,
+    .lab-object-palette-item {
+      min-height:44px; border:1px solid rgba(206,218,240,.22); border-radius:9px;
+      background:#111c2d; color:#f4f5fa; font:inherit; cursor:pointer;
+    }
+    .lab-object-palette-heading button { width:42px; font-size:20px; }
+    .lab-object-palette-note { margin:9px 0 12px; color:#aab8cc; font-size:12px; }
+    .lab-object-palette-count { display:block; margin:0 0 9px; color:#e4c477; font-size:11px; }
+    .lab-object-palette-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .lab-object-palette-item { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:9px 5px; text-align:center; touch-action:none; }
+    .lab-object-palette-item:hover,.lab-object-palette-item:focus-visible { border-color:#e4c477; background:#1b2a40; }
+    .lab-object-palette-item svg,.lab-object-preview svg,.lab-placed-object svg { display:block; width:35px; height:27px; }
+    .lab-object-palette-hint { margin:10px 0 0; color:#8292aa; font-size:10px; }
+    .lab-object-layer { position:absolute; z-index:80; pointer-events:none; overflow:visible; }
+    .lab-placed-object { position:absolute; display:grid; justify-items:center; gap:2px; transform:translate(-50%,-50%); pointer-events:auto; }
+    .lab-placed-object-move {
+      display:grid; place-items:center; min-width:58px; min-height:48px; padding:4px 6px;
+      border:1px solid rgba(228,196,119,.75); border-radius:10px; background:rgba(8,16,31,.82);
+      color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.32); cursor:grab; touch-action:none;
+    }
+    .lab-placed-object-move:active { cursor:grabbing; }
+    .lab-placed-object-name { max-width:104px; padding:1px 5px; border-radius:4px; background:rgba(8,16,31,.8); color:#e5edf8; font:600 10px/1.2 system-ui,sans-serif; overflow-wrap:anywhere; text-align:center; }
+    .lab-placed-object-remove { position:absolute; top:-8px; right:-8px; display:grid; place-items:center; width:23px; height:23px; padding:0; border:1px solid rgba(240,139,132,.75); border-radius:50%; background:#3a1c24; color:#fff; font:700 15px/1 system-ui,sans-serif; cursor:pointer; }
+    .lab-object-drag-preview { position:fixed; z-index:10060; display:grid; place-items:center; width:58px; height:50px; border:1px solid #e4c477; border-radius:10px; background:rgba(8,16,31,.9); pointer-events:none; transform:translate(-50%,-50%); }
+    .lab-object-palette button:focus-visible,.lab-placed-object button:focus-visible { outline:2px solid #f0cc79; outline-offset:2px; }
+    @media (max-width: 680px) {
+      .lab-object-palette { top:70px; right:8px; width:min(310px,calc(100vw - 16px)); max-height:calc(100dvh - 78px); }
+      .lab-object-palette-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
   `;
 
   const style = document.createElement("style");
@@ -424,6 +465,10 @@
     });
     const picker = state.bar.querySelector(".lab-standard-fullscreen-time-picker:not([hidden])");
     picker?.querySelector(".lab-standard-picker-close")?.click();
+    if (state.objectPalette && !state.objectPalette.hidden) {
+      state.objectPalette.hidden = true;
+      state.objectPaletteToggle.setAttribute("aria-expanded", "false");
+    }
   }
 
   function setFullscreenControlsCollapsed(state, collapsed) {
@@ -435,6 +480,10 @@
     else state.bar.removeAttribute("aria-hidden");
     state.collapseToggle.setAttribute("aria-expanded", String(!collapsed));
     state.collapseToggle.textContent = collapsed ? "☰ Mostrar opções" : "☰ Ocultar opções";
+    if (collapsed && state.objectPalette && !state.objectPalette.hidden) {
+      state.objectPalette.hidden = true;
+      state.objectPaletteToggle.setAttribute("aria-expanded", "false");
+    }
     state.handle.setAttribute("aria-expanded", String(!collapsed));
     state.handle.setAttribute("aria-label", collapsed ? "Mostrar controles do laboratório. Puxe para baixo ou toque." : "Recolher controles do laboratório");
     if (collapsed) state.handle.focus({ preventScroll: true });
@@ -443,6 +492,12 @@
 
   function attachFullscreenOptions(root, profile, bar) {
     const exit = bar.querySelector(".lab-standard-exit, #mru-fullscreen-exit, #mruv-fullscreen-exit");
+    const objectPaletteToggle = document.createElement("button");
+    objectPaletteToggle.type = "button";
+    objectPaletteToggle.className = "lab-standard-object-palette-toggle";
+    objectPaletteToggle.textContent = "Objetos";
+    objectPaletteToggle.setAttribute("aria-expanded", "false");
+    objectPaletteToggle.setAttribute("aria-label", "Abrir a bandeja de objetos");
     const collapseToggle = document.createElement("button");
     collapseToggle.type = "button";
     collapseToggle.className = "lab-standard-collapse-button";
@@ -452,6 +507,7 @@
     if (!bar.id) bar.id = "lab-fullscreen-toolbar-" + profile.kind;
     collapseToggle.setAttribute("aria-controls", bar.id);
     bar.insertBefore(collapseToggle, exit || null);
+    bar.insertBefore(objectPaletteToggle, collapseToggle);
 
     const handle = document.createElement("button");
     handle.type = "button";
@@ -471,7 +527,7 @@
       onGridChange();
     }
 
-    const state = { root, profile, bar, collapseToggle, handle, overlay, gridControl, onGridChange };
+    const state = { root, profile, bar, collapseToggle, objectPaletteToggle, handle, overlay, gridControl, onGridChange };
     collapseToggle.addEventListener("click", () => setFullscreenControlsCollapsed(state, true));
     let startY = null;
     let ignoreNextClick = false;
@@ -502,7 +558,308 @@
 
     root.insertBefore(overlay, root.firstChild);
     root.append(handle);
+    installObjectPalette(state);
     return state;
+  }
+
+
+  function labScene(profile, root) {
+    const selector = {
+      workspace: "#workspace-canvas",
+      priority: "#lab-scene",
+      mru: "svg",
+      mruv: "svg",
+      magnet: "#magnet-canvas",
+      faraday: "#faraday-scene",
+      freefall: "#freefall-scene"
+    }[profile.kind];
+    return selector ? q(root, selector) : null;
+  }
+
+  function paletteItems(profile) {
+    if (profile.kind === "mru" || profile.kind === "mruv") {
+      const select = byId(profile.kind + "-add-type");
+      if (select?.options?.length) {
+        return Array.from(select.options).filter((option) => !option.disabled).map((option) => ({
+          kind: option.value,
+          label: option.textContent.trim(),
+          icon: /carrinho|cart/i.test(option.textContent) ? "cart" : /bola|esfera/i.test(option.textContent) ? "sphere" : "block",
+          physical: true
+        }));
+      }
+    }
+    if (profile.kind === "magnet") {
+      return [
+        { kind: "metal-ball", label: "Esfera de metal", icon: "sphere", physical: true },
+        { kind: "compass", label: "Bússola", icon: "compass", physical: true }
+      ];
+    }
+    return [
+      { kind: "sphere", label: "Esfera · marcador visual", icon: "sphere", physical: false },
+      { kind: "block", label: "Bloco · marcador visual", icon: "block", physical: false },
+      { kind: "cart", label: "Carrinho · marcador visual", icon: "cart", physical: false }
+    ];
+  }
+
+  function objectIcon(kind) {
+    if (kind === "sphere" || kind === "metal-ball") {
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#c99f51" stroke="#f6d792" stroke-width="1.5"/><circle cx="19" cy="13" r="3.5" fill="#fff3c4" opacity=".8"/></svg>';
+    }
+    if (kind === "cart" || /cart/i.test(kind)) {
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M7 23h34l-4-11H15l-3-4H6" fill="none" stroke="#d6b87a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="13" y="13" width="25" height="10" rx="2" fill="#4f86d9" stroke="#a9c7ff"/><circle cx="19" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/><circle cx="33" cy="27" r="3.5" fill="#111c2d" stroke="#d6b87a" stroke-width="2"/></svg>';
+    }
+    if (kind === "compass") {
+      return '<svg viewBox="0 0 48 36" aria-hidden="true"><circle cx="24" cy="18" r="13" fill="#13233b" stroke="#d6b87a" stroke-width="2"/><path d="m28 11-3 8-6 6 3-8z" fill="#f26c6c" stroke="#ffe1a3" stroke-width="1"/></svg>';
+    }
+    return '<svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 7h24v22H12z" rx="3" fill="#4f86d9" stroke="#a9c7ff" stroke-width="1.5"/><path d="M17 12h14v12H17z" fill="#77a8f2" opacity=".45"/></svg>';
+  }
+
+  function markerStorageKey(profile) {
+    const params = new URLSearchParams(location.search);
+    const topic = params.get("topico") || params.get("topic") || "";
+    return "diario-lab-markers:" + profile.kind + ":" + location.pathname + ":" + topic;
+  }
+
+  function readMarkers(profile) {
+    try {
+      const value = JSON.parse(localStorage.getItem(markerStorageKey(profile)) || "[]");
+      if (!Array.isArray(value)) return [];
+      return value.filter((item) => item && ["sphere", "block", "cart"].includes(item.kind))
+        .map((item) => ({
+          id: String(item.id || ("marker-" + Math.random().toString(36).slice(2, 9))),
+          kind: item.kind,
+          name: String(item.name || item.kind).slice(0, 36),
+          x: Math.max(.03, Math.min(.97, Number(item.x) || .5)),
+          y: Math.max(.05, Math.min(.95, Number(item.y) || .5))
+        }));
+    } catch { return []; }
+  }
+
+  function saveMarkers(state) {
+    try { localStorage.setItem(markerStorageKey(state.profile), JSON.stringify(state.markers)); } catch {}
+  }
+
+  function syncObjectLayerPosition(state) {
+    if (!state?.scene || !state.objectLayer || !state.root.isConnected) return;
+    const rootRect = state.root.getBoundingClientRect();
+    const sceneRect = state.scene.getBoundingClientRect();
+    if (!(sceneRect.width > 0) || !(sceneRect.height > 0)) return;
+    state.objectLayer.style.left = Math.round(sceneRect.left - rootRect.left) + "px";
+    state.objectLayer.style.top = Math.round(sceneRect.top - rootRect.top) + "px";
+    state.objectLayer.style.width = Math.round(sceneRect.width) + "px";
+    state.objectLayer.style.height = Math.round(sceneRect.height) + "px";
+  }
+
+  function renderVisualMarkers(state) {
+    const layer = state.objectLayer;
+    if (!layer) return;
+    layer.replaceChildren();
+    state.markers.forEach((item) => {
+      const wrap = document.createElement("div");
+      wrap.className = "lab-placed-object";
+      wrap.style.left = (item.x * 100) + "%";
+      wrap.style.top = (item.y * 100) + "%";
+      const move = document.createElement("button");
+      move.type = "button";
+      move.className = "lab-placed-object-move";
+      move.setAttribute("aria-label", "Mover " + item.name);
+      move.title = "Arraste para reposicionar";
+      move.innerHTML = objectIcon(item.kind);
+      const name = document.createElement("span");
+      name.className = "lab-placed-object-name";
+      name.textContent = item.name;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "lab-placed-object-remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "Remover " + item.name);
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        state.markers = state.markers.filter((candidate) => candidate.id !== item.id);
+        saveMarkers(state);
+        renderVisualMarkers(state);
+        updateMarkerCount(state);
+      });
+      move.addEventListener("pointerdown", (event) => {
+        if (event.button !== undefined && event.button !== 0) return;
+        state.markerDrag = { id: item.id, pointerId: event.pointerId, element: wrap };
+        state.selectedMarkerId = item.id;
+        try { move.setPointerCapture(event.pointerId); } catch {}
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      move.addEventListener("pointermove", (event) => {
+        const drag = state.markerDrag;
+        if (!drag || drag.id !== item.id || drag.pointerId !== event.pointerId) return;
+        const rect = state.scene.getBoundingClientRect();
+        if (!(rect.width > 0) || !(rect.height > 0)) return;
+        item.x = Math.max(.03, Math.min(.97, (event.clientX - rect.left) / rect.width));
+        item.y = Math.max(.05, Math.min(.95, (event.clientY - rect.top) / rect.height));
+        wrap.style.left = (item.x * 100) + "%";
+        wrap.style.top = (item.y * 100) + "%";
+      });
+      const finishMove = (event) => {
+        if (state.markerDrag?.id !== item.id || state.markerDrag.pointerId !== event.pointerId) return;
+        state.markerDrag = null;
+        saveMarkers(state);
+      };
+      move.addEventListener("pointerup", finishMove);
+      move.addEventListener("pointercancel", finishMove);
+      wrap.append(move, name, remove);
+      layer.append(wrap);
+    });
+  }
+
+  function updateMarkerCount(state) {
+    if (!state.markerCount) return;
+    const n = state.markers.length;
+    state.markerCount.textContent = n + (n === 1 ? " marcador na cena" : " marcadores na cena");
+  }
+
+  function addVisualMarker(state, kind, clientX, clientY) {
+    const rect = state.scene.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) return false;
+    const count = state.markers.filter((item) => item.kind === kind).length + 1;
+    const labels = { sphere: "Esfera", block: "Bloco", cart: "Carrinho" };
+    state.markers.push({
+      id: "marker-" + Math.random().toString(36).slice(2, 11),
+      kind,
+      name: labels[kind] + " " + count,
+      x: Math.max(.03, Math.min(.97, (clientX - rect.left) / rect.width)),
+      y: Math.max(.05, Math.min(.95, (clientY - rect.top) / rect.height))
+    });
+    saveMarkers(state);
+    renderVisualMarkers(state);
+    updateMarkerCount(state);
+    return true;
+  }
+
+  function addPaletteItemAt(state, item, clientX, clientY) {
+    const rect = state.scene.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) return false;
+    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return false;
+    if (item.physical) {
+      window.dispatchEvent(new CustomEvent("diario-lab-object-drop", {
+        detail: { labKind: state.profile.kind, kind: item.kind, clientX, clientY }
+      }));
+      return true;
+    }
+    return addVisualMarker(state, item.kind, clientX, clientY);
+  }
+
+  function installObjectPalette(state) {
+    state.scene = labScene(state.profile, state.root);
+    const toggle = state.objectPaletteToggle;
+    const panel = document.createElement("section");
+    panel.className = "lab-object-palette";
+    panel.hidden = true;
+    panel.setAttribute("aria-label", "Bandeja de objetos do laboratório");
+    const heading = document.createElement("div");
+    heading.className = "lab-object-palette-heading";
+    const title = document.createElement("strong");
+    title.textContent = "Adicionar objetos";
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Fechar bandeja de objetos");
+    heading.append(title, close);
+    const note = document.createElement("p");
+    note.className = "lab-object-palette-note";
+    note.textContent = state.profile.kind === "mru" || state.profile.kind === "mruv"
+      ? "Arraste um carrinho ou instrumento até o quadriculado; ele será adicionado à simulação."
+      : state.profile.kind === "magnet"
+        ? "Arraste uma esfera ou bússola até o campo; o objeto participará da simulação magnética."
+        : "Neste experimento, itens extras são marcadores visuais e não alteram os cálculos físicos.";
+    const count = document.createElement("output");
+    count.className = "lab-object-palette-count";
+    const grid = document.createElement("div");
+    grid.className = "lab-object-palette-grid";
+    const items = paletteItems(state.profile);
+    state.markers = items.some((item) => !item.physical) ? readMarkers(state.profile) : [];
+    state.markerCount = items.some((item) => !item.physical) ? count : null;
+    count.hidden = !state.markerCount;
+    if (state.markers.length) renderVisualMarkers(state);
+
+    items.forEach((item) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "lab-object-palette-item";
+      card.setAttribute("aria-label", "Arrastar ou adicionar " + item.label);
+      const preview = document.createElement("span");
+      preview.className = "lab-object-preview";
+      preview.innerHTML = objectIcon(item.icon);
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      card.append(preview, label);
+      let pointer = null;
+      let ghost = null;
+      let dragged = false;
+      let suppressClick = false;
+      const movePreview = (event) => {
+        if (!pointer || pointer.id !== event.pointerId) return;
+        const distance = Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y);
+        if (!dragged && distance >= 8) {
+          dragged = true;
+          ghost = document.createElement("div");
+          ghost.className = "lab-object-drag-preview";
+          ghost.innerHTML = objectIcon(item.icon);
+          state.root.append(ghost);
+          state.dragPreview = ghost;
+        }
+        if (ghost) {
+          ghost.style.left = event.clientX + "px";
+          ghost.style.top = event.clientY + "px";
+        }
+      };
+      const finishPreview = (event) => {
+        if (!pointer || pointer.id !== event.pointerId) return;
+        if (dragged) {
+          suppressClick = true;
+          addPaletteItemAt(state, item, event.clientX, event.clientY);
+          window.setTimeout(() => { suppressClick = false; }, 0);
+        }
+        pointer = null;
+        if (ghost) ghost.remove();
+        ghost = null;
+        state.dragPreview = null;
+      };
+      card.addEventListener("pointerdown", (event) => {
+        if (event.button !== undefined && event.button !== 0) return;
+        pointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        dragged = false;
+        try { card.setPointerCapture(event.pointerId); } catch {}
+      });
+      card.addEventListener("pointermove", movePreview);
+      card.addEventListener("pointerup", finishPreview);
+      card.addEventListener("pointercancel", finishPreview);
+      card.addEventListener("click", (event) => {
+        if (suppressClick) { suppressClick = false; event.preventDefault(); return; }
+        const rect = state.scene?.getBoundingClientRect();
+        if (!rect) return;
+        addPaletteItemAt(state, item, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      });
+      grid.append(card);
+    });
+    const hint = document.createElement("p");
+    hint.className = "lab-object-palette-hint";
+    hint.textContent = items.every((item) => item.physical)
+      ? "Depois de inserir um item, arraste-o na cena para reposicionar. Use os controles do laboratório para removê-lo."
+      : "Arraste os marcadores para reposicionar; toque no × junto ao objeto para removê-lo.";
+    panel.append(heading, note, count, grid, hint);
+    close.addEventListener("click", () => { panel.hidden = true; toggle.setAttribute("aria-expanded", "false"); });
+    toggle.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      toggle.setAttribute("aria-expanded", String(!panel.hidden));
+      if (!panel.hidden) panel.querySelector(".lab-object-palette-item")?.focus();
+    });
+    state.objectPalette = panel;
+    state.objectLayer = document.createElement("div");
+    state.objectLayer.className = "lab-object-layer";
+    state.objectLayer.setAttribute("aria-label", "Objetos posicionados na simulação");
+    state.root.append(state.objectLayer, panel);
+    renderVisualMarkers(state);
+    updateMarkerCount(state);
+    syncObjectLayerPosition(state);
   }
 
   function mount(root, profile) {
@@ -604,6 +961,7 @@
       if (profile.objectEditor) current.objects.setAttribute("aria-expanded", String(objectExpanded));
     }
     syncDrawerPosition(current);
+    syncObjectLayerPosition(current);
     if (profile.extraButton && profile.extraSource) {
       const active = attr(profile.extraSource, "aria-pressed") === "true";
       let label = profile.extraLabel || profile.extraSource.textContent.trim();
@@ -636,6 +994,10 @@
       current.handle.remove();
       current.overlay.remove();
       current.collapseToggle.remove();
+      current.objectPaletteToggle.remove();
+      current.objectPalette?.remove();
+      current.objectLayer?.remove();
+      current.dragPreview?.remove();
       current.bar.toggleAttribute("inert", false);
       current.bar.removeAttribute("aria-hidden");
       current.profile.root.classList.remove("lab-standard-controls-collapsed");
@@ -654,5 +1016,5 @@
 
   document.addEventListener("fullscreenchange", onFullscreenChange);
   window.addEventListener("diario-lab-fullscreen-refresh", update);
-  window.addEventListener("resize", () => { if (current) syncDrawerPosition(current); });
+  window.addEventListener("resize", () => { if (current) { syncDrawerPosition(current); syncObjectLayerPosition(current); } });
 })();
