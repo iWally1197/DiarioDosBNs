@@ -13,15 +13,15 @@
   <link rel="stylesheet" href="laboratorio-suite.css?v=mirror-optics-physics-20261023-1">
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=teacher-visibility-20261019-1" defer></script>
-  <script defer src="/laboratorio-fullscreen.js?v=lab-object-palette-20261028-1"></script>
+  <script defer src="/laboratorio-fullscreen.js?v=lab-infinite-pan-20261028-1"></script>
   <link rel="stylesheet" href="physics-topic-labs.css?v=lab-menu-play-20261011&previous=unified-labs-20261011-1">
   <script type="module">
     const topic = new URLSearchParams(location.search).get("topico") || "";
     if (topic.startsWith("lab-")) {
-      import("./physics-topic-labs.js?v=wheel-zoom-20261028-1");
+      import("./physics-topic-labs.js?v=lab-infinite-pan-20261028-1");
     } else {
       import("/laboratorio.js?v=wheel-zoom-20261028-1");
-      import("/laboratorio-workspace.js?v=wheel-zoom-20261028-1");
+      import("/laboratorio-workspace.js?v=lab-infinite-pan-20261028-1");
     }
   </script>
   <script type="module" src="src-app.js?v=clean-routes-20261013-2"></script>

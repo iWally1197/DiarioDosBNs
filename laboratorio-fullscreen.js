@@ -110,6 +110,10 @@
     }
 
     .lab-standard-object-palette-toggle { border-color:rgba(129,179,255,.72)!important; }
+    .lab-standard-pan-toggle { border-color:rgba(129,179,255,.72)!important; }
+    .lab-standard-pan-toggle[aria-pressed="true"] { background:#1c3550!important; border-color:#e4c477!important; }
+    .lab-view-pan-mode,.magnet-view-pan-mode { cursor:grab!important; }
+    .is-view-dragging,.magnet-view-panning { cursor:grabbing!important; }
     .lab-object-palette {
       position:fixed; top:76px; right:12px; z-index:10040; box-sizing:border-box;
       width:min(320px,calc(100vw - 24px)); max-height:calc(100dvh - 88px); overflow:auto;
@@ -498,6 +502,32 @@
     objectPaletteToggle.textContent = "Objetos";
     objectPaletteToggle.setAttribute("aria-expanded", "false");
     objectPaletteToggle.setAttribute("aria-label", "Abrir a bandeja de objetos");
+    const panToggle = document.createElement("button");
+    panToggle.type = "button";
+    panToggle.className = "lab-standard-pan-toggle";
+    panToggle.textContent = "Mover vista";
+    panToggle.setAttribute("aria-pressed", "false");
+    panToggle.setAttribute("aria-label", "Ativar movimento livre da vista");
+    const scene = labScene(profile, root);
+    const panClass = profile.kind === "magnet" ? "magnet-view-pan-mode" : "lab-view-pan-mode";
+    const panSource = () => q(root, profile.kind === "magnet" ? ".magnet-view-pan-toggle" : ".lab-view-pan-toggle");
+    const isPanEnabled = () => {
+      const source = panSource();
+      return source ? attr(source, "aria-pressed") === "true" : Boolean(scene?.classList.contains(panClass));
+    };
+    const setPanEnabled = (enabled) => {
+      const source = panSource();
+      if (source) {
+        if ((attr(source, "aria-pressed") === "true") !== enabled) source.click();
+      } else {
+        scene?.classList.toggle(panClass, enabled);
+      }
+      panToggle.setAttribute("aria-pressed", String(enabled));
+      panToggle.textContent = enabled ? "Mover vista: ligado" : "Mover vista";
+      panToggle.setAttribute("aria-label", enabled ? "Desativar movimento livre da vista" : "Ativar movimento livre da vista");
+      window.dispatchEvent(new CustomEvent("diario-lab-pan-mode", { detail: { labKind: profile.kind, active: enabled } }));
+    };
+    panToggle.addEventListener("click", () => setPanEnabled(!isPanEnabled()));
     const collapseToggle = document.createElement("button");
     collapseToggle.type = "button";
     collapseToggle.className = "lab-standard-collapse-button";
@@ -508,6 +538,9 @@
     collapseToggle.setAttribute("aria-controls", bar.id);
     bar.insertBefore(collapseToggle, exit || null);
     bar.insertBefore(objectPaletteToggle, collapseToggle);
+    bar.insertBefore(panToggle, objectPaletteToggle);
+    const panWasEnabled = isPanEnabled();
+    setPanEnabled(panWasEnabled);
 
     const handle = document.createElement("button");
     handle.type = "button";
@@ -527,7 +560,7 @@
       onGridChange();
     }
 
-    const state = { root, profile, bar, collapseToggle, objectPaletteToggle, handle, overlay, gridControl, onGridChange };
+    const state = { root, profile, bar, collapseToggle, objectPaletteToggle, panToggle, setPanEnabled, isPanEnabled, panWasEnabled, handle, overlay, gridControl, onGridChange };
     collapseToggle.addEventListener("click", () => setFullscreenControlsCollapsed(state, true));
     let startY = null;
     let ignoreNextClick = false;

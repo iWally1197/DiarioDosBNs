@@ -83,7 +83,7 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
     state.carts=config.carts.map((car,i)=>({id:String(car.id),kind:["sport-cart","minimal-cart"].includes(car.kind)?car.kind:"scientific-cart",name:String(car.name||("Carrinho "+String.fromCharCode(65+i))).trim().slice(0,42)||"Carrinho",x0:Number(car.x0),v0:Number(car.v0??car.v??0),a:Number(car.a??0),color:validColor(car.color,colorSet[i%colorSet.length]),wheelColor:validColor(car.wheelColor,"#202935"),size:clamp(Number(car.size)||1,.55,1.7),wheelRadius:clamp(Number(car.wheelRadius)||.03,.01,.15),opacity:clamp(Number(car.opacity??1),.2,1),details:car.details!==false,vector:car.vector!==false,vectorA:car.vectorA!==false,vectorD:car.vectorD!==false,trail:car.trail!==false,chartVisible:car.chartVisible!==false,visible:car.visible!==false,locked:car.locked===true}));
     state.fixtures=Array.isArray(config.fixtures)?config.fixtures.filter((item)=>item&&allowed.has(item.kind)).map((item,i)=>({id:String(item.id||uid("obj")),kind:item.kind,name:String(item.name||names[item.kind]+" "+(i+1)).trim().slice(0,42)||names[item.kind],x:Number.isFinite(Number(item.x))?Number(item.x):0,color:validColor(item.color,"#f0c66e"),interval:clamp(Number(item.interval)||state.sampleInterval,.1,60),visible:item.visible!==false,locked:item.locked===true})): [];
     state.playbackRate=[.25,.5,1,2,4].includes(Number(config.playbackRate))?Number(config.playbackRate):1;state.loop=config.loop!==false;state.brakingMode=config.brakingMode===true;
-    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.cameraFollowOffset=clamp(Number(config.cameraFollowOffset)||0,-1000000,1000000);state.follow=config.follow!==false;state.cameraOffsetY=clamp(Number(config.cameraOffsetY)||0,-500,500);state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration!==false,displacement:config.vectors?.displacement!==false};state.highContrast=config.highContrast===true;state.simpleMode=config.simpleMode===true;state.reduceMotion=config.reduceMotion===true;
+    state.viewSpan=clamp(Number(config.viewSpan)||24,8,80);state.cameraCenter=Number(config.cameraCenter)||0;state.cameraFollowOffset=clamp(Number(config.cameraFollowOffset)||0,-1000000,1000000);state.follow=config.follow!==false;state.cameraOffsetY=Number.isFinite(Number(config.cameraOffsetY))?Number(config.cameraOffsetY):0;state.showGrid=config.showGrid!==false;state.vectors={velocity:config.vectors?.velocity!==false,acceleration:config.vectors?.acceleration!==false,displacement:config.vectors?.displacement!==false};state.highContrast=config.highContrast===true;state.simpleMode=config.simpleMode===true;state.reduceMotion=config.reduceMotion===true;
     if(!state.carts.some((car)=>car.id===state.selectedId))state.selectedId=state.carts[0]?.id||null;
     state.selectedIds=state.selectedIds.filter((id)=>entity(id));if(state.selectedId&&!state.selectedIds.includes(state.selectedId))state.selectedIds=[state.selectedId];
     if(resetTime)state.time=0;state.events=[];state.logged=new Set();state.lastGateTimes={};state.run++;
@@ -136,7 +136,10 @@ import { crossingTime as crossingTimeCalc, crossingTimes, meetEvents as meetEven
   function drawScene(){
     $("mruv-camera-world").setAttribute("transform","translate(0 "+state.cameraOffsetY.toFixed(2)+")");
     const min=cameraMin(),max=min+state.viewSpan,xOf=(x)=>100+(x-min)/state.viewSpan*900,grid=[],ticks=niceStep(state.viewSpan/10);
+    const verticalGridOffset=((state.cameraOffsetY%42)+42)%42;
+    if(state.showGrid) for(let y=132-verticalGridOffset;y<=467;y+=42) grid.push('<path class="mruv-grid-line" d="M100 '+y+'H1000"/>');
     let value=Math.ceil(min/ticks)*ticks;
+    
     for(let i=0;i<70&&value<=max+1e-8;i++,value+=ticks){
       const x=xOf(value),major=Math.abs(value/(ticks*5)-Math.round(value/(ticks*5)))<1e-5;
       if(state.showGrid)grid.push('<path class="'+(major?"mruv-grid-major":"mruv-grid-line")+'" d="M'+x+' 132V467"/>');
@@ -580,7 +583,7 @@ function renderMode(){
       if(pointers.has(event.pointerId))pointers.get(event.pointerId).point=pointAt(event);
       if(gesture?.type==="pan"&&gesture.id===event.pointerId){
         const point=pointAt(event),dx=point.x-gesture.last.x,dy=point.y-gesture.last.y;gesture.last=point;
-        stopCameraFollow();state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-500,500);scheduleRender();intercept(event);return;
+        stopCameraFollow();state.cameraCenter-=dx/900*state.viewSpan;state.cameraOffsetY=clamp(state.cameraOffsetY+dy,-1000000000,1000000000);scheduleRender();intercept(event);return;
       }
       if(gesture?.type==="pinch"&&gesture.ids.includes(event.pointerId)){
         const a=pointers.get(gesture.ids[0])?.point,b=pointers.get(gesture.ids[1])?.point;
@@ -588,7 +591,7 @@ function renderMode(){
         const distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),midY=(a.y+b.y)/2;
         state.viewSpan=clamp(gesture.span*Math.pow(gesture.distance/distance,.78),8,80);
         state.cameraCenter=gesture.anchorWorld-(gesture.ratio-.5)*state.viewSpan;
-        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-500,500);state.cameraFollowOffset=0;state.follow=false;scheduleRender();intercept(event);
+        state.cameraOffsetY=clamp(gesture.offsetY+midY-gesture.centerY,-1000000000,1000000000);state.cameraFollowOffset=0;state.follow=false;scheduleRender();intercept(event);
       }
     },true);
     const endPointer=event=>{
@@ -609,7 +612,7 @@ function renderMode(){
       if(event.shiftKey){
         if(state.follow)state.cameraFollowOffset+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
         else state.cameraCenter+=(event.deltaX*factor)/Math.max(1,rect.width)*state.viewSpan;
-        state.cameraOffsetY=clamp(state.cameraOffsetY-(event.deltaY*factor)*500/Math.max(1,rect.height),-500,500);
+        state.cameraOffsetY+=-(event.deltaY*factor)*500/Math.max(1,rect.height);
         drawScene();updatePendingSave();
       }else zoomAt(point,Math.exp(event.deltaY*factor*.0008));
       event.preventDefault();
@@ -803,7 +806,7 @@ function renderMode(){
   svg.addEventListener("pointerdown",startDrag);svg.addEventListener("pointermove",moveDrag);svg.addEventListener("pointerup",stopDrag);svg.addEventListener("pointercancel",stopDrag);
   installCameraNavigation();
   svg.addEventListener("keydown",event=>{
-    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();stopCameraFollow();const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY=clamp(state.cameraOffsetY+dy*12,-500,500);drawScene();updatePendingSave();return;}
+    if(event.altKey&&["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)){event.preventDefault();stopCameraFollow();const dx=event.key==="ArrowLeft"?-1:event.key==="ArrowRight"?1:0,dy=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;state.cameraCenter+=dx*state.viewSpan*.05;state.cameraOffsetY+=dy*12;drawScene();updatePendingSave();return;}
     if(event.key==="+"||event.key==="="){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan/1.2,8,80);state.follow=false;state.cameraFollowOffset=0;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
     if(event.key==="-"){event.preventDefault();const ratio=.5,world=cameraMin()+ratio*state.viewSpan;state.viewSpan=clamp(state.viewSpan*1.2,8,80);state.follow=false;state.cameraFollowOffset=0;state.cameraCenter=world-(ratio-.5)*state.viewSpan;drawScene();updatePendingSave();return;}
     if(event.key==="0"){event.preventDefault();state.viewSpan=24;state.cameraCenter=0;state.cameraOffsetY=0;state.follow=true;drawScene();updatePendingSave();return;}

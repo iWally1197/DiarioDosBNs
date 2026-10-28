@@ -55,7 +55,8 @@ import { createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./lab
     Object.assign(controls.style,{position:"absolute",top:"58px",right:"8px",zIndex:"5",width:"min(720px, calc(100% - 16px))",flexWrap:"wrap",justifyContent:"flex-end"});
     const button=(label,aria,cls="lab-view-reset")=>{const el=document.createElement("button");el.type="button";el.className=cls;el.textContent=label;el.setAttribute("aria-label",aria);return el;};
     const move=button("Mover","Ativar ferramenta para mover a vista","lab-view-pan-toggle");
-    move.setAttribute("aria-pressed","false");
+    move.setAttribute("aria-pressed","true");
+    scene.classList.add("lab-view-pan-mode");
     const out=button("−","Afastar perspectiva","lab-view-control-button"),zoom=document.createElement("output");
     zoom.className="lab-view-zoom";zoom.setAttribute("aria-live","polite");
     const into=button("+","Aproximar perspectiva","lab-view-control-button");

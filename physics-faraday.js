@@ -10,7 +10,7 @@ if(shell&&scene&&chart){
   const defaults={turns:20,magneticField:.3,area:.25,frequency:.5,phaseDegrees:0,speed:.25};
   const parameters={...defaults};
   let time=0,playing=false,raf=0,lastFrame=0,mode="2d",sceneZoom=1;
-  let yaw=-.42,pitch=-.16,drag=null;
+  let yaw=-.42,pitch=-.16,drag=null,viewPanX=0,viewPanY=0;
   const format=(value,digits=2)=>Number(value).toLocaleString("pt-BR",{minimumFractionDigits:digits,maximumFractionDigits:digits});
   const numberText=(value,digits=3)=>`${format(value,digits)}`;
   function setControlOutputs(){
@@ -46,11 +46,12 @@ if(shell&&scene&&chart){
     const grid=css("--line","rgba(140,160,190,.25)"),text=css("--text","#e8edf5"),muted=css("--muted","#9eb0c8"),gold=css("--gold","#d6b87a"),blue=css("--blue","#73b9ff");
     const state=faradayState(parameters,time),theta=state.angle;
     ctx.fillStyle=css("--bg-soft","#101a2c");ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle=grid;ctx.lineWidth=1;
-    for(let x=0;x<w;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-    for(let y=0;y<h;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    drawInfiniteGrid(w,h,grid);
+    ctx.save();
+    ctx.translate(viewPanX,viewPanY);
     if(mode==="2d") draw2d(w,h,theta,{grid,text,muted,gold,blue});
     else draw3d(w,h,theta,{grid,text,muted,gold,blue});
+    ctx.restore();
     const readouts={
       "#faraday-time":`${format(time)} s`,
       "#faraday-angle":`${format(((state.angleDegrees%360)+360)%360,0)}°`,
@@ -60,6 +61,13 @@ if(shell&&scene&&chart){
     };
     for(const [selector,value] of Object.entries(readouts)){const node=shell.querySelector(selector);if(node)node.textContent=value;}
     drawChart();
+  }
+  function drawInfiniteGrid(w,h,color){
+    const gap=32*Math.max(.7,Math.min(2.5,sceneZoom)),ox=((viewPanX%gap)+gap)%gap,oy=((viewPanY%gap)+gap)%gap;
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.globalAlpha=.55;ctx.beginPath();
+    for(let x=ox;x<w;x+=gap){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,h);}
+    for(let y=oy;y<h;y+=gap){ctx.moveTo(0,y+.5);ctx.lineTo(w,y+.5);}
+    ctx.stroke();ctx.restore();
   }
   function draw2d(w,h,theta,colors){
     const {text,muted,gold,blue}=colors,cx=w*.52,cy=h*.53,r=Math.min(w,h)*.25;
@@ -148,6 +156,12 @@ if(shell&&scene&&chart){
     draw();
   }));
   const fullscreen=shell.querySelector("[data-fullscreen]");
+  const panButton=document.createElement("button");
+  panButton.type="button";panButton.className="lab-view-pan-toggle";panButton.textContent="Mover vista";panButton.setAttribute("aria-pressed","false");
+  fullscreen?.parentElement?.insertBefore(panButton,fullscreen);
+  const setPanMode=(active)=>{scene.classList.toggle("lab-view-pan-mode",active);panButton.setAttribute("aria-pressed",String(active));panButton.textContent=active?"Mover vista: ligado":"Mover vista";};
+  panButton.addEventListener("click",()=>setPanMode(!scene.classList.contains("lab-view-pan-mode")));
+  window.addEventListener("diario-lab-pan-mode",(event)=>{if(event.detail?.labKind==="faraday")setPanMode(Boolean(event.detail.active));});
   scene.addEventListener("wheel",(event)=>{
     event.preventDefault();
     const unit=event.deltaMode===1?16:event.deltaMode===2?scene.clientHeight:1;
@@ -166,8 +180,19 @@ if(shell&&scene&&chart){
   window.addEventListener("diario-lab-zoom",(event)=>{if(document.fullscreenElement!==shell)return;sceneZoom=Math.max(.65,Math.min(2.5,sceneZoom*Number(event.detail?.factor||1)));draw();});
   window.addEventListener("diario-lab-seek",(event)=>{if(document.fullscreenElement!==shell)return;const frequency=Number(parameters.frequency);if(!(frequency>0))return;pause();time=Math.max(0,Math.min(1/frequency,Number(event.detail?.time)||0));draw();});
   document.addEventListener("fullscreenchange",()=>{const full=document.fullscreenElement===shell;fullscreen.setAttribute("aria-pressed",String(full));if(panelToggle){panelToggle.hidden=!full;if(!full)panel.classList.remove("is-open");panelToggle.setAttribute("aria-expanded",String(panel.classList.contains("is-open")));}if(panelPlay)panelPlay.hidden=!full;syncPanelPlay();});
-  scene.addEventListener("pointerdown",(event)=>{if(mode!=="3d")return;drag={x:event.clientX,y:event.clientY};scene.setPointerCapture(event.pointerId);});
-  scene.addEventListener("pointermove",(event)=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag={x:event.clientX,y:event.clientY};yaw+=dx*.008;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.008));draw();});
+  scene.addEventListener("pointerdown",(event)=>{
+    if(event.button!==undefined&&event.button!==0)return;
+    if(mode==="2d"&&!scene.classList.contains("lab-view-pan-mode"))return;
+    drag={type:mode==="3d"&&!scene.classList.contains("lab-view-pan-mode")?"rotate":"pan",x:event.clientX,y:event.clientY};
+    scene.setPointerCapture(event.pointerId);
+  });
+  scene.addEventListener("pointermove",(event)=>{
+    if(!drag)return;
+    const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag={...drag,x:event.clientX,y:event.clientY};
+    if(drag.type==="rotate"){yaw+=dx*.008;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.008));}
+    else {viewPanX+=dx;viewPanY+=dy;window.dispatchEvent(new CustomEvent("diario-lab-camera-pan",{detail:{dx,dy}}));}
+    draw();
+  });
   scene.addEventListener("pointerup",()=>{drag=null;});
   scene.addEventListener("pointercancel",()=>{drag=null;});
   scene.addEventListener("keydown",(event)=>{if(mode!=="3d")return;const step=.08;if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;else if(event.key==="ArrowUp")pitch=Math.max(-1.1,pitch-step);else if(event.key==="ArrowDown")pitch=Math.min(1.1,pitch+step);else return;event.preventDefault();draw();});

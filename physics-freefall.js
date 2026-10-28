@@ -111,17 +111,16 @@ if (!lab || !sceneContext || !chartContext) {
     const { width, height } = size;
     ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, width, height);
+    const gridGap=44*state.camera.zoom;
+    const gridX=((24*state.camera.zoom+state.camera.x)%gridGap+gridGap)%gridGap;
+    const gridY=((22*state.camera.zoom+state.camera.y)%gridGap+gridGap)%gridGap;
+    ctx.strokeStyle=palette.grid;ctx.lineWidth=1;ctx.globalAlpha=.58;ctx.beginPath();
+    for(let x=gridX;x<width;x+=gridGap){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,height);}
+    for(let y=gridY;y<height;y+=gridGap){ctx.moveTo(0,y+.5);ctx.lineTo(width,y+.5);}
+    ctx.stroke();ctx.globalAlpha=1;
     ctx.save();
     ctx.translate(state.camera.x, state.camera.y);
     ctx.scale(state.camera.zoom, state.camera.zoom);
-    ctx.strokeStyle = palette.grid;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.58;
-    ctx.beginPath();
-    for (let x = 24; x < width; x += 44) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, height); }
-    for (let y = 22; y < height; y += 44) { ctx.moveTo(0, y + 0.5); ctx.lineTo(width, y + 0.5); }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
 
     const top = 55;
     const floorY = height - 48;
@@ -509,8 +508,10 @@ if (!lab || !sceneContext || !chartContext) {
         scene.classList.add("is-view-dragging"); try { scene.setPointerCapture(event.pointerId); } catch {} intercept(event); drawScene(); return;
       }
       if (state.running && body) { status.textContent = "Pause a simulação antes de reposicionar os objetos."; intercept(event); return; }
-      const shouldPan = event.pointerType === "touch" ? scene.classList.contains("lab-view-pan-mode")
-        : event.button === 1 || event.button === 2 || event.shiftKey || space || (scene.classList.contains("lab-view-pan-mode") && event.button === 0);
+      const shouldPan = event.pointerType === "touch"
+        ? (!body || scene.classList.contains("lab-view-pan-mode"))
+        : event.button === 1 || event.button === 2 || event.shiftKey || space
+          || (event.button === 0 && (!body || scene.classList.contains("lab-view-pan-mode")));
       if (!shouldPan) return;
       drag = { type: "camera", id: event.pointerId, x: event.clientX, y: event.clientY }; scene.classList.add("is-view-dragging"); try { scene.setPointerCapture(event.pointerId); } catch {} intercept(event);
     }, true);
