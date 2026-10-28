@@ -9,11 +9,11 @@ import {
   makeFieldModel,
   makeMagnet,
   magnetContainsPoint,
-  magnetInteractionForceTorque,
+  magnetInteractionForceTorqueWithSources,
   magnetPrismsOverlap,
-  stepMagnetInteraction,
+  stepMagnetInteractionWithSources,
   traceFieldLine
-} from "./laboratorio-magnetismo-core.js";
+} from "./laboratorio-magnetismo-core.js?magnetic-objects-20261028-1";
 
 const byId = (id) => document.getElementById(id);
 const canvas = byId("magnet-canvas");
@@ -22,7 +22,7 @@ if (!canvas || !ctx) throw new Error("Não foi possível iniciar a cena do labor
 const systemPrefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 const initial = () => ({
-  mode: "permanent", magnet: makeMagnet(), secondMagnet: makeMagnet({ x: 0.2, y: 0.06, angle: Math.PI, polarity: 1 }),
+  mode: "permanent", magnet: makeMagnet(), secondMagnet: makeMagnet({ x: 0.2, y: 0.06, angle: Math.PI, polarity: 1 }), additionalMagnets: [], selectedExtraMagnet: -1,
   coil: makeCoil({ x: 0.24, y: -0.13 }), coilEnabled: false, coilVelocity: { x: 0, y: 0, angle: 0 },
   powerOutletEnabled: false, powerCableEnabled: false, coilConnected: false, coilPowerRequested: false, powerPlug: null,
   inductionMeterEnabled: false, inductionMeterEnergy: 0, inductionMeterVoltage: 0, inductionMeterPeakVoltage: 0,
@@ -115,9 +115,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 function activeFieldModel(overrides = {}) {
   const mode = state.mode;
-  const magnets = mode === "interaction" ? [state.magnet, state.secondMagnet]
-    : mode === "field" ? [state.showMagnetSource ? state.magnet : null]
-    : [state.magnet];
+  const magnets = allActiveMagnets();
   const coil = effectiveCoil();
   const useCoil = Boolean(coil && coilIsEnergized() && (mode !== "field" || state.showCoilSource));
   return makeFieldModel({ magnets, coil: state.coilEnabled ? (overrides.coil || coil) : null, useCoil, earth: state.earth, ...overrides });
@@ -238,6 +236,7 @@ function updateModeUI() {
   if (state.simulationPaused) status.textContent = "Simulação pausada: o ímã livre, a bobina e as esferas ficam congelados; o campo permanece estático para consulta.";
   else if (state.reduceMotion) status.textContent = "A preferência de movimento reduzido suspendeu o movimento automático; arrastar e alterar parâmetros continuam disponíveis.";
   else if (hasDynamicBodies) status.textContent = "Simulação ativa: bobina, esferas e, quando habilitado, ímã livre respondem ao campo magnético.";
+  else if (state.additionalMagnets.length) status.textContent = `${state.additionalMagnets.length} ímã(ns) adicional(is) somam seus campos ao modelo; arraste para reposicionar.`;
   else status.textContent = "Adicione uma bobina ou esferas de metal para iniciar a interação magnética.";
   const fullscreenActive = document.fullscreenElement === byId("magnet-workspace");
   byId("fullscreen-toggle").setAttribute("aria-pressed", String(fullscreenActive));
@@ -258,6 +257,10 @@ function positionableObjects() {
     { value: "magnet-1", label: "Ímã permanente", type: "magnet", index: 0, point: state.magnet }
   ];
   if (state.mode === "interaction") objects.push({ value: "magnet-2", label: "Segundo ímã", type: "magnet", index: 1, point: state.secondMagnet });
+  state.additionalMagnets.forEach((point, index) => {
+    const sceneIndex = index + (state.mode === "interaction" ? 2 : 1);
+    objects.push({ value: `extra-magnet-${index}`, label: `Ímã adicional ${index + 1}`, type: "magnet", index: sceneIndex, point });
+  });
   if (state.coilEnabled) objects.push({ value: "coil", label: "Bobina", type: "coil", point: state.coil });
   state.compasses.forEach((point, index) => objects.push({ value: `compass-${index}`, label: `Bússola ${index + 1}`, type: "compass", index, point }));
   state.metalBalls.forEach((point, index) => objects.push({ value: `metal-${index}`, label: `Bolinha de metal ${index + 1}`, type: "metal", index, point }));
@@ -287,6 +290,8 @@ function syncKeyboardPositionControls() {
   const object = objects.find((item) => item.value === select.value) || objects[0];
   const x = byId("magnet-position-x"), y = byId("magnet-position-y");
   if (!object || !x || !y) return;
+  const removeExtra = byId("remove-extra-magnet");
+  if (removeExtra) removeExtra.disabled = state.selectedExtraMagnet < 0 || !state.additionalMagnets.length;
   x.value = String(object.point.x);
   y.value = String(object.point.y);
   byId("magnet-position-x-value").textContent = `${formatter(2).format(object.point.x)} m`;
@@ -304,10 +309,10 @@ function applyKeyboardPosition(event) {
   const x = clamp(movingX ? Number(byId("magnet-position-x").value) : object.point.x, -0.37, 0.37);
   const y = clamp(movingX ? object.point.y : Number(byId("magnet-position-y").value), -0.23, 0.23);
   const status = byId("magnet-position-status");
-  if (object.type === "magnet" && state.mode === "interaction") {
+  if (object.type === "magnet" && state.mode === "interaction" && object.index < 2) {
     const other = object.index === 0 ? state.secondMagnet : state.magnet;
     if (magnetPrismsOverlap(other, makeMagnet({ ...object.point, x, y }))) {
-      status.textContent = "Essa posição faria os ímãs se sobreporem. Escolha outra posição.";
+      status.textContent = "Essa posição faria os ímãs principais se sobreporem. Escolha outra posição.";
       syncKeyboardPositionControls();
       return;
     }
@@ -316,9 +321,13 @@ function applyKeyboardPosition(event) {
   object.point.y = y;
   if (object.type === "metal") { object.point.vx = 0; object.point.vy = 0; }
   if (object.type === "coil") state.coilVelocity = { x: 0, y: 0, angle: 0 };
-  if (object.type === "magnet" && state.mode === "interaction") state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  if (object.type === "magnet") {
+    state.interactionForce = null;
+    if (state.mode === "interaction") state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+  }
   if (object.type === "compass") state.selectedCompass = object.index;
   if (object.type === "metal") state.selectedMetalBall = object.index;
+  if (object.type === "magnet" && object.index >= (state.mode === "interaction" ? 2 : 1)) state.selectedExtraMagnet = object.index - (state.mode === "interaction" ? 2 : 1);
   if (object.type === "power-plug") {
     state.powerPlug = object.point;
     const closeToOutlet = Math.hypot(x - POWER_OUTLET_POSITION.x, y - POWER_OUTLET_POSITION.y) <= 0.065;
@@ -330,7 +339,7 @@ function applyKeyboardPosition(event) {
   queueDraw();
 }
 
-byId("magnet-position-target").addEventListener("change", syncKeyboardPositionControls);
+byId("magnet-position-target").addEventListener("change", () => { const object = selectedPositionObject(); if (object?.type === "magnet" && object.index >= (state.mode === "interaction" ? 2 : 1)) state.selectedExtraMagnet = object.index - (state.mode === "interaction" ? 2 : 1); syncKeyboardPositionControls(); });
 byId("magnet-position-x").addEventListener("input", applyKeyboardPosition);
 byId("magnet-position-y").addEventListener("input", applyKeyboardPosition);
 byId("magnet-position-x").addEventListener("change", () => {
@@ -357,10 +366,10 @@ document.querySelectorAll(".magnet-modes [role=tab]").forEach((tab) => tab.addEv
 }));
 
 function interactionSummary() {
-  const result = state.interactionForce || magnetInteractionForceTorque(
-    state.interactionFixed === "first" ? state.magnet : state.secondMagnet,
-    state.interactionFixed === "first" ? state.secondMagnet : state.magnet
-  );
+  const fixedIsFirst = state.interactionFixed === "first";
+  const fixedSources = [fixedIsFirst ? state.magnet : state.secondMagnet, ...state.additionalMagnets];
+  const moving = fixedIsFirst ? state.secondMagnet : state.magnet;
+  const result = state.interactionForce || magnetInteractionForceTorqueWithSources(fixedSources, moving);
   const fx = formatter(3).format(result.force.x), fy = formatter(3).format(result.force.y), torque = formatter(4).format(result.torque);
   return `Estimativa no ímã livre: Fx ${fx} N, Fy ${fy} N e τz ${torque} N·m.`;
 }
@@ -372,9 +381,9 @@ function shouldRunSimulation() {
 
 function advanceInteraction(dt) {
   const fixedIsFirst = state.interactionFixed === "first";
-  const fixed = fixedIsFirst ? state.magnet : state.secondMagnet;
+  const fixedSources = [fixedIsFirst ? state.magnet : state.secondMagnet, ...state.additionalMagnets];
   const movingKey = fixedIsFirst ? "secondMagnet" : "magnet";
-  const result = stepMagnetInteraction(fixed, state[movingKey], state.interactionVelocity, dt);
+  const result = stepMagnetInteractionWithSources(fixedSources, state[movingKey], state.interactionVelocity, dt);
   state[movingKey] = result.magnet;
   state.interactionVelocity = result.velocity;
   state.interactionForce = result;
@@ -659,7 +668,7 @@ function drawMagnet(magnet, index = 0) {
   }
   ctx.restore();
   const label = toScreen({ x: magnet.x, y: magnet.y + magnet.height / 2 + 0.023 });
-  ctx.fillStyle = "#d8e2f3"; ctx.font = "11px system-ui"; ctx.textAlign = "center"; ctx.fillText(index === 1 ? "Ímã A" : "Ímã B", label.x, label.y);
+  ctx.fillStyle = "#d8e2f3"; ctx.font = "11px system-ui"; ctx.textAlign = "center"; ctx.fillText(index === 1 ? "Ímã A" : index === 2 ? "Ímã B" : `Ímã adicional ${index - 2}`, label.x, label.y);
 }
 
 function drawPowerHardware() {
@@ -837,9 +846,13 @@ function updateReadings(model) {
 }
 
 function allActiveMagnets() {
-  if (state.mode === "interaction") return [state.magnet, state.secondMagnet];
-  if (state.mode === "field") return state.showMagnetSource ? [state.magnet] : [];
-  return [state.magnet];
+  if (state.mode === "field" && !state.showMagnetSource) return [];
+  const magnets = state.mode === "interaction" ? [state.magnet, state.secondMagnet] : [state.magnet];
+  return [...magnets, ...state.additionalMagnets];
+}
+function magnetAtSceneIndex(index) {
+  if (state.mode === "interaction") return index === 0 ? state.magnet : index === 1 ? state.secondMagnet : state.additionalMagnets[index - 2];
+  return index === 0 ? state.magnet : state.additionalMagnets[index - 1];
 }
 
 function graphData(kind) {
@@ -1130,6 +1143,7 @@ function beginDrag(event) {
   if (state.mode === "interaction" && state.interactionMotion && !state.simulationPaused && !state.reduceMotion && nearest.type === "magnet" && nearest.index === fixedIndex) return;
   if (nearest.type === "compass") state.selectedCompass = nearest.index;
   if (nearest.type === "metal") state.selectedMetalBall = nearest.index;
+  if (nearest.type === "magnet" && nearest.index >= (state.mode === "interaction" ? 2 : 1)) { state.selectedExtraMagnet = nearest.index - (state.mode === "interaction" ? 2 : 1); syncKeyboardPositionControls(); }
   drag = { ...nearest, dx: nearest.point.x - world.x, dy: nearest.point.y - world.y };
   canvas.classList.add("is-dragging"); canvas.setPointerCapture(event.pointerId); event.preventDefault();
 }
@@ -1140,15 +1154,19 @@ function moveDrag(event) {
   if (drag.type === "sensor") { state.sensor.x = x; state.sensor.y = y; }
   if (drag.type === "compass") { state.compasses[drag.index].x = x; state.compasses[drag.index].y = y; }
   if (drag.type === "magnet") {
-    const magnet = drag.index === 0 ? state.magnet : state.secondMagnet;
-    if (state.mode === "interaction") {
+    const magnet = magnetAtSceneIndex(drag.index);
+    if (!magnet) return;
+    if (state.mode === "interaction" && drag.index < 2) {
       const other = drag.index === 0 ? state.secondMagnet : state.magnet;
       const candidate = makeMagnet({ ...magnet, x, y });
       if (magnetPrismsOverlap(other, candidate)) return;
     }
     magnet.x = x; magnet.y = y;
+    state.interactionForce = null;
     const fixedIndex = state.interactionFixed === "first" ? 0 : 1;
-    if (state.mode === "interaction" && state.interactionMotion && drag.index !== fixedIndex) state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+    if (state.mode === "interaction" && state.interactionMotion && drag.index === fixedIndex) state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+    if (state.mode === "interaction" && state.interactionMotion && drag.index !== fixedIndex && drag.index < 2) state.interactionVelocity = { x: 0, y: 0, angle: 0 };
+    if (drag.index >= (state.mode === "interaction" ? 2 : 1)) state.selectedExtraMagnet = drag.index - (state.mode === "interaction" ? 2 : 1);
   }
   if (drag.type === "coil") { state.coil.x = x; state.coil.y = y; state.coilVelocity = { x: 0, y: 0, angle: 0 }; }
   if (drag.type === "power-plug") { state.powerPlug = { x, y }; state.coilConnected = false; state.coilPowerRequested = false; }
@@ -1245,7 +1263,7 @@ byId("second-magnet-toggle").addEventListener("click", () => {
 });
 window.addEventListener("diario-lab-object-drop", (event) => {
   const data = event.detail || {};
-  if (data.labKind !== "magnet" || !["metal-ball", "compass"].includes(data.kind)) return;
+  if (data.labKind !== "magnet" || !["metal-ball", "compass", "permanent-magnet", "coil"].includes(data.kind)) return;
   if (!canvasSize()) return;
   const rect = canvas.getBoundingClientRect();
   const local = { x: Number(data.clientX) - rect.left, y: Number(data.clientY) - rect.top };
@@ -1254,14 +1272,49 @@ window.addEventListener("diario-lab-object-drop", (event) => {
   if (data.kind === "metal-ball") {
     state.metalBalls.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.19, 0.19), radius: 0.012, vx: 0, vy: 0 });
     state.selectedMetalBall = state.metalBalls.length - 1;
-  } else {
+  } else if (data.kind === "compass") {
     state.compasses.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.2, 0.2) });
     state.selectedCompass = state.compasses.length - 1;
+  } else if (data.kind === "coil") {
+    state.coilEnabled = true;
+    state.coil.x = clamp(world.x, -0.28, 0.28); state.coil.y = clamp(world.y, -0.18, 0.18);
+    state.coilVelocity = { x: 0, y: 0, angle: 0 };
+    state.coilConnected = false; state.coilPowerRequested = false;
+    resetInductionMeter();
+  } else {
+    const candidate = makeMagnet({ x: clamp(world.x, -0.30, 0.30), y: clamp(world.y, -0.18, 0.18), angle: 0, polarity: 1 });
+    const blocked = (point) => allActiveMagnets().some((existing) => magnetPrismsOverlap(existing, point));
+    if (blocked(candidate)) {
+      let found = false;
+      for (const radius of [0.14, 0.20, 0.27]) {
+        for (let step = 0; step < 12 && !found; step++) {
+          const angle = step * Math.PI / 6;
+          const point = makeMagnet({ ...candidate, x: clamp(candidate.x + Math.cos(angle) * radius, -0.30, 0.30), y: clamp(candidate.y + Math.sin(angle) * radius, -0.18, 0.18) });
+          if (!blocked(point)) { candidate.x = point.x; candidate.y = point.y; found = true; }
+        }
+      }
+      if (!found) { byId("sensor-action-status").textContent = "Não há espaço livre para posicionar outro ímã. Afaste os que já estão na cena."; return; }
+    }
+    state.additionalMagnets.push(candidate);
+    state.selectedExtraMagnet = state.additionalMagnets.length - 1;
   }
   byId("sensor-action-status").textContent = "";
   syncKeyboardPositionControls();
+  if (data.kind === "permanent-magnet") {
+    state.interactionForce = null;
+    const target = byId("magnet-position-target");
+    if (target) { target.value = `extra-magnet-${state.selectedExtraMagnet}`; syncKeyboardPositionControls(); }
+  }
+  updateModeUI();
   syncSimulationLoop();
   queueDraw();
+});
+byId("remove-extra-magnet")?.addEventListener("click", () => {
+  if (state.selectedExtraMagnet < 0 || !state.additionalMagnets.length) return;
+  state.additionalMagnets.splice(state.selectedExtraMagnet, 1);
+  state.interactionForce = null;
+  state.selectedExtraMagnet = state.additionalMagnets.length ? Math.min(state.selectedExtraMagnet, state.additionalMagnets.length - 1) : -1;
+  syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
 byId("add-metal-ball").addEventListener("click", () => {
   const index = state.metalBalls.length;

@@ -212,6 +212,57 @@ export function magnetInteractionForceTorque(firstInput, secondInput) {
   return { force: { x: forceX, y: forceY }, torque, energy };
 }
 
+/** Interaction of one moving magnet with any number of fixed finite magnets. */
+export function magnetInteractionForceTorqueWithSources(fixedInputs, movingInput) {
+  const fixed = (Array.isArray(fixedInputs) ? fixedInputs : [fixedInputs]).filter(Boolean).map(makeMagnet);
+  const moving = makeMagnet(movingInput);
+  if (!fixed.length) return { force: { x: 0, y: 0 }, torque: 0, energy: 0 };
+  const energyAt = (candidate) => fixed.reduce((sum, source) => sum + magnetInteractionEnergy(source, candidate), 0);
+  const positionStep = 0.001, angleStep = 0.002;
+  const shifted = (dx, dy, da) => ({ ...moving, x: moving.x + dx, y: moving.y + dy, angle: moving.angle + da });
+  return {
+    force: {
+      x: -(energyAt(shifted(positionStep, 0, 0)) - energyAt(shifted(-positionStep, 0, 0))) / (2 * positionStep),
+      y: -(energyAt(shifted(0, positionStep, 0)) - energyAt(shifted(0, -positionStep, 0))) / (2 * positionStep)
+    },
+    torque: -(energyAt(shifted(0, 0, angleStep)) - energyAt(shifted(0, 0, -angleStep))) / (2 * angleStep),
+    energy: energyAt(moving)
+  };
+}
+
+/** Damped motion under the combined force and torque from multiple fixed magnets. */
+export function stepMagnetInteractionWithSources(fixedInputs, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: 0.37, y: 0.23 }) {
+  const fixed = (Array.isArray(fixedInputs) ? fixedInputs : [fixedInputs]).filter(Boolean).map(makeMagnet);
+  let moving = makeMagnet(movingInput);
+  const velocity = { x: Number(velocityInput.x) || 0, y: Number(velocityInput.y) || 0, angle: Number(velocityInput.angle) || 0 };
+  const dt = clamp(elapsedSeconds, 0, 0.04);
+  const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+  const h = dt / steps;
+  const density = 7400;
+  const mass = Math.max(0.05, moving.length * moving.height * moving.depth * density);
+  const inertia = Math.max(1e-5, mass * (moving.length ** 2 + moving.height ** 2) / 12);
+  const linearDamping = 1.4, angularDamping = 0.018;
+  let interaction = magnetInteractionForceTorqueWithSources(fixed, moving);
+  for (let i = 0; i < steps; i++) {
+    interaction = magnetInteractionForceTorqueWithSources(fixed, moving);
+    velocity.x = (velocity.x + interaction.force.x / mass * h) * Math.exp(-linearDamping / mass * h);
+    velocity.y = (velocity.y + interaction.force.y / mass * h) * Math.exp(-linearDamping / mass * h);
+    velocity.angle = (velocity.angle + interaction.torque / inertia * h) * Math.exp(-angularDamping / inertia * h);
+    const candidate = makeMagnet({ ...moving, x: moving.x + velocity.x * h, y: moving.y + velocity.y * h, angle: moving.angle + velocity.angle * h });
+    const extentX = Math.abs(Math.cos(candidate.angle)) * candidate.length / 2 + Math.abs(Math.sin(candidate.angle)) * candidate.height / 2;
+    const extentY = Math.abs(Math.sin(candidate.angle)) * candidate.length / 2 + Math.abs(Math.cos(candidate.angle)) * candidate.height / 2;
+    candidate.x = clamp(candidate.x, -bounds.x + extentX, bounds.x - extentX);
+    candidate.y = clamp(candidate.y, -bounds.y + extentY, bounds.y - extentY);
+    if (fixed.some((source) => magnetPrismsOverlap(source, candidate))) {
+      velocity.x = 0; velocity.y = 0;
+      candidate.x = moving.x; candidate.y = moving.y;
+      if (fixed.some((source) => magnetPrismsOverlap(source, candidate))) { velocity.angle = 0; candidate.angle = moving.angle; }
+    }
+    moving = candidate;
+  }
+  return { magnet: moving, velocity, ...interaction, mass, inertia };
+}
+
 /** Two-dimensional oriented-rectangle collision check for the projected scene. */
 export function magnetPrismsOverlap(firstInput, secondInput) {
   const first = makeMagnet(firstInput), second = makeMagnet(secondInput);
