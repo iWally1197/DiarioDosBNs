@@ -1,0 +1,517 @@
+/* Immersive presentation for one experiment opened from the laboratory catalog.
+   The simulation logic and existing controls stay in their original pages. */
+html[data-lab-simulation-window="true"],
+html[data-lab-simulation-window="true"] body {
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+html[data-lab-simulation-window="true"] body { margin:0; }
+html[data-lab-simulation-window="true"] body > .site-header,
+html[data-lab-simulation-window="true"] body > .site-footer,
+html[data-lab-simulation-window="true"] body > .skip-link,
+html[data-lab-simulation-window="true"] #conteudo > .breadcrumbs,
+html[data-lab-simulation-window="true"] #conteudo > .back-top,
+html[data-lab-simulation-window="true"] #conteudo > .lab-return-link,
+html[data-lab-simulation-window="true"] #conteudo > .tool-heading,
+html[data-lab-simulation-window="true"] #conteudo > .lab-topic-heading,
+html[data-lab-simulation-window="true"] #conteudo > .mru-intro,
+html[data-lab-simulation-window="true"] #conteudo > .mruv-intro,
+html[data-lab-simulation-window="true"] #conteudo > .magnet-intro,
+html[data-lab-simulation-window="true"] #conteudo > .section-kicker,
+html[data-lab-simulation-window="true"] #conteudo > h1,
+html[data-lab-simulation-window="true"] #conteudo > .freefall-lede,
+html[data-lab-simulation-window="true"] #conteudo > .freefall-equations,
+html[data-lab-simulation-window="true"] #conteudo > .faraday-lede,
+html[data-lab-simulation-window="true"] #conteudo > .faraday-equation,
+html[data-lab-simulation-window="true"] #conteudo > .magnet-learning,
+html[data-lab-simulation-window="true"] #conteudo > .magnet-back-link {
+  display:none !important;
+}
+html[data-lab-simulation-window="true"] main#conteudo {
+  box-sizing:border-box !important;
+  position:relative;
+  width:100vw !important;
+  max-width:none !important;
+  height:100dvh !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  background:#08101f;
+}
+html[data-lab-simulation-window="true"] button:focus-visible,
+html[data-lab-simulation-window="true"] input:focus-visible,
+html[data-lab-simulation-window="true"] select:focus-visible {
+  outline-offset:2px;
+}
+
+/* Shared experiment workspace: scene and graph stay in view, parameters remain scrollable. */
+html[data-lab-simulation-kind="workspace"] #lab-workspace:not([hidden]) {
+  position:fixed !important;
+  inset:0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:flex !important;
+  flex-direction:column;
+  gap:8px;
+  width:100vw;
+  height:100dvh;
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:hidden;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-heading {
+  flex:0 0 auto;
+  min-height:42px;
+  margin:0;
+  padding:2px 4px;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-heading h2 {
+  margin:0;
+  font-size:clamp(1.05rem,2vw,1.45rem);
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-heading p,
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-heading .lesson-tag {
+  display:none;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-grid {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  grid-template-columns:minmax(0,1fr) minmax(280px,min(30vw,370px));
+  gap:10px;
+  overflow:hidden;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-visuals {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  gap:8px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-panels {
+  flex:1 0 min(66dvh,620px);
+  min-height:360px;
+  grid-template-columns:minmax(0,1.35fr) minmax(240px,.65fr);
+  gap:8px;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-panel {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-canvas-wrap {
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace canvas {
+  display:block;
+  width:100%;
+  height:100%;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-controls {
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  margin:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-transport,
+html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-measurements {
+  flex:0 0 auto;
+}
+
+/* Other experiments rendered by the shared HTML experiment page. */
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) {
+  position:fixed !important;
+  inset:0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:flex !important;
+  flex-direction:column;
+  gap:8px;
+  width:100vw;
+  height:100dvh;
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:auto;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) .lab-experiment-heading {
+  flex:0 0 auto;
+  min-height:42px;
+  margin:0;
+}
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) .lab-experiment-heading > div:first-child {
+  display:none;
+}
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) .lab-simulation-grid,
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) .lab-existing-panels {
+  flex:1 0 min(68dvh,650px);
+  min-height:360px;
+  grid-template-columns:minmax(0,1.35fr) minmax(250px,.65fr);
+}
+html[data-lab-simulation-kind="workspace"] .lab-experiment:not([hidden]) canvas {
+  display:block;
+  max-width:100%;
+}
+
+/* Priority interactive topics use the same single-experiment view. */
+html[data-lab-simulation-kind="topic"] #priority-lab:not([hidden]) {
+  position:fixed !important;
+  inset:0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:flex !important;
+  flex-direction:column;
+  width:100vw;
+  height:100dvh;
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:hidden;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-header {
+  flex:0 0 auto;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-back,
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-intro {
+  display:none !important;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-workspace {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  grid-template-columns:minmax(0,1fr) minmax(280px,min(31vw,380px));
+  overflow:hidden;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-stage {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab #lab-scene {
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+}
+html[data-lab-simulation-kind="topic"] #priority-lab .priority-panel {
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+}
+
+/* MRU and MRUV: large track with their existing object editor beside it. */
+html[data-lab-simulation-kind="mru"] .mru-lab-page,
+html[data-lab-simulation-kind="mruv"] .mruv-lab-page {
+  width:100vw !important;
+  max-width:none !important;
+  height:100dvh !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+html[data-lab-simulation-kind="mru"] .mru-lab-grid,
+html[data-lab-simulation-kind="mruv"] .mruv-lab-grid {
+  position:fixed !important;
+  inset:112px 0 0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(300px,min(34vw,440px));
+  grid-template-rows:minmax(0,1fr) minmax(100px,.35fr);
+  gap:10px;
+  width:100vw;
+  height:calc(100dvh - 112px);
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:hidden;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="mru"] .mru-ui-mode,
+html[data-lab-simulation-kind="mruv"] .mruv-ui-mode {
+  position:fixed;
+  z-index:30;
+  top:8px;
+  left:10px;
+  right:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  max-height:48px;
+  margin:0;
+  padding:4px 8px;
+  overflow:auto;
+  background:rgba(8,16,31,.94);
+}
+html[data-lab-simulation-kind="mru"] .mru-mode-bar,
+html[data-lab-simulation-kind="mruv"] .mruv-mode-bar {
+  position:fixed;
+  z-index:30;
+  top:60px;
+  left:10px;
+  right:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  max-height:42px;
+  margin:0;
+  padding:4px 8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  background:rgba(8,16,31,.94);
+}
+html[data-lab-simulation-kind="mru"] .mru-mode-bar p,
+html[data-lab-simulation-kind="mruv"] .mruv-mode-bar p { display:none; }
+html[data-lab-simulation-kind="mru"] .mru-main-column,
+html[data-lab-simulation-kind="mruv"] .mruv-main-column {
+  grid-column:1;
+  grid-row:1 / span 2;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+html[data-lab-simulation-kind="mru"] .mru-scene-card,
+html[data-lab-simulation-kind="mruv"] .mruv-scene-card {
+  display:flex;
+  flex:1 0 min(62dvh,650px);
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  margin:0;
+}
+html[data-lab-simulation-kind="mru"] .mru-stage,
+html[data-lab-simulation-kind="mruv"] .mruv-stage {
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+}
+html[data-lab-simulation-kind="mru"] #mru-scene,
+html[data-lab-simulation-kind="mruv"] #mruv-scene {
+  display:block;
+  width:100%;
+  height:100%;
+}
+html[data-lab-simulation-kind="mru"] .mru-editor-card,
+html[data-lab-simulation-kind="mruv"] .mruv-editor-card {
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+html[data-lab-simulation-kind="mru"] .mru-investigation-card,
+html[data-lab-simulation-kind="mruv"] .mruv-investigation-card {
+  grid-column:2;
+  grid-row:2;
+  min-height:0;
+  margin:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+
+/* Magnetism: keep the experiment mode tabs and put the magnetic scene edge to edge. */
+html[data-lab-simulation-kind="magnet"] .magnet-modes {
+  position:fixed;
+  z-index:30;
+  top:8px;
+  left:8px;
+  right:8px;
+  display:flex;
+  max-width:none;
+  margin:0;
+  overflow-x:auto;
+  background:rgba(8,16,31,.94);
+}
+html[data-lab-simulation-kind="magnet"] #magnet-workspace {
+  position:fixed !important;
+  inset:58px 0 0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,min(32vw,390px));
+  gap:10px;
+  width:100vw;
+  height:calc(100dvh - 58px);
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:hidden;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="magnet"] .magnet-scene-column,
+html[data-lab-simulation-kind="magnet"] .magnet-controls {
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+html[data-lab-simulation-kind="magnet"] .magnet-scene-column {
+  display:flex;
+  flex-direction:column;
+}
+html[data-lab-simulation-kind="magnet"] #magnet-canvas {
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+}
+html[data-lab-simulation-kind="magnet"] .magnet-readings {
+  position:fixed;
+  z-index:32;
+  left:10px;
+  bottom:10px;
+  max-width:min(70vw,720px);
+  margin:0;
+  padding:6px 10px;
+  border:1px solid rgba(228,196,119,.55);
+  border-radius:10px;
+  background:rgba(8,16,31,.92);
+}
+html[data-lab-simulation-kind="magnet"] #magnet-graphs:not([hidden]) {
+  position:fixed;
+  z-index:34;
+  right:10px;
+  bottom:10px;
+  width:min(420px,calc(100vw - 20px));
+  max-height:38dvh;
+  overflow:auto;
+  border-radius:12px;
+  background:#0b1525;
+}
+
+/* Faraday and free-fall share an edge-to-edge stage with their existing parameter panels. */
+html[data-lab-simulation-kind="faraday"] #faraday-lab,
+html[data-lab-simulation-kind="freefall"] #freefall-lab {
+  position:fixed !important;
+  inset:0 !important;
+  z-index:20;
+  box-sizing:border-box;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,min(32vw,390px));
+  gap:10px;
+  width:100vw;
+  height:100dvh;
+  min-height:0;
+  margin:0 !important;
+  padding:10px !important;
+  overflow:hidden;
+  background:#08101f;
+}
+html[data-lab-simulation-kind="faraday"] .faraday-stage,
+html[data-lab-simulation-kind="freefall"] .freefall-stage {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  overflow:auto;
+}
+html[data-lab-simulation-kind="faraday"] #faraday-scene,
+html[data-lab-simulation-kind="freefall"] .freefall-canvas,
+html[data-lab-simulation-kind="freefall"] #freefall-scene {
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+}
+html[data-lab-simulation-kind="faraday"] .faraday-controls,
+html[data-lab-simulation-kind="freefall"] .freefall-controls {
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+
+@media (max-width:760px) {
+  html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-grid,
+  html[data-lab-simulation-kind="topic"] #priority-lab .priority-workspace,
+  html[data-lab-simulation-kind="magnet"] #magnet-workspace,
+  html[data-lab-simulation-kind="faraday"] #faraday-lab,
+  html[data-lab-simulation-kind="freefall"] #freefall-lab {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(54dvh,1fr) minmax(0,40dvh);
+    overflow:auto;
+    overscroll-behavior:contain;
+  }
+  html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-visuals {
+    min-height:54dvh;
+  }
+  html[data-lab-simulation-kind="workspace"] #lab-workspace .lab-workspace-panels {
+    flex-basis:54dvh;
+    min-height:430px;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(270px,1.5fr) minmax(150px,.7fr);
+  }
+  html[data-lab-simulation-kind="topic"] #priority-lab .priority-panel,
+  html[data-lab-simulation-kind="magnet"] .magnet-controls,
+  html[data-lab-simulation-kind="faraday"] .faraday-controls,
+  html[data-lab-simulation-kind="freefall"] .freefall-controls {
+    max-height:40dvh;
+    overflow:auto;
+  }
+  html[data-lab-simulation-kind="mru"] .mru-lab-grid,
+  html[data-lab-simulation-kind="mruv"] .mruv-lab-grid {
+    inset:112px 0 0 !important;
+    height:calc(100dvh - 112px);
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(56dvh,1fr) minmax(180px,auto) minmax(100px,auto);
+    overflow:auto;
+  }
+  html[data-lab-simulation-kind="mru"] .mru-main-column,
+  html[data-lab-simulation-kind="mruv"] .mruv-main-column {
+    grid-column:1;
+    grid-row:1;
+    min-height:56dvh;
+  }
+  html[data-lab-simulation-kind="mru"] .mru-scene-card,
+  html[data-lab-simulation-kind="mruv"] .mruv-scene-card { flex-basis:56dvh; }
+  html[data-lab-simulation-kind="mru"] .mru-editor-card,
+  html[data-lab-simulation-kind="mruv"] .mruv-editor-card {
+    grid-column:1;
+    grid-row:2;
+    max-height:40dvh;
+  }
+  html[data-lab-simulation-kind="mru"] .mru-investigation-card,
+  html[data-lab-simulation-kind="mruv"] .mruv-investigation-card {
+    grid-column:1;
+    grid-row:3;
+  }
+  html[data-lab-simulation-kind="mru"] .mru-ui-mode > div:first-child p,
+  html[data-lab-simulation-kind="mruv"] .mruv-ui-mode > div:first-child p { display:none; }
+  html[data-lab-simulation-kind="magnet"] .magnet-modes {
+    top:4px;
+    left:4px;
+    right:4px;
+  }
+  html[data-lab-simulation-kind="magnet"] #magnet-workspace {
+    inset:54px 0 0 !important;
+    height:calc(100dvh - 54px);
+  }
+  html[data-lab-simulation-kind="magnet"] .magnet-readings {
+    max-width:calc(100vw - 20px);
+    right:10px;
+    bottom:10px;
+    font-size:11px;
+  }
+}
