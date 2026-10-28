@@ -1,4 +1,4 @@
-import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-4";
+import { opticalDistance, opticalViewFor, wavelengthColor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-5";
 
 // Velocidade-base arbitrária da animação; a velocidade visual não altera o valor físico de c.
 const VISUAL_METERS_PER_NS = 0.3;
@@ -607,18 +607,21 @@ function drawSphericalLantern(context, geometry, values, p, view, palette) {
   drawLabel(context, explanation, 12, 78, Math.max(80, context.canvas.width - 24));
 }
 
-function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44) {
+function drawOpticalBackgroundGrid(context, width, height, color, spacing = 44, camera = null) {
+  const zoom = Math.max(0.01, Number(camera?.zoom) || 1);
+  const scaledSpacing = spacing * zoom;
+  const cameraX = Number(camera?.x) || 0, cameraY = Number(camera?.y) || 0;
+  const baseX = Math.round(width / 2 / spacing) * spacing * zoom + cameraX;
+  const baseY = Math.round(height / 2 / spacing) * spacing * zoom + cameraY;
+  const firstX = ((baseX % scaledSpacing) + scaledSpacing) % scaledSpacing;
+  const firstY = ((baseY % scaledSpacing) + scaledSpacing) % scaledSpacing;
   context.save();
   context.strokeStyle = color;
   context.lineWidth = 1;
   context.globalAlpha = 0.34;
   context.beginPath();
-  const centerX = Math.round(width / 2 / spacing) * spacing;
-  const centerY = Math.round(height / 2 / spacing) * spacing;
-  for (let x = centerX; x >= 0; x -= spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
-  for (let x = centerX + spacing; x <= width; x += spacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
-  for (let y = centerY; y >= 0; y -= spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
-  for (let y = centerY + spacing; y <= height; y += spacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
+  for (let x = firstX; x <= width; x += scaledSpacing) { context.moveTo(x + 0.5, 0); context.lineTo(x + 0.5, height); }
+  for (let y = firstY; y <= height; y += scaledSpacing) { context.moveTo(0, y + 0.5); context.lineTo(width, y + 0.5); }
   context.stroke();
   context.restore();
 }
@@ -638,7 +641,7 @@ export function drawOpticalScene(context, width, height, id, parameters, model, 
   context.__opticalLabelsVisible = parameters.showLabels !== false;
   try {
     if (parameters.showGrid !== false) {
-      drawOpticalBackgroundGrid(context, width, height, activePalette.line);
+      drawOpticalBackgroundGrid(context, width, height, activePalette.line, 44, view.camera);
       drawAxes(context, width, height, geometry.bounds, view, activePalette, geometry.kind === "spherical-mirror");
     }
     if (geometry.kind === "plane-mirror") drawReflection(context, geometry, model.values, parameters, view, activePalette);

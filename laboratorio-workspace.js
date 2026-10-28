@@ -1,6 +1,6 @@
 import { experiments, experimentById, initialParameters } from "./laboratorio-catalogo.js?v=mirror-optics-physics-20261023-5";
 import { durationFor, graphFor, sampleValues, stateAt } from "./laboratorio-advanced-core.js?v=mirror-optics-physics-20261023-5";
-import { drawOpticalScene } from "./laboratorio-optica-render.js?v=mirror-optics-physics-20261023-5";
+import { drawOpticalScene } from "./laboratorio-optica-render.js?v=infinite-world-optics-20261028-1";
 import { opticalModelFor, opticalViewFor } from "./laboratorio-optica-core.js?v=mirror-optics-physics-20261023-5";
 import { createCamera, panCameraBy, resetCamera, zoomCameraAtPoint } from "./laboratorio-camera.js?v=lab-camera-20261023-1";
 
@@ -66,7 +66,12 @@ function initializeCanvasViewControls() {
     canvas.style.touchAction = "none";
     wrapper.style.touchAction = "none";
     const apply = () => {
-      if (camera.zoom === 1 && camera.x === 0 && camera.y === 0) canvas.style.removeProperty("transform");
+      if (isOpticalScene) {
+        canvas.style.removeProperty("transform");
+        window.dispatchEvent(new CustomEvent("diario-optics-camera-change", {
+          detail: { canvasId: canvas.id, x: camera.x, y: camera.y, zoom: camera.zoom }
+        }));
+      } else if (camera.zoom === 1 && camera.x === 0 && camera.y === 0) canvas.style.removeProperty("transform");
       else canvas.style.transform = `translate3d(${camera.x}px, ${camera.y}px, 0) scale(${camera.zoom})`;
       zoomValue.textContent = `${Math.round(camera.zoom * 100)}%`;
     };
@@ -77,7 +82,9 @@ function initializeCanvasViewControls() {
     const canvasOrigin = () => {
       const wrapperRect = wrapper.getBoundingClientRect();
       const canvasRect = canvas.getBoundingClientRect();
-      return { x: canvasRect.left - wrapperRect.left - camera.x, y: canvasRect.top - wrapperRect.top - camera.y };
+      const translateX = isOpticalScene ? 0 : camera.x;
+      const translateY = isOpticalScene ? 0 : camera.y;
+      return { x: canvasRect.left - wrapperRect.left - translateX, y: canvasRect.top - wrapperRect.top - translateY };
     };
     const zoomAt = (point, factor) => { zoomCameraAtPoint(camera, factor, point, canvasOrigin()); apply(); };
     const zoomAtCenter = (factor) => {
@@ -278,7 +285,7 @@ function initializeExperimentPage(topicId) {
   const controlsSidebar = $("#workspace-controls-sidebar");
   const sceneContext = canvas.getContext("2d");
   const graphContext = graphCanvas.getContext("2d");
-  const state = { id: null, mode: "human", parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null, opticalBounds: null };
+  const state = { id: null, mode: "human", parameters: {}, time: 0, running: false, lastFrame: 0, frame: 0, records: [], graph: null, plot: null, opticalBounds: null, opticalCamera: { x: 0, y: 0, zoom: 1 } };
   const panelPlayButton = $("#workspace-panel-play");
   const syncPanelPlay = () => { if (panelPlayButton) { const play = $("#workspace-play"); panelPlayButton.textContent = play?.textContent || (state.running ? "Pausar" : "Continuar"); panelPlayButton.setAttribute("aria-pressed", String(state.running)); panelPlayButton.disabled = Boolean(play?.disabled); } };
   panelPlayButton?.addEventListener("click", () => { $("#workspace-play")?.click(); syncPanelPlay(); });
@@ -1092,7 +1099,7 @@ function initializeExperimentPage(topicId) {
     const baseline = height * 0.72;
     const values = model.values;
     if (id.startsWith("optics-")) {
-      drawOpticalScene(ctx, width, height, id, p, model, c, opticalDrag?.view || state.opticalBounds);
+      drawOpticalScene(ctx, width, height, id, p, model, c, opticalDrag?.view || opticalCameraView(state.opticalBounds || model.geometry.bounds, width, height, state.opticalCamera));
       return;
     }
     if (["mru", "muv", "newton"].includes(id)) {
@@ -1359,6 +1366,18 @@ function initializeExperimentPage(topicId) {
     if (!options.skipTimeControls) updateTimeControls();
   }
 
+  window.addEventListener("diario-optics-camera-change", (event) => {
+    if (!state.id?.startsWith("optics-")) return;
+    const camera = event.detail || {};
+    state.opticalCamera = {
+      x: Number.isFinite(Number(camera.x)) ? Number(camera.x) : 0,
+      y: Number.isFinite(Number(camera.y)) ? Number(camera.y) : 0,
+      zoom: Number.isFinite(Number(camera.zoom)) ? Number(camera.zoom) : 1
+    };
+    try { render({ skipGraph: true, skipReadouts: true, skipTimeControls: true }); }
+    catch (error) { showError(error); }
+  });
+
   function showError(error) {
     stop();
     $("#workspace-status").textContent = `Não foi possível atualizar esta simulação: ${error.message}`;
@@ -1395,6 +1414,23 @@ function initializeExperimentPage(topicId) {
   let opticalDrag = null;
   let opticalDragFrame = 0;
   let opticalDragWasRunning = false;
+
+  function opticalCameraView(bounds, width, height, camera = state.opticalCamera) {
+    const base = opticalViewFor(bounds, width, height);
+    const zoom = Math.max(0.01, Number(camera?.zoom) || 1);
+    const x = Number(camera?.x) || 0, y = Number(camera?.y) || 0;
+    return {
+      ...base,
+      camera: { x, y, zoom },
+      toScreen(point) {
+        const screen = base.toScreen(point);
+        return { x: x + screen.x * zoom, y: y + screen.y * zoom };
+      },
+      toWorld(point) {
+        return base.toWorld({ x: (point.x - x) / zoom, y: (point.y - y) / zoom });
+      }
+    };
+  }
 
   function pointerCanvasPoint(event, view) {
     const rect = canvas.getBoundingClientRect();
@@ -1560,7 +1596,7 @@ function initializeExperimentPage(topicId) {
       || canvas.classList.contains("lab-view-pan-mode") || canvas.classList.contains("lab-view-multitouch")) return;
     const model = stateAt(state.id, state.parameters, state.time);
     const rect = canvas.getBoundingClientRect();
-    const view = opticalViewFor(state.opticalBounds || model.geometry.bounds, canvas.clientWidth || rect.width, canvas.clientHeight || rect.height);
+    const view = opticalCameraView(state.opticalBounds || model.geometry.bounds, canvas.clientWidth || rect.width, canvas.clientHeight || rect.height, state.opticalCamera);
     const point = pointerCanvasPoint(event, view);
     const near = (handle, tolerance = 30) => {
       if (!handle) return false;

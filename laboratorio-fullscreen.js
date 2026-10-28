@@ -544,7 +544,9 @@
     overlay.className = "lab-infinite-grid-overlay";
     overlay.setAttribute("aria-hidden", "true");
     const gridControl = findGridControl(root);
-    const onGridChange = () => { overlay.hidden = Boolean(gridControl && !gridControl.checked); };
+    const topic = new URLSearchParams(location.search).get("topico") || "";
+    const sceneDrawsItsOwnGrid = profile.kind === "workspace" && topic.startsWith("optics-");
+    const onGridChange = () => { overlay.hidden = sceneDrawsItsOwnGrid || Boolean(gridControl && !gridControl.checked); };
     if (gridControl) {
       gridControl.addEventListener("change", onGridChange);
       onGridChange();
