@@ -327,7 +327,7 @@ function applyKeyboardPosition(event) {
   }
   if (object.type === "compass") state.selectedCompass = object.index;
   if (object.type === "metal") state.selectedMetalBall = object.index;
-  if (object.type === "magnet" && object.index >= (state.mode === "interaction" ? 2 : 1)) state.selectedExtraMagnet = object.index - (state.mode === "interaction" ? 2 : 1);
+  if (object.type === "magnet") { const offset = state.mode === "interaction" ? 2 : 1; state.selectedExtraMagnet = object.index >= offset ? object.index - offset : -1; }
   if (object.type === "power-plug") {
     state.powerPlug = object.point;
     const closeToOutlet = Math.hypot(x - POWER_OUTLET_POSITION.x, y - POWER_OUTLET_POSITION.y) <= 0.065;
@@ -339,7 +339,7 @@ function applyKeyboardPosition(event) {
   queueDraw();
 }
 
-byId("magnet-position-target").addEventListener("change", () => { const object = selectedPositionObject(); if (object?.type === "magnet" && object.index >= (state.mode === "interaction" ? 2 : 1)) state.selectedExtraMagnet = object.index - (state.mode === "interaction" ? 2 : 1); syncKeyboardPositionControls(); });
+byId("magnet-position-target").addEventListener("change", () => { const object = selectedPositionObject(); const offset = state.mode === "interaction" ? 2 : 1; state.selectedExtraMagnet = object?.type === "magnet" && object.index >= offset ? object.index - offset : -1; syncKeyboardPositionControls(); });
 byId("magnet-position-x").addEventListener("input", applyKeyboardPosition);
 byId("magnet-position-y").addEventListener("input", applyKeyboardPosition);
 byId("magnet-position-x").addEventListener("change", () => {
@@ -1143,7 +1143,7 @@ function beginDrag(event) {
   if (state.mode === "interaction" && state.interactionMotion && !state.simulationPaused && !state.reduceMotion && nearest.type === "magnet" && nearest.index === fixedIndex) return;
   if (nearest.type === "compass") state.selectedCompass = nearest.index;
   if (nearest.type === "metal") state.selectedMetalBall = nearest.index;
-  if (nearest.type === "magnet" && nearest.index >= (state.mode === "interaction" ? 2 : 1)) { state.selectedExtraMagnet = nearest.index - (state.mode === "interaction" ? 2 : 1); syncKeyboardPositionControls(); }
+  if (nearest.type === "magnet") { const offset = state.mode === "interaction" ? 2 : 1; state.selectedExtraMagnet = nearest.index >= offset ? nearest.index - offset : -1; syncKeyboardPositionControls(); }
   drag = { ...nearest, dx: nearest.point.x - world.x, dy: nearest.point.y - world.y };
   canvas.classList.add("is-dragging"); canvas.setPointerCapture(event.pointerId); event.preventDefault();
 }
