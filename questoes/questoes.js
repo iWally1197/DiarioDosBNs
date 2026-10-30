@@ -32,6 +32,8 @@ import "./questoes-data.js?v=fisica-variada-20261029-3";
   let state = loadProgress(progressStorage,storageKey);
   let activeView = "all";
   let currentPage = 1;
+  let paginationWindowStart = 1;
+  let paginationWindowExpanded = false;
   let searchTimer = 0;
   let quizSession = null;
   let quizTimer = 0;
@@ -390,20 +392,81 @@ import "./questoes-data.js?v=fisica-variada-20261029-3";
     card.append(head,body);
     return card;
   }
-  function renderPagination(total) {
+  function renderPagination(total,preserveWindow=false) {
     pagination.replaceChildren();
     const pages = Math.ceil(total/pageSize);
     if (pages <= 1) return;
-    const previous = document.createElement("button");
-    previous.type = "button";
-    previous.textContent = "‹";
-    previous.setAttribute("aria-label","Página anterior");
+
+    let windowSize = paginationWindowExpanded && pages >= 6 ? 5 : 4;
+    let maxStart = Math.max(1,pages-windowSize+1);
+    paginationWindowStart = Math.max(1,Math.min(paginationWindowStart,maxStart));
+    let windowEnd = Math.min(pages,paginationWindowStart+windowSize-1);
+
+    if (!preserveWindow && (currentPage < paginationWindowStart || currentPage > windowEnd)) {
+      if (currentPage <= 4) {
+        paginationWindowStart = 1;
+        paginationWindowExpanded = false;
+        windowSize = 4;
+      } else {
+        paginationWindowExpanded = true;
+        windowSize = Math.min(5,pages);
+        paginationWindowStart = Math.max(1,Math.min(currentPage-2,pages-windowSize+1));
+      }
+      windowEnd = Math.min(pages,paginationWindowStart+windowSize-1);
+    }
+
     const pageHasAnsweredQuestion = page => Boolean(quizSession && quizSession.ids.slice((page-1)*pageSize,page*pageSize).some(id => Number(state.answers[id]?.attempts) > 0));
-    previous.disabled = currentPage <= 1 || pageHasAnsweredQuestion(currentPage-1);
-    if (pageHasAnsweredQuestion(currentPage-1)) previous.title = "Não é possível voltar para uma página com questões já respondidas.";
-    previous.addEventListener("click",() => { currentPage--; renderQuestions(); });
-    pagination.append(previous);
-    for (let page=1; page<=pages; page++) {
+    const previousRange = document.createElement("button");
+    previousRange.type = "button";
+    previousRange.className = "q-page-range-arrow";
+    previousRange.textContent = "‹";
+    previousRange.setAttribute("aria-label","Mostrar páginas anteriores");
+    previousRange.disabled = paginationWindowStart <= 1;
+    previousRange.addEventListener("click",() => {
+      paginationWindowStart = paginationWindowStart <= 4 ? 1 : paginationWindowStart-4;
+      paginationWindowExpanded = paginationWindowStart > 1;
+      renderPagination(total,true);
+    });
+    pagination.append(previousRange);
+
+    const window = document.createElement("div");
+    window.className = "q-pagination-window";
+    window.setAttribute("role","group");
+    window.setAttribute("aria-label","Arraste para ver outros números de página");
+    let dragStartX = null;
+    let dragPointerId = null;
+    let dragConsumed = false;
+    window.addEventListener("pointerdown",event => {
+      if (event.button !== undefined && event.button !== 0) return;
+      dragStartX = event.clientX;
+      dragPointerId = event.pointerId;
+      try { window.setPointerCapture(event.pointerId); } catch {}
+    });
+    window.addEventListener("pointermove",event => {
+      if (dragStartX !== null && Math.abs(event.clientX-dragStartX) > 20) event.preventDefault();
+    });
+    window.addEventListener("pointerup",event => {
+      if (dragStartX === null || event.pointerId !== dragPointerId) return;
+      const delta = event.clientX-dragStartX;
+      dragStartX = null;
+      dragPointerId = null;
+      if (Math.abs(delta) < 28) return;
+      dragConsumed = true;
+      paginationWindowExpanded = true;
+      const max = Math.max(1,pages-4);
+      paginationWindowStart = Math.max(1,Math.min(max,paginationWindowStart + (delta < 0 ? 1 : -1)));
+      renderPagination(total,true);
+    });
+    window.addEventListener("pointercancel",() => { dragStartX = null; dragPointerId = null; });
+    window.addEventListener("click",event => {
+      if (dragConsumed) {
+        event.preventDefault();
+        event.stopPropagation();
+        dragConsumed = false;
+      }
+    },true);
+
+    for (let page=paginationWindowStart; page<=windowEnd; page++) {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = String(page);
@@ -412,15 +475,25 @@ import "./questoes-data.js?v=fisica-variada-20261029-3";
       if (button.disabled) button.title = "Esta página já contém questões respondidas.";
       button.setAttribute("aria-label","Página " + page);
       button.addEventListener("click",() => { currentPage=page; renderQuestions(); });
-      pagination.append(button);
+      window.append(button);
     }
-    const next = document.createElement("button");
-    next.type = "button";
-    next.textContent = "›";
-    next.setAttribute("aria-label","Próxima página");
-    next.disabled = currentPage >= pages;
-    next.addEventListener("click",() => { currentPage++; renderQuestions(); });
-    pagination.append(next);
+    pagination.append(window);
+
+    const nextRange = document.createElement("button");
+    nextRange.type = "button";
+    nextRange.className = "q-page-range-arrow";
+    nextRange.textContent = "›";
+    nextRange.setAttribute("aria-label","Mostrar próximas páginas");
+    nextRange.disabled = windowEnd >= pages;
+    nextRange.addEventListener("click",() => {
+      const candidate = paginationWindowStart === 1
+        ? (pages >= 8 ? 4 : Math.max(2,pages-4))
+        : paginationWindowStart === 2 ? 4 : paginationWindowStart+4;
+      paginationWindowExpanded = true;
+      paginationWindowStart = Math.max(1,Math.min(Math.max(1,pages-4),candidate));
+      renderPagination(total,true);
+    });
+    pagination.append(nextRange);
   }
   function renderQuestions() {
     const visible = getVisibleQuestions();
