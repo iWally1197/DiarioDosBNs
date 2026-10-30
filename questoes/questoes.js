@@ -5,7 +5,7 @@ import "./questoes-data.js?v=fisica-variada-20261029-4";
 (() => {
   "use strict";
 
-  let allQuestions = Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS : [];
+  let allQuestions = Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS.flat(Infinity) : [];
   const allowedLabs = new Set(["/laboratorio-mru/","/laboratorio-mruv/","/laboratorio-espelhos/","/laboratorio-magnetismo/"]);
   const pageSize = 6;
   const storageKey = "diario-bns-questoes-v1";
@@ -725,7 +725,7 @@ import "./questoes-data.js?v=fisica-variada-20261029-4";
         tags:[]
       };
     });
-    allQuestions = [...databaseQuestions,...(Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS : [])];
+    allQuestions = [...databaseQuestions,...(Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS.flat(Infinity) : [])];
     validation = normalizeQuestionList(allQuestions);
     questions = validation.questions;
     currentPage = 1;
