@@ -299,7 +299,8 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         for (const other of choices.querySelectorAll(".q-choice")) other.classList.toggle("is-selected",other.querySelector("input").checked);
       });
       const text = document.createElement("span");
-      text.textContent = question.imageOnly ? "(" + choice.letter + ")" : "(" + choice.letter + ") " + choice.text;
+      const optionLetter = question.lowercaseChoiceLetters ? choice.letter.toLowerCase() : choice.letter;
+      text.textContent = question.imageOnly ? "(" + optionLetter + ")" : question.lowercaseChoiceLetters ? optionLetter + ") " + choice.text : "(" + optionLetter + ") " + choice.text;
       label.append(radio,text);
       choices.append(label);
     }
@@ -756,7 +757,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
         src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:index === 0 && record.display_format === "image" ? "Imagem completa da questão original do IME" : `Imagem ilustrativa ${index + 1}`
+        alt:index === 0 && String(record.institution || "").toUpperCase() === "IME" ? "Figura original da questão do IME" : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const officialSource = String(record.institution || "").toUpperCase() === "IME"
@@ -783,6 +784,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         images,
         choices:Array.isArray(record.choices) ? record.choices : [],
         correct:record.correct_option,
+        lowercaseChoiceLetters:Number(record.year) === 2025,
         imageOnly:record.display_format === "image",
         solution:record.resolution || "",
         source:officialSource ? `IME · CFG ${officialSource.cycle}, questão original ${originalQuestionNumber}.` : "",
