@@ -7,6 +7,15 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
 
   let allQuestions = Array.isArray(window.DIARIO_QUESTIONS) ? window.DIARIO_QUESTIONS.flat(Infinity) : [];
   const allowedLabs = new Set(["/laboratorio-mru/","/laboratorio-mruv/","/laboratorio-espelhos/","/laboratorio-magnetismo/"]);
+  const localQuestionFigures = {
+    "419cde9d-839c-49c4-b111-a1d1cfd95f75":[{src:"/questoes/imagens/ita-misseis-2020.svg",alt:"Esquema didático do alvo em movimento e das trajetórias dos dois mísseis; fora de escala."}],
+    "5513e8aa-0cae-4bc5-92ca-96f8b3311fe8":[{src:"/questoes/imagens/fuvest-ciclo-pv-2015.svg",alt:"Diagrama p-V do ciclo triangular descrito no enunciado."}],
+    "e22cc610-98bf-44e5-aa8e-c9b882f79d03":[{src:"/questoes/imagens/uerj-campo-eletrico-pontos.svg",alt:"Pontos I a IV alinhados no sentido do campo elétrico uniforme."}],
+    "e6abd983-48e7-403a-927b-cf6bc31912d6":[{src:"/questoes/imagens/fuvest-trajetorias-pv-2019.svg",alt:"Esquema p-V de três trajetórias entre os mesmos estados, com C acima de B e B acima de A."}],
+    "87165235-09a4-499b-909b-ce801271e9de":[{src:"/questoes/imagens/ufrgs-ciclos-pv-2022.svg",alt:"Esquema p-V mostrando os sentidos dos quatro ciclos."}],
+    "6fabcb18-45dd-4b48-b7a2-dabcbbcf133f":[{src:"/questoes/imagens/fuvest-ciclo-adiabatico-2024.svg",alt:"Esquema qualitativo das etapas adiabáticas e isovolumétricas do ciclo."}],
+    "08482649-c19f-4d58-bf9d-c1d33134c71e":[{src:"/questoes/imagens/enem-absorcao-tecidos-2017.svg",alt:"Gráfico qualitativo de absorção por melanina, oxi-hemoglobina e água."}]
+  };
   const pageSize = 6;
   const storageKey = "diario-bns-questoes-v1";
   const filterConfig = [
@@ -730,6 +739,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         src:database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
         alt:index === 0 && record.display_format === "image" ? "Imagem completa do enunciado" : `Imagem ilustrativa ${index + 1}`
       }));
+      if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       return {
         id:"admin-" + record.id,
         title:record.title,
