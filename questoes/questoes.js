@@ -761,11 +761,15 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const officialSource = String(record.institution || "").toUpperCase() === "IME"
-        ? (Number(record.year) === 2024
-          ? {cycle:"2023/2024",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Gabarito_Prova_Objetiva_1_FASE.pdf"}
-          : Number(record.year) === 2025
-            ? {cycle:"2024/2025",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/CFG_Objetiva_24_25.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/GabaritoFINAL20242025.pdf"}
-            : null)
+        ? (Number(record.year) === 2022
+          ? {cycle:"2021/2022",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/CFG1fase2021.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/GabaritoDEFINITIVO.pdf"}
+          : Number(record.year) === 2023
+            ? {cycle:"2022/2023",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2022-2023/provaobjetiva2022.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2022-2023/gabaritooficialbjetiva20222023.pdf"}
+            : Number(record.year) === 2024
+              ? {cycle:"2023/2024",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Gabarito_Prova_Objetiva_1_FASE.pdf"}
+              : Number(record.year) === 2025
+                ? {cycle:"2024/2025",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/CFG_Objetiva_24_25.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/GabaritoFINAL20242025.pdf"}
+                : null)
         : null;
       const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
@@ -813,3 +817,4 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
 
   loadPublishedQuestions().catch(() => {});
 })();
+
