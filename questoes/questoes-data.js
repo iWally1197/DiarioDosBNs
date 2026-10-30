@@ -4767,4 +4767,1107 @@ window.DIARIO_QUESTIONS = [
     ]
   }
 ]
+,
+[
+  {
+    "id": "questao-extra-20261029-76",
+    "title": "Temperatura final após mistura de água",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Equilíbrio térmico",
+    "bank": "Autoral — estilo FUVEST",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Misturam-se 100 g de água a 80 °C com 300 g de água a 20 °C, em um recipiente isolado. Desprezando o calor do recipiente, qual é a temperatura de equilíbrio?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "40 °C"
+      },
+      {
+        "letter": "B",
+        "text": "42 °C"
+      },
+      {
+        "letter": "C",
+        "text": "44 °C"
+      },
+      {
+        "letter": "D",
+        "text": "48 °C"
+      },
+      {
+        "letter": "E",
+        "text": "50 °C"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Equilíbrio térmico",
+      "calorimetria"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-77",
+    "title": "Rendimento máximo de uma máquina térmica",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Máquina de Carnot",
+    "bank": "Autoral — estilo OBF",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Uma máquina ideal opera entre reservatórios a 500 K e 300 K. Qual é seu rendimento máximo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "20%"
+      },
+      {
+        "letter": "B",
+        "text": "30%"
+      },
+      {
+        "letter": "C",
+        "text": "35%"
+      },
+      {
+        "letter": "D",
+        "text": "40%"
+      },
+      {
+        "letter": "E",
+        "text": "60%"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Máquina de Carnot",
+      "rendimento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-78",
+    "title": "Velocidade mínima no ponto mais alto de um looping",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento circular vertical",
+    "bank": "Autoral — estilo ITA/IME",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um carrinho percorre um looping vertical de raio 1,6 m. Adote g = 10 m/s². Qual velocidade mínima ele deve ter no ponto mais alto para manter contato com a pista?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "4 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "5 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "8 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "16 m/s"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento circular vertical",
+      "looping"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-79",
+    "title": "Energia de uma esfera rolando sem deslizar",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Rolamento e energia cinética",
+    "bank": "Autoral — estilo EFOMM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Difícil",
+    "statement": "Uma esfera maciça de massa 2,0 kg rola sem deslizar com velocidade do centro de massa de 3,0 m/s. Para uma esfera maciça, I = 2mR²/5. Qual é sua energia cinética total?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "9,0 J"
+      },
+      {
+        "letter": "B",
+        "text": "10,8 J"
+      },
+      {
+        "letter": "C",
+        "text": "12,6 J"
+      },
+      {
+        "letter": "D",
+        "text": "18 J"
+      },
+      {
+        "letter": "E",
+        "text": "27 J"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Rolamento e energia cinética",
+      "rolamento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-80",
+    "title": "Conservação do momento angular de uma patinadora",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Momento angular",
+    "bank": "Autoral — estilo ENEM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Uma patinadora gira com momento de inércia 5,0 kg·m² e velocidade angular 1,2 rad/s. Ao recolher os braços, seu momento de inércia passa a 2,0 kg·m². Desprezando torques externos, qual é a nova velocidade angular?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,48 rad/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,2 rad/s"
+      },
+      {
+        "letter": "C",
+        "text": "3,0 rad/s"
+      },
+      {
+        "letter": "D",
+        "text": "4,2 rad/s"
+      },
+      {
+        "letter": "E",
+        "text": "6,0 rad/s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Momento angular",
+      "rotação"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-81",
+    "title": "Lei das áreas de Kepler",
+    "discipline": "Física",
+    "subject": "Astronomia",
+    "subtopic": "Segunda lei de Kepler",
+    "bank": "Autoral — estilo FUVEST",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "De acordo com a segunda lei de Kepler, uma linha que liga um planeta ao Sol varre áreas iguais em:",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "intervalos de tempo iguais"
+      },
+      {
+        "letter": "B",
+        "text": "distâncias iguais ao Sol"
+      },
+      {
+        "letter": "C",
+        "text": "ângulos iguais"
+      },
+      {
+        "letter": "D",
+        "text": "períodos orbitais diferentes"
+      },
+      {
+        "letter": "E",
+        "text": "velocidades constantes"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Astronomia",
+      "Segunda lei de Kepler",
+      "órbitas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-82",
+    "title": "Dilatação temporal em uma viagem relativística",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Dilatação do tempo",
+    "bank": "Autoral — estilo OBF",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Uma nave viaja com fator de Lorentz γ = 2. Para um relógio que acompanha a nave passam 3,0 s. Quanto tempo mede um observador no referencial em que a nave está em movimento?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,5 s"
+      },
+      {
+        "letter": "B",
+        "text": "3,0 s"
+      },
+      {
+        "letter": "C",
+        "text": "4,5 s"
+      },
+      {
+        "letter": "D",
+        "text": "6,0 s"
+      },
+      {
+        "letter": "E",
+        "text": "9,0 s"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Dilatação do tempo",
+      "relatividade"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-83",
+    "title": "Massa restante após decaimento radioativo",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Meia-vida",
+    "bank": "Autoral — estilo ITA/IME",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Uma amostra radioativa de 160 mg tem meia-vida de 4 horas. Qual massa permanece após 16 horas?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "5 mg"
+      },
+      {
+        "letter": "B",
+        "text": "8 mg"
+      },
+      {
+        "letter": "C",
+        "text": "10 mg"
+      },
+      {
+        "letter": "D",
+        "text": "20 mg"
+      },
+      {
+        "letter": "E",
+        "text": "40 mg"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Meia-vida",
+      "radioatividade"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-84",
+    "title": "Resistência de um fio metálico",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Resistividade elétrica",
+    "bank": "Autoral — estilo EFOMM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um fio tem resistividade 2,8 × 10⁻⁸ Ω·m, comprimento 5,0 m e área transversal 1,0 × 10⁻⁶ m². Qual é sua resistência elétrica?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,014 Ω"
+      },
+      {
+        "letter": "B",
+        "text": "0,14 Ω"
+      },
+      {
+        "letter": "C",
+        "text": "1,4 Ω"
+      },
+      {
+        "letter": "D",
+        "text": "14 Ω"
+      },
+      {
+        "letter": "E",
+        "text": "140 Ω"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Resistividade elétrica",
+      "resistência"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-85",
+    "title": "Tensão no secundário de um transformador",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Transformadores",
+    "bank": "Autoral — estilo ENEM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Um transformador ideal tem 1 000 espiras no primário e 100 no secundário. Se o primário recebe 120 V alternados, qual é a tensão eficaz no secundário?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,2 V"
+      },
+      {
+        "letter": "B",
+        "text": "10 V"
+      },
+      {
+        "letter": "C",
+        "text": "12 V"
+      },
+      {
+        "letter": "D",
+        "text": "120 V"
+      },
+      {
+        "letter": "E",
+        "text": "1 200 V"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Transformadores",
+      "indução"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-86",
+    "title": "Energia armazenada em um capacitor",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Capacitores",
+    "bank": "Autoral — estilo FUVEST",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um capacitor de 40 μF está submetido a uma diferença de potencial de 50 V. Qual energia elétrica fica armazenada nele?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,005 J"
+      },
+      {
+        "letter": "B",
+        "text": "0,050 J"
+      },
+      {
+        "letter": "C",
+        "text": "0,10 J"
+      },
+      {
+        "letter": "D",
+        "text": "0,50 J"
+      },
+      {
+        "letter": "E",
+        "text": "5,0 J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Capacitores",
+      "energia elétrica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-87",
+    "title": "Frequência fundamental de um tubo aberto",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Ondas estacionárias em tubos",
+    "bank": "Autoral — estilo OBF",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um tubo aberto nas duas extremidades tem comprimento 0,50 m. Considerando a velocidade do som igual a 340 m/s, qual é a frequência fundamental?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "340 Hz"
+      },
+      {
+        "letter": "B",
+        "text": "170 Hz"
+      },
+      {
+        "letter": "C",
+        "text": "85 Hz"
+      },
+      {
+        "letter": "D",
+        "text": "680 Hz"
+      },
+      {
+        "letter": "E",
+        "text": "1 360 Hz"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Ondas estacionárias em tubos",
+      "ressonância"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-88",
+    "title": "Ângulo limite na passagem do vidro para o ar",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Reflexão total interna",
+    "bank": "Autoral — estilo ITA/IME",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um raio se propaga no vidro de índice de refração 1,50 e incide na interface com o ar, de índice 1,00. Qual é aproximadamente o ângulo limite medido em relação à normal?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "24°"
+      },
+      {
+        "letter": "B",
+        "text": "30°"
+      },
+      {
+        "letter": "C",
+        "text": "36°"
+      },
+      {
+        "letter": "D",
+        "text": "42°"
+      },
+      {
+        "letter": "E",
+        "text": "60°"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Reflexão total interna",
+      "refração"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-89",
+    "title": "Aceleração de um bloco em um plano inclinado com atrito",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Atrito em plano inclinado",
+    "bank": "Autoral — estilo EFOMM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Difícil",
+    "statement": "Um bloco desliza para baixo em um plano inclinado de 30°. O coeficiente de atrito cinético é 0,50. Adote g = 10 m/s² e cos 30° = 0,866. Qual é aproximadamente a aceleração do bloco?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,17 m/s²"
+      },
+      {
+        "letter": "B",
+        "text": "0,50 m/s²"
+      },
+      {
+        "letter": "C",
+        "text": "0,67 m/s²"
+      },
+      {
+        "letter": "D",
+        "text": "1,3 m/s²"
+      },
+      {
+        "letter": "E",
+        "text": "5,0 m/s²"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Atrito em plano inclinado",
+      "atrito"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-90",
+    "title": "Velocidade de escape de um planeta",
+    "discipline": "Física",
+    "subject": "Gravitação",
+    "subtopic": "Velocidade de escape",
+    "bank": "Autoral — estilo ENEM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um planeta tem raio 2,0 × 10⁶ m e aceleração gravitacional na superfície de 8,0 m/s². Usando vₑ = √(2gR), qual é aproximadamente a velocidade de escape?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,8 km/s"
+      },
+      {
+        "letter": "B",
+        "text": "5,7 km/s"
+      },
+      {
+        "letter": "C",
+        "text": "8,0 km/s"
+      },
+      {
+        "letter": "D",
+        "text": "11 km/s"
+      },
+      {
+        "letter": "E",
+        "text": "16 km/s"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Gravitação",
+      "Velocidade de escape",
+      "gravitação"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-91",
+    "title": "Energia potencial elástica de uma mola",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Energia potencial elástica",
+    "bank": "Autoral — estilo FUVEST",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Uma mola ideal de constante elástica 50 N/m é deformada em 0,20 m. Qual energia potencial elástica fica armazenada?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,10 J"
+      },
+      {
+        "letter": "B",
+        "text": "0,50 J"
+      },
+      {
+        "letter": "C",
+        "text": "1,0 J"
+      },
+      {
+        "letter": "D",
+        "text": "2,0 J"
+      },
+      {
+        "letter": "E",
+        "text": "10 J"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Energia potencial elástica",
+      "molas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-92",
+    "title": "Frequência de batimentos sonoros",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Batimentos",
+    "bank": "Autoral — estilo OBF",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Duas fontes sonoras emitem frequências de 440 Hz e 442 Hz simultaneamente. Qual é a frequência dos batimentos percebidos?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2 Hz"
+      },
+      {
+        "letter": "B",
+        "text": "4 Hz"
+      },
+      {
+        "letter": "C",
+        "text": "220 Hz"
+      },
+      {
+        "letter": "D",
+        "text": "441 Hz"
+      },
+      {
+        "letter": "E",
+        "text": "882 Hz"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Batimentos",
+      "som"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-93",
+    "title": "Intensidade luminosa ao aumentar a distância",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Lei do inverso do quadrado",
+    "bank": "Autoral — estilo ITA/IME",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Uma fonte pontual isotrópica ilumina uma superfície. Se a distância até a fonte triplica, mantendo-se as demais condições, a intensidade recebida passa a ser:",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "três vezes maior"
+      },
+      {
+        "letter": "B",
+        "text": "um terço"
+      },
+      {
+        "letter": "C",
+        "text": "duas vezes menor"
+      },
+      {
+        "letter": "D",
+        "text": "um nono"
+      },
+      {
+        "letter": "E",
+        "text": "nove vezes maior"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Lei do inverso do quadrado",
+      "intensidade"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-94",
+    "title": "Constante de tempo de um circuito RC",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Circuito RC",
+    "bank": "Autoral — estilo EFOMM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um circuito RC tem resistência de 20 kΩ e capacitância de 50 μF. Qual é sua constante de tempo τ = RC?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,10 s"
+      },
+      {
+        "letter": "B",
+        "text": "0,50 s"
+      },
+      {
+        "letter": "C",
+        "text": "1,0 s"
+      },
+      {
+        "letter": "D",
+        "text": "2,5 s"
+      },
+      {
+        "letter": "E",
+        "text": "10 s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Circuito RC",
+      "circuitos"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-95",
+    "title": "Calor recebido por um gás a volume constante",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Transformação isovolumétrica",
+    "bank": "Autoral — estilo ENEM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um mol de gás ideal recebe calor a volume constante. Sua capacidade térmica molar nessa transformação é 12,5 J/(mol·K), e a temperatura aumenta 40 K. Quanto calor o gás recebe?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "125 J"
+      },
+      {
+        "letter": "B",
+        "text": "500 J"
+      },
+      {
+        "letter": "C",
+        "text": "800 J"
+      },
+      {
+        "letter": "D",
+        "text": "1 000 J"
+      },
+      {
+        "letter": "E",
+        "text": "2 000 J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Transformação isovolumétrica",
+      "gás ideal"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-96",
+    "title": "Energia de um fóton violeta",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Energia do fóton",
+    "bank": "Autoral — estilo FUVEST",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um fóton tem comprimento de onda 400 nm. Use h = 6,63 × 10⁻³⁴ J·s e c = 3,0 × 10⁸ m/s. Qual é aproximadamente sua energia?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,66 × 10⁻¹⁹ J"
+      },
+      {
+        "letter": "B",
+        "text": "4,97 × 10⁻¹⁹ J"
+      },
+      {
+        "letter": "C",
+        "text": "6,63 × 10⁻¹⁹ J"
+      },
+      {
+        "letter": "D",
+        "text": "1,99 × 10⁻¹⁸ J"
+      },
+      {
+        "letter": "E",
+        "text": "4,97 × 10⁻¹⁶ J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Energia do fóton",
+      "quantização"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-97",
+    "title": "Potência para elevar uma carga",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Potência mecânica",
+    "bank": "Autoral — estilo OBF",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um elevador ergue uma carga de 800 kg a uma altura de 15 m em 20 s, com velocidade constante. Adote g = 10 m/s². Qual potência útil média é necessária?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "600 W"
+      },
+      {
+        "letter": "B",
+        "text": "1 200 W"
+      },
+      {
+        "letter": "C",
+        "text": "3 000 W"
+      },
+      {
+        "letter": "D",
+        "text": "6 000 W"
+      },
+      {
+        "letter": "E",
+        "text": "12 000 W"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Potência mecânica",
+      "trabalho e energia"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-98",
+    "title": "Velocidade de onda em uma corda",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Ondas em cordas",
+    "bank": "Autoral — estilo ITA/IME",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Difícil",
+    "statement": "Uma corda está sob tensão de 80 N e tem densidade linear de 5,0 × 10⁻³ kg/m. Usando v = √(T/μ), qual é aproximadamente a velocidade de propagação da onda?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "40 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "80 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "100 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "113 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "126 m/s"
+      }
+    ],
+    "correct": "E",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Ondas em cordas",
+      "ondas mecânicas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-99",
+    "title": "Taxa de condução de calor em uma parede",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Condução térmica",
+    "bank": "Autoral — estilo EFOMM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Uma parede de condutividade térmica 0,60 W/(m·K), área 4,0 m² e espessura 0,10 m separa ambientes com diferença de temperatura de 25 K. Qual é a taxa de transferência de calor por condução?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "60 W"
+      },
+      {
+        "letter": "B",
+        "text": "600 W"
+      },
+      {
+        "letter": "C",
+        "text": "1 500 W"
+      },
+      {
+        "letter": "D",
+        "text": "6 000 W"
+      },
+      {
+        "letter": "E",
+        "text": "15 000 W"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Condução térmica",
+      "transferência de calor"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-100",
+    "title": "Empuxo sobre um corpo imerso em água",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Princípio de Arquimedes",
+    "bank": "Autoral — estilo ENEM",
+    "institution": "Diário dos BNs",
+    "year": 2026,
+    "difficulty": "Fácil",
+    "statement": "Um corpo totalmente imerso desloca 2,0 × 10⁻³ m³ de água. Considere a densidade da água 1 000 kg/m³ e g = 10 m/s². Qual é o módulo do empuxo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,0 N"
+      },
+      {
+        "letter": "B",
+        "text": "10 N"
+      },
+      {
+        "letter": "C",
+        "text": "20 N"
+      },
+      {
+        "letter": "D",
+        "text": "200 N"
+      },
+      {
+        "letter": "E",
+        "text": "2 000 N"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral elaborada para o Diário dos BNs; não corresponde à transcrição de uma prova específica.",
+    "license": "Enunciado e alternativas originais; questão autoral.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Princípio de Arquimedes",
+      "empuxo"
+    ]
+  }
+]
 ];
