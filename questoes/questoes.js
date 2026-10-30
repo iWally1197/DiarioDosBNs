@@ -1,6 +1,6 @@
 import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=question-lock-20261014-1";
 import {supabasePromise} from "/src-supabase.js";
-import "./questoes-data.js";
+import "./questoes-data.js?v=cometas-20261029-1";
 
 (() => {
   "use strict";
@@ -375,6 +375,15 @@ import "./questoes-data.js";
       const source = document.createElement("p");
       source.className = "q-source";
       source.textContent = "Fonte: " + question.source + (question.license ? " " + question.license : "");
+      if (question.sourceUrl) {
+        const sourceLink = document.createElement("a");
+        sourceLink.className = "q-source-link";
+        sourceLink.href = question.sourceUrl;
+        sourceLink.target = "_blank";
+        sourceLink.rel = "noopener noreferrer";
+        sourceLink.textContent = "Consultar prova original";
+        source.append(document.createTextNode(" "), sourceLink);
+      }
       footer.append(source);
     }
     body.append(choices,actions,feedback,solution,footer);
