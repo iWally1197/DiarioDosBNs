@@ -2511,4 +2511,1132 @@ window.DIARIO_QUESTIONS = [
     ]
   }
 ]
+,
+[
+  {
+    "id": "questao-extra-20261029-26",
+    "title": "Trabalho para elevar uma carga por uma rampa",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Trabalho e máquinas simples",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma carga de peso 300 N deve subir 1,5 m por uma rampa de 6,0 m. Despreze o atrito e suponha que a força aplicada seja paralela à rampa. Qual é o módulo dessa força?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "50 N"
+      },
+      {
+        "letter": "B",
+        "text": "75 N"
+      },
+      {
+        "letter": "C",
+        "text": "100 N"
+      },
+      {
+        "letter": "D",
+        "text": "150 N"
+      },
+      {
+        "letter": "E",
+        "text": "300 N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 10 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Trabalho e máquinas simples",
+      "plano inclinado"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-27",
+    "title": "Por que o metal parece mais frio que o plástico",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Condução térmica",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Duas placas, uma de metal e outra de plástico, ficaram por bastante tempo na mesma sala. Ao tocá-las, a placa metálica parece mais fria. Qual explicação é compatível com essa observação?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "As placas podem estar à mesma temperatura, mas o metal conduz calor da mão mais rapidamente."
+      },
+      {
+        "letter": "B",
+        "text": "O metal está necessariamente a uma temperatura menor que a do plástico."
+      },
+      {
+        "letter": "C",
+        "text": "O plástico conduz calor melhor e retira energia da mão mais depressa."
+      },
+      {
+        "letter": "D",
+        "text": "A sensação prova que a placa metálica está abaixo de 0 °C."
+      },
+      {
+        "letter": "E",
+        "text": "O metal produz frio, que passa para a mão."
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 11 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Condução térmica",
+      "calor"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-28",
+    "title": "Gelo flutuando em um copo cheio",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Mudanças de estado e calor",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um copo cheio até a borda contém água e cubos de gelo que flutuam, sem tocar o fundo. Considere: I. gotas na parte externa podem vir da condensação do vapor de água do ar; II. ao derreter, o gelo necessariamente faz o nível subir; III. a água transfere calor para o gelo durante a fusão. Quais afirmações são corretas?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Apenas I"
+      },
+      {
+        "letter": "B",
+        "text": "Apenas II"
+      },
+      {
+        "letter": "C",
+        "text": "Apenas I e III"
+      },
+      {
+        "letter": "D",
+        "text": "Apenas II e III"
+      },
+      {
+        "letter": "E",
+        "text": "I, II e III"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 12 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Mudanças de estado e calor",
+      "mudança de estado"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-29",
+    "title": "Rodas internas e externas em uma curva",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento circular e rolamento",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Um automóvel faz uma curva de raio constante, com rapidez constante, e suas rodas rolam sem escorregar. Comparadas às rodas internas, as rodas externas percorrem arcos maiores no mesmo intervalo de tempo. Sobre a rotação das rodas em torno dos próprios eixos, qual afirmação é correta?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "As internas têm maior velocidade angular e aceleração angular positiva."
+      },
+      {
+        "letter": "B",
+        "text": "As externas têm menor velocidade angular e aceleração angular nula."
+      },
+      {
+        "letter": "C",
+        "text": "Todas têm a mesma velocidade angular e aceleração angular positiva."
+      },
+      {
+        "letter": "D",
+        "text": "As externas têm maior velocidade angular e, nesse movimento uniforme, aceleração angular nula."
+      },
+      {
+        "letter": "E",
+        "text": "As internas têm maior velocidade angular e todas têm aceleração angular nula."
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 13 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento circular e rolamento",
+      "rolamento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-30",
+    "title": "Como as gotículas formam o arco-íris",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Refração, dispersão e reflexão interna",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Na formação do arco-íris primário, a luz solar interage com gotículas de água. Qual sequência descreve melhor o processo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "A luz é absorvida pela gota e reemitida sem mudar de direção."
+      },
+      {
+        "letter": "B",
+        "text": "A refração na entrada dispersa as cores; uma reflexão interna redireciona a luz; e a refração na saída contribui para separá-las."
+      },
+      {
+        "letter": "C",
+        "text": "Apenas a reflexão externa separa as cores, sem refração."
+      },
+      {
+        "letter": "D",
+        "text": "A difração na superfície da gota produz todas as cores do arco."
+      },
+      {
+        "letter": "E",
+        "text": "A gota transforma luz branca em luz monocromática."
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 14 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Refração, dispersão e reflexão interna",
+      "arco-íris"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-31",
+    "title": "Tempo para erguer um balde com um sarilho",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Roda e eixo",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um sarilho enrola uma corda em um cilindro de raio 0,10 m. O balde precisa subir 6,0 m, e a manivela completa uma volta a cada 4,0 s. Desprezando o deslizamento da corda, qual é aproximadamente o tempo de subida? Use π ≈ 3,14.",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "12 s"
+      },
+      {
+        "letter": "B",
+        "text": "20 s"
+      },
+      {
+        "letter": "C",
+        "text": "40 s"
+      },
+      {
+        "letter": "D",
+        "text": "60 s"
+      },
+      {
+        "letter": "E",
+        "text": "80 s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 16 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Roda e eixo",
+      "máquinas simples"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-32",
+    "title": "Força para sustentar um balde na manivela",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Equilíbrio de torques",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um balde de massa total 12 kg fica suspenso por uma corda enrolada em um cilindro de raio 0,10 m. Uma pessoa aplica força perpendicular à manivela, cujo braço mede 0,30 m. Qual força mínima mantém o balde parado? Use g = 10 m/s².",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "20 N"
+      },
+      {
+        "letter": "B",
+        "text": "40 N"
+      },
+      {
+        "letter": "C",
+        "text": "60 N"
+      },
+      {
+        "letter": "D",
+        "text": "80 N"
+      },
+      {
+        "letter": "E",
+        "text": "120 N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 17 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Equilíbrio de torques",
+      "torque"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-33",
+    "title": "Lupa concentrando a luz solar",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Lentes e energia luminosa",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma lupa é usada para concentrar a luz do Sol sobre um pedaço de papel. Qual afirmação explica corretamente o aquecimento?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "A lupa cria energia luminosa adicional, e o papel queima ao atingir um valor de energia total."
+      },
+      {
+        "letter": "B",
+        "text": "A lupa concentra a energia luminosa incidente, elevando a temperatura do papel até a ignição."
+      },
+      {
+        "letter": "C",
+        "text": "A lupa converte a luz em frio, que é absorvido pelo papel."
+      },
+      {
+        "letter": "D",
+        "text": "A lupa aumenta a frequência da luz até que o papel se incendeie."
+      },
+      {
+        "letter": "E",
+        "text": "O papel queima porque a lupa impede qualquer troca de calor com o ar."
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 18 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Lentes e energia luminosa",
+      "lupa"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-34",
+    "title": "Queda livre: metade da altura e metade da velocidade final",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Queda livre",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Um parafuso é solto do repouso de uma altura h e cai em queda livre, sem resistência do ar. Compare o instante t₁ em que ele está à altura h/2 com o instante t₂ em que sua rapidez é metade da rapidez imediatamente antes de tocar o solo. Qual relação é correta?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "t₂ = t₁ e t₂ = t_f/2"
+      },
+      {
+        "letter": "B",
+        "text": "t₂ = t₁ e t₂ < t_f/2"
+      },
+      {
+        "letter": "C",
+        "text": "t₂ = t₁ e t₂ > t_f/2"
+      },
+      {
+        "letter": "D",
+        "text": "t₂ < t₁ e t₂ = t_f/2"
+      },
+      {
+        "letter": "E",
+        "text": "t₂ > t₁ e t₂ = t_f/2"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 19 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Queda livre",
+      "queda livre"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-35",
+    "title": "Energia durante o quique de uma bola",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Colisões e energia mecânica",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma bola de borracha cai sobre um piso rígido e retorna com rapidez menor que a rapidez de chegada. Considere: I. durante a compressão, parte da energia cinética transforma-se em energia potencial elástica; II. o piso armazena toda a energia que lança a bola de volta; III. parte da energia mecânica transforma-se em outras formas, como energia térmica e som. Quais afirmações são corretas?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Apenas I"
+      },
+      {
+        "letter": "B",
+        "text": "Apenas II"
+      },
+      {
+        "letter": "C",
+        "text": "Apenas III"
+      },
+      {
+        "letter": "D",
+        "text": "Apenas I e II"
+      },
+      {
+        "letter": "E",
+        "text": "Apenas I e III"
+      }
+    ],
+    "correct": "E",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 20 da OBF 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Colisões e energia mecânica",
+      "colisão"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-36",
+    "title": "Período orbital e raio da órbita",
+    "discipline": "Física",
+    "subject": "Gravitação",
+    "subtopic": "Leis de Kepler",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Dois satélites de massa desprezível orbitam o mesmo planeta em órbitas circulares. Se o raio orbital de um deles é três vezes maior que o do outro, qual é a razão entre seus períodos, maior sobre menor?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "√3"
+      },
+      {
+        "letter": "B",
+        "text": "3√3"
+      },
+      {
+        "letter": "C",
+        "text": "9"
+      },
+      {
+        "letter": "D",
+        "text": "27"
+      },
+      {
+        "letter": "E",
+        "text": "1/3"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 15 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Gravitação",
+      "Leis de Kepler",
+      "órbita"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-37",
+    "title": "Três molas idênticas em série",
+    "discipline": "Física",
+    "subject": "Oscilações",
+    "subtopic": "Sistema massa-mola",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Uma massa m oscila presa a uma mola de constante elástica k, com período T₀. Depois, a mesma massa é presa a três molas idênticas de constante k conectadas em série. Qual será o novo período?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "T₀/3"
+      },
+      {
+        "letter": "B",
+        "text": "T₀/√3"
+      },
+      {
+        "letter": "C",
+        "text": "√3 T₀"
+      },
+      {
+        "letter": "D",
+        "text": "3T₀"
+      },
+      {
+        "letter": "E",
+        "text": "3√3 T₀"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 16 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Oscilações",
+      "Sistema massa-mola",
+      "molas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-38",
+    "title": "Calor e trabalho em uma expansão isotérmica",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Primeira lei da Termodinâmica",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Um gás ideal sofre uma expansão isotérmica e recebe 120 J de calor. Adotando que o trabalho realizado pelo gás é positivo, qual é o trabalho realizado pelo gás nesse processo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0 J"
+      },
+      {
+        "letter": "B",
+        "text": "60 J"
+      },
+      {
+        "letter": "C",
+        "text": "120 J"
+      },
+      {
+        "letter": "D",
+        "text": "240 J"
+      },
+      {
+        "letter": "E",
+        "text": "Não é possível relacionar calor e trabalho"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 18 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Primeira lei da Termodinâmica",
+      "termodinâmica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-39",
+    "title": "Amplificação sonora em um estetoscópio ideal",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Intensidade sonora e decibéis",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Em um modelo ideal, toda a potência sonora que atravessa uma membrana circular de raio R₁ chega a uma área circular menor de raio R₂. Se R₁/R₂ = 4, qual é aproximadamente o aumento do nível de intensidade sonora? Use Δβ = 10 log₁₀(I₂/I₁).",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "3 dB"
+      },
+      {
+        "letter": "B",
+        "text": "6 dB"
+      },
+      {
+        "letter": "C",
+        "text": "9 dB"
+      },
+      {
+        "letter": "D",
+        "text": "12 dB"
+      },
+      {
+        "letter": "E",
+        "text": "24 dB"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 19 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Intensidade sonora e decibéis",
+      "decibéis"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-40",
+    "title": "Capacitor com duas regiões dielétricas",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Capacitância e dielétricos",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Entre duas placas paralelas de área total A e separação d, dois dielétricos ocupam metades laterais iguais da área, sem se sobrepor. Suas constantes dielétricas relativas são κ₁ = 2 e κ₂ = 4. Qual é a capacitância equivalente, desprezando efeitos de borda?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "ε₀A/d"
+      },
+      {
+        "letter": "B",
+        "text": "2ε₀A/d"
+      },
+      {
+        "letter": "C",
+        "text": "3ε₀A/d"
+      },
+      {
+        "letter": "D",
+        "text": "4ε₀A/d"
+      },
+      {
+        "letter": "E",
+        "text": "6ε₀A/d"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 21 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Capacitância e dielétricos",
+      "capacitores"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-41",
+    "title": "Corrente induzida em uma espira circular",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Lei de Faraday-Lenz",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Uma espira única de raio 0,10 m está em um campo magnético perpendicular ao seu plano. O campo diminui uniformemente a 0,20 T/s, e a resistência da espira é 0,50 Ω. Qual é aproximadamente a corrente induzida? Use π ≈ 3,14.",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,3 mA"
+      },
+      {
+        "letter": "B",
+        "text": "6,3 mA"
+      },
+      {
+        "letter": "C",
+        "text": "12,6 mA"
+      },
+      {
+        "letter": "D",
+        "text": "25,1 mA"
+      },
+      {
+        "letter": "E",
+        "text": "62,8 mA"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 23 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Lei de Faraday-Lenz",
+      "indução"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-42",
+    "title": "Variação de energia em um espalhamento Raman",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Energia do fóton",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Um fóton de comprimento de onda 500 nm é espalhado por um material e sai com comprimento de onda 520 nm. Usando hc = 1 240 eV·nm, quanto de energia aproximadamente o fóton transferiu ao material?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,0095 eV"
+      },
+      {
+        "letter": "B",
+        "text": "0,095 eV"
+      },
+      {
+        "letter": "C",
+        "text": "0,19 eV"
+      },
+      {
+        "letter": "D",
+        "text": "2,38 eV"
+      },
+      {
+        "letter": "E",
+        "text": "2,48 eV"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 24 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Energia do fóton",
+      "efeito Raman"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-43",
+    "title": "Instante de aproximação mínima ao eixo",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Função horária e ponto de retorno",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "A posição de uma partícula é x(t) = √[D² + (Vt − D)²], com D > 0 e V > 0. Em que instante a partícula atinge sua menor posição x?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "D/(2V)"
+      },
+      {
+        "letter": "B",
+        "text": "D/V"
+      },
+      {
+        "letter": "C",
+        "text": "2D/V"
+      },
+      {
+        "letter": "D",
+        "text": "D/V²"
+      },
+      {
+        "letter": "E",
+        "text": "2D²/V"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 13 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Função horária e ponto de retorno",
+      "movimento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-44",
+    "title": "Medição de uma resistência desconhecida",
+    "discipline": "Física",
+    "subject": "Eletricidade",
+    "subtopic": "Circuito em série e lei de Ohm",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Uma fonte ideal de 12 V está ligada em série a um resistor de 20 Ω e a um resistor desconhecido Rₓ. Um amperímetro ideal indica corrente de 0,40 A. Qual é o valor de Rₓ?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "4 Ω"
+      },
+      {
+        "letter": "B",
+        "text": "10 Ω"
+      },
+      {
+        "letter": "C",
+        "text": "12 Ω"
+      },
+      {
+        "letter": "D",
+        "text": "20 Ω"
+      },
+      {
+        "letter": "E",
+        "text": "50 Ω"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 22 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletricidade",
+      "Circuito em série e lei de Ohm",
+      "resistores"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-45",
+    "title": "Velocidade após um trecho acelerado e uma descida",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Conservação da energia mecânica",
+    "bank": "ITA 2025 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Um carrinho parte do repouso e percorre um trecho horizontal de comprimento ℓ com aceleração constante a₀. Em seguida, desce sem atrito uma curva que reduz sua altura em R. Qual é sua rapidez ao final? Use g para a aceleração da gravidade.",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "√(a₀ℓ + gR)"
+      },
+      {
+        "letter": "B",
+        "text": "√(2a₀ℓ + 2gR)"
+      },
+      {
+        "letter": "C",
+        "text": "√(2a₀ℓ + gR)"
+      },
+      {
+        "letter": "D",
+        "text": "2√(a₀ℓ + gR)"
+      },
+      {
+        "letter": "E",
+        "text": "√(a₀ℓ + 2gR)"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 14 do vestibular ITA 2025; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2025_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Conservação da energia mecânica",
+      "energia mecânica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-46",
+    "title": "Rendimento de um motor elétrico",
+    "discipline": "Física",
+    "subject": "Energia",
+    "subtopic": "Rendimento e potência",
+    "bank": "ENEM 2025 (estilo contextualizado)",
+    "institution": "INEP",
+    "year": 2025,
+    "difficulty": "Fácil",
+    "statement": "Um motor recebe potência elétrica de 1 500 W e fornece 1 200 W de potência mecânica útil. Qual é o rendimento do motor?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "20%"
+      },
+      {
+        "letter": "B",
+        "text": "60%"
+      },
+      {
+        "letter": "C",
+        "text": "75%"
+      },
+      {
+        "letter": "D",
+        "text": "80%"
+      },
+      {
+        "letter": "E",
+        "text": "125%"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral em formato contextualizado, com referência ao acervo oficial do ENEM; não é transcrição de um item específico.",
+    "sourceUrl": "https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem/provas-e-gabaritos/2025",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Energia",
+      "Rendimento e potência",
+      "rendimento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-47",
+    "title": "Temperatura de equilíbrio em uma mistura de água",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Equilíbrio térmico",
+    "bank": "FUVEST 2024 (estilo vestibular)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Misturam-se 200 g de água a 80 °C com 300 g de água a 20 °C em um recipiente termicamente isolado. Despreze a capacidade térmica do recipiente. Qual é a temperatura final de equilíbrio?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "32 °C"
+      },
+      {
+        "letter": "B",
+        "text": "44 °C"
+      },
+      {
+        "letter": "C",
+        "text": "50 °C"
+      },
+      {
+        "letter": "D",
+        "text": "56 °C"
+      },
+      {
+        "letter": "E",
+        "text": "60 °C"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de calorimetria em formato de vestibular, com referência ao acervo oficial da FUVEST; não é transcrição de um item específico.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2024",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Equilíbrio térmico",
+      "calorimetria"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-48",
+    "title": "Força magnética sobre uma carga perto de um fio",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Campo de corrente e força magnética",
+    "bank": "IME 2025/2026 (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2026,
+    "difficulty": "Difícil",
+    "statement": "Um fio retilíneo longo conduz corrente de 5,0 A. A 5,0 cm do fio, uma partícula de carga 2,0 μC move-se a 1 000 m/s perpendicularmente ao campo magnético criado pelo fio. Use B = μ₀I/(2πr) e μ₀/(2π) = 2,0 × 10⁻⁷ T·m/A. Qual é o módulo da força magnética?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "4,0 × 10⁻⁹ N"
+      },
+      {
+        "letter": "B",
+        "text": "4,0 × 10⁻⁸ N"
+      },
+      {
+        "letter": "C",
+        "text": "4,0 × 10⁻⁷ N"
+      },
+      {
+        "letter": "D",
+        "text": "2,0 × 10⁻⁶ N"
+      },
+      {
+        "letter": "E",
+        "text": "4,0 × 10⁻⁵ N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema de força magnética sobre partícula próxima a fio com corrente na prova do IME 2025/2026.",
+    "sourceUrl": "https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2025-2026/Prova1fase2025OBJETIVA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Campo de corrente e força magnética",
+      "força magnética"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-49",
+    "title": "Força sobre um elétron acelerado",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Trabalho e energia cinética",
+    "bank": "IME 2024/2025 EQA (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Um elétron parte do repouso e é acelerado por uma força constante ao longo de 1,5 cm, atingindo 2,0 × 10⁶ m/s. Despreze efeitos relativísticos e use massa do elétron 9,1 × 10⁻³¹ kg. Qual é aproximadamente o módulo da força?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "6,1 × 10⁻¹⁷ N"
+      },
+      {
+        "letter": "B",
+        "text": "1,2 × 10⁻¹⁶ N"
+      },
+      {
+        "letter": "C",
+        "text": "2,4 × 10⁻¹⁶ N"
+      },
+      {
+        "letter": "D",
+        "text": "6,1 × 10⁻¹⁶ N"
+      },
+      {
+        "letter": "E",
+        "text": "1,2 × 10⁻¹⁵ N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do problema de aceleração de elétron da prova discursiva de Física do IME/EQA 2024/2025.",
+    "sourceUrl": "https://www.ime.eb.mil.br/images/arquivos/admissao/cg/provas-anteriores/2024-2025/EQA_-_Fisica_Discursiva.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Trabalho e energia cinética",
+      "trabalho"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-50",
+    "title": "Velocidades de blocos ligados por uma barra rígida",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Vínculos geométricos e velocidades",
+    "bank": "EFOMM 2026 (adaptada)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Difícil",
+    "statement": "Dois carrinhos movem-se em trilhos perpendiculares e são ligados por uma barra rígida de 1,0 m. Em certo instante, suas distâncias ao canto dos trilhos são x = 0,60 m e y = 0,80 m. Se o carrinho no eixo y se afasta do canto a 1,5 m/s, qual é o módulo da velocidade do carrinho no eixo x nesse instante?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,80 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,5 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "2,0 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "2,5 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "3,0 m/s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema de vínculo geométrico e conservação de energia da questão 21 da prova de Física EFOMM 2026.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Vínculos geométricos e velocidades",
+      "vínculo"
+    ]
+  }
+]
 ];
