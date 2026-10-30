@@ -769,7 +769,13 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
               ? {cycle:"2023/2024",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Gabarito_Prova_Objetiva_1_FASE.pdf"}
               : Number(record.year) === 2025
                 ? {cycle:"2024/2025",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/CFG_Objetiva_24_25.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/GabaritoFINAL20242025.pdf"}
-                : null)
+                : Number(record.year) === 2026
+                  ? {cycle:"2025/2026",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2025-2026/Prova1fase2025OBJETIVA.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2025-2026/Gabarito_FINAL_2025-2026OBJETIVA.pdf"}
+                  : Number(record.year) === 2021
+                    ? {cycle:"2020/2021",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2020-2021/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2020-2021/Gabarito_Prova_Objetiva_1_FASE.pdf"}
+                    : Number(record.year) === 2020
+                      ? {cycle:"2019/2020",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2019-2020/CFG_PROVA_OBJETIVA_2019_20.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2019-2020/CFG_GABARITO_DEFINITIVO_PROVA_OBJETIVA_2019_20.pdf"}
+                      : null)
         : null;
       const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
