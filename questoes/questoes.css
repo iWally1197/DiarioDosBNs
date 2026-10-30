@@ -36,3 +36,5 @@
 
 
 .q-pagination { align-items:center; flex-wrap:nowrap; max-width:100%; }.q-pagination-window { display:flex; flex:0 1 auto; gap:5px; max-width:calc(100vw - 110px); overflow:hidden; touch-action:pan-y; user-select:none; cursor:grab; }.q-pagination-window:active { cursor:grabbing; }.q-pagination-window button { flex:0 0 35px; }.q-pagination .q-page-range-arrow { flex:0 0 35px; font-size:22px; line-height:1; }
+
+.q-diagram-unavailable { color:var(--muted,#aab7ca); cursor:not-allowed; text-align:center; }
