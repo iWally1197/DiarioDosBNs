@@ -423,7 +423,7 @@ import "./questoes-data.js?v=fisica-variada-20261029-4";
     previousRange.setAttribute("aria-label","Mostrar páginas anteriores");
     previousRange.disabled = paginationWindowStart <= 1;
     previousRange.addEventListener("click",() => {
-      paginationWindowStart = paginationWindowStart <= 4 ? 1 : paginationWindowStart-4;
+      paginationWindowStart = paginationWindowStart <= 2 ? 1 : paginationWindowStart <= 4 ? 2 : paginationWindowStart-4;
       paginationWindowExpanded = paginationWindowStart > 1;
       renderPagination(total,true);
     });
