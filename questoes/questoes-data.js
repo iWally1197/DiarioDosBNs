@@ -3639,4 +3639,1132 @@ window.DIARIO_QUESTIONS = [
     ]
   }
 ]
+,
+[
+  {
+    "id": "questao-extra-20261029-51",
+    "title": "Intensidade transmitida por três polarizadores",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Polarização da luz",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Luz não polarizada de intensidade I₀ atravessa três polarizadores ideais. O primeiro tem eixo horizontal, o segundo está a 45° do horizontal e o terceiro tem eixo vertical. Qual fração de I₀ emerge do conjunto?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "I₀/2"
+      },
+      {
+        "letter": "B",
+        "text": "I₀/4"
+      },
+      {
+        "letter": "C",
+        "text": "I₀/8"
+      },
+      {
+        "letter": "D",
+        "text": "I₀/16"
+      },
+      {
+        "letter": "E",
+        "text": "0"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 4 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Polarização da luz",
+      "polarizadores"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-52",
+    "title": "Temperatura em uma expansão adiabática",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Transformações adiabáticas",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um gás ideal monoatômico sofre uma expansão adiabática quase estática e reversível. O que acontece com sua temperatura e sua entropia?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "A temperatura aumenta e a entropia aumenta."
+      },
+      {
+        "letter": "B",
+        "text": "A temperatura diminui e a entropia permanece constante."
+      },
+      {
+        "letter": "C",
+        "text": "A temperatura permanece constante e a entropia aumenta."
+      },
+      {
+        "letter": "D",
+        "text": "Ambas permanecem constantes."
+      },
+      {
+        "letter": "E",
+        "text": "A temperatura diminui e a entropia diminui."
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 5 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Transformações adiabáticas",
+      "adiabática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-53",
+    "title": "A velocidade da luz no vácuo",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Postulados da relatividade",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma fonte luminosa e um observador movem-se um em relação ao outro no vácuo. De acordo com a relatividade especial, como se comporta a velocidade da luz medida pelo observador?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Varia com a velocidade da fonte."
+      },
+      {
+        "letter": "B",
+        "text": "Varia com a velocidade do observador."
+      },
+      {
+        "letter": "C",
+        "text": "Depende da intensidade luminosa."
+      },
+      {
+        "letter": "D",
+        "text": "Tem o mesmo valor c para qualquer observador inercial."
+      },
+      {
+        "letter": "E",
+        "text": "É nula quando fonte e observador se afastam."
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 6 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Postulados da relatividade",
+      "relatividade"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-54",
+    "title": "Como uma chave altera a potência em um circuito",
+    "discipline": "Física",
+    "subject": "Eletricidade",
+    "subtopic": "Resistores em circuitos mistos",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Uma fonte ideal alimenta Rₐ em série com Rᵦ. Uma chave conecta um terceiro resistor R꜀, igual aos demais, em paralelo com Rᵦ. Ao fechar a chave, como variam as potências dissipadas em Rₐ e Rᵦ?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "As duas aumentam."
+      },
+      {
+        "letter": "B",
+        "text": "As duas diminuem."
+      },
+      {
+        "letter": "C",
+        "text": "A potência em Rₐ aumenta e a de Rᵦ diminui."
+      },
+      {
+        "letter": "D",
+        "text": "A potência em Rₐ diminui e a de Rᵦ aumenta."
+      },
+      {
+        "letter": "E",
+        "text": "As duas permanecem iguais."
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 7 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletricidade",
+      "Resistores em circuitos mistos",
+      "circuitos"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-55",
+    "title": "Corrente elétrica em uma mola helicoidal",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Interação magnética entre espiras",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma corrente contínua percorre um fio enrolado em forma de mola helicoidal. Em espiras vizinhas, os trechos de corrente têm o mesmo sentido de circulação. Qual é o efeito magnético predominante entre as espiras?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Elas se atraem, tendendo a contrair a mola."
+      },
+      {
+        "letter": "B",
+        "text": "Elas se repelem, alongando a mola."
+      },
+      {
+        "letter": "C",
+        "text": "A mola gira sem alterar seu comprimento."
+      },
+      {
+        "letter": "D",
+        "text": "A mola perde toda a tensão mecânica."
+      },
+      {
+        "letter": "E",
+        "text": "Não há interação magnética entre espiras."
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 9 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Interação magnética entre espiras",
+      "eletromagnetismo"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-56",
+    "title": "Cargas induzidas em um condutor neutro",
+    "discipline": "Física",
+    "subject": "Eletrostática",
+    "subtopic": "Indução eletrostática",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Aproxima-se uma carga puntiforme negativa de um condutor metálico inicialmente neutro e isolado, sem que haja contato. Após o equilíbrio eletrostático, qual descrição é correta?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "O condutor adquire carga líquida negativa uniforme."
+      },
+      {
+        "letter": "B",
+        "text": "O condutor adquire carga líquida positiva uniforme."
+      },
+      {
+        "letter": "C",
+        "text": "A região próxima fica positiva e a região mais distante negativa; a carga total continua nula."
+      },
+      {
+        "letter": "D",
+        "text": "A região próxima fica negativa e a região distante positiva; a carga total continua nula."
+      },
+      {
+        "letter": "E",
+        "text": "Não ocorre redistribuição de cargas no condutor."
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 11 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletrostática",
+      "Indução eletrostática",
+      "indução eletrostática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-57",
+    "title": "Coeficiente de desempenho de uma estufa e de uma bomba de calor",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Máquinas térmicas e refrigeradores",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma estufa elétrica ideal converte energia elétrica em calor para aquecer um cômodo. Uma bomba de calor ideal usa energia elétrica para transferir calor do exterior para o cômodo. Para o coeficiente de desempenho C = Q/E, qual afirmação é correta?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "C da estufa é 1 e o da bomba de calor pode ser maior que 1."
+      },
+      {
+        "letter": "B",
+        "text": "Os dois coeficientes são sempre menores que 1."
+      },
+      {
+        "letter": "C",
+        "text": "O coeficiente da estufa é maior que 1 e o da bomba é igual a 1."
+      },
+      {
+        "letter": "D",
+        "text": "Os dois coeficientes são sempre iguais a zero."
+      },
+      {
+        "letter": "E",
+        "text": "O coeficiente da bomba de calor é necessariamente menor que o da estufa."
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 15 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Máquinas térmicas e refrigeradores",
+      "máquinas térmicas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-58",
+    "title": "Tensão de uma corda e afinação de um violão",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Ondas estacionárias em cordas",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma corda de violão tem comprimento fixo e está vibrando no primeiro harmônico. A tensão é aumentada. O que ocorre com o comprimento de onda na corda e com o comprimento de onda do som emitido no ar?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Ambos aumentam."
+      },
+      {
+        "letter": "B",
+        "text": "O comprimento de onda na corda diminui, mas o do som no ar permanece igual."
+      },
+      {
+        "letter": "C",
+        "text": "O da corda permanece igual e o do som no ar diminui."
+      },
+      {
+        "letter": "D",
+        "text": "Ambos permanecem iguais."
+      },
+      {
+        "letter": "E",
+        "text": "O da corda aumenta e o do som diminui."
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 1 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Ondas estacionárias em cordas",
+      "cordas vibrantes"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-59",
+    "title": "Reflexão de pulsos em extremidades de uma corda",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Reflexão de ondas",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um pulso transversal percorre uma corda e encontra primeiro uma extremidade fixa. Outro pulso encontra uma extremidade livre. Como cada pulso é refletido?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Na extremidade fixa não inverte; na livre inverte."
+      },
+      {
+        "letter": "B",
+        "text": "Ambos são refletidos sem inversão."
+      },
+      {
+        "letter": "C",
+        "text": "Ambos são refletidos com inversão."
+      },
+      {
+        "letter": "D",
+        "text": "Na extremidade fixa inverte; na livre não inverte."
+      },
+      {
+        "letter": "E",
+        "text": "Nenhum pulso é refletido."
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 14 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Reflexão de ondas",
+      "reflexão de ondas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-60",
+    "title": "O que determina a alternância das marés",
+    "discipline": "Física",
+    "subject": "Gravitação",
+    "subtopic": "Marés e rotação terrestre",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Em um modelo simplificado das marés, consideram-se a atração gravitacional entre Terra e Lua, a rotação da Terra e a rotação da Lua em torno de seu próprio eixo. Quais fatores explicam a alternância diária das marés nesse modelo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Somente a rotação da Lua."
+      },
+      {
+        "letter": "B",
+        "text": "A atração gravitacional Terra–Lua e a rotação da Terra."
+      },
+      {
+        "letter": "C",
+        "text": "Apenas a rotação da Terra."
+      },
+      {
+        "letter": "D",
+        "text": "A rotação da Lua e a rotação da Terra, sem gravidade."
+      },
+      {
+        "letter": "E",
+        "text": "Os três fatores são igualmente necessários para o ciclo diário."
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 2 da OBF 2024, nível II; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n2.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Gravitação",
+      "Marés e rotação terrestre",
+      "marés"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-61",
+    "title": "Profundidade aparente de um peixe",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Refração e profundidade aparente",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um peixe está a 0,80 m de profundidade em água com índice de refração 4/3. Uma pessoa observa o peixe quase perpendicularmente à superfície, do ar. Qual é aproximadamente a profundidade aparente?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,40 m"
+      },
+      {
+        "letter": "B",
+        "text": "0,53 m"
+      },
+      {
+        "letter": "C",
+        "text": "0,60 m"
+      },
+      {
+        "letter": "D",
+        "text": "0,80 m"
+      },
+      {
+        "letter": "E",
+        "text": "1,07 m"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 20 da OBF 2024, nível II; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n2.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Refração e profundidade aparente",
+      "refração"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-62",
+    "title": "Distância de frenagem de um automóvel",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento uniformemente variado",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um automóvel viaja a 20 m/s e freia com aceleração constante de módulo 4,0 m/s² até parar. Despreze o tempo de reação do motorista. Qual é a distância percorrida durante a frenagem?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "20 m"
+      },
+      {
+        "letter": "B",
+        "text": "25 m"
+      },
+      {
+        "letter": "C",
+        "text": "40 m"
+      },
+      {
+        "letter": "D",
+        "text": "50 m"
+      },
+      {
+        "letter": "E",
+        "text": "100 m"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 19 da OBF 2024, nível II; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n2.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento uniformemente variado",
+      "frenagem"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-63",
+    "title": "Dilatação do furo em uma placa metálica",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Dilatação linear",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma placa metálica tem um furo circular de diâmetro 10,0 cm. A placa é aquecida em 100 °C e tem coeficiente de dilatação linear 2,0 × 10⁻⁵ °C⁻¹. Qual é aproximadamente a variação do diâmetro do furo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,02 mm"
+      },
+      {
+        "letter": "B",
+        "text": "0,20 mm"
+      },
+      {
+        "letter": "C",
+        "text": "2,0 mm"
+      },
+      {
+        "letter": "D",
+        "text": "0,20 cm"
+      },
+      {
+        "letter": "E",
+        "text": "2,0 cm"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 16 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Dilatação linear",
+      "dilatação"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-64",
+    "title": "Tensão em um cabo que sustenta uma viga",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Equilíbrio estático e torque",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma viga horizontal uniforme de 4,0 m pesa 100 N. Ela está articulada em uma extremidade e sustentada por um cabo vertical na outra. Qual é a tensão no cabo para manter a viga em equilíbrio?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "25 N"
+      },
+      {
+        "letter": "B",
+        "text": "50 N"
+      },
+      {
+        "letter": "C",
+        "text": "75 N"
+      },
+      {
+        "letter": "D",
+        "text": "100 N"
+      },
+      {
+        "letter": "E",
+        "text": "200 N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 2 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Equilíbrio estático e torque",
+      "torque"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-65",
+    "title": "Período de uma oscilação medido em laboratório",
+    "discipline": "Física",
+    "subject": "Oscilações",
+    "subtopic": "Período e frequência",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Um corpo realiza 15 oscilações completas em 30 s. Qual é o período de uma oscilação?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,5 s"
+      },
+      {
+        "letter": "B",
+        "text": "1,0 s"
+      },
+      {
+        "letter": "C",
+        "text": "2,0 s"
+      },
+      {
+        "letter": "D",
+        "text": "15 s"
+      },
+      {
+        "letter": "E",
+        "text": "30 s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 19 da OBF 2024, nível III; texto reescrito para estudo.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n3.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Oscilações",
+      "Período e frequência",
+      "movimento harmônico"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-66",
+    "title": "Potência elétrica gerada por um painel solar",
+    "discipline": "Física",
+    "subject": "Energia",
+    "subtopic": "Potência e rendimento",
+    "bank": "ENEM (estilo contextualizado)",
+    "institution": "INEP",
+    "year": 2025,
+    "difficulty": "Fácil",
+    "statement": "Um painel de área 2,0 m² recebe radiação solar com intensidade de 500 W/m². Se sua eficiência de conversão é 20%, qual potência elétrica ele fornece nessas condições?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "100 W"
+      },
+      {
+        "letter": "B",
+        "text": "200 W"
+      },
+      {
+        "letter": "C",
+        "text": "500 W"
+      },
+      {
+        "letter": "D",
+        "text": "1 000 W"
+      },
+      {
+        "letter": "E",
+        "text": "2 000 W"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral em formato contextualizado inspirado no ENEM; não corresponde à transcrição de um item específico.",
+    "sourceUrl": "https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem/provas-e-gabaritos/2025",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Energia",
+      "Potência e rendimento",
+      "energia solar"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-67",
+    "title": "Força em uma prensa hidráulica",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Princípio de Pascal",
+    "bank": "ENEM (estilo contextualizado)",
+    "institution": "INEP",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Em uma prensa hidráulica ideal, o pistão menor tem área 5,0 cm² e recebe uma força de 50 N. O pistão maior tem área 0,10 m². Qual força pode ser exercida pelo pistão maior?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1 000 N"
+      },
+      {
+        "letter": "B",
+        "text": "5 000 N"
+      },
+      {
+        "letter": "C",
+        "text": "10 000 N"
+      },
+      {
+        "letter": "D",
+        "text": "20 000 N"
+      },
+      {
+        "letter": "E",
+        "text": "100 000 N"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral em formato contextualizado inspirado no ENEM; não corresponde à transcrição de um item específico.",
+    "sourceUrl": "https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem/provas-e-gabaritos/2025",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Princípio de Pascal",
+      "prensa hidráulica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-68",
+    "title": "Intensidade da luz e efeito fotoelétrico",
+    "discipline": "Física",
+    "subject": "Física Moderna",
+    "subtopic": "Efeito fotoelétrico",
+    "bank": "FUVEST 2024 (estilo vestibular)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma luz de frequência superior à frequência de corte ilumina uma superfície fotoelétrica. Mantendo a frequência, aumenta-se a intensidade da luz. Qual efeito é esperado?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "A energia cinética máxima dos elétrons aumenta, mas a quantidade emitida não muda."
+      },
+      {
+        "letter": "B",
+        "text": "A energia cinética máxima diminui e a corrente fotoelétrica aumenta."
+      },
+      {
+        "letter": "C",
+        "text": "A frequência de corte aumenta junto com a intensidade."
+      },
+      {
+        "letter": "D",
+        "text": "A taxa de emissão de elétrons pode aumentar, mas a energia cinética máxima não muda."
+      },
+      {
+        "letter": "E",
+        "text": "Nenhum elétron é emitido após a mudança."
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de Física Moderna em formato de vestibular, com referência ao acervo da FUVEST; não é transcrição de item específico.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2024",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Física Moderna",
+      "Efeito fotoelétrico",
+      "efeito fotoelétrico"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-69",
+    "title": "Espaçamento entre franjas em uma experiência de Young",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Interferência de ondas luminosas",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Em uma experiência de dupla fenda, a luz tem comprimento de onda 600 nm, a tela está a 1,5 m das fendas e a separação entre elas é 0,30 mm. Qual é o espaçamento entre franjas claras consecutivas?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,3 mm"
+      },
+      {
+        "letter": "B",
+        "text": "1,0 mm"
+      },
+      {
+        "letter": "C",
+        "text": "2,0 mm"
+      },
+      {
+        "letter": "D",
+        "text": "3,0 mm"
+      },
+      {
+        "letter": "E",
+        "text": "6,0 mm"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 8 do vestibular ITA 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Interferência de ondas luminosas",
+      "interferência"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-70",
+    "title": "Raio da trajetória de um próton em campo magnético",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Força magnética de Lorentz",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Um próton move-se perpendicularmente a um campo magnético uniforme de 0,50 T com velocidade 3,0 × 10⁵ m/s. Use massa do próton 1,67 × 10⁻²⁷ kg e carga 1,60 × 10⁻¹⁹ C. Qual é aproximadamente o raio da trajetória?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,63 mm"
+      },
+      {
+        "letter": "B",
+        "text": "3,1 mm"
+      },
+      {
+        "letter": "C",
+        "text": "6,3 mm"
+      },
+      {
+        "letter": "D",
+        "text": "12,5 mm"
+      },
+      {
+        "letter": "E",
+        "text": "31 mm"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema da questão 10 do vestibular ITA 2024; texto reescrito para estudo.",
+    "sourceUrl": "https://www.vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Força magnética de Lorentz",
+      "partícula carregada"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-71",
+    "title": "Direção do campo elétrico de um disco carregado",
+    "discipline": "Física",
+    "subject": "Eletrostática",
+    "subtopic": "Campo elétrico de distribuições de carga",
+    "bank": "IME 2024/2025 EQA (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Um disco isolante possui carga superficial positiva uniforme. Em um ponto situado sobre seu eixo de simetria, acima do disco, qual é o sentido do campo elétrico resultante?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "Em direção ao disco, ao longo do eixo."
+      },
+      {
+        "letter": "B",
+        "text": "Afastando-se do disco, ao longo do eixo."
+      },
+      {
+        "letter": "C",
+        "text": "Tangente ao disco."
+      },
+      {
+        "letter": "D",
+        "text": "Radial em direção à borda."
+      },
+      {
+        "letter": "E",
+        "text": "Nulo em qualquer ponto do eixo."
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada do tema de campo elétrico de um disco carregado na prova de Física do IME/EQA 2024/2025.",
+    "sourceUrl": "https://www.ime.eb.mil.br/images/arquivos/admissao/cg/provas-anteriores/2024-2025/EQA_-_Fisica_Discursiva.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletrostática",
+      "Campo elétrico de distribuições de carga",
+      "campo elétrico"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-72",
+    "title": "Velocidade do fluido em um estreitamento de tubulação",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Equação da continuidade",
+    "bank": "EFOMM (estilo contextualizado)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Água escoa em regime estacionário por um tubo horizontal. A área da seção diminui de 8,0 cm² para 2,0 cm². Se a velocidade na seção maior é 1,5 m/s, qual é a velocidade na seção estreita?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,375 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,5 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "3,0 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "6,0 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "12 m/s"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de hidrodinâmica em formato de concurso marítimo; não corresponde à transcrição de um item específico.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Equação da continuidade",
+      "continuidade"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-73",
+    "title": "Volume de um gás aquecido sob pressão constante",
+    "discipline": "Física",
+    "subject": "Termodinâmica",
+    "subtopic": "Lei de Charles",
+    "bank": "FUVEST 2024 (estilo vestibular)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Um gás ideal ocupa 2,0 L a 300 K. Ele é aquecido até 450 K, mantendo-se a pressão constante. Qual será seu volume final?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,3 L"
+      },
+      {
+        "letter": "B",
+        "text": "2,0 L"
+      },
+      {
+        "letter": "C",
+        "text": "2,5 L"
+      },
+      {
+        "letter": "D",
+        "text": "3,0 L"
+      },
+      {
+        "letter": "E",
+        "text": "4,5 L"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de gases ideais em formato de vestibular, com referência ao acervo da FUVEST; não é transcrição de item específico.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2024",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termodinâmica",
+      "Lei de Charles",
+      "gases ideais"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-74",
+    "title": "Trabalho para comprimir uma mola",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Energia potencial elástica",
+    "bank": "FUVEST 2024 (estilo vestibular)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma mola ideal de constante elástica 200 N/m é comprimida lentamente em 0,10 m a partir de seu comprimento natural. Qual trabalho é armazenado como energia potencial elástica?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,5 J"
+      },
+      {
+        "letter": "B",
+        "text": "1,0 J"
+      },
+      {
+        "letter": "C",
+        "text": "2,0 J"
+      },
+      {
+        "letter": "D",
+        "text": "10 J"
+      },
+      {
+        "letter": "E",
+        "text": "20 J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de energia elástica em formato de vestibular, com referência ao acervo da FUVEST; não é transcrição de item específico.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2024",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Energia potencial elástica",
+      "molas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-75",
+    "title": "Energia adquirida por um próton ao atravessar uma diferença de potencial",
+    "discipline": "Física",
+    "subject": "Eletrostática",
+    "subtopic": "Energia elétrica e potencial",
+    "bank": "IME 2024/2025 EQA (estilo concurso)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Um próton atravessa uma diferença de potencial de 500 V, partindo do repouso. Desprezando perdas, qual é o aumento de sua energia cinética? Use a carga elementar e = 1,60 × 10⁻¹⁹ C.",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "8,0 × 10⁻²⁰ J"
+      },
+      {
+        "letter": "B",
+        "text": "8,0 × 10⁻¹⁷ J"
+      },
+      {
+        "letter": "C",
+        "text": "1,6 × 10⁻¹⁶ J"
+      },
+      {
+        "letter": "D",
+        "text": "5,0 × 10⁻¹⁹ J"
+      },
+      {
+        "letter": "E",
+        "text": "5,0 × 10² J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral de energia elétrica de partículas carregadas, no estilo do IME/EQA; não é transcrição de item específico.",
+    "sourceUrl": "https://www.ime.eb.mil.br/images/arquivos/admissao/cg/provas-anteriores/2024-2025/EQA_-_Fisica_Discursiva.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletrostática",
+      "Energia elétrica e potencial",
+      "potencial elétrico"
+    ]
+  }
+]
 ];
