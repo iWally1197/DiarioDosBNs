@@ -230,9 +230,14 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     statement.className = "q-statement";
     statement.textContent = formatQuestionStatement(question.statement);
     body.append(statement);
-    const questionImages = Array.isArray(question.images) && question.images.length
+    const rawQuestionImages = Array.isArray(question.images) && question.images.length
       ? question.images
       : question.image ? [{src:question.image,alt:question.imageAlt || "Figura da questão"}] : [];
+    const questionImages = rawQuestionImages.map((item,index) => {
+      if (typeof item === "string") return {src:item,alt:question.imageAlt || "Figura " + (index+1) + " da questão"};
+      if (!item || typeof item !== "object") return null;
+      return {...item,src:item.src || item.url || item.path || "",alt:item.alt || "Figura " + (index+1) + " da questão"};
+    }).filter(item => typeof item?.src === "string" && item.src.trim());
     for (const item of questionImages) {
       const imageButton = document.createElement("button");
       imageButton.type = "button";
@@ -243,6 +248,14 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       image.alt = item.alt || "Figura da questão";
       image.loading = "lazy";
       imageButton.append(image);
+      image.addEventListener("error",() => {
+        imageButton.disabled = true;
+        imageButton.classList.add("q-diagram-unavailable");
+        imageButton.replaceChildren();
+        const notice = document.createElement("span");
+        notice.textContent = "A imagem desta questão está temporariamente indisponível.";
+        imageButton.append(notice);
+      },{once:true});
       imageButton.addEventListener("click",() => {
         el("question-image-large").src = item.src;
         el("question-image-large").alt = item.alt || "Figura da questão";
