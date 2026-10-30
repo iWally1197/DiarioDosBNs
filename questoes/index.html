@@ -5,10 +5,10 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08101f">
-  <meta name="description" content="Banco de questões temporariamente indisponível enquanto são confirmadas as autorizações de uso.">
-  <meta property="og:title" content="Banco de questões temporariamente indisponível | Diário dos BNs">
-  <meta property="og:description" content="O banco de questões será reaberto após a confirmação das autorizações de uso.">
-  <title>Banco de questões temporariamente indisponível | Diário dos BNs</title>
+  <meta name="description" content="Questões oficiais de Física do IME com imagens originais, gabaritos oficiais e filtros por assunto, banca e ano.">
+  <meta property="og:title" content="Questões de Física | Diário dos BNs">
+  <meta property="og:description" content="Estude questões originais do IME, confira o gabarito oficial e explore os conteúdos de Física.">
+  <title>Questões de Física | Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="/assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="/styles.css?v=mobile-20261028-1">
   <link rel="stylesheet" href="/questoes/questoes.css?v=question-images-spacing-20261029-1">
@@ -16,6 +16,7 @@
   <script defer src="/script.js?v=menu-button-20261014-2"></script>
   <script defer src="/quick-menu.js?v=teacher-visibility-20261019-1"></script>
   <script defer data-diario-accessibility="true" src="/accessibility.js?v=accessibility-20261013-1"></script>
+  <script type="module" src="/questoes/questoes.js?v=ime-approved-20261030-1"></script>
 </head>
 <body class="questions-page">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -29,13 +30,76 @@
   </header>
 
   <main id="conteudo" class="questions-wrap">
-    <nav class="question-breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><span aria-current="page">Questões de Física</span></nav>
-    <section class="q-empty" role="status" aria-labelledby="question-bank-paused-title">
-      <span aria-hidden="true">⏸</span>
-      <h1 id="question-bank-paused-title">Banco de questões temporariamente indisponível</h1>
-      <p>As questões serão disponibilizadas novamente depois que as permissões de uso forem confirmadas com as respectivas bancas e organizadores.</p>
-      <a class="q-button q-button-outline" href="/laboratorio/">Explorar laboratórios de Física</a>
+      <nav class="question-breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span aria-hidden="true">/</span><span aria-current="page">Questões de Física</span></nav>
+    <section class="questions-hero" aria-labelledby="questions-title">
+      <div>
+        <p class="q-eyebrow">PRATIQUE · INVESTIGUE · APRENDA</p>
+        <h1 id="questions-title">Questões de <span>Física</span></h1>
+        <p class="q-lede">Resolva questões oficiais do IME e confira o gabarito oficial após responder. Filtre por assunto, banca e ano.</p>
+      </div>
+      <a class="q-hero-lab" href="/laboratorio/"><span aria-hidden="true">↗</span><span><b>Leve a teoria para a prática</b><small>Explore os laboratórios de Física</small></span></a>
+      <a id="question-admin-link" class="q-hero-lab" href="/admin/questoes/" hidden><span aria-hidden="true">✎</span><span><b>Gerenciar questões</b><small>Área exclusiva para administradores</small></span></a>
     </section>
+
+    <section class="q-search-panel" aria-label="Pesquisa e filtros">
+      <label class="q-search-label" for="question-search">Pesquisar questões
+        <span class="q-search-box"><span aria-hidden="true">⌕</span><input id="question-search" type="search" placeholder="Pesquisar questões de Física..." autocomplete="off"><kbd>⌕</kbd></span>
+      </label>
+      <div class="q-filter-heading"><span>Refine sua busca</span><span id="active-filter-count" class="q-filter-count">0 filtros ativos</span><button id="clear-filters" type="button" class="q-text-button">Limpar filtros</button></div>
+      <div id="question-filters" class="q-filter-bar" aria-label="Filtros de questões"></div>
+      <div class="q-search-footer"><p>Escolha mais de uma opção quando quiser combinar critérios.</p><button id="share-search" type="button" class="q-share-button">Compartilhar busca</button></div>
+      <div id="share-search-panel" class="q-share-panel" hidden><label for="share-search-url">Link desta busca</label><div><input id="share-search-url" type="url" readonly><button id="copy-search-url" type="button">Copiar link</button></div><span id="share-search-status" role="status" aria-live="polite"></span></div>
+    </section>
+
+    <div class="q-page-grid">
+      <section class="q-results" aria-labelledby="q-results-title">
+        <div class="q-results-head">
+          <div><p class="q-eyebrow">BIBLIOTECA DE EXERCÍCIOS</p><h2 id="q-results-title">Questões para estudar</h2></div>
+          <div class="q-results-tools">
+            <label class="q-sort-label" for="question-sort">Ordenar
+              <select id="question-sort"><option value="recent">Mais recentes</option><option value="year-desc">Ano mais novo</option><option value="year-asc">Ano mais antigo</option><option value="difficulty">Dificuldade</option></select>
+            </label>
+            <details class="q-study-details">
+              <summary>Modo simulado</summary>
+              <form id="quiz-form" class="q-study-popover">
+                <strong>Monte seu simulado</strong>
+                <label for="quiz-amount">Quantidade de questões<select id="quiz-amount"><option value="5">5 questões</option><option value="10">10 questões</option><option value="20">Até 20 questões</option></select></label>
+                <label class="q-checkbox-line"><input id="quiz-timer-enabled" type="checkbox"> Usar cronômetro (opcional)</label>
+                <label id="quiz-time-label" for="quiz-time" hidden>Tempo<select id="quiz-time"><option value="10">10 minutos</option><option value="20">20 minutos</option><option value="30">30 minutos</option></select></label>
+                <button class="q-button q-button-save" type="submit">Começar simulado</button>
+                <p>O tempo é opcional e não há penalidade por errar.</p>
+              </form>
+            </details>
+          </div>
+        </div>
+        <div class="q-view-tabs" role="group" aria-label="Exibir questões">
+          <button type="button" data-view="all" aria-pressed="true">Todas</button>
+          <button type="button" data-view="favorites" aria-pressed="false">Favoritas <span id="favorite-count">0</span></button>
+          <button type="button" data-view="unanswered" aria-pressed="false">Não respondidas</button>
+          <button type="button" data-view="wrong" aria-pressed="false">Para revisar</button>
+        </div>
+        <div id="quiz-banner" class="q-quiz-banner" hidden>
+          <div><strong id="quiz-progress">Simulado em andamento</strong><span id="quiz-timer" aria-live="off"></span></div>
+          <button id="end-quiz" type="button" class="q-button q-button-refuse">Encerrar simulado</button>
+        </div>
+        <p id="question-count" class="q-count" role="status" aria-live="polite">Carregando questões…</p>
+        <div id="question-list" class="q-question-list" aria-live="polite"></div>
+        <div id="question-empty" class="q-empty" hidden><span aria-hidden="true">⌕</span><h3>Nenhuma questão encontrada</h3><p>Tente remover um filtro ou buscar por outro conceito de Física.</p><button type="button" id="empty-clear" class="q-button q-button-outline">Limpar busca e filtros</button></div>
+        <nav id="question-pagination" class="q-pagination" aria-label="Páginas de questões"></nav>
+      </section>
+
+      <aside class="q-sidebar" aria-label="Seu progresso e opções de estudo">
+        <section class="q-progress-card">
+          <div class="q-side-kicker">SEU ESTUDO</div><h2>Seu progresso</h2><p>Este histórico fica salvo somente neste navegador.</p>
+          <div class="q-progress-main"><strong id="progress-accuracy">0%</strong><span>de aproveitamento</span></div>
+          <div class="q-progress-bar" role="progressbar" aria-label="Percentual de respostas corretas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-bar-fill"></span></div>
+          <dl class="q-progress-stats"><div><dt>Respondidas</dt><dd id="progress-answered">0</dd></div><div><dt>Acertos</dt><dd id="progress-correct">0</dd></div><div><dt>Tentativas</dt><dd id="progress-attempts">0</dd></div></dl>
+          <button id="reset-progress" type="button" class="q-reset-button">Apagar meu progresso</button>
+        </section>
+        <section class="q-review-card"><span aria-hidden="true">↻</span><div><h2>Estudo sem pressa</h2><p>O gabarito oficial é mostrado depois que você responde. As questões ficam bloqueadas após a tentativa, e a resolução detalhada ainda não foi revisada.</p></div></section>
+        <a class="q-lab-card" href="/laboratorio/"><span aria-hidden="true">⚛</span><b>Investigue na prática</b><small>Abra as simulações disponíveis no laboratório.</small><span class="q-card-link">Ver laboratórios →</span></a>
+      </aside>
+    </div>
   </main>
 
   <dialog id="question-image-dialog" class="q-image-dialog" aria-label="Imagem ampliada">
@@ -45,7 +109,7 @@
   </dialog>
 
   <footer class="site-footer">
-    <div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Materiais para investigar a Física.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div>
+    <div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Questões e materiais para investigar a Física.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div>
     <div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><a href="/laboratorio/">Laboratórios ↗</a><a href="/privacidade/">Privacidade</a><a href="/apoie/">Apoie o projeto ↗</a></div>
   </footer>
 </body>

@@ -299,7 +299,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         for (const other of choices.querySelectorAll(".q-choice")) other.classList.toggle("is-selected",other.querySelector("input").checked);
       });
       const text = document.createElement("span");
-      text.textContent = "(" + choice.letter + ") " + choice.text;
+      text.textContent = question.imageOnly ? "(" + choice.letter + ")" : "(" + choice.letter + ") " + choice.text;
       label.append(radio,text);
       choices.append(label);
     }
@@ -347,11 +347,10 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const heading = document.createElement("strong");
       heading.textContent = correct ? "Resposta correta." : "Ainda não. A alternativa correta é " + question.correct + ".";
       const note = document.createElement("span");
-      note.textContent = " Sua resposta foi salva e não pode ser alterada. Confira a resolução para revisar o raciocínio.";
+      note.textContent = question.solution?.trim() ? " Sua resposta foi salva e não pode ser alterada. Confira a resolução para revisar o raciocínio." : " Sua resposta foi salva e não pode ser alterada. A resolução detalhada ainda não foi revisada; consulte a fonte e o gabarito oficial ao final.";
       feedback.replaceChildren(heading,note);
       verify.disabled = true;
-      solutionButton.hidden = false;
-      solutionButton.disabled = false;
+      if (solutionButton) { solutionButton.hidden = false; solutionButton.disabled = false; }
       updateProgress();
       if (quizSession && quizSession.ids.includes(question.id) && !quizSession.checked.has(question.id)) {
         quizSession.checked.set(question.id,correct);
@@ -359,36 +358,45 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         if (quizSession.checked.size >= quizSession.ids.length) finishQuiz();
       }
     });
-    const solutionButton = document.createElement("button");
-    solutionButton.type = "button";
-    solutionButton.className = "q-button q-button-outline";
-    solutionButton.textContent = "Ver resolução";
-    solutionButton.hidden = !alreadyAnswered;
-    solutionButton.disabled = !alreadyAnswered;
-    const solution = document.createElement("div");
-    solution.className = "q-solution";
-    solution.hidden = true;
-    const solutionTitle = document.createElement("strong");
-    solutionTitle.textContent = "Resolução passo a passo";
-    const solutionText = document.createElement("div");
-    solutionText.textContent = question.solution;
-    solution.append(solutionTitle,solutionText);
+    const hasSolution = typeof question.solution === "string" && question.solution.trim().length > 0;
+    let solutionButton = null;
+    let solution = null;
+    if (hasSolution) {
+      solutionButton = document.createElement("button");
+      solutionButton.type = "button";
+      solutionButton.className = "q-button q-button-outline";
+      solutionButton.textContent = "Ver resolução";
+      solutionButton.hidden = !alreadyAnswered;
+      solutionButton.disabled = !alreadyAnswered;
+      solution = document.createElement("div");
+      solution.className = "q-solution";
+      solution.hidden = true;
+      const solutionTitle = document.createElement("strong");
+      solutionTitle.textContent = "Resolução passo a passo";
+      const solutionText = document.createElement("div");
+      solutionText.textContent = question.solution;
+      solution.append(solutionTitle,solutionText);
+    }
     if (alreadyAnswered) {
       feedback.hidden = false;
       feedback.className = "q-answer-feedback" + (savedAnswer.lastCorrect === true ? " is-correct" : savedAnswer.lastCorrect === false ? " is-wrong" : "");
       const heading = document.createElement("strong");
       heading.textContent = savedAnswer.lastCorrect === true ? "Resposta correta, salva anteriormente." : savedAnswer.lastCorrect === false ? "Resposta incorreta, salva anteriormente. A alternativa correta é " + question.correct + "." : "Questão já respondida anteriormente.";
       const note = document.createElement("span");
-      note.textContent = savedLetter ? " Sua alternativa foi salva neste navegador e não pode ser alterada." : " O progresso foi preservado neste navegador. Não é possível responder novamente.";
+      note.textContent = savedLetter ? " Sua alternativa foi salva neste navegador e não pode ser alterada." + (hasSolution ? "" : " A resolução detalhada ainda não foi revisada.") : " O progresso foi preservado neste navegador. Não é possível responder novamente.";
       feedback.replaceChildren(heading,note);
     }
-    solutionButton.setAttribute("aria-expanded","false");
-    solutionButton.addEventListener("click",() => {
-      solution.hidden = !solution.hidden;
-      solutionButton.textContent = solution.hidden ? "Ver resolução" : "Ocultar resolução";
-      solutionButton.setAttribute("aria-expanded",String(!solution.hidden));
-    });
-    actions.append(verify,solutionButton);
+    if (solutionButton) {
+      solutionButton.setAttribute("aria-expanded","false");
+      solutionButton.addEventListener("click",() => {
+        solution.hidden = !solution.hidden;
+        solutionButton.textContent = solution.hidden ? "Ver resolução" : "Ocultar resolução";
+        solutionButton.setAttribute("aria-expanded",String(!solution.hidden));
+      });
+      actions.append(verify,solutionButton);
+    } else {
+      actions.append(verify);
+    }
     const footer = document.createElement("div");
     footer.className = "q-card-footer";
     if (question.simulation && simulations.has(question.simulation)) {
@@ -413,12 +421,23 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         sourceLink.href = question.sourceUrl;
         sourceLink.target = "_blank";
         sourceLink.rel = "noopener noreferrer";
-        sourceLink.textContent = "Consultar prova original";
+        sourceLink.textContent = "Ver prova original";
         source.append(document.createTextNode(" "), sourceLink);
+      }
+      if (question.keyUrl) {
+        const keyLink = document.createElement("a");
+        keyLink.className = "q-source-link";
+        keyLink.href = question.keyUrl;
+        keyLink.target = "_blank";
+        keyLink.rel = "noopener noreferrer";
+        keyLink.textContent = "Consultar gabarito oficial";
+        source.append(document.createTextNode(" · "), keyLink);
       }
       footer.append(source);
     }
-    body.append(choices,actions,feedback,solution,footer);
+    body.append(choices,actions,feedback);
+    if (solution) body.append(solution);
+    body.append(footer);
     card.append(head,body);
     return card;
   }
@@ -736,10 +755,18 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const databaseQuestions = (data || []).map(record => {
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
-        src:database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:index === 0 && record.display_format === "image" ? "Imagem completa do enunciado" : `Imagem ilustrativa ${index + 1}`
+        src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
+        alt:index === 0 && record.display_format === "image" ? "Imagem completa da questão original do IME" : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
+      const officialSource = String(record.institution || "").toUpperCase() === "IME"
+        ? (Number(record.year) === 2024
+          ? {cycle:"2023/2024",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2023-2024/Gabarito_Prova_Objetiva_1_FASE.pdf"}
+          : Number(record.year) === 2025
+            ? {cycle:"2024/2025",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/CFG_Objetiva_24_25.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2024-2025/GabaritoFINAL20242025.pdf"}
+            : null)
+        : null;
+      const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
         id:"admin-" + record.id,
         title:record.title,
@@ -756,9 +783,12 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         images,
         choices:Array.isArray(record.choices) ? record.choices : [],
         correct:record.correct_option,
+        imageOnly:record.display_format === "image",
         solution:record.resolution || "",
-        source:"",
-        license:"",
+        source:officialSource ? `IME · CFG ${officialSource.cycle}, questão original ${originalQuestionNumber}.` : "",
+        sourceUrl:officialSource?.proof || "",
+        keyUrl:officialSource?.key || "",
+        license:officialSource ? "Reprodução integral autorizada pelo IME." : "",
         tags:[]
       };
     });
