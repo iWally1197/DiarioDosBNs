@@ -456,21 +456,27 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     window.setAttribute("aria-label","Arraste para ver outros números de página");
     let dragStartX = null;
     let dragPointerId = null;
+    let dragCaptured = false;
     let dragConsumed = false;
     window.addEventListener("pointerdown",event => {
       if (event.button !== undefined && event.button !== 0) return;
       dragStartX = event.clientX;
       dragPointerId = event.pointerId;
-      try { window.setPointerCapture(event.pointerId); } catch {}
+      dragCaptured = false;
     });
     window.addEventListener("pointermove",event => {
-      if (dragStartX !== null && Math.abs(event.clientX-dragStartX) > 20) event.preventDefault();
+      if (dragStartX === null || Math.abs(event.clientX-dragStartX) <= 20) return;
+      event.preventDefault();
+      if (!dragCaptured) {
+        try { window.setPointerCapture(event.pointerId); dragCaptured = true; } catch {}
+      }
     });
     window.addEventListener("pointerup",event => {
       if (dragStartX === null || event.pointerId !== dragPointerId) return;
       const delta = event.clientX-dragStartX;
       dragStartX = null;
       dragPointerId = null;
+      dragCaptured = false;
       if (Math.abs(delta) < 28) return;
       dragConsumed = true;
       paginationWindowExpanded = true;
@@ -478,7 +484,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       paginationWindowStart = Math.max(1,Math.min(max,paginationWindowStart + (delta < 0 ? 1 : -1)));
       renderPagination(total,true);
     });
-    window.addEventListener("pointercancel",() => { dragStartX = null; dragPointerId = null; });
+    window.addEventListener("pointercancel",() => { dragStartX = null; dragPointerId = null; dragCaptured = false; });
     window.addEventListener("click",event => {
       if (dragConsumed) {
         event.preventDefault();
