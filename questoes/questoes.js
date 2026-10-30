@@ -779,7 +779,11 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
                         ? {cycle:"2018/2019",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2018-2019/CFG_Prova_Objetiva_2018_2019.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2018-2019/CFG_Gabarito_Objetiva_2018_2019.pdf"}
                         : Number(record.year) === 2018
                           ? {cycle:"2017/2018",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/CFG_Prova_Objetiva_2017_2018.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/CFG_Gabarito_Objetiva_2017_2018.pdf"}
-                          : null)
+                          : Number(record.year) === 2017
+                            ? {cycle:"2016/2017",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas16_17/CFG-Objetiva-2016-2017.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas16_17/CFG-Objetiva-2016-2017-Gabarito.pdf"}
+                            : Number(record.year) === 2016
+                              ? {cycle:"2015/2016",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas15_16/CFG-Objetiva-2015-2016.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas15_16/CFG-Objetiva-2015-2016-Gabarito.pdf"}
+                              : null)
         : null;
       const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
