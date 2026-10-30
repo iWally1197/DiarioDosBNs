@@ -181,6 +181,14 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     chip.textContent = text;
     return chip;
   }
+  function formatQuestionStatement(value) {
+    let statement = String(value ?? "").replace(/\r\n?/g,"\n").replace(/[ \t]+/g," ").trim();
+    const itemMarker = "(?:[IVXLCDM]{1,8}[.)]|\\([IVXLCDM]{1,8}\\)|\\d{1,3}[.)]|\\(\\d{1,3}\\))";
+    statement = statement.replace(new RegExp("([^\\n])\\s+(?=" + itemMarker + "\\s)","g"),"$1\n");
+    statement = statement.replace(new RegExp("(^|\\s)(" + itemMarker + ")(?=\\S)","g"),"$1$2 ");
+    return statement;
+  }
+
   function renderCard(question,position) {
     const card = document.createElement("article");
     card.className = "q-card";
@@ -220,7 +228,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     body.className = "q-card-body";
     const statement = document.createElement("p");
     statement.className = "q-statement";
-    statement.textContent = question.statement;
+    statement.textContent = formatQuestionStatement(question.statement);
     body.append(statement);
     const questionImages = Array.isArray(question.images) && question.images.length
       ? question.images
