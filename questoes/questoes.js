@@ -1,6 +1,6 @@
 import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=question-lock-20261014-1";
 import {supabasePromise} from "/src-supabase.js";
-import "./questoes-data.js?v=fisica-variada-20261029-2";
+import "./questoes-data.js?v=fisica-variada-20261029-3";
 
 (() => {
   "use strict";
