@@ -1383,4 +1383,1132 @@ window.DIARIO_QUESTIONS = [
       "pressão de radiação"
     ]
   }
+,
+[
+  {
+    "id": "questao-extra-20261029-01",
+    "title": "Corrente em aparelhos ligados em paralelo",
+    "discipline": "Física",
+    "subject": "Eletricidade",
+    "subtopic": "Potência e corrente elétrica",
+    "bank": "ENEM 2024 (adaptada)",
+    "institution": "INEP",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Em uma instalação de 127 V, dois aparelhos resistivos de 1 000 W e 500 W são ligados em paralelo. Desprezando perdas, qual é aproximadamente a corrente total fornecida pela rede?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "3,9 A"
+      },
+      {
+        "letter": "B",
+        "text": "7,9 A"
+      },
+      {
+        "letter": "C",
+        "text": "11,8 A"
+      },
+      {
+        "letter": "D",
+        "text": "15,0 A"
+      },
+      {
+        "letter": "E",
+        "text": "19,7 A"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ENEM 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://download.inep.gov.br/enem/provas_e_gabaritos/2024_PV_impresso_D2_CD12.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletricidade",
+      "Potência e corrente elétrica",
+      "circuitos"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-02",
+    "title": "Economia mensal com lâmpadas LED",
+    "discipline": "Física",
+    "subject": "Eletricidade",
+    "subtopic": "Consumo de energia",
+    "bank": "ENEM 2024 (adaptada)",
+    "institution": "INEP",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma lâmpada incandescente de 60 W é substituída por uma LED de 9 W, com iluminação equivalente. Usadas 5 horas por dia durante 30 dias, quantos quilowatts-hora são economizados?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1,53 kWh"
+      },
+      {
+        "letter": "B",
+        "text": "7,65 kWh"
+      },
+      {
+        "letter": "C",
+        "text": "9,00 kWh"
+      },
+      {
+        "letter": "D",
+        "text": "51,0 kWh"
+      },
+      {
+        "letter": "E",
+        "text": "76,5 kWh"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ENEM 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://download.inep.gov.br/enem/provas_e_gabaritos/2024_PV_impresso_D2_CD12.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletricidade",
+      "Consumo de energia",
+      "energia elétrica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-03",
+    "title": "Aquecimento de água em um recipiente",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Calor sensível",
+    "bank": "ENEM 2024 (adaptada)",
+    "institution": "INEP",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma quantidade de 0,40 kg de água recebe calor e sua temperatura aumenta 15 °C. Adote calor específico da água igual a 4 200 J/(kg·°C). Qual é o calor absorvido?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,52 kJ"
+      },
+      {
+        "letter": "B",
+        "text": "10,5 kJ"
+      },
+      {
+        "letter": "C",
+        "text": "16,8 kJ"
+      },
+      {
+        "letter": "D",
+        "text": "25,2 kJ"
+      },
+      {
+        "letter": "E",
+        "text": "42,0 kJ"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ENEM 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://download.inep.gov.br/enem/provas_e_gabaritos/2024_PV_impresso_D2_CD12.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Calor sensível",
+      "calorimetria"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-04",
+    "title": "Impulso em uma colisão com uma parede",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Quantidade de movimento e impulso",
+    "bank": "ENEM 2024 (adaptada)",
+    "institution": "INEP",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma bola de 0,15 kg move-se perpendicularmente a uma parede a 12 m/s e retorna no sentido oposto a 8 m/s. Qual é o módulo do impulso recebido pela bola?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,60 N·s"
+      },
+      {
+        "letter": "B",
+        "text": "1,20 N·s"
+      },
+      {
+        "letter": "C",
+        "text": "2,00 N·s"
+      },
+      {
+        "letter": "D",
+        "text": "3,00 N·s"
+      },
+      {
+        "letter": "E",
+        "text": "4,00 N·s"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ENEM 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://download.inep.gov.br/enem/provas_e_gabaritos/2024_PV_impresso_D2_CD12.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Quantidade de movimento e impulso",
+      "impulso"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-05",
+    "title": "Reflexão em um espelho plano",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Reflexão da luz",
+    "bank": "ENEM 2024 (adaptada)",
+    "institution": "INEP",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Um raio luminoso incide sobre um espelho plano formando 35° com a normal à superfície. Qual é o ângulo entre o raio incidente e o refletido?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "35°"
+      },
+      {
+        "letter": "B",
+        "text": "70°"
+      },
+      {
+        "letter": "C",
+        "text": "90°"
+      },
+      {
+        "letter": "D",
+        "text": "110°"
+      },
+      {
+        "letter": "E",
+        "text": "145°"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ENEM 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://download.inep.gov.br/enem/provas_e_gabaritos/2024_PV_impresso_D2_CD12.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Reflexão da luz",
+      "óptica geométrica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-06",
+    "title": "Velocidade média de uma bicicleta",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento uniforme",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Durante um trecho retilíneo, uma bicicleta percorre 180 m em 30 s, mantendo velocidade constante. Qual é o módulo dessa velocidade?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "3 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "5 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "6 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "9 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "15 m/s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em OBF 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1_p.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento uniforme",
+      "cinemática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-07",
+    "title": "Conversão de temperatura",
+    "discipline": "Física",
+    "subject": "Termologia",
+    "subtopic": "Escalas termométricas",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "A temperatura de uma sala é 25 °C. Qual valor corresponde a essa temperatura na escala Fahrenheit?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "77 °F"
+      },
+      {
+        "letter": "B",
+        "text": "68 °F"
+      },
+      {
+        "letter": "C",
+        "text": "45 °F"
+      },
+      {
+        "letter": "D",
+        "text": "52 °F"
+      },
+      {
+        "letter": "E",
+        "text": "90 °F"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em OBF 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1_p.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Termologia",
+      "Escalas termométricas",
+      "temperatura"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-08",
+    "title": "Deslocamento em duas direções",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Vetores",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma estudante caminha 5 m para leste e depois 12 m para norte. Qual é o módulo do deslocamento entre o ponto inicial e o final?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "7 m"
+      },
+      {
+        "letter": "B",
+        "text": "13 m"
+      },
+      {
+        "letter": "C",
+        "text": "17 m"
+      },
+      {
+        "letter": "D",
+        "text": "60 m"
+      },
+      {
+        "letter": "E",
+        "text": "(5 + 12) m"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em OBF 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1_p.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Vetores",
+      "vetores"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-09",
+    "title": "Velocidade de propagação de uma onda",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Equação fundamental da onda",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Uma onda periódica tem comprimento de onda 0,75 m e frequência 4,0 Hz. Qual é sua velocidade de propagação?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,19 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,33 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "3,0 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "5,3 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "16 m/s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em OBF 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1_p.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Equação fundamental da onda",
+      "ondas"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-10",
+    "title": "Pressão da água em uma piscina",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Pressão hidrostática",
+    "bank": "OBF 2024 (adaptada)",
+    "institution": "Olimpíada Brasileira de Física",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Em uma piscina, um ponto está a 1,2 m abaixo da superfície. Considerando água com densidade 1 000 kg/m³ e g = 10 m/s², qual é a pressão manométrica nesse ponto?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1 200 Pa"
+      },
+      {
+        "letter": "B",
+        "text": "6 000 Pa"
+      },
+      {
+        "letter": "C",
+        "text": "10 000 Pa"
+      },
+      {
+        "letter": "D",
+        "text": "12 000 Pa"
+      },
+      {
+        "letter": "E",
+        "text": "120 000 Pa"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em OBF 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://app.graxaim.org/obf/2024/ga/pub/fase1_n1_p.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Pressão hidrostática",
+      "hidrostática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-11",
+    "title": "Energia cinética de um carrinho",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Energia cinética",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Fácil",
+    "statement": "Um carrinho de 4,0 kg desloca-se a 5,0 m/s em relação ao solo. Qual é sua energia cinética?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "20 J"
+      },
+      {
+        "letter": "B",
+        "text": "50 J"
+      },
+      {
+        "letter": "C",
+        "text": "80 J"
+      },
+      {
+        "letter": "D",
+        "text": "100 J"
+      },
+      {
+        "letter": "E",
+        "text": "200 J"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ITA 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Energia cinética",
+      "energia"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-12",
+    "title": "Velocidade da sombra de uma pessoa",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento relativo",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Uma luminária pontual está a 8 m do chão. Uma pessoa de 2 m de altura caminha em linha reta, afastando-se da base da luminária a 1,5 m/s. Qual é a velocidade da extremidade da sombra da pessoa em relação ao chão?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,5 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,0 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "1,5 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "2,0 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "3,0 m/s"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ITA 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento relativo",
+      "cinemática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-13",
+    "title": "Variação do período de um pêndulo",
+    "discipline": "Física",
+    "subject": "Oscilações",
+    "subtopic": "Pêndulo simples e dilatação",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Difícil",
+    "statement": "Um pêndulo simples tem período inicial de 2,000 s. Sua haste metálica, de coeficiente de dilatação linear 2,0 × 10⁻⁵ °C⁻¹, sofre aquecimento de 100 °C. Para pequenas variações, T é proporcional a √L. Qual é aproximadamente o novo período?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,000 s"
+      },
+      {
+        "letter": "B",
+        "text": "2,001 s"
+      },
+      {
+        "letter": "C",
+        "text": "2,002 s"
+      },
+      {
+        "letter": "D",
+        "text": "2,004 s"
+      },
+      {
+        "letter": "E",
+        "text": "2,040 s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ITA 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Oscilações",
+      "Pêndulo simples e dilatação",
+      "oscilações"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-14",
+    "title": "Imagem formada por uma lente convergente",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Lentes esféricas",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Um objeto é colocado a 20 cm de uma lente convergente cuja distância focal é 12 cm. Usando a equação das lentes delgadas, a que distância da lente se forma a imagem?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "7,5 cm"
+      },
+      {
+        "letter": "B",
+        "text": "12 cm"
+      },
+      {
+        "letter": "C",
+        "text": "20 cm"
+      },
+      {
+        "letter": "D",
+        "text": "30 cm"
+      },
+      {
+        "letter": "E",
+        "text": "60 cm"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ITA 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Lentes esféricas",
+      "lentes"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-15",
+    "title": "Força eletromotriz induzida em uma bobina",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Indução eletromagnética",
+    "bank": "ITA 2024 (adaptada)",
+    "institution": "Instituto Tecnológico de Aeronáutica",
+    "year": 2024,
+    "difficulty": "Média",
+    "statement": "Uma bobina com 200 espiras sofre uma variação uniforme do fluxo magnético por espira de 9,0 × 10⁻⁴ Wb em 0,030 s. Qual é o módulo da força eletromotriz média induzida?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,6 V"
+      },
+      {
+        "letter": "B",
+        "text": "6,0 V"
+      },
+      {
+        "letter": "C",
+        "text": "30 V"
+      },
+      {
+        "letter": "D",
+        "text": "60 V"
+      },
+      {
+        "letter": "E",
+        "text": "180 V"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em ITA 2024 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://vestibular.ita.br/provas/2024_fase1.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Indução eletromagnética",
+      "indução"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-16",
+    "title": "Alcance de um projétil lançado horizontalmente",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Lançamento horizontal",
+    "bank": "IME 2024–2025 (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Um objeto é lançado horizontalmente do alto de uma plataforma de 45 m com velocidade inicial de 12 m/s. Despreze a resistência do ar e use g = 10 m/s². Qual é o alcance horizontal?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "12 m"
+      },
+      {
+        "letter": "B",
+        "text": "24 m"
+      },
+      {
+        "letter": "C",
+        "text": "30 m"
+      },
+      {
+        "letter": "D",
+        "text": "36 m"
+      },
+      {
+        "letter": "E",
+        "text": "54 m"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em IME 2024–2025 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.ime.eb.mil.br/vestibular-e-concursos/cfg-ensino-medio/provas-anteriores-cfg",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Lançamento horizontal",
+      "lançamento"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-17",
+    "title": "Interação entre duas cargas elétricas",
+    "discipline": "Física",
+    "subject": "Eletromagnetismo",
+    "subtopic": "Lei de Coulomb",
+    "bank": "IME 2024–2025 (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Média",
+    "statement": "Duas cargas puntiformes positivas, de 4,0 μC e 2,0 μC, estão separadas por 0,30 m no vácuo. Adote k = 9,0 × 10⁹ N·m²/C². Qual é o módulo da força elétrica entre elas?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,08 N"
+      },
+      {
+        "letter": "B",
+        "text": "0,80 N"
+      },
+      {
+        "letter": "C",
+        "text": "1,8 N"
+      },
+      {
+        "letter": "D",
+        "text": "8,0 N"
+      },
+      {
+        "letter": "E",
+        "text": "80 N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em IME 2024–2025 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.ime.eb.mil.br/vestibular-e-concursos/cfg-ensino-medio/provas-anteriores-cfg",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Eletromagnetismo",
+      "Lei de Coulomb",
+      "eletrostática"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-18",
+    "title": "Equilíbrio em um tubo em U",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Pressão e densidade",
+    "bank": "IME 2024–2025 (adaptada)",
+    "institution": "Instituto Militar de Engenharia",
+    "year": 2025,
+    "difficulty": "Difícil",
+    "statement": "Em um tubo em U aberto, uma coluna de óleo de densidade 800 kg/m³ tem altura de 0,25 m acima da interface com água. Qual altura de água produz a mesma pressão hidrostática? Considere as duas colunas em equilíbrio.",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "0,20 m"
+      },
+      {
+        "letter": "B",
+        "text": "0,25 m"
+      },
+      {
+        "letter": "C",
+        "text": "0,31 m"
+      },
+      {
+        "letter": "D",
+        "text": "0,40 m"
+      },
+      {
+        "letter": "E",
+        "text": "0,80 m"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em IME 2024–2025 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.ime.eb.mil.br/vestibular-e-concursos/cfg-ensino-medio/provas-anteriores-cfg",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Pressão e densidade",
+      "fluidos"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-19",
+    "title": "Velocidade após uma colisão perfeitamente inelástica",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Colisões e conservação do momento",
+    "bank": "FUVEST 2023 (adaptada)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2023,
+    "difficulty": "Média",
+    "statement": "Um carrinho de 2 kg move-se a 6 m/s e colide com outro de 4 kg inicialmente em repouso. Os carrinhos ficam unidos após o choque. Qual é a velocidade do conjunto imediatamente após a colisão?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "1 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "1,5 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "2 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "3 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "6 m/s"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em FUVEST 2023 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2023/",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Colisões e conservação do momento",
+      "colisões"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-20",
+    "title": "Potência útil de uma pequena usina",
+    "discipline": "Física",
+    "subject": "Energia",
+    "subtopic": "Transformação de energia",
+    "bank": "FUVEST 2023 (adaptada)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2023,
+    "difficulty": "Média",
+    "statement": "Uma usina recebe 3,0 kg de água por segundo, que cai de uma altura de 10 m. Se 50% da energia potencial gravitacional é convertida em energia elétrica e g = 10 m/s², qual é a potência elétrica gerada?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "30 W"
+      },
+      {
+        "letter": "B",
+        "text": "150 W"
+      },
+      {
+        "letter": "C",
+        "text": "300 W"
+      },
+      {
+        "letter": "D",
+        "text": "600 W"
+      },
+      {
+        "letter": "E",
+        "text": "1 500 W"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em FUVEST 2023 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2023/",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Energia",
+      "Transformação de energia",
+      "energia"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-21",
+    "title": "Distância entre objeto e imagem em espelho plano",
+    "discipline": "Física",
+    "subject": "Óptica",
+    "subtopic": "Espelho plano",
+    "bank": "FUVEST 2023 (adaptada)",
+    "institution": "Fundação Universitária para o Vestibular",
+    "year": 2023,
+    "difficulty": "Fácil",
+    "statement": "Um objeto está a 2,0 m diante de um espelho plano. Qual é a distância entre o objeto e sua imagem?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "4,0 m"
+      },
+      {
+        "letter": "B",
+        "text": "2,0 m"
+      },
+      {
+        "letter": "C",
+        "text": "1,0 m"
+      },
+      {
+        "letter": "D",
+        "text": "0,5 m"
+      },
+      {
+        "letter": "E",
+        "text": "A imagem coincide com o objeto"
+      }
+    ],
+    "correct": "A",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em FUVEST 2023 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.fuvest.br/acervo-vestibular-2023/",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Óptica",
+      "Espelho plano",
+      "espelhos"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-22",
+    "title": "Velocidade de um bloco após descer uma rampa",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Conservação da energia mecânica",
+    "bank": "EFOMM 2026 (adaptada)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um bloco parte do repouso e desce uma pista sem atrito, perdendo 1,25 m de altura. Adote g = 10 m/s². Qual é sua velocidade ao atingir o ponto mais baixo?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,5 m/s"
+      },
+      {
+        "letter": "B",
+        "text": "4,0 m/s"
+      },
+      {
+        "letter": "C",
+        "text": "4,5 m/s"
+      },
+      {
+        "letter": "D",
+        "text": "5,0 m/s"
+      },
+      {
+        "letter": "E",
+        "text": "12,5 m/s"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em EFOMM 2026 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Conservação da energia mecânica",
+      "energia mecânica"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-23",
+    "title": "Aceleração centrípeta de um navio em curva",
+    "discipline": "Física",
+    "subject": "Mecânica",
+    "subtopic": "Movimento circular",
+    "bank": "EFOMM 2026 (adaptada)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Uma embarcação descreve uma curva circular de raio 20 m com velocidade constante de 10 m/s. Qual é o módulo de sua aceleração centrípeta?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2,0 m/s²"
+      },
+      {
+        "letter": "B",
+        "text": "4,0 m/s²"
+      },
+      {
+        "letter": "C",
+        "text": "5,0 m/s²"
+      },
+      {
+        "letter": "D",
+        "text": "10 m/s²"
+      },
+      {
+        "letter": "E",
+        "text": "20 m/s²"
+      }
+    ],
+    "correct": "C",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em EFOMM 2026 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Mecânica",
+      "Movimento circular",
+      "movimento circular"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-24",
+    "title": "Empuxo sobre um bloco totalmente submerso",
+    "discipline": "Física",
+    "subject": "Fluidos",
+    "subtopic": "Princípio de Arquimedes",
+    "bank": "EFOMM 2026 (adaptada)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um bloco de volume 0,002 m³ está totalmente submerso em água de densidade 1 000 kg/m³. Use g = 10 m/s². Qual é o empuxo exercido pela água?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "2 N"
+      },
+      {
+        "letter": "B",
+        "text": "20 N"
+      },
+      {
+        "letter": "C",
+        "text": "200 N"
+      },
+      {
+        "letter": "D",
+        "text": "2 000 N"
+      },
+      {
+        "letter": "E",
+        "text": "20 000 N"
+      }
+    ],
+    "correct": "B",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em EFOMM 2026 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Fluidos",
+      "Princípio de Arquimedes",
+      "empuxo"
+    ]
+  },
+  {
+    "id": "questao-extra-20261029-25",
+    "title": "Profundidade medida por sonar",
+    "discipline": "Física",
+    "subject": "Ondulatória",
+    "subtopic": "Eco e velocidade do som",
+    "bank": "EFOMM 2026 (adaptada)",
+    "institution": "Escola de Formação de Oficiais da Marinha Mercante",
+    "year": 2026,
+    "difficulty": "Média",
+    "statement": "Um sonar emite um pulso sonoro que retorna após 2,0 s. Considerando a velocidade do som na água igual a 1 500 m/s, qual é a profundidade no local?",
+    "choices": [
+      {
+        "letter": "A",
+        "text": "750 m"
+      },
+      {
+        "letter": "B",
+        "text": "1 000 m"
+      },
+      {
+        "letter": "C",
+        "text": "1 250 m"
+      },
+      {
+        "letter": "D",
+        "text": "1 500 m"
+      },
+      {
+        "letter": "E",
+        "text": "3 000 m"
+      }
+    ],
+    "correct": "D",
+    "solution": "Gabarito indicado. Esta questão ainda não possui solução revisada.",
+    "source": "Questão autoral adaptada de temas de Física cobrados em EFOMM 2026 (adaptada); enunciado e alternativas próprios.",
+    "sourceUrl": "https://www.marinha.mil.br/ciaga/sites/www.marinha.mil.br.ciaga/files/Processos%20Seletivos/PROVA%20BRANCA%202%20DIA.pdf",
+    "license": "Enunciado e alternativas reescritos/adaptados para estudo; não são transcrição literal.",
+    "tags": [
+      "Física",
+      "Ondulatória",
+      "Eco e velocidade do som",
+      "ondas"
+    ]
+  }
+]
 ];
