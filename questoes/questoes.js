@@ -757,7 +757,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
         src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:index === 0 && String(record.institution || "").toUpperCase() === "IME" ? "Figura original da questão do IME" : `Imagem ilustrativa ${index + 1}`
+        alt:String(record.institution || "").toUpperCase() === "IME" ? `Figura original ou alternativa visual ${index + 1} da questão do IME` : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const officialSource = String(record.institution || "").toUpperCase() === "IME"
@@ -775,6 +775,8 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
                     ? {cycle:"2020/2021",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2020-2021/Prova_Objetiva_1_FASE.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2020-2021/Gabarito_Prova_Objetiva_1_FASE.pdf"}
                     : Number(record.year) === 2020
                       ? {cycle:"2019/2020",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2019-2020/CFG_PROVA_OBJETIVA_2019_20.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2019-2020/CFG_GABARITO_DEFINITIVO_PROVA_OBJETIVA_2019_20.pdf"}
+                      : Number(record.year) === 2019
+                        ? {cycle:"2018/2019",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2018-2019/CFG_Prova_Objetiva_2018_2019.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2018-2019/CFG_Gabarito_Objetiva_2018_2019.pdf"}
                       : null)
         : null;
       const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
@@ -823,4 +825,5 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
 
   loadPublishedQuestions().catch(() => {});
 })();
+
 
