@@ -44,6 +44,20 @@
 .vl-field input[type=range] { width:100%; accent-color:var(--vl-gold); }
 .vl-field select { appearance:auto; }.vl-field select option { color:#f4f6fb; background:#0d1728; }
 .vl-locks,.vl-check-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }.vl-locks label,.vl-check-stack label,.vl-check-row { display:flex; align-items:flex-start; gap:6px; color:var(--vl-muted); font-size:9px; line-height:1.35; cursor:pointer; }
+.vl-selection-actions{display:grid;gap:8px;padding:10px;border:1px solid rgba(230,196,119,.55);border-radius:9px;background:linear-gradient(145deg,rgba(230,196,119,.1),rgba(10,20,36,.92) 58%);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.vl-selection-actions[hidden]{display:none!important}
+.vl-selection-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vl-selection-head>div{display:grid;min-width:0;gap:3px}
+.vl-selection-head span{color:var(--vl-gold);font-size:8px;font-weight:800;letter-spacing:.12em}
+.vl-selection-head strong{overflow:hidden;color:var(--vl-text);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.vl-selection-head .vl-icon-button{flex:0 0 32px;width:32px;min-width:32px;min-height:32px}
+.vl-selection-actions h3{margin:0;color:var(--vl-text);font-size:11px}
+.vl-selection-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.vl-selection-buttons .vl-button{min-height:36px;padding:0 6px;font-size:9px}
+.vl-selection-locks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.vl-selection-locks label{display:flex;align-items:flex-start;gap:6px;min-width:0;padding:7px;border:1px solid var(--vl-line);border-radius:7px;color:var(--vl-muted);background:rgba(7,16,30,.68);font-size:9px;line-height:1.35;cursor:pointer}
+.vl-selection-locks input{flex:0 0 auto;margin:1px 0 0;accent-color:var(--vl-gold)}
+
 .vl-actions { display:flex; flex-wrap:wrap; gap:5px; }.vl-button { min-height:32px; padding:0 9px; font-size:10px; }.vl-primary { border-color:#277b51; color:#fff; background:#23764a; }.vl-primary:hover { border-color:#185a37; background:#185a37; }.vl-danger { border-color:#a93b3b; color:#fff; background:#a93b3b; }.vl-danger:hover { background:#7d2929; }
 .vl-help { margin:0; color:var(--vl-muted); font-size:9px; line-height:1.5; }
 .vl-vector-list { display:grid; gap:5px; max-height:230px; overflow:auto; }
