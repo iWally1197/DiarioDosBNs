@@ -76,7 +76,7 @@ function loadScene() {
 let state = loadScene();
 let undoStack = [], redoStack = [], inputBefore = null, interaction = null, rafId = 0, previousFrame = 0;
 const pointers = new Map();
-let pinchStart = null, edgePanFrame = 0, edgePanLastFrame = 0, edgePanPointer = null;
+let pinchStart = null, edgePanFrame = 0, edgePanLastFrame = 0, edgePanPointer = null, advancedMode = false;
 const canvas = $("vl-canvas");
 const ctx = canvas.getContext("2d");
 let canvasWidth = 1, canvasHeight = 1, pixelRatio = 1, resizeObserver;
@@ -117,9 +117,11 @@ function updateEditor(vector=selected()) {
   const form=$("vl-vector-list");
   if(!vector) {
     ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=true);
+    $("vl-editor-status").textContent="Nenhum vetor selecionado. Use “＋ Novo vetor” para criar um.";
     return;
   }
   ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=false);
+  $("vl-editor-status").textContent="Selecionado: "+vector.name+". As mudanças nos campos aparecem imediatamente na cena.";
   $("vl-name").value=vector.name;
   $("vl-quantity").value=vector.quantity;
   $("vl-color").value=vector.color;
@@ -129,11 +131,15 @@ function updateEditor(vector=selected()) {
 }
 function renderVectorList() {
   const list=$("vl-vector-list");
+  if(!state.vectors.length) {
+    list.innerHTML="<p class=\"vl-vector-empty\">Ainda não há vetores. Use “＋ Novo vetor” para começar.</p>";
+    return;
+  }
   list.innerHTML=state.vectors.map((v)=>"<div class=\"vl-vector-item"+(v.id===state.selectedId?" is-selected":"")+"\" data-vector-item=\""+esc(v.id)+"\">"+
-    "<input type=\"checkbox\" data-visible=\""+esc(v.id)+"\" aria-label=\"Mostrar "+esc(v.name)+"\" "+(v.visible?"checked":"")+">"+
-    "<button type=\"button\" data-select=\""+esc(v.id)+"\" aria-pressed=\""+(v.id===state.selectedId)+"\">"+esc(v.name)+" <span class=\"vl-vector-vector\">("+fmt(v.components.x)+", "+fmt(v.components.y)+(state.dimension===3?", "+fmt(v.components.z):"")+") "+esc(info(v).unit)+"</span></button>"+
-    "<input type=\"color\" data-color=\""+esc(v.id)+"\" value=\""+esc(v.color)+"\" aria-label=\"Cor de "+esc(v.name)+"\">"+
-    "<input type=\"checkbox\" data-include=\""+esc(v.id)+"\" aria-label=\"Incluir "+esc(v.name)+" na operação\" "+(v.include?"checked":"")+">"+
+    "<input type=\"checkbox\" data-visible=\""+esc(v.id)+"\" aria-label=\"Mostrar "+esc(v.name)+"\" title=\"Mostrar ou ocultar\" "+(v.visible?"checked":"")+">"+
+    "<button type=\"button\" data-select=\""+esc(v.id)+"\" aria-pressed=\""+(v.id===state.selectedId)+"\" title=\"Selecionar "+esc(v.name)+"\">"+esc(v.name)+" <span class=\"vl-vector-vector\">("+fmt(v.components.x)+", "+fmt(v.components.y)+(state.dimension===3?", "+fmt(v.components.z):"")+") "+esc(info(v).unit)+"</span></button>"+
+    "<input type=\"color\" data-color=\""+esc(v.id)+"\" value=\""+esc(v.color)+"\" aria-label=\"Cor de "+esc(v.name)+"\" title=\"Alterar cor\">"+
+    "<input type=\"checkbox\" data-include=\""+esc(v.id)+"\" aria-label=\"Incluir "+esc(v.name)+" na operação\" title=\"Incluir na operação\" "+(v.include?"checked":"")+">"+
     "</div>").join("");
 }
 function compatibleVectors(vectors) {
@@ -255,6 +261,10 @@ function updatePhysicsReadout() {
 }
 function renderAll() {
   renderVectorList(); renderOperation(); renderReadouts(); draw();
+  $("vl-vector-count").textContent=String(state.vectors.length);
+  $("vl-duplicate").disabled=!selected();
+  $("vl-delete").disabled=!selected();
+  $("vl-editor-status").textContent=selected()?"Selecionado: "+selected().name+". As mudanças nos campos aparecem imediatamente na cena.":"Nenhum vetor selecionado. Use “＋ Novo vetor” para criar um.";
   $("vl-zoom-label").textContent=Math.round(state.camera.zoom/48*100)+"%";
   $("vl-grid-toggle").checked=state.showGrid; $("vl-components-toggle").checked=state.showComponents;
   $("vl-angle-toggle").checked=state.showAngles; $("vl-snap-toggle").checked=state.snap;
@@ -263,9 +273,9 @@ function renderAll() {
   $("vl-3d-view").hidden=state.dimension!==3; $("vl-connect-next").checked=state.connectNext;
   $("vl-angle-unit").value=state.angleUnit; $("vl-show-result").checked=state.showResult;
   $("vl-learning-mode").value=state.learningMode; $("vl-experiment").value=state.experiment;
-  document.documentElement.classList.toggle("high-contrast",state.contrast);
-  document.documentElement.classList.toggle("low-stimulation",state.lowStimulus);
-  document.documentElement.classList.toggle("reduce-motion",state.reducedMotion);
+  document.body.classList.toggle("high-contrast",state.contrast);
+  document.body.classList.toggle("low-stimulation",state.lowStimulus);
+  document.body.classList.toggle("reduce-motion",state.reducedMotion);
   $("vl-contrast-toggle").checked=state.contrast; $("vl-low-stimulus-toggle").checked=state.lowStimulus;
   $("vl-reduced-motion-toggle").checked=state.reducedMotion; $("vl-steps-toggle").checked=state.showSteps;
   $("vl-stage-title").textContent=state.dimension===3?"Espaço vetorial 3D · projeção ortográfica":"Espaço cartesiano";
@@ -690,19 +700,30 @@ $("vl-vector-list").addEventListener("change",(event)=>{
 });
 
 $("vl-add").addEventListener("click",()=>{
-  try {
-    snapshotUndo();
-    const quantity=$("vl-quantity").value;
-    const previous=selected();
-    const origin=state.connectNext&&previous?endOf(previous):{x:getNumber("vl-ox"),y:getNumber("vl-oy"),z:getNumber("vl-oz")};
-    const vector=makeVector({name:$("vl-name").value.trim()||"Vetor "+String.fromCharCode(65+state.vectors.length%26),color:$("vl-color").value,quantity,origin,components:{x:getNumber("vl-vx"),y:getNumber("vl-vy"),z:getNumber("vl-vz")},attachedToBody:quantity==="force"&&!state.connectNext});
-    if(state.vectors.length>=300)throw new Error("A cena chegou ao limite prático de 300 vetores.");
-    state.vectors.push(vector);state.selectedId=vector.id;updateEditor(vector);notify("");renderAll();setStatus("Vetor adicionado");
-  } catch(error) { notify(error.message); }
+  if(state.vectors.length>=300){notify("A cena chegou ao limite prático de 300 vetores.");return;}
+  snapshotUndo();
+  const previous=selected(),index=state.vectors.length,center=pointWorld({x:canvasWidth/2,y:canvasHeight/2},0);
+  const nameNumbers=state.vectors.map((v)=>Number(v.name.match(/^Vetor (\d+)$/)?.[1]||0));
+  let nameNumber=1;while(nameNumbers.includes(nameNumber))nameNumber++;
+  const slot=index%6;
+  const origin=state.connectNext&&previous?endOf(previous):{
+    x:center.x+((slot%3)-1)*.7,
+    y:center.y-(Math.floor(slot/3)-.5)*.7,
+    z:0
+  };
+  const vector=makeVector({
+    name:"Vetor "+nameNumber,
+    color:colors[index%colors.length],
+    quantity:"abstract",
+    origin,
+    components:{x:4,y:3,z:state.dimension===3?2:0}
+  });
+  state.vectors.push(vector);state.selectedId=vector.id;updateEditor(vector);notify("");renderAll();setStatus("Vetor adicionado à cena");
 });
 $("vl-duplicate").addEventListener("click",()=>{
   const v=selected();if(!v)return;
-  snapshotUndo();const copy=makeVector({...v,id:crypto.randomUUID(),name:v.name+" (cópia)",color:colors[state.vectors.length%colors.length],origin:add(v.origin,{x:.5,y:.5,z:0})});
+  if(state.vectors.length>=300){notify("A cena chegou ao limite prático de 300 vetores.");return;}
+  snapshotUndo();const copy=makeVector({...v,id:crypto.randomUUID(),name:v.name+" (cópia)",color:colors[state.vectors.length%colors.length],origin:add(startOf(v),{x:.75,y:.75,z:0})});
   state.vectors.push(copy);state.selectedId=copy.id;updateEditor(copy);renderAll();
 });
 $("vl-delete").addEventListener("click",()=>{
@@ -712,6 +733,12 @@ $("vl-delete").addEventListener("click",()=>{
 $("vl-align-x").addEventListener("click",()=>{const v=selected();if(!v||v.locked)return;snapshotUndo();v.components.y=0;updateEditor(v);renderAll();});
 $("vl-align-y").addEventListener("click",()=>{const v=selected();if(!v||v.locked)return;snapshotUndo();v.components.x=0;updateEditor(v);renderAll();});
 
+$("vl-advanced-toggle").addEventListener("click",()=>{
+  advancedMode=!advancedMode;
+  document.body.classList.toggle("vl-advanced-mode",advancedMode);
+  $("vl-advanced-toggle").setAttribute("aria-pressed",String(advancedMode));
+  $("vl-advanced-toggle").textContent=advancedMode?"Ocultar avançados":"Mais controles";
+});
 function bindCheck(id,key) { $(id).addEventListener("change",()=>{snapshotUndo();state[key]=$(id).checked;renderAll();}); }
 bindCheck("vl-grid-toggle","showGrid");bindCheck("vl-components-toggle","showComponents");bindCheck("vl-angle-toggle","showAngles");bindCheck("vl-snap-toggle","snap");bindCheck("vl-show-result","showResult");
 bindCheck("vl-contrast-toggle","contrast");bindCheck("vl-low-stimulus-toggle","lowStimulus");bindCheck("vl-reduced-motion-toggle","reducedMotion");bindCheck("vl-steps-toggle","showSteps");
@@ -786,8 +813,31 @@ $("vl-fit").addEventListener("click",()=>{
   state.camera.panY=(Math.min(...ys)+Math.max(...ys))*state.camera.zoom/2;
   draw();$("vl-zoom-label").textContent=Math.round(state.camera.zoom/48*100)+"%";
 });
-$("vl-fullscreen").addEventListener("click",async()=>{try{if(!document.fullscreenElement)await $("vl-app").requestFullscreen();else await document.exitFullscreen();}catch{setStatus("Tela cheia não disponível neste navegador.");}});
-document.addEventListener("fullscreenchange",()=>{$("vl-fullscreen").textContent=document.fullscreenElement?"Sair da tela cheia":"Tela cheia";setCanvasSize();});
+function syncFullscreenControls() {
+  const active=document.fullscreenElement===$("vl-app");
+  $("vl-fullscreen").textContent=active?"Sair da tela cheia":"Tela cheia";
+  $("vl-fullscreen-controls").hidden=!active;
+  $("vl-fullscreen-readouts").hidden=!active;
+  if(!active){$("vl-app").classList.remove("vl-controls-open","vl-readouts-open");}
+  $("vl-fullscreen-controls").setAttribute("aria-expanded",String($("vl-app").classList.contains("vl-controls-open")));
+  $("vl-fullscreen-readouts").setAttribute("aria-expanded",String($("vl-app").classList.contains("vl-readouts-open")));
+  $("vl-fullscreen-controls").textContent=$("vl-app").classList.contains("vl-controls-open")?"Fechar controles":"⚙ Controles";
+  $("vl-fullscreen-readouts").textContent=$("vl-app").classList.contains("vl-readouts-open")?"Ocultar leituras":"Leituras";
+}
+$("vl-fullscreen").addEventListener("click",async()=>{
+  try {
+    if(document.fullscreenElement===$("vl-app"))await document.exitFullscreen();
+    else if(!document.fullscreenElement)await $("vl-app").requestFullscreen();
+    else await document.exitFullscreen();
+  } catch { setStatus("Tela cheia não disponível neste navegador."); }
+});
+$("vl-fullscreen-controls").addEventListener("click",()=>{
+  $("vl-app").classList.toggle("vl-controls-open");syncFullscreenControls();setCanvasSize();
+});
+$("vl-fullscreen-readouts").addEventListener("click",()=>{
+  $("vl-app").classList.toggle("vl-readouts-open");syncFullscreenControls();setCanvasSize();
+});
+document.addEventListener("fullscreenchange",()=>{syncFullscreenControls();setCanvasSize();});
 $("vl-angle-convention")?.addEventListener("change",()=>{snapshotUndo();state.angleConvention=$("vl-angle-convention").value;renderAll();});
 
 function updateBodyControls() {
@@ -872,4 +922,4 @@ function syncAllInputs() {
   $("vl-angle-convention").value=state.angleConvention;
 }
 window.addEventListener("resize",setCanvasSize);
-updateEditor(selected());updateGuided();syncAllInputs();renderAll();setStatus("Laboratório de vetores pronto");
+syncFullscreenControls();updateEditor(selected());updateGuided();syncAllInputs();renderAll();setStatus("Laboratório de vetores pronto");
