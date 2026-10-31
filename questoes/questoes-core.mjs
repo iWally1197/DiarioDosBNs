@@ -7,6 +7,12 @@ export function isValidQuestion(question) {
       !Array.isArray(question.choices) || question.choices.length < 2) return false;
   const letters = question.choices.map(choice => choice && choice.letter);
   if (letters.some(letter => typeof letter !== "string" || !letter.trim()) || new Set(letters).size !== letters.length) return false;
+  if (question.multiSelect === true) {
+    const codes = new Set(["01","02","04","08","16"]);
+    const correctSum = Number(question.correct);
+    return letters.length === 5 && letters.every(letter => codes.has(letter)) &&
+      Number.isInteger(correctSum) && correctSum >= 0 && correctSum <= 31;
+  }
   return letters.filter(letter => letter === question.correct).length === 1;
 }
 

@@ -1,4 +1,4 @@
-import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=question-lock-20261014-1";
+import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=uem-somatoria-20261031-1";
 import {supabasePromise} from "/src-supabase.js";
 import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
 
@@ -294,10 +294,11 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       });
       body.append(imageButton);
     }
+    const multiSelect = question.multiSelect === true;
     const choices = document.createElement("fieldset");
     choices.className = "q-choice-group";
     const legend = document.createElement("legend");
-    legend.textContent = "Selecione uma alternativa";
+    legend.textContent = multiSelect ? "Marque os itens corretos; a resposta é a soma dos códigos." : "Selecione uma alternativa";
     choices.append(legend);
     const feedback = document.createElement("div");
     feedback.className = "q-answer-feedback";
@@ -306,33 +307,42 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const savedAnswer = questionRecord(question);
     const alreadyAnswered = savedAnswer.attempts > 0;
     const savedLetter = savedAnswer.selectedLetter || (savedAnswer.lastCorrect === true ? question.correct : null);
+    const savedSum = Number(savedLetter);
+    const correctSum = Number(question.correct);
     let checked = alreadyAnswered;
     for (const choice of question.choices) {
       const label = document.createElement("label");
       label.className = "q-choice";
-      const radio = document.createElement("input");
-      radio.type = "radio";
-      radio.name = "answer-" + question.id;
-      radio.value = choice.letter;
-      radio.checked = savedLetter === choice.letter;
-      radio.disabled = alreadyAnswered;
-      radio.addEventListener("change",() => {
+      const input = document.createElement("input");
+      input.type = multiSelect ? "checkbox" : "radio";
+      input.name = "answer-" + question.id;
+      input.value = choice.letter;
+      input.checked = multiSelect
+        ? Number.isInteger(savedSum) && savedSum >= 0 && (savedSum & Number(choice.letter)) !== 0
+        : savedLetter === choice.letter;
+      input.disabled = alreadyAnswered;
+      input.addEventListener("change",() => {
         for (const other of choices.querySelectorAll(".q-choice")) other.classList.toggle("is-selected",other.querySelector("input").checked);
       });
       const text = document.createElement("span");
       const optionLetter = question.lowercaseChoiceLetters ? choice.letter.toLowerCase() : choice.letter;
-      text.textContent = question.imageOnly ? "(" + optionLetter + ")" : question.lowercaseChoiceLetters ? optionLetter + ") " + choice.text : "(" + optionLetter + ") " + choice.text;
-      label.append(radio,text);
+      text.textContent = multiSelect
+        ? choice.letter + ") " + choice.text
+        : question.imageOnly ? "(" + optionLetter + ")" : question.lowercaseChoiceLetters ? optionLetter + ") " + choice.text : "(" + optionLetter + ") " + choice.text;
+      label.append(input,text);
       choices.append(label);
     }
     if (alreadyAnswered) {
       choices.disabled = true;
       for (const label of choices.querySelectorAll(".q-choice")) {
-        const radio = label.querySelector("input");
-        if (radio.value === question.correct) label.classList.add("is-correct");
-        if (radio.checked) {
+        const input = label.querySelector("input");
+        const isCorrectChoice = multiSelect
+          ? (correctSum & Number(input.value)) !== 0
+          : input.value === question.correct;
+        if (isCorrectChoice) label.classList.add("is-correct");
+        if (input.checked) {
           label.classList.add("is-selected");
-          if (radio.value !== question.correct) label.classList.add("is-wrong");
+          if (!isCorrectChoice) label.classList.add("is-wrong");
         }
       }
     }
@@ -345,29 +355,38 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     verify.disabled = alreadyAnswered;
     verify.addEventListener("click",() => {
       if (checked) return;
-      const chosen = choices.querySelector('input[type="radio"]:checked');
-      if (!chosen) {
+      const selectedInputs = [...choices.querySelectorAll("input:checked")];
+      if ((!multiSelect && !selectedInputs.length) || (multiSelect && !selectedInputs.length && correctSum !== 0)) {
         feedback.hidden = false;
         feedback.className = "q-answer-feedback";
-        feedback.textContent = "Escolha uma alternativa antes de conferir.";
+        feedback.textContent = multiSelect ? "Marque ao menos um item antes de conferir." : "Escolha uma alternativa antes de conferir.";
         return;
       }
       checked = true;
       choices.disabled = true;
-      const correct = chosen.value === question.correct;
-      const answerUpdate = recordAnswer(state.answers,question.id,chosen.value,question.correct);
+      const submittedValue = multiSelect
+        ? String(selectedInputs.reduce((sum,input) => sum + Number(input.value),0)).padStart(2,"0")
+        : selectedInputs[0].value;
+      const correctValue = multiSelect ? String(correctSum).padStart(2,"0") : question.correct;
+      const correct = multiSelect ? Number(submittedValue) === correctSum : submittedValue === question.correct;
+      const answerUpdate = recordAnswer(state.answers,question.id,submittedValue,correctValue);
       if (answerUpdate.alreadyAnswered) return;
       state.answers = answerUpdate.answers;
       saveState();
       for (const label of choices.querySelectorAll(".q-choice")) {
-        const radio = label.querySelector("input");
-        if (radio.value === question.correct) label.classList.add("is-correct");
-        else if (radio.checked) label.classList.add("is-wrong");
+        const input = label.querySelector("input");
+        const isCorrectChoice = multiSelect
+          ? (correctSum & Number(input.value)) !== 0
+          : input.value === question.correct;
+        if (isCorrectChoice) label.classList.add("is-correct");
+        else if (input.checked) label.classList.add("is-wrong");
       }
       feedback.hidden = false;
       feedback.className = "q-answer-feedback " + (correct ? "is-correct" : "is-wrong");
       const heading = document.createElement("strong");
-      heading.textContent = correct ? "Resposta correta." : "Ainda não. A alternativa correta é " + question.correct + ".";
+      heading.textContent = correct
+        ? (multiSelect ? "Resposta correta. Soma: " + correctValue + "." : "Resposta correta.")
+        : (multiSelect ? "Ainda não. A soma correta é " + correctValue + "." : "Ainda não. A alternativa correta é " + question.correct + ".");
       const note = document.createElement("span");
       note.textContent = question.solution?.trim() ? " Sua resposta foi salva e não pode ser alterada. Confira a resolução para revisar o raciocínio." : " Sua resposta foi salva e não pode ser alterada. A resolução detalhada ainda não foi revisada; consulte a fonte e o gabarito oficial ao final.";
       feedback.replaceChildren(heading,note);
@@ -403,9 +422,13 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       feedback.hidden = false;
       feedback.className = "q-answer-feedback" + (savedAnswer.lastCorrect === true ? " is-correct" : savedAnswer.lastCorrect === false ? " is-wrong" : "");
       const heading = document.createElement("strong");
-      heading.textContent = savedAnswer.lastCorrect === true ? "Resposta correta, salva anteriormente." : savedAnswer.lastCorrect === false ? "Resposta incorreta, salva anteriormente. A alternativa correta é " + question.correct + "." : "Questão já respondida anteriormente.";
+      heading.textContent = savedAnswer.lastCorrect === true
+        ? (multiSelect ? "Resposta correta, salva anteriormente. Soma: " + String(correctSum).padStart(2,"0") + "." : "Resposta correta, salva anteriormente.")
+        : savedAnswer.lastCorrect === false
+          ? (multiSelect ? "Resposta incorreta, salva anteriormente. A soma correta é " + String(correctSum).padStart(2,"0") + "." : "Resposta incorreta, salva anteriormente. A alternativa correta é " + question.correct + ".")
+          : "Questão já respondida anteriormente.";
       const note = document.createElement("span");
-      note.textContent = savedLetter ? " Sua alternativa foi salva neste navegador e não pode ser alterada." + (hasSolution ? "" : " A resolução detalhada ainda não foi revisada.") : " O progresso foi preservado neste navegador. Não é possível responder novamente.";
+      note.textContent = savedLetter ? " Sua resposta foi salva neste navegador e não pode ser alterada." + (hasSolution ? "" : " A resolução detalhada ainda não foi revisada.") : " O progresso foi preservado neste navegador. Não é possível responder novamente.";
       feedback.replaceChildren(heading,note);
     }
     if (solutionButton) {
@@ -779,10 +802,14 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
         src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:String(record.institution || "").toUpperCase() === "IME" ? `Figura original ou alternativa visual ${index + 1} da questão do IME` : `Imagem ilustrativa ${index + 1}`
+        alt:["IME","UEM"].includes(String(record.institution || "").toUpperCase()) ? `Figura original da questão de ${String(record.institution).toUpperCase()}` : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
-      const officialSource = String(record.institution || "").toUpperCase() === "IME"
+      const officialSource = String(record.institution || "").toUpperCase() === "UEM"
+        ? (String(record.title || "").includes("Inverno 2019")
+          ? {cycle:"Vestibular de Inverno 2019",proof:"https://www.vestibular.uem.br/provas/in19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/in19/gabdef.pdf"}
+          : {cycle:"Vestibular de Verão 2019",proof:"https://www.vestibular.uem.br/provas/ve19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/ve19/gabdef.pdf"})
+        : String(record.institution || "").toUpperCase() === "IME"
         ? (Number(record.year) === 2022
           ? {cycle:"2021/2022",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/CFG1fase2021.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/GabaritoDEFINITIVO.pdf"}
           : Number(record.year) === 2023
@@ -836,13 +863,14 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         images,
         choices:Array.isArray(record.choices) ? record.choices : [],
         correct:record.correct_option,
+        multiSelect:String(record.institution || "").toUpperCase() === "UEM",
         lowercaseChoiceLetters:Number(record.year) === 2025,
         imageOnly:record.display_format === "image",
         solution:record.resolution || "",
-        source:officialSource ? `IME · CFG ${officialSource.cycle}, questão original ${originalQuestionNumber}.` : "",
+        source:officialSource ? `${String(record.institution || "").toUpperCase() === "UEM" ? "UEM" : "IME · CFG"} · ${officialSource.cycle}, questão original ${originalQuestionNumber}.` : "",
         sourceUrl:officialSource?.proof || "",
         keyUrl:officialSource?.key || "",
-        license:officialSource ? "Reprodução integral autorizada pelo IME." : "",
+        license:officialSource ? (String(record.institution || "").toUpperCase() === "UEM" ? "Prova oficial da UEM." : "Reprodução integral autorizada pelo IME.") : "",
         tags:[]
       };
     });
