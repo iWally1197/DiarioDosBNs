@@ -36,6 +36,7 @@ function makeVector(data = {}) {
     include: data.include !== false,
     locked: Boolean(data.locked),
     lockOrigin: Boolean(data.lockOrigin),
+    lockTip: Boolean(data.lockTip),
     lockModule: Boolean(data.lockModule),
     lockAngle: Boolean(data.lockAngle),
     attachedToBody: Boolean(data.attachedToBody)
@@ -74,7 +75,7 @@ function loadScene() {
   } catch { return freshScene(); }
 }
 let state = loadScene();
-let undoStack = [], redoStack = [], inputBefore = null, interaction = null, rafId = 0, previousFrame = 0;
+let undoStack = [], redoStack = [], inputBefore = null, interaction = null, selectionActionsOpen = false, rafId = 0, previousFrame = 0;
 const pointers = new Map();
 let pinchStart = null, edgePanFrame = 0, edgePanLastFrame = 0, edgePanPointer = null, advancedMode = false;
 const canvas = $("vl-canvas");
@@ -87,8 +88,8 @@ const fmt = (value,digits=3)=>Number(value).toLocaleString("pt-BR",{maximumFract
 const fmtVector = (v)=>"("+fmt(v.x)+", "+fmt(v.y)+", "+fmt(v.z)+")";
 const info = (v)=>quantityInfo[v.quantity] || quantityInfo.abstract;
 const selected = ()=>state.vectors.find((v)=>v.id===state.selectedId) || state.vectors[0] || null;
-const endOf = (v)=>add(v.origin,v.components);
 const startOf = (v)=>v.attachedToBody?vector3(state.body.position):v.origin;
+const endOf = (v)=>add(startOf(v),v.components);
 const combinedUnit = (a,b,separator="·") => a&&b?a+separator+b:(a||b);
 function saveLocal() {
   try { localStorage.setItem(storageKey,JSON.stringify(state)); $("vl-live-status").textContent="Cena salva neste navegador"; }
@@ -116,18 +117,37 @@ function displayedAngle(angle) {
 function updateEditor(vector=selected()) {
   const form=$("vl-vector-list");
   if(!vector) {
-    ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=true);
+    ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-tip","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=true);
     $("vl-editor-status").textContent="Nenhum vetor selecionado. Use “＋ Novo vetor” para criar um.";
     return;
   }
-  ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=false);
+  ["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-tip","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>$(id).disabled=false);
   $("vl-editor-status").textContent="Selecionado: "+vector.name+". As mudanças nos campos aparecem imediatamente na cena.";
   $("vl-name").value=vector.name;
   $("vl-quantity").value=vector.quantity;
   $("vl-color").value=vector.color;
   $("vl-ox").value=fmt(vector.origin.x,6); $("vl-oy").value=fmt(vector.origin.y,6); $("vl-oz").value=fmt(vector.origin.z,6);
   $("vl-vx").value=fmt(vector.components.x,6); $("vl-vy").value=fmt(vector.components.y,6); $("vl-vz").value=fmt(vector.components.z,6);
-  $("vl-lock-origin").checked=vector.lockOrigin; $("vl-lock-module").checked=vector.lockModule; $("vl-lock-angle").checked=vector.lockAngle; $("vl-lock-vector").checked=vector.locked;
+  $("vl-lock-origin").checked=vector.lockOrigin; $("vl-lock-tip").checked=vector.lockTip; $("vl-lock-module").checked=vector.lockModule; $("vl-lock-angle").checked=vector.lockAngle; $("vl-lock-vector").checked=vector.locked;
+  syncSelectionActions();
+}
+function syncSelectionActions() {
+  const vector=selected();
+  const panel=$("vl-selection-actions");
+  panel.hidden=!selectionActionsOpen||!vector;
+  $("vl-context-vector-name").textContent=vector?.name||"Vetor selecionado";
+  $("vl-context-force").disabled=!vector||vector.quantity==="force";
+  $("vl-context-force").textContent=vector?.quantity==="force"?"Já é uma força":"Definir como força";
+  $("vl-context-delete").disabled=!vector;
+  if(vector) {
+    $("vl-lock-origin").checked=vector.lockOrigin;
+    $("vl-lock-tip").checked=vector.lockTip;
+  }
+}
+function openSelectionActions() {
+  selectionActionsOpen=true;
+  $("vl-selection-actions").closest("details").open=true;
+  syncSelectionActions();
 }
 function renderVectorList() {
   const list=$("vl-vector-list");
@@ -261,6 +281,7 @@ function updatePhysicsReadout() {
 }
 function renderAll() {
   renderVectorList(); renderOperation(); renderReadouts(); draw();
+  syncSelectionActions();
   $("vl-vector-count").textContent=String(state.vectors.length);
   $("vl-duplicate").disabled=!selected();
   $("vl-delete").disabled=!selected();
@@ -280,7 +301,7 @@ function renderAll() {
   $("vl-reduced-motion-toggle").checked=state.reducedMotion; $("vl-steps-toggle").checked=state.showSteps;
   $("vl-stage-title").textContent=state.dimension===3?"Espaço vetorial 3D · projeção ortográfica":"Espaço cartesiano";
   $("vl-stage-status").textContent=state.dimension===3?"3D · coordenadas físicas preservadas ao orbitar":"2D · unidades em escala consistente";
-  $("vl-canvas-hint").textContent=state.tool==="pan"?"Arraste para mover a câmera · scroll ou pinça para zoom":state.dimension===3&&state.tool==="orbit"?"Arraste para orbitar · scroll ou pinça para zoom":"Arraste a ponta para alterar o vetor · arraste o corpo para transladá-lo · scroll para zoom";
+  $("vl-canvas-hint").textContent=state.tool==="pan"?"Arraste para mover a câmera · scroll ou pinça para zoom":state.dimension===3&&state.tool==="orbit"?"Arraste para orbitar · scroll ou pinça para zoom":"Clique em um vetor para abrir ações · arraste a ponta para alterar · scroll para zoom";
   document.querySelectorAll("[data-dimension]").forEach((b)=>{const active=Number(b.dataset.dimension)===state.dimension;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",String(active));});
   document.querySelectorAll("[data-tool]").forEach((b)=>{const active=b.dataset.tool===state.tool;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",String(active));b.hidden=b.dataset.tool==="orbit"&&state.dimension!==3;});
   document.querySelectorAll(".vl-z-field").forEach((e)=>e.hidden=state.dimension!==3);
@@ -564,10 +585,13 @@ function onPointerDown(event) {
   }
   const hit=hitTest(p);
   if(hit) {
-    state.selectedId=hit.vector.id;updateEditor(hit.vector);
-    interaction={type:"vector",dragType:hit.type,id:hit.vector.id,start:p,before:clone(state),origin:clone(hit.vector.origin),components:clone(hit.vector.components),body:clone(state.body.position)};
+    state.selectedId=hit.vector.id;openSelectionActions();updateEditor(hit.vector);
+    const origin=clone(startOf(hit.vector)),components=clone(hit.vector.components),end=add(origin,components);
+    const pointerWorld=pointWorld(p,hit.type==="tip"?end.z:origin.z);
+    interaction={type:"vector",dragType:hit.type,id:hit.vector.id,start:p,before:clone(state),origin,components,end,body:clone(state.body.position),startWorldX:pointerWorld.x,startWorldY:pointerWorld.y};
     renderVectorList();renderReadouts();draw();event.preventDefault();return;
   }
+  selectionActionsOpen=false;syncSelectionActions();
   interaction={type:"pan",start:p,panX:state.camera.panX,panY:state.camera.panY};
   draw();
 }
@@ -582,22 +606,43 @@ function applyDrag(p) {
   }
   if(interaction.type!=="vector")return;
   const v=state.vectors.find((x)=>x.id===interaction.id);if(!v||v.locked)return;
-  const z=interaction.dragType==="tip"?v.origin.z+v.components.z:v.origin.z;
+  const z=interaction.dragType==="tip"?interaction.end.z:interaction.origin.z;
   const world=pointWorld(p,z);
-  if(interaction.dragType==="body") {
-    if(v.attachedToBody) {
-      state.body.position={x:world.x,y:world.y,z:state.body.position.z};
-      $("vl-body-x").value=fmt(state.body.position.x,6);$("vl-body-y").value=fmt(state.body.position.y,6);
-    } else if(!v.lockOrigin) {
-      const delta={x:world.x-interaction.startWorldX,y:world.y-interaction.startWorldY,z:0};
-      v.origin=add(interaction.origin,delta);
+  const delta={x:world.x-interaction.startWorldX,y:world.y-interaction.startWorldY,z:0};
+  const moveAttachedBody=()=>{
+    if(state.vectors.some((item)=>item.attachedToBody&&item.lockOrigin))return;
+    const nextBody=add(interaction.body,delta);
+    state.body.position={x:nextBody.x,y:nextBody.y,z:interaction.body.z};
+    state.vectors.filter((item)=>item.attachedToBody).forEach((item)=>{
+      const initial=interaction.before.vectors.find((original)=>original.id===item.id);
+      const initialComponents=initial?.components||item.components;
+      const fixedEnd=add(interaction.body,initialComponents);
+      item.origin=clone(state.body.position);
+      item.components=item.lockTip?vector3(subtract(fixedEnd,state.body.position)):clone(initialComponents);
+    });
+    $("vl-body-x").value=fmt(state.body.position.x,6);$("vl-body-y").value=fmt(state.body.position.y,6);
+  };
+  if(v.attachedToBody&&(interaction.dragType==="body"||interaction.dragType==="origin")) {
+    if(!v.lockOrigin)moveAttachedBody();
+  } else if(interaction.dragType==="body") {
+    if(v.lockOrigin&&v.lockTip)return;
+    if(v.lockOrigin) {
+      v.origin=clone(interaction.origin);
+      v.components=vector3(add(interaction.components,delta));
+    } else if(v.lockTip) {
+      v.origin=vector3(add(interaction.origin,delta));
+      v.components=vector3(subtract(interaction.end,v.origin));
+    } else {
+      v.origin=vector3(add(interaction.origin,delta));
+      v.components=clone(interaction.components);
     }
   } else if(interaction.dragType==="origin") {
-    if(!v.lockOrigin&&!v.attachedToBody) {
-      const originalEnd=add(interaction.origin,interaction.components);
-      v.origin=world;v.components=subtract(originalEnd,world);
+    if(!v.lockOrigin) {
+      v.origin=vector3(world);
+      v.components=v.lockTip?vector3(subtract(interaction.end,world)):clone(interaction.components);
     }
   } else {
+    if(v.lockTip)return;
     let components=subtract(world,startOf(v));
     if(state.dimension===2)components.z=v.components.z;
     if(v.lockModule) {
@@ -612,8 +657,10 @@ function applyDrag(p) {
       components={x:Math.round(components.x/snap)*snap,y:Math.round(components.y/snap)*snap,z:state.dimension===3?Math.round(components.z/snap)*snap:components.z};
     }
     v.components=vector3(components);
-    $("vl-vx").value=fmt(v.components.x,6);$("vl-vy").value=fmt(v.components.y,6);$("vl-vz").value=fmt(v.components.z,6);
   }
+  const visibleOrigin=startOf(v);
+  $("vl-ox").value=fmt(visibleOrigin.x,6);$("vl-oy").value=fmt(visibleOrigin.y,6);$("vl-oz").value=fmt(visibleOrigin.z,6);
+  $("vl-vx").value=fmt(v.components.x,6);$("vl-vy").value=fmt(v.components.y,6);$("vl-vz").value=fmt(v.components.z,6);
   renderVectorList();renderReadouts();draw();
 }
 function onPointerMove(event) {
@@ -629,7 +676,6 @@ function onPointerMove(event) {
     }
     return;
   }
-  if(interaction?.type==="vector"&&interaction.startWorldX==null){const v=state.vectors.find((x)=>x.id===interaction.id);const w=v?pointWorld(interaction.start,v.origin.z):{x:0,y:0};interaction.startWorldX=w.x;interaction.startWorldY=w.y;}
   applyDrag(p);
   startEdgePan(p);
 }
@@ -678,16 +724,16 @@ function applyEditorForm() {
     v.quantity=$("vl-quantity").value;
     v.origin={x:getNumber("vl-ox"),y:getNumber("vl-oy"),z:getNumber("vl-oz")};
     v.components={x:getNumber("vl-vx"),y:getNumber("vl-vy"),z:getNumber("vl-vz")};
-    v.lockOrigin=$("vl-lock-origin").checked;v.lockModule=$("vl-lock-module").checked;v.lockAngle=$("vl-lock-angle").checked;v.locked=$("vl-lock-vector").checked;
-    notify("");renderVectorList();renderReadouts();draw();saveLocal();
+    v.lockOrigin=$("vl-lock-origin").checked;v.lockTip=$("vl-lock-tip").checked;v.lockModule=$("vl-lock-module").checked;v.lockAngle=$("vl-lock-angle").checked;v.locked=$("vl-lock-vector").checked;
+    notify("");renderVectorList();renderReadouts();draw();syncSelectionActions();saveLocal();
   } catch(error) { notify(error.message); }
 }
-["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>{
+["vl-name","vl-quantity","vl-color","vl-ox","vl-oy","vl-oz","vl-vx","vl-vy","vl-vz","vl-lock-origin","vl-lock-tip","vl-lock-module","vl-lock-angle","vl-lock-vector"].forEach((id)=>{
   const input=$(id);input.addEventListener("focus",beginFormEdit);input.addEventListener("input",applyEditorForm);input.addEventListener("change",()=>{applyEditorForm();commitFormEdit();});
 });
 $("vl-vector-list").addEventListener("click",(event)=>{
   const button=event.target.closest("[data-select]");if(!button)return;
-  state.selectedId=button.dataset.select;updateEditor(selected());renderAll();
+  state.selectedId=button.dataset.select;openSelectionActions();updateEditor(selected());renderAll();
 });
 $("vl-vector-list").addEventListener("change",(event)=>{
   const id=event.target.dataset.visible||event.target.dataset.include||event.target.dataset.color;
@@ -728,7 +774,13 @@ $("vl-duplicate").addEventListener("click",()=>{
 });
 $("vl-delete").addEventListener("click",()=>{
   const v=selected();if(!v)return;
-  snapshotUndo();state.vectors=state.vectors.filter((item)=>item.id!==v.id);state.selectedId=state.vectors[0]?.id||null;updateEditor(selected());renderAll();
+  snapshotUndo();state.vectors=state.vectors.filter((item)=>item.id!==v.id);state.selectedId=state.vectors[0]?.id||null;selectionActionsOpen=false;updateEditor(selected());renderAll();
+});
+$("vl-context-close").addEventListener("click",()=>{selectionActionsOpen=false;syncSelectionActions();});
+$("vl-context-delete").addEventListener("click",()=>$("vl-delete").click());
+$("vl-context-force").addEventListener("click",()=>{
+  const v=selected();if(!v||v.quantity==="force")return;
+  snapshotUndo();v.quantity="force";updateEditor(v);renderAll();setStatus("Vetor definido como força");
 });
 $("vl-align-x").addEventListener("click",()=>{const v=selected();if(!v||v.locked)return;snapshotUndo();v.components.y=0;updateEditor(v);renderAll();});
 $("vl-align-y").addEventListener("click",()=>{const v=selected();if(!v||v.locked)return;snapshotUndo();v.components.x=0;updateEditor(v);renderAll();});
