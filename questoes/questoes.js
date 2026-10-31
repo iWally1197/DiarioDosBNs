@@ -791,7 +791,9 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
                                     ? {cycle:"2012/2013",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Provas_Objetivas_CFG.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Gabarito_CFG-Objetiva-Definitivo.pdf"}
                                     : Number(record.year) === 2012
                                       ? {cycle:"2011/2012",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas11_12/ProvaObjetiva_CA_CFG_2011_2012.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Resultados/2011-2012/Gabarito_Definitivo_Prova_Objetiva_CA_CFG_2011_2012.pdf"}
-                                      : null)const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
+                                      : null)
+        : null;
+      const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
         id:"admin-" + record.id,
         title:record.title,
