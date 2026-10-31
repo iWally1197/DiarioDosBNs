@@ -9,12 +9,12 @@
   <title>Laboratório de Vetores | Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="/assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="/styles.css?v=mobile-20261028-1">
-  <link rel="stylesheet" href="/laboratorio-vetores/vetores.css?v=vector-lab-flow-20261030-2">
+  <link rel="stylesheet" href="/laboratorio-vetores/vetores.css?v=vector-lab-actions-20261030-1">
   <script defer src="/clean-links.js?v=clean-routes-20261013-2"></script>
   <script defer src="/script.js?v=menu-button-20261014-2"></script>
   <script defer src="/quick-menu.js?v=teacher-visibility-20261019-1"></script>
   <script defer data-diario-accessibility="true" src="/accessibility.js?v=accessibility-20261013-1"></script>
-  <script type="module" src="/laboratorio-vetores/vector-lab.js?v=vector-lab-flow-20261030-1"></script>
+  <script type="module" src="/laboratorio-vetores/vector-lab.js?v=vector-lab-actions-20261030-1"></script>
 </head>
 <body class="vector-lab-page">
   <a class="skip-link" href="#vector-workspace">Pular para o laboratório</a>
@@ -93,7 +93,7 @@
             <canvas id="vl-canvas" tabindex="0" role="img" aria-label="Plano cartesiano interativo. Use os controles numéricos ou arraste um vetor selecionado.">
               Área interativa de vetores. Os valores também estão disponíveis nos controles numéricos.
             </canvas>
-            <div class="vl-canvas-hint" id="vl-canvas-hint">Arraste a ponta para alterar o vetor · arraste o corpo para transladá-lo · ao chegar à borda a câmera acompanha o objeto · scroll para zoom</div>
+            <div class="vl-canvas-hint" id="vl-canvas-hint">Clique em um vetor para abrir ações · arraste a ponta para alterar · scroll para zoom</div>
             <div class="vl-canvas-overlay" id="vl-canvas-message" aria-live="polite"></div>
           </div>
           <div class="vl-stage-foot">
@@ -107,6 +107,22 @@
             <div class="vl-panel-body">
               <p class="vl-help">Escolha um vetor na lista. Arraste a ponta no plano ou ajuste suas componentes abaixo.</p>
               <div class="vl-vector-list" id="vl-vector-list" aria-label="Vetores criados"></div>
+              <section class="vl-selection-actions" id="vl-selection-actions" aria-labelledby="vl-context-title" hidden>
+                <div class="vl-selection-head">
+                  <div><span>AÇÕES DO VETOR</span><strong id="vl-context-vector-name">Vetor selecionado</strong></div>
+                  <button class="vl-icon-button" id="vl-context-close" type="button" aria-label="Fechar ações do vetor">×</button>
+                </div>
+                <h3 id="vl-context-title">Editar este vetor</h3>
+                <div class="vl-selection-buttons">
+                  <button id="vl-context-force" class="vl-button vl-primary" type="button">Definir como força</button>
+                  <button id="vl-context-delete" class="vl-button vl-danger" type="button">Excluir vetor</button>
+                </div>
+                <div class="vl-selection-locks" aria-label="Fixar extremidades do vetor">
+                  <label><input type="checkbox" id="vl-lock-origin"> Fixar base (origem)</label>
+                  <label><input type="checkbox" id="vl-lock-tip"> Fixar ponta (extremidade)</label>
+                </div>
+                <p class="vl-help">Com as duas extremidades fixadas, o vetor não pode ser arrastado.</p>
+              </section>
               <p class="vl-editor-status" id="vl-editor-status" role="status" aria-live="polite">Editando o vetor selecionado.</p>
               <div class="vl-form-grid">
                 <label class="vl-field">Componente x<input id="vl-vx" type="number" step="any" value="4"></label>
@@ -132,7 +148,6 @@
                 <summary>Restrições, alinhamento e conexão</summary>
                 <div class="vl-panel-body">
                   <div class="vl-locks">
-                    <label><input type="checkbox" id="vl-lock-origin"> Fixar origem</label>
                     <label><input type="checkbox" id="vl-lock-module"> Fixar módulo</label>
                     <label><input type="checkbox" id="vl-lock-angle"> Fixar ângulo</label>
                     <label><input type="checkbox" id="vl-lock-vector"> Bloquear edição</label>
