@@ -1,4 +1,5 @@
 export const MU0 = 4 * Math.PI * 1e-7;
+export const MAGNET_SCENE_LIMIT_M = 100;
 const MU0_OVER_4PI = 1e-7;
 const MAGNET_QUADRATURE = 8;
 const INTERACTION_QUADRATURE = 4;
@@ -231,7 +232,7 @@ export function magnetInteractionForceTorqueWithSources(fixedInputs, movingInput
 }
 
 /** Damped motion under the combined force and torque from multiple fixed magnets. */
-export function stepMagnetInteractionWithSources(fixedInputs, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: 0.37, y: 0.23 }) {
+export function stepMagnetInteractionWithSources(fixedInputs, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: MAGNET_SCENE_LIMIT_M, y: MAGNET_SCENE_LIMIT_M }) {
   const fixed = (Array.isArray(fixedInputs) ? fixedInputs : [fixedInputs]).filter(Boolean).map(makeMagnet);
   let moving = makeMagnet(movingInput);
   const velocity = { x: Number(velocityInput.x) || 0, y: Number(velocityInput.y) || 0, angle: Number(velocityInput.angle) || 0 };
@@ -279,7 +280,7 @@ export function magnetPrismsOverlap(firstInput, secondInput) {
  * Stable damped 2D step for one moving prism. The assumed magnet density and
  * damping describe a classroom model; near-contact motion is regularized.
  */
-export function stepMagnetInteraction(fixedInput, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: 0.37, y: 0.23 }) {
+export function stepMagnetInteraction(fixedInput, movingInput, velocityInput = {}, elapsedSeconds = 1 / 60, bounds = { x: MAGNET_SCENE_LIMIT_M, y: MAGNET_SCENE_LIMIT_M }) {
   let fixed = makeMagnet(fixedInput), moving = makeMagnet(movingInput);
   const velocity = { x: Number(velocityInput.x) || 0, y: Number(velocityInput.y) || 0, angle: Number(velocityInput.angle) || 0 };
   const dt = clamp(elapsedSeconds, 0, 0.04);
@@ -330,7 +331,7 @@ export function fieldAngleDegrees(field) {
   return Math.atan2(field.y, field.x) * 180 / Math.PI;
 }
 
-export function traceFieldLine(model, start, { step = 0.006, maxSteps = 260, bounds = { x: 0.42, y: 0.27 } } = {}) {
+export function traceFieldLine(model, start, { step = 0.006, maxSteps = 260, bounds = { x: 0.42, y: 0.27, centerX: 0, centerY: 0 } } = {}) {
   const points = [{ x: start.x, y: start.y }];
   let p = { x: start.x, y: start.y };
   const direction = (point) => {
@@ -338,8 +339,9 @@ export function traceFieldLine(model, start, { step = 0.006, maxSteps = 260, bou
     const length = Math.hypot(b.x, b.y);
     return length > 1e-11 ? { x: b.x / length, y: b.y / length } : null;
   };
+  const centerX = Number(bounds.centerX) || 0, centerY = Number(bounds.centerY) || 0;
   for (let i = 0; i < maxSteps; i++) {
-    if (Math.abs(p.x) > bounds.x || Math.abs(p.y) > bounds.y) break;
+    if (Math.abs(p.x - centerX) > bounds.x || Math.abs(p.y - centerY) > bounds.y) break;
     const k1 = direction(p);
     if (!k1) break;
     const k2 = direction({ x: p.x + k1.x * step / 2, y: p.y + k1.y * step / 2 });
