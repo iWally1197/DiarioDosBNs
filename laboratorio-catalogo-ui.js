@@ -14,12 +14,23 @@ function withDeadline(promise, timeoutMs, message) {
 
 const catalog = globalThis.document?.querySelector("#lab-cards");
 const mirrorTopicIds = new Set(["optics-reflection", "optics-concave-mirror", "optics-concave-parabolic-mirror", "optics-convex-mirror"]);
-const allowedExperiments = experiments.filter((item) => {
+const vectorLabExperiment = {
+  id: "lab-vectors",
+  title: "Laboratório de vetores",
+  category: "Vetores",
+  level: "Ensino médio",
+  mode: "2D e 3D",
+  description: "Crie, edite, decomponha e combine vetores; explore componentes, resultantes e aplicações físicas.",
+  destination: "/laboratorio-vetores/",
+  status: "Funcional"
+};
+const allowedExperiments = [...experiments.filter((item) => {
   if (item.id === "optics-mirrors") return true;
   if (mirrorTopicIds.has(item.id) || item.hiddenFromCatalog) return false;
   return laboratoryPublicationByExperimentId.has(item.id);
-});
+}), vectorLabExperiment];
 function isPublishedCatalogExperiment(item, publishedSlugs) {
+  if (item.id === "lab-vectors") return true;
   if (item.id === "optics-mirrors") {
     return [...mirrorTopicIds].some((id) => {
       const publication = laboratoryPublicationByExperimentId.get(id);
@@ -51,7 +62,8 @@ function initializeCatalog() {
     "lens-diverging": '<path d="M36 13q7 25 0 50m12-50q-7 25 0 50"/><path class="secondary" d="M10 39h25m0 0-6-6m6 6-6 6M49 39h25m-25-12-11-8m11 32-11 8"/>',
     projectile: '<path d="M12 56 Q39 4 72 37"/><circle cx="12" cy="56" r="3"/><circle class="secondary" cx="72" cy="37" r="4"/><path class="secondary" d="M16 57h62M16 59v-8"/>',
     mru: '<path d="M9 48h64"/><path d="m60 38 13 10-13 10"/><circle cx="24" cy="48" r="7"/><circle class="secondary" cx="49" cy="48" r="7"/>',
-    muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>'
+    muv: '<path d="M10 56 28 46l18-13 22-21"/><path class="secondary" d="M10 59h64M10 59V12"/>',
+    "lab-vectors": '<path d="M43 65V11m0 0-5 8m5-8 5 8M12 39h62m0 0-8-5m8 5-8 5"/><path class="secondary" d="M21 57 61 23m0 0-1 10m1-10-10 1M21 57h40M21 57V23"/>'
   };
   const svgFor = (id) => `<svg viewBox="0 0 86 76" aria-hidden="true">${diagrams[id] || ""}</svg>`;
   let visibleExperiments = [];
@@ -104,8 +116,8 @@ function initializeCatalog() {
       const published = new Set((data || []).map((row) => row.slug));
       visibleExperiments = allowedExperiments.filter((item) => isPublishedCatalogExperiment(item, published));
       status.textContent = visibleExperiments.length
-        ? "Esta lista acompanha os laboratórios marcados como “No ar” no painel administrativo."
-        : "Nenhum laboratório está no ar no momento. Ative os que deseja exibir no painel administrativo.";
+        ? "A lista acompanha os laboratórios no ar no painel administrativo; o laboratório de vetores fica sempre disponível."
+        : "O laboratório de vetores está disponível. Ative outros experimentos no painel administrativo.";
     } catch {
       visibleExperiments = [...allowedExperiments];
       status.textContent = "Não foi possível consultar a publicação agora. A lista permitida continua disponível; tente atualizar a página.";
