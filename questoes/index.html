@@ -16,7 +16,7 @@
   <script defer src="/script.js?v=menu-button-20261014-2"></script>
   <script defer src="/quick-menu.js?v=teacher-visibility-20261019-1"></script>
   <script defer data-diario-accessibility="true" src="/accessibility.js?v=accessibility-20261013-1"></script>
-  <script type="module" src="/questoes/questoes.js?v=ime-official-2011-2026-20261030-6"></script>
+  <script type="module" src="/questoes/questoes.js?v=ime-official-2009-2026-20261030-7"></script>
 </head>
 <body class="questions-page">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -112,6 +112,28 @@
     <div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Questões e materiais para investigar a Física.</p><a class="back-top" href="#conteudo">Voltar ao início ↑</a></div>
     <div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><a href="/laboratorio/">Laboratórios ↗</a><a href="/privacidade/">Privacidade</a><a href="/apoie/">Apoie o projeto ↗</a></div>
   </footer>
+  <script>
+    (() => {
+      const showLoadFallback = () => {
+        const status = document.getElementById("question-count");
+        if (!status || !status.textContent.includes("Carregando")) return;
+        status.textContent = "As questões não carregaram. Verifique a conexão e tente novamente.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "q-button q-button-outline";
+        retry.style.marginInlineStart = "0.6rem";
+        retry.textContent = "Tentar novamente";
+        retry.addEventListener("click",() => window.location.reload());
+        status.append(retry);
+      };
+      window.setTimeout(showLoadFallback,18000);
+      window.addEventListener("error",event => {
+        if (event.target instanceof HTMLScriptElement && event.target.src.includes("/questoes/questoes.js")) {
+          window.setTimeout(showLoadFallback,0);
+        }
+      },true);
+    })();
+  </script>
 </body>
 </html>
 

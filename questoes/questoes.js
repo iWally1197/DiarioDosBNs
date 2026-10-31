@@ -52,6 +52,27 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     if (!saveProgress(progressStorage,storageKey,state)) setStatus("O navegador não permitiu salvar o progresso local.");
   }
   function setStatus(message) { questionCount.textContent = message; }
+  function showQuestionLoadError(error) {
+    console.error("Não foi possível carregar as questões.",error);
+    if (questions.length === 0) {
+      questionList.replaceChildren();
+      questionList.hidden = true;
+      emptyPanel.hidden = true;
+    }
+    questionCount.replaceChildren(document.createTextNode("Não foi possível carregar as questões. Confira sua conexão e tente novamente. "));
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "q-button q-button-outline";
+    retry.textContent = "Tentar novamente";
+    retry.addEventListener("click",() => {
+      retry.disabled = true;
+      retry.textContent = "Carregando…";
+      setStatus("Carregando questões…");
+      loadPublishedQuestions().catch(showQuestionLoadError);
+    },{once:true});
+    questionCount.append(retry);
+  }
+
   function questionRecord(question) {
     const value = state.answers[question.id];
     if (!value || typeof value !== "object") return {attempts:0,correct:0,lastCorrect:null,selectedLetter:null};
@@ -749,10 +770,11 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
   if (validation.invalidCount > 0) setStatus("A página carregou " + questions.length + " questões válidas; " + validation.invalidCount + " registros foram ignorados por estarem incompletos.");
 
   async function loadPublishedQuestions() {
+    setStatus("Carregando questões…");
     const database = await supabasePromise;
-    if (!database) return;
+    if (!database) throw new Error("Conexão com o banco indisponível.");
     const {data,error} = await database.from("physics_questions").select("*").eq("status","published").order("created_at",{ascending:false}).limit(500);
-    if (error) return;
+    if (error) throw error;
     const databaseQuestions = (data || []).map(record => {
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
@@ -791,7 +813,11 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
                                     ? {cycle:"2012/2013",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Provas_Objetivas_CFG.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Gabarito_CFG-Objetiva-Definitivo.pdf"}
                                     : Number(record.year) === 2012
                                       ? {cycle:"2011/2012",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas11_12/ProvaObjetiva_CA_CFG_2011_2012.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Resultados/2011-2012/Gabarito_Definitivo_Prova_Objetiva_CA_CFG_2011_2012.pdf"}
-                                      : null)
+                                      : Number(record.year) === 2011
+                                        ? {cycle:"2010/2011",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas10_11/Objetiva.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Resultados/2010-2011/GABARITO_Prova_Objetiva_2010_final.pdf"}
+                                        : Number(record.year) === 2010
+                                          ? {cycle:"2009/2010",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas09_10/Objetiva_Final_Formato_A3_02-10.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Resultados/2009-2010/Gabarito_definitivo_objetiva_2009.pdf"}
+                                          : null)
         : null;
       const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
@@ -829,15 +855,19 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     renderQuestions();
     const adminLink = el("question-admin-link");
     if (adminLink) {
-      const {data:authData} = await database.auth.getUser();
-      if (authData?.user) {
-        const {data:role} = await database.from("user_roles").select("role,status").eq("user_id",authData.user.id).maybeSingle();
-        if (role?.role === "admin" && role?.status === "active") adminLink.hidden = false;
+      try {
+        const {data:authData} = await database.auth.getUser();
+        if (authData?.user) {
+          const {data:role} = await database.from("user_roles").select("role,status").eq("user_id",authData.user.id).maybeSingle();
+          if (role?.role === "admin" && role?.status === "active") adminLink.hidden = false;
+        }
+      } catch (error) {
+        console.warn("Não foi possível verificar o acesso administrativo às questões.",error);
       }
     }
   }
 
-  loadPublishedQuestions().catch(() => {});
+  loadPublishedQuestions().catch(showQuestionLoadError);
 })();
 
 
