@@ -76,7 +76,7 @@ function loadScene() {
 let state = loadScene();
 let undoStack = [], redoStack = [], inputBefore = null, interaction = null, rafId = 0, previousFrame = 0;
 const pointers = new Map();
-let pinchStart = null;
+let pinchStart = null, edgePanFrame = 0, edgePanLastFrame = 0, edgePanPointer = null;
 const canvas = $("vl-canvas");
 const ctx = canvas.getContext("2d");
 let canvasWidth = 1, canvasHeight = 1, pixelRatio = 1, resizeObserver;
@@ -330,14 +330,26 @@ function drawGrid() {
     for(let j=startY;j<=endY;j++){const y=canvasHeight/2+state.camera.panY+j*px;line(0,y,canvasWidth,y,j%5===0?"rgba(157,181,214,.16)":"rgba(157,181,214,.075)",j%5===0?1:.65);}
   } else {
     const span=niceSpacing(Math.max(canvasWidth,canvasHeight)/(state.camera.zoom*8));
-    const extent=clamp(Math.ceil(Math.max(canvasWidth,canvasHeight)/(state.camera.zoom*span))*span+span,8,400);
-    for(let n=-extent;n<=extent;n+=span) {
-      const ax=pointScreen({x:n,y:-extent,z:0}),bx=pointScreen({x:n,y:extent,z:0});
-      const ay=pointScreen({x:-extent,y:n,z:0}),by=pointScreen({x:extent,y:n,z:0});
-      line(ax.x,ax.y,bx.x,bx.y,n===0?"rgba(230,196,119,.4)":"rgba(157,181,214,.1)",n===0?1.4:.6);
-      line(ay.x,ay.y,by.x,by.y,n===0?"rgba(230,196,119,.4)":"rgba(157,181,214,.1)",n===0?1.4:.6);
+    const corners=[
+      pointWorld({x:0,y:0},0),pointWorld({x:canvasWidth,y:0},0),
+      pointWorld({x:0,y:canvasHeight},0),pointWorld({x:canvasWidth,y:canvasHeight},0)
+    ];
+    const minX=Math.min(...corners.map((p)=>p.x)),maxX=Math.max(...corners.map((p)=>p.x));
+    const minY=Math.min(...corners.map((p)=>p.y)),maxY=Math.max(...corners.map((p)=>p.y));
+    const firstX=Math.floor(minX/span)-1,lastX=Math.ceil(maxX/span)+1;
+    const firstY=Math.floor(minY/span)-1,lastY=Math.ceil(maxY/span)+1;
+    for(let i=firstX;i<=lastX;i++) {
+      const x=i*span,major=i===0,weight=i%5===0;
+      const a=pointScreen({x,y:minY-span,z:0}),b=pointScreen({x,y:maxY+span,z:0});
+      line(a.x,a.y,b.x,b.y,major?"rgba(230,196,119,.4)":"rgba(157,181,214,.1)",major?1.4:weight?.85:.6);
     }
-    const zAxisA=pointScreen({x:0,y:0,z:-extent}),zAxisB=pointScreen({x:0,y:0,z:extent});
+    for(let j=firstY;j<=lastY;j++) {
+      const y=j*span,major=j===0,weight=j%5===0;
+      const a=pointScreen({x:minX-span,y,z:0}),b=pointScreen({x:maxX+span,y,z:0});
+      line(a.x,a.y,b.x,b.y,major?"rgba(230,196,119,.4)":"rgba(157,181,214,.1)",major?1.4:weight?.85:.6);
+    }
+    const zExtent=canvasHeight/(state.camera.zoom*Math.max(.08,Math.abs(Math.cos(state.camera.pitch))))+span;
+    const zAxisA=pointScreen({x:0,y:0,z:-zExtent}),zAxisB=pointScreen({x:0,y:0,z:zExtent});
     line(zAxisA.x,zAxisA.y,zAxisB.x,zAxisB.y,"rgba(157,181,214,.12)",.7);
   }
   ctx.restore();
@@ -491,6 +503,34 @@ function hitTest(p) {
 function pointerPosition(event) {
   const r=canvas.getBoundingClientRect();return {x:event.clientX-r.left,y:event.clientY-r.top};
 }
+function stopEdgePan() {
+  if(edgePanFrame)cancelAnimationFrame(edgePanFrame);
+  edgePanFrame=0;edgePanLastFrame=0;edgePanPointer=null;
+}
+function edgePanVelocity(p) {
+  const margin=Math.max(24,Math.min(58,Math.min(canvasWidth,canvasHeight)*.12)),speed=320;
+  const x=p.x<margin?clamp((margin-p.x)/margin,0,1):p.x>canvasWidth-margin?-clamp((p.x-(canvasWidth-margin))/margin,0,1):0;
+  const y=p.y<margin?clamp((margin-p.y)/margin,0,1):p.y>canvasHeight-margin?-clamp((p.y-(canvasHeight-margin))/margin,0,1):0;
+  return {x:x*speed,y:y*speed};
+}
+function runEdgePan(time) {
+  edgePanFrame=0;
+  if(interaction?.type!=="vector"||!edgePanPointer||pointers.size>=2){stopEdgePan();return;}
+  const velocity=edgePanVelocity(edgePanPointer);
+  if(!velocity.x&&!velocity.y){stopEdgePan();return;}
+  const dt=edgePanLastFrame?Math.min((time-edgePanLastFrame)/1000,.05):1/60;
+  edgePanLastFrame=time;
+  state.camera.panX+=velocity.x*dt;state.camera.panY+=velocity.y*dt;
+  applyDrag(edgePanPointer);
+  edgePanFrame=requestAnimationFrame(runEdgePan);
+}
+function startEdgePan(p) {
+  if(interaction?.type!=="vector"){stopEdgePan();return;}
+  edgePanPointer=p;
+  const velocity=edgePanVelocity(p);
+  if((velocity.x||velocity.y)&&!edgePanFrame){edgePanLastFrame=0;edgePanFrame=requestAnimationFrame(runEdgePan);}
+  else if(!velocity.x&&!velocity.y)stopEdgePan();
+}
 function zoomAround(next,focus) {
   next=clamp(next,8,260);
   const world=pointWorld(focus,0);
@@ -504,6 +544,7 @@ function onPointerDown(event) {
   canvas.focus({preventScroll:true});canvas.setPointerCapture(event.pointerId);
   const p=pointerPosition(event);pointers.set(event.pointerId,p);
   if(pointers.size>=2) {
+    stopEdgePan();
     const list=[...pointers.values()],mid={x:(list[0].x+list[1].x)/2,y:(list[0].y+list[1].y)/2};
     pinchStart={distance:Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y),zoom:state.camera.zoom,panX:state.camera.panX,panY:state.camera.panY,mid,world:pointWorld(mid,0)};
     interaction=null;return;
@@ -580,9 +621,11 @@ function onPointerMove(event) {
   }
   if(interaction?.type==="vector"&&interaction.startWorldX==null){const v=state.vectors.find((x)=>x.id===interaction.id);const w=v?pointWorld(interaction.start,v.origin.z):{x:0,y:0};interaction.startWorldX=w.x;interaction.startWorldY=w.y;}
   applyDrag(p);
+  startEdgePan(p);
 }
 function onPointerUp(event) {
   pointers.delete(event.pointerId);
+  stopEdgePan();
   if(pointers.size<2)pinchStart=null;
   if(interaction?.type==="vector") {
     const v=state.vectors.find((x)=>x.id===interaction.id);
@@ -731,9 +774,12 @@ $("vl-3d-view").addEventListener("change",()=>{
   Object.assign(state.camera,views[$("vl-3d-view").value]||views.iso);draw();
 });
 $("vl-fit").addEventListener("click",()=>{
-  if(!state.vectors.length){$("vl-center").click();return;}
-  const points=[];state.vectors.filter((v)=>v.visible).forEach((v)=>{const o=startOf(v);points.push(o,add(o,v.components));});
-  const xs=points.map((p)=>p.x),ys=points.map((p)=>p.y);
+  const visible=state.vectors.filter((v)=>v.visible);
+  if(!visible.length){$("vl-center").click();setStatus("Não há vetores visíveis para enquadrar");return;}
+  const points=[];
+  visible.forEach((v)=>{const o=startOf(v);points.push(o,add(o,v.components));});
+  const projected=points.map((p)=>state.dimension===3?project3D(p,state.camera):p);
+  const xs=projected.map((p)=>p.x),ys=projected.map((p)=>p.y);
   const spanX=Math.max(...xs)-Math.min(...xs)||1,spanY=Math.max(...ys)-Math.min(...ys)||1;
   state.camera.zoom=clamp(Math.min((canvasWidth-100)/spanX,(canvasHeight-100)/spanY),8,180);
   state.camera.panX=-(Math.min(...xs)+Math.max(...xs))*state.camera.zoom/2;
