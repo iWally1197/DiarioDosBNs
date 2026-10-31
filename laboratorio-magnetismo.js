@@ -8,12 +8,13 @@ import {
   makeCoil,
   makeFieldModel,
   makeMagnet,
+  MAGNET_SCENE_LIMIT_M,
   magnetContainsPoint,
   magnetInteractionForceTorqueWithSources,
   magnetPrismsOverlap,
   stepMagnetInteractionWithSources,
   traceFieldLine
-} from "./laboratorio-magnetismo-core.js?magnetic-objects-20261028-1";
+} from "./laboratorio-magnetismo-core.js?interaction-square-20261030-1";
 
 const byId = (id) => document.getElementById(id);
 const canvas = byId("magnet-canvas");
@@ -80,7 +81,7 @@ function inductionEnergyLabel(joules = state.inductionMeterEnergy) {
 }
 function plugNearCoil() {
   const reach = state.coil.length / 2 + state.coil.radius + 0.11;
-  return { x: clamp(state.coil.x - Math.cos(state.coil.angle) * reach, -0.36, 0.36), y: clamp(state.coil.y - Math.sin(state.coil.angle) * reach, -0.22, 0.22) };
+  return { x: clampSceneCoordinate(state.coil.x - Math.cos(state.coil.angle) * reach), y: clampSceneCoordinate(state.coil.y - Math.sin(state.coil.angle) * reach) };
 }
 function coilIsEnergized() {
   return state.coilEnabled && state.powerOutletEnabled && state.powerCableEnabled && state.coilConnected && state.coilPowerRequested;
@@ -112,6 +113,8 @@ const graphNames = { distance: "Campo × distância", current: "Campo × corrent
 const formatter = (digits = 2) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const formatField = (tesla, digits = 2) => `${formatter(digits).format(tesla * (Math.abs(tesla) >= 1e-3 ? 1e3 : 1e6))} ${Math.abs(tesla) >= 1e-3 ? "mT" : "μT"}`;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const SCENE_EDGE_MARGIN_M = 0.5;
+const clampSceneCoordinate = (value, extent = 0) => clamp(Number(value) || 0, -MAGNET_SCENE_LIMIT_M + Math.max(SCENE_EDGE_MARGIN_M, extent), MAGNET_SCENE_LIMIT_M - Math.max(SCENE_EDGE_MARGIN_M, extent));
 
 function activeFieldModel(overrides = {}) {
   const mode = state.mode;
@@ -306,8 +309,8 @@ function applyKeyboardPosition(event) {
   const object = selectedPositionObject();
   if (!object) return;
   const movingX = event.currentTarget.id === "magnet-position-x";
-  const x = clamp(movingX ? Number(byId("magnet-position-x").value) : object.point.x, -0.37, 0.37);
-  const y = clamp(movingX ? object.point.y : Number(byId("magnet-position-y").value), -0.23, 0.23);
+  const x = clampSceneCoordinate(movingX ? Number(byId("magnet-position-x").value) : object.point.x);
+  const y = clampSceneCoordinate(movingX ? object.point.y : Number(byId("magnet-position-y").value));
   const status = byId("magnet-position-status");
   if (object.type === "magnet" && state.mode === "interaction" && object.index < 2) {
     const other = object.index === 0 ? state.secondMagnet : state.magnet;
@@ -340,8 +343,8 @@ function applyKeyboardPosition(event) {
 }
 
 byId("magnet-position-target").addEventListener("change", () => { const object = selectedPositionObject(); const offset = state.mode === "interaction" ? 2 : 1; state.selectedExtraMagnet = object?.type === "magnet" && object.index >= offset ? object.index - offset : -1; syncKeyboardPositionControls(); });
-byId("magnet-position-x").addEventListener("input", applyKeyboardPosition);
-byId("magnet-position-y").addEventListener("input", applyKeyboardPosition);
+byId("magnet-position-x").addEventListener("change", applyKeyboardPosition);
+byId("magnet-position-y").addEventListener("change", applyKeyboardPosition);
 byId("magnet-position-x").addEventListener("change", () => {
   const object = selectedPositionObject();
   if (object) byId("magnet-position-status").textContent = `${object.label}: posição horizontal ${formatter(2).format(object.point.x)} m.`;
@@ -441,7 +444,7 @@ function updateCoilMotion(dt, field) {
   velocity.y = (velocity.y + result.force.y / 0.18 * dt) * Math.exp(-2.2 * dt);
   limitVelocity(velocity, 0.42);
   velocity.angle = (velocity.angle + result.torque / 0.004 * dt) * Math.exp(-2.8 * dt);
-  const next = { ...state.coil, x: clamp(state.coil.x + velocity.x * dt, -0.34, 0.34), y: clamp(state.coil.y + velocity.y * dt, -0.19, 0.19) };
+  const next = { ...state.coil, x: clampSceneCoordinate(state.coil.x + velocity.x * dt, state.coil.length / 2 + state.coil.radius), y: clampSceneCoordinate(state.coil.y + velocity.y * dt, state.coil.length / 2 + state.coil.radius) };
   next.angle = ((state.coil.angle + velocity.angle * dt + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
   const coilRect = { ...next, height: state.coil.radius * 2 };
   const blocked = allActiveMagnets().some((magnet) => rectanglesOverlap(coilRect, magnet));
@@ -485,8 +488,8 @@ function updateMetalBalls(dt, field, magnets) {
     ball.vy = (ball.vy + force.y / mass * dt) * Math.exp(-1.7 * dt);
     const speed = Math.hypot(ball.vx, ball.vy);
     if (speed > 0.24) { ball.vx *= 0.24 / speed; ball.vy *= 0.24 / speed; }
-    ball.x = clamp(ball.x + ball.vx * dt, -0.385, 0.385);
-    ball.y = clamp(ball.y + ball.vy * dt, -0.215, 0.215);
+    ball.x = clampSceneCoordinate(ball.x + ball.vx * dt, ball.radius);
+    ball.y = clampSceneCoordinate(ball.y + ball.vy * dt, ball.radius);
     keepBallOutsideMagnets(ball, magnets);
   }
   for (let i = 0; i < state.metalBalls.length; i++) for (let j = i + 1; j < state.metalBalls.length; j++) {
@@ -547,6 +550,28 @@ function canvasSize() {
 
 const toScreen = (point) => magnetWorldToScreen(point, view, camera);
 const toWorld = (point) => magnetScreenToWorld(point, view, camera);
+
+function drawInteractionBoundary() {
+  const limit = MAGNET_SCENE_LIMIT_M;
+  const corners = [
+    toScreen({ x: -limit, y: -limit }), toScreen({ x: limit, y: -limit }),
+    toScreen({ x: limit, y: limit }), toScreen({ x: -limit, y: limit })
+  ];
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, view.width, view.height); ctx.clip();
+  ctx.strokeStyle = "rgba(244,205,119,.72)"; ctx.lineWidth = 1.5; ctx.setLineDash([8, 7]);
+  ctx.beginPath(); ctx.moveTo(corners[0].x, corners[0].y);
+  for (let i = 1; i < corners.length; i++) ctx.lineTo(corners[i].x, corners[i].y);
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "#f2d99f"; ctx.font = "11px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  const xLeft = toScreen({ x: -limit, y: 0 }), xRight = toScreen({ x: limit, y: 0 });
+  if (xLeft.x >= 0 && xLeft.x < view.width) ctx.fillText(`x = −${limit} m`, xLeft.x + 5, 5);
+  if (xRight.x >= 0 && xRight.x < view.width) ctx.fillText(`x = +${limit} m`, xRight.x + 5, 5);
+  const yTop = toScreen({ x: 0, y: limit }), yBottom = toScreen({ x: 0, y: -limit });
+  if (yTop.y >= 0 && yTop.y < view.height) ctx.fillText(`y = +${limit} m`, 5, yTop.y + 5);
+  if (yBottom.y >= 0 && yBottom.y < view.height) ctx.fillText(`y = −${limit} m`, 5, yBottom.y + 5);
+  ctx.restore();
+}
 
 function drawGrid() {
   if (!state.showGrid) return;
@@ -623,7 +648,8 @@ function drawFieldLines(model) {
   if (!state.showLines) return;
   const seeds = fieldSeeds(model);
   ctx.save(); ctx.strokeStyle = "rgba(238,199,111,.78)"; ctx.lineWidth = 1.2;
-  const bounds = { x: Math.min(0.4, view.width / 2 / view.scale), y: Math.min(0.25, view.height / 2 / view.scale) };
+  const center = toWorld({ x: view.width / 2, y: view.height / 2 });
+  const bounds = { x: view.width / 2 / view.scale + 0.02, y: view.height / 2 / view.scale + 0.02, centerX: center.x, centerY: center.y };
   for (const seed of seeds) {
     const path = traceFieldLine(model, seed, { bounds, maxSteps: 240, step: 0.0045 });
     if (path.length < 3) continue;
@@ -817,7 +843,7 @@ function drawSensor() {
 function renderScene(model) {
   if (!canvasSize()) return;
   ctx.fillStyle = "#0a1424"; ctx.fillRect(0, 0, view.width, view.height);
-  drawGrid(); drawHeatmap(model); drawFieldLines(model); drawVectors(model);
+  drawGrid(); drawInteractionBoundary(); drawHeatmap(model); drawFieldLines(model); drawVectors(model);
   drawPowerHardware();
   drawCoil(model);
   drawInductionMeter();
@@ -1150,7 +1176,7 @@ function beginDrag(event) {
 
 function moveDrag(event) {
   if (!drag) return;
-  const world = toWorld(localPointer(event)); const x = clamp(world.x + drag.dx, -0.37, 0.37), y = clamp(world.y + drag.dy, -0.23, 0.23);
+  const world = toWorld(localPointer(event)); const x = clampSceneCoordinate(world.x + drag.dx), y = clampSceneCoordinate(world.y + drag.dy);
   if (drag.type === "sensor") { state.sensor.x = x; state.sensor.y = y; }
   if (drag.type === "compass") { state.compasses[drag.index].x = x; state.compasses[drag.index].y = y; }
   if (drag.type === "magnet") {
@@ -1270,26 +1296,26 @@ window.addEventListener("diario-lab-object-drop", (event) => {
   const world = toWorld(local);
   if (!Number.isFinite(world.x) || !Number.isFinite(world.y)) return;
   if (data.kind === "metal-ball") {
-    state.metalBalls.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.19, 0.19), radius: 0.012, vx: 0, vy: 0 });
+    state.metalBalls.push({ x: clampSceneCoordinate(world.x, 0.012), y: clampSceneCoordinate(world.y, 0.012), radius: 0.012, vx: 0, vy: 0 });
     state.selectedMetalBall = state.metalBalls.length - 1;
   } else if (data.kind === "compass") {
-    state.compasses.push({ x: clamp(world.x, -0.34, 0.34), y: clamp(world.y, -0.2, 0.2) });
+    state.compasses.push({ x: clampSceneCoordinate(world.x, 0.03), y: clampSceneCoordinate(world.y, 0.03) });
     state.selectedCompass = state.compasses.length - 1;
   } else if (data.kind === "coil") {
     state.coilEnabled = true;
-    state.coil.x = clamp(world.x, -0.28, 0.28); state.coil.y = clamp(world.y, -0.18, 0.18);
+    state.coil.x = clampSceneCoordinate(world.x, state.coil.length / 2 + state.coil.radius); state.coil.y = clampSceneCoordinate(world.y, state.coil.length / 2 + state.coil.radius);
     state.coilVelocity = { x: 0, y: 0, angle: 0 };
     state.coilConnected = false; state.coilPowerRequested = false;
     resetInductionMeter();
   } else {
-    const candidate = makeMagnet({ x: clamp(world.x, -0.30, 0.30), y: clamp(world.y, -0.18, 0.18), angle: 0, polarity: 1 });
+    const candidate = makeMagnet({ x: clampSceneCoordinate(world.x, 0.1), y: clampSceneCoordinate(world.y, 0.1), angle: 0, polarity: 1 });
     const blocked = (point) => allActiveMagnets().some((existing) => magnetPrismsOverlap(existing, point));
     if (blocked(candidate)) {
       let found = false;
       for (const radius of [0.14, 0.20, 0.27]) {
         for (let step = 0; step < 12 && !found; step++) {
           const angle = step * Math.PI / 6;
-          const point = makeMagnet({ ...candidate, x: clamp(candidate.x + Math.cos(angle) * radius, -0.30, 0.30), y: clamp(candidate.y + Math.sin(angle) * radius, -0.18, 0.18) });
+          const point = makeMagnet({ ...candidate, x: clampSceneCoordinate(candidate.x + Math.cos(angle) * radius, 0.1), y: clampSceneCoordinate(candidate.y + Math.sin(angle) * radius, 0.1) });
           if (!blocked(point)) { candidate.x = point.x; candidate.y = point.y; found = true; }
         }
       }
@@ -1319,8 +1345,8 @@ byId("remove-extra-magnet")?.addEventListener("click", () => {
 byId("add-metal-ball").addEventListener("click", () => {
   const index = state.metalBalls.length;
   state.metalBalls.push({
-    x: clamp(state.magnet.x - state.magnet.length / 2 - 0.04 - Math.floor(index / 3) * 0.035, -0.34, 0.34),
-    y: clamp(state.magnet.y + ((index % 3) - 1) * 0.04, -0.19, 0.19),
+    x: clampSceneCoordinate(state.magnet.x - state.magnet.length / 2 - 0.04 - Math.floor(index / 3) * 0.035, 0.1),
+    y: clampSceneCoordinate(state.magnet.y + ((index % 3) - 1) * 0.04, 0.1),
     radius: 0.012, vx: 0, vy: 0
   });
   state.selectedMetalBall = state.metalBalls.length - 1;
@@ -1333,8 +1359,8 @@ byId("remove-metal-ball").addEventListener("click", () => {
   state.selectedMetalBall = state.metalBalls.length ? Math.min(state.selectedMetalBall, state.metalBalls.length - 1) : -1;
   syncKeyboardPositionControls(); syncSimulationLoop(); queueDraw();
 });
-byId("sensor-x").addEventListener("input", (e) => { state.sensor.x = Number(e.target.value); queueDraw(); });
-byId("sensor-y").addEventListener("input", (e) => { state.sensor.y = Number(e.target.value); queueDraw(); });
+byId("sensor-x").addEventListener("change", (e) => { state.sensor.x = clampSceneCoordinate(e.target.value, 0.03); e.target.value = String(state.sensor.x); updateControlText(); queueDraw(); });
+byId("sensor-y").addEventListener("change", (e) => { state.sensor.y = clampSceneCoordinate(e.target.value, 0.03); e.target.value = String(state.sensor.y); updateControlText(); queueDraw(); });
 byId("line-density").addEventListener("input", (e) => { state.density = Number(e.target.value); queueDraw(); });
 byId("interaction-motion").addEventListener("change", (event) => {
   state.interactionMotion = event.target.checked;
@@ -1357,7 +1383,7 @@ byId("reduce-motion").addEventListener("change", (event) => {
   syncSimulationLoop(); queueDraw();
 });
 for (const [id, key] of [["show-lines", "showLines"], ["show-vectors", "showVectors"], ["show-heatmap", "showHeatmap"], ["show-current", "showCurrent"], ["show-grid", "showGrid"], ["show-numbers", "showNumbers"], ["show-interior", "showInterior"], ["earth-compass", "earth"], ["earth-field", "earth"], ["show-magnet-source", "showMagnetSource"], ["show-coil-source", "showCoilSource"]]) byId(id).addEventListener("change", (e) => { state[key] = e.target.checked; queueDraw(); });
-byId("add-compass").addEventListener("click", () => { state.compasses.push({ x: clamp(state.sensor.x - 0.09, -0.34, 0.34), y: clamp(state.sensor.y - 0.08, -0.2, 0.2) }); state.selectedCompass = state.compasses.length - 1; byId("sensor-action-status").textContent = ""; syncKeyboardPositionControls(); queueDraw(); });
+byId("add-compass").addEventListener("click", () => { state.compasses.push({ x: clampSceneCoordinate(state.sensor.x - 0.09, 0.03), y: clampSceneCoordinate(state.sensor.y - 0.08, 0.03) }); state.selectedCompass = state.compasses.length - 1; byId("sensor-action-status").textContent = ""; syncKeyboardPositionControls(); queueDraw(); });
 byId("remove-compass").addEventListener("click", () => { if (!state.compasses.length) return; state.compasses.splice(state.selectedCompass, 1); state.selectedCompass = Math.max(0, Math.min(state.selectedCompass, state.compasses.length - 1)); syncKeyboardPositionControls(); queueDraw(); });
 byId("reset-lab").addEventListener("click", () => { state = initial(); graphComparison = null; chartInspection = "Passe o cursor ou toque em um ponto para inspecionar."; updateModeUI(); syncSimulationLoop(); queueDraw(); });
 byId("complexity-toggle").addEventListener("click", (e) => { state.advanced = !state.advanced; e.currentTarget.setAttribute("aria-pressed", String(state.advanced)); e.currentTarget.textContent = state.advanced ? "Modo básico" : "Modo avançado"; document.querySelectorAll(".magnet-advanced").forEach((node) => { node.hidden = !state.advanced; }); });
@@ -1390,7 +1416,7 @@ canvas.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") target.x += step;
   if (event.key === "ArrowUp") target.y += step;
   if (event.key === "ArrowDown") target.y -= step;
-  target.x = clamp(target.x, -0.37, 0.37); target.y = clamp(target.y, -0.23, 0.23);
+  target.x = clampSceneCoordinate(target.x, 0.03); target.y = clampSceneCoordinate(target.y, 0.03);
   queueDraw();
 });
 const chart = byId("magnet-chart");
