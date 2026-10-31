@@ -441,34 +441,3 @@ body.lab-virtual-topic #lab-graph { height:clamp(260px,38vh,420px); }
 .mirror-comparison-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mirror-comparison .lab-workspace-canvas-wrap{min-height:260px}
 @media(max-width:760px){.mirror-comparison-grid{grid-template-columns:1fr}}
-
-
-/* Atalho em destaque para o laboratório de vetores. */
-.lab-vector-feature {
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto;
-  align-items:center;
-  gap:16px;
-  margin:20px 0 18px;
-  padding:18px 20px;
-  border:1px solid color-mix(in srgb,var(--gold) 54%,var(--line));
-  border-radius:10px;
-  background:linear-gradient(110deg,color-mix(in srgb,var(--gold) 9%,var(--surface)),color-mix(in srgb,var(--blue) 10%,var(--surface)));
-  color:var(--text);
-  text-decoration:none;
-  transition:border-color .16s,transform .16s,box-shadow .16s;
-}
-.lab-vector-feature:hover { transform:translateY(-2px); border-color:var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.18); }
-.lab-vector-feature:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
-.lab-vector-feature-mark { display:grid; place-items:center; width:48px; height:48px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--gold); font-size:27px; font-weight:700; }
-.lab-vector-feature-copy { display:grid; gap:4px; }
-.lab-vector-feature-copy .section-kicker { margin:0; font-size:9px; }
-.lab-vector-feature-copy strong { font:600 clamp(16px,2vw,21px)/1.2 var(--display); }
-.lab-vector-feature-copy>span:last-child { color:var(--muted); font-size:12px; line-height:1.5; }
-.lab-vector-feature-cta { display:inline-flex; align-items:center; gap:9px; min-height:42px; padding:0 13px; border:1px solid var(--gold); border-radius:6px; color:var(--gold); font-size:12px; font-weight:700; white-space:nowrap; }
-@media(max-width:680px) {
-  .lab-vector-feature { grid-template-columns:auto minmax(0,1fr); gap:11px; padding:14px; }
-  .lab-vector-feature-mark { width:40px; height:40px; }
-  .lab-vector-feature-cta { grid-column:1/-1; justify-content:center; }
-  .lab-vector-feature-copy>span:last-child { font-size:11px; }
-}
