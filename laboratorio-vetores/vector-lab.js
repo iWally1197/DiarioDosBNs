@@ -147,6 +147,11 @@ function syncSelectionActions() {
 function openSelectionActions() {
   selectionActionsOpen=true;
   $("vl-selection-actions").closest("details").open=true;
+  if(document.fullscreenElement===$("vl-app")) {
+    $("vl-app").classList.add("vl-controls-open");
+    syncFullscreenControls();
+    setCanvasSize();
+  }
   syncSelectionActions();
 }
 function renderVectorList() {
