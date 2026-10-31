@@ -169,8 +169,8 @@ function operationResult() {
     return {kind:"scalar",value,unit:combinedUnit(info(pair[0]).unit,info(pair[1]).unit),caption:"A · B",angle,steps:"A · B = AxBx + AyBy + AzBz\nA · B = "+fmt(value)};
   }
   if(op==="cross") {
-    if(state.dimension!==3)return {error:"O produto vetorial usa o modo 3D; em 2D, ele aparece como componente z."};
     const value=cross(pair[0].components,pair[1].components);
+    if(state.dimension===2) return {kind:"scalar",value:value.z,unit:combinedUnit(info(pair[0]).unit,info(pair[1]).unit,"×"),caption:"(A × B)z · k̂",outOfPlane:value.z,steps:"A × B = (AyBz − AzBy, AzBx − AxBz, AxBy − AyBx)\nNo plano xy: (A × B)z = AxBy − AyBx = "+fmt(value.z)+". O sinal indica o sentido perpendicular ao plano (regra da mão direita)."};
     return {kind:"vector",value,unit:combinedUnit(info(pair[0]).unit,info(pair[1]).unit,"×"),caption:"R = A × B",steps:"A × B = (AyBz − AzBy, AzBx − AxBz, AxBy − AyBx)\nR = "+fmtVector(value)};
   }
   if(op==="projection") {
@@ -193,7 +193,8 @@ function renderOperation() {
     output.innerHTML="<strong>"+esc(result.caption)+"</strong> = "+esc(fmtVector(result.value))+selectedUnit+"<br>|R| = "+fmt(magnitude(result.value))+(selectedUnit?" "+esc(result.unit):"");
     state.resultVector={components:vector3(result.value),color:"#f4d36e",name:"Resultante"};
   } else {
-    output.innerHTML="<strong>"+esc(result.caption)+"</strong> = "+fmt(result.value)+(result.unit?" "+esc(result.unit):"")+(result.angle===null?"<br>Ângulo não definido.":"<br>Ângulo = "+displayedAngle(result.angle));
+    const angleText=result.angle===undefined?"":result.angle===null?"<br>Ângulo não definido.":"<br>Ângulo = "+displayedAngle(result.angle);
+    output.innerHTML="<strong>"+esc(result.caption)+"</strong> = "+fmt(result.value)+(result.unit?" "+esc(result.unit):"")+angleText;
     state.resultVector=null;
   }
   if(state.showSteps) output.innerHTML+="<div class=\"vl-equation-steps\">"+esc(result.steps).replace(/\n/g,"<br>")+"</div>";
@@ -430,6 +431,15 @@ function drawMotion() {
   if(state.motion.showVelocity){const v=velocityAtTime(state.motion.v0,state.motion.a,state.motion.time);drawArrow(p,add(p,multiply(v,.16)),"#68d59d","v",2);}
   if(state.motion.showAcceleration)drawArrow(p,add(p,multiply(state.motion.a,.12)),"#ff8b70","a",2);
 }
+function drawOutOfPlane(result) {
+  if(state.dimension!==2||state.operation!=="cross"||!result||result.error||!result.outOfPlane)return;
+  const origin=pointScreen({x:0,y:0,z:0}),x=origin.x+24,y=origin.y-23,r=8;
+  ctx.save();ctx.strokeStyle="#f4d36e";ctx.fillStyle="#f4d36e";ctx.lineWidth=1.6;
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
+  if(result.outOfPlane>0){ctx.beginPath();ctx.arc(x,y,2.7,0,Math.PI*2);ctx.fill();}
+  else {line(x-r*.55,y-r*.55,x+r*.55,y+r*.55,"#f4d36e",1.6);line(x+r*.55,y-r*.55,x-r*.55,y+r*.55,"#f4d36e",1.6);}
+  ctx.font="10px sans-serif";ctx.fillText(result.outOfPlane>0?"+z":"−z",x+11,y+3);ctx.restore();
+}
 function pointAtTime(t){return positionAtTime(state.motion.r0,state.motion.v0,state.motion.a,t);}
 function draw() {
   if(!ctx||!canvasWidth||!canvasHeight)return;
@@ -445,6 +455,7 @@ function draw() {
   });
   const operation=operationResult();
   drawOperationConstruction(operation);
+  drawOutOfPlane(operation);
   if(state.showResult&&operation.kind==="vector"&&!operation.error)drawArrow({x:0,y:0,z:0},operation.value,"#f4d36e",operation.caption||"R",3,true);
   if(state.motion.trajectory||state.motion.time>0)drawMotion();
   if(!state.vectors.length){ctx.fillStyle="#cfdaeb";ctx.textAlign="center";ctx.font="14px sans-serif";ctx.fillText("Adicione um vetor para começar",canvasWidth/2,canvasHeight/2);}
