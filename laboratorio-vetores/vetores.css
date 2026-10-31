@@ -124,3 +124,6 @@
 .vl-app:fullscreen .vl-readout-grid article>div{font-size:10px}.vl-app:fullscreen .vl-limit-note{margin-top:6px}
 @media(max-width:780px){.vl-app:fullscreen .vl-stage-head{align-items:center;flex-direction:row}.vl-app:fullscreen .vl-camera-controls{justify-content:flex-start}.vl-app.vl-readouts-open:fullscreen .vl-readout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.vl-app:fullscreen .vl-toolbar{gap:4px;padding:5px}.vl-app:fullscreen .vl-tool{min-height:31px;padding-inline:7px}.vl-app:fullscreen .vl-icon-button{min-width:31px;width:31px;min-height:31px}.vl-app:fullscreen .vl-stage-head{align-items:flex-start;flex-direction:column;gap:4px}.vl-app:fullscreen .vl-stage-head>div:first-child{display:none}.vl-app:fullscreen .vl-camera-controls{width:100%;flex-wrap:nowrap;overflow-x:auto}.vl-app:fullscreen .vl-camera-controls>*{flex-shrink:0}.vl-app.vl-controls-open:fullscreen .vl-sidebar{width:min(390px,calc(100vw - 12px))}.vl-app.vl-readouts-open:fullscreen .vl-bottom-panel{max-height:36dvh}}
+
+.vl-app:fullscreen .vl-toolbar-menu-body{position:fixed;top:58px;left:10px;max-height:min(60dvh,420px);overflow:auto}
+@media(max-width:520px){.vl-app:fullscreen .vl-toolbar-menu-body{top:48px;left:6px;max-width:calc(100vw - 12px)}}
