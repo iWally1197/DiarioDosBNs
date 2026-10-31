@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08101f">
+  <meta name="description" content="Laboratório virtual de vetores: crie, manipule, decomponha e combine vetores em 2D e 3D.">
+  <title>Laboratório de Vetores | Diário dos BNs</title>
+  <link rel="icon" type="image/jpeg" href="/assets-diario-dos-bns-logo.jpeg">
+  <link rel="stylesheet" href="/styles.css?v=mobile-20261028-1">
+  <link rel="stylesheet" href="/laboratorio-vetores/vetores.css?v=vector-lab-20261030-1">
+  <script defer src="/clean-links.js?v=clean-routes-20261013-2"></script>
+  <script defer src="/script.js?v=menu-button-20261014-2"></script>
+  <script defer src="/quick-menu.js?v=teacher-visibility-20261019-1"></script>
+  <script defer data-diario-accessibility="true" src="/accessibility.js?v=accessibility-20261013-1"></script>
+  <script type="module" src="/laboratorio-vetores/vector-lab.js?v=vector-lab-20261030-1"></script>
+</head>
+<body class="vector-lab-page">
+  <a class="skip-link" href="#vector-workspace">Pular para o laboratório</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Diário dos BNs, página inicial"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="sr-only">Abrir menu</span><span></span><span></span><span></span></button>
+    <nav class="nav" id="primary-nav" aria-label="Navegação principal">
+      <a href="/">Início</a><a href="/questoes/">Questões</a><a href="/turmas/">Turmas</a><a href="/downloads/">Downloads</a><a href="/blender/">Aprenda Blender</a><a href="/laboratorio/" aria-current="page">Laboratório</a><a href="/ia/">Assistente de Física</a><a href="/apoie/">Apoie o projeto</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Ativar modo claro"><span class="theme-icon" aria-hidden="true">☼</span><span class="theme-label">Modo claro</span></button>
+  </header>
+
+  <main class="vector-page-wrap" id="vector-workspace">
+    <nav class="vector-breadcrumbs" aria-label="Você está em"><a href="/">Início</a><span>/</span><a href="/laboratorio/">Laboratório</a><span>/</span><span aria-current="page">Vetores</span></nav>
+    <section class="vector-heading">
+      <div>
+        <p class="vector-kicker">OBSERVAR · MANIPULAR · CALCULAR</p>
+        <h1>Laboratório <span>de Vetores</span></h1>
+        <p>Crie vetores, altere suas componentes e veja operações, projeções e aplicações físicas serem atualizadas no espaço cartesiano.</p>
+      </div>
+      <div class="vector-heading-actions">
+        <button class="vl-button vl-quiet" id="vl-save" type="button">Salvar cena</button>
+        <a class="vl-button vl-quiet" href="/laboratorio/">Voltar aos laboratórios</a>
+      </div>
+    </section>
+
+    <div class="vl-app" id="vl-app">
+      <div class="vl-toolbar" role="toolbar" aria-label="Controles do espaço vetorial">
+        <div class="vl-tool-group" aria-label="Ferramenta">
+          <button type="button" class="vl-tool is-active" data-tool="select" aria-pressed="true">Selecionar</button>
+          <button type="button" class="vl-tool" data-tool="pan" aria-pressed="false">Mover vista</button>
+          <button type="button" class="vl-tool" data-tool="orbit" aria-pressed="false" hidden>Orbitar 3D</button>
+        </div>
+        <div class="vl-tool-group" aria-label="Dimensão">
+          <button type="button" class="vl-tool is-active" data-dimension="2" aria-pressed="true">2D</button>
+          <button type="button" class="vl-tool" data-dimension="3" aria-pressed="false">3D</button>
+        </div>
+        <label class="vl-view-toggle"><input id="vl-grid-toggle" type="checkbox" checked> Grade</label>
+        <label class="vl-view-toggle"><input id="vl-components-toggle" type="checkbox"> Componentes</label>
+        <label class="vl-view-toggle"><input id="vl-angle-toggle" type="checkbox" checked> Ângulo</label>
+        <div class="vl-toolbar-spacer"></div>
+        <button class="vl-icon-button" id="vl-undo" type="button" aria-label="Desfazer" title="Desfazer (Ctrl+Z)">↶</button>
+        <button class="vl-icon-button" id="vl-redo" type="button" aria-label="Refazer" title="Refazer (Ctrl+Shift+Z)">↷</button>
+        <button class="vl-button vl-fullscreen" id="vl-fullscreen" type="button">Tela cheia</button>
+      </div>
+
+      <div class="vl-main-layout">
+        <section class="vl-stage" aria-label="Área de desenho vetorial">
+          <div class="vl-stage-head">
+            <div><strong id="vl-stage-title">Espaço cartesiano</strong><span id="vl-stage-status">2D · unidades em escala consistente</span></div>
+            <div class="vl-camera-controls">
+              <button class="vl-icon-button" id="vl-zoom-out" type="button" aria-label="Diminuir zoom">−</button>
+              <output id="vl-zoom-label">100%</output>
+              <button class="vl-icon-button" id="vl-zoom-in" type="button" aria-label="Aumentar zoom">+</button>
+              <button class="vl-small-button" id="vl-center" type="button">Centralizar</button>
+              <button class="vl-small-button" id="vl-fit" type="button">Enquadrar vetores</button>
+              <select class="vl-small-button" id="vl-3d-view" aria-label="Perspectiva 3D" hidden><option value="iso">Isométrica</option><option value="front">Frontal</option><option value="top">Superior</option><option value="side">Lateral</option></select>
+              <button class="vl-small-button" id="vl-reset-camera" type="button">Restaurar vista</button>
+            </div>
+          </div>
+          <div class="vl-canvas-wrap">
+            <canvas id="vl-canvas" tabindex="0" role="img" aria-label="Plano cartesiano interativo. Use os controles numéricos ou arraste um vetor selecionado.">
+              Área interativa de vetores. Os valores também estão disponíveis nos controles numéricos.
+            </canvas>
+            <div class="vl-canvas-hint" id="vl-canvas-hint">Arraste a ponta para alterar o vetor · arraste o corpo para transladá-lo · scroll para zoom</div>
+            <div class="vl-canvas-overlay" id="vl-canvas-message" aria-live="polite"></div>
+          </div>
+          <div class="vl-stage-foot">
+            <span>Eixos X e Y em unidades do SI; o eixo Z aparece no modo 3D.</span>
+            <label>Encaixar na grade <input type="checkbox" id="vl-snap-toggle"></label>
+          </div>
+        </section>
+
+        <aside class="vl-sidebar" aria-label="Ferramentas de vetores">
+          <details class="vl-panel" open>
+            <summary><span>1</span> Criar e editar vetores</summary>
+            <div class="vl-panel-body">
+              <div class="vl-form-grid">
+                <label class="vl-field vl-wide">Nome<input id="vl-name" type="text" value="Vetor A" maxlength="32"></label>
+                <label class="vl-field">Grandeza
+                  <select id="vl-quantity">
+                    <option value="abstract">Vetor abstrato</option><option value="position">Posição</option><option value="displacement">Deslocamento</option><option value="velocity">Velocidade</option><option value="acceleration">Aceleração</option><option value="force">Força</option><option value="momentum">Quantidade de movimento</option><option value="impulse">Impulso</option><option value="electric-field">Campo elétrico</option><option value="magnetic-field">Campo magnético</option><option value="torque">Torque</option><option value="angular-velocity">Velocidade angular</option><option value="angular-momentum">Momento angular</option>
+                  </select>
+                </label>
+                <label class="vl-field">Cor<input id="vl-color" type="color" value="#55a4ff" aria-label="Cor do vetor"></label>
+                <label class="vl-field">Origem x<input id="vl-ox" type="number" step="any" value="0"></label>
+                <label class="vl-field">Origem y<input id="vl-oy" type="number" step="any" value="0"></label>
+                <label class="vl-field vl-z-field" hidden>Origem z<input id="vl-oz" type="number" step="any" value="0"></label>
+                <label class="vl-field">Componente x<input id="vl-vx" type="number" step="any" value="4"></label>
+                <label class="vl-field">Componente y<input id="vl-vy" type="number" step="any" value="3"></label>
+                <label class="vl-field vl-z-field" hidden>Componente z<input id="vl-vz" type="number" step="any" value="0"></label>
+              </div>
+              <div class="vl-locks">
+                <label><input type="checkbox" id="vl-lock-origin"> Fixar origem</label>
+                <label><input type="checkbox" id="vl-lock-module"> Fixar módulo</label>
+                <label><input type="checkbox" id="vl-lock-angle"> Fixar ângulo</label>
+                <label><input type="checkbox" id="vl-lock-vector"> Bloquear edição</label>
+                <label><input type="checkbox" id="vl-connect-next"> Conectar próximo vetor ao fim do selecionado</label>
+              </div>
+              <div class="vl-actions"><button id="vl-add" class="vl-button vl-primary" type="button">Adicionar vetor</button><button id="vl-duplicate" class="vl-button" type="button">Duplicar</button><button id="vl-delete" class="vl-button vl-danger" type="button">Excluir</button><button id="vl-align-x" class="vl-button" type="button">Alinhar em X</button><button id="vl-align-y" class="vl-button" type="button">Alinhar em Y</button></div>
+              <p class="vl-help">A edição numérica e o desenho permanecem sincronizados. Vetores da mesma operação devem ter grandezas compatíveis.</p>
+              <div class="vl-vector-list" id="vl-vector-list" aria-label="Vetores criados"></div>
+            </div>
+          </details>
+
+          <details class="vl-panel" open>
+            <summary><span>2</span> Operações e projeções</summary>
+            <div class="vl-panel-body">
+              <label class="vl-field">Operação
+                <select id="vl-operation"><option value="sum">Resultante: soma</option><option value="subtract">Subtração A − B</option><option value="scale">Multiplicação por escalar</option><option value="dot">Produto escalar A · B</option><option value="cross">Produto vetorial A × B</option><option value="projection">Projetar A sobre B</option></select>
+              </label>
+              <div id="vl-scale-row" class="vl-scalar-control" hidden><label for="vl-scale">Escalar k</label><input id="vl-scale-range" type="range" min="-5" max="5" step="0.1" value="2"><input id="vl-scale" type="number" step="any" value="2"></div>
+              <div class="vl-inline-control"><label for="vl-angle-unit">Ângulo</label><select id="vl-angle-unit"><option value="deg">Graus</option><option value="rad">Radianos</option></select></div>
+              <div class="vl-inline-control"><label for="vl-angle-convention">Convenção</label><select id="vl-angle-convention"><option value="0-360">0° a 360°</option><option value="-180-180">−180° a 180°</option></select></div>
+              <label class="vl-field" id="vl-add-method-row">Método gráfico da soma
+                <select id="vl-add-method"><option value="components">Componentes</option><option value="triangle">Triângulo</option><option value="parallelogram">Paralelogramo (dois vetores)</option><option value="polygon">Polígono (três ou mais)</option></select>
+              </label>
+              <div id="vl-properties-result" class="vl-operation-result"></div>
+              <label class="vl-check-row"><input id="vl-show-result" type="checkbox" checked> Mostrar resultado no desenho</label>
+              <div class="vl-operation-result" id="vl-operation-result" aria-live="polite"></div>
+            </div>
+          </details>
+
+          <details class="vl-panel">
+            <summary><span>3</span> Aprender e experimentar</summary>
+            <div class="vl-panel-body">
+              <label class="vl-field">Modo de aprendizagem
+                <select id="vl-learning-mode"><option value="free">Exploração livre</option><option value="guided">Aprendizagem orientada</option><option value="experiment">Experimentos</option><option value="challenge">Desafios</option></select>
+              </label>
+              <div class="vl-guided-card" id="vl-guided-card">Arraste a ponta do vetor ou altere suas componentes. Observe como o módulo e o ângulo mudam.</div>
+              <label class="vl-field">Experimento
+                <select id="vl-experiment"><option value="perpendicular">Vetores perpendiculares</option><option value="parallel">Vetores paralelos</option><option value="opposite">Vetores opostos</option><option value="equilibrium">Equilíbrio de três forças</option><option value="decompose">Decomposição de uma força</option><option value="displacement">Resultante de deslocamentos</option><option value="relative">Velocidade relativa</option><option value="torque">Torque de uma força</option><option value="cross3d">Produto vetorial em 3D</option></select>
+              </label>
+              <button id="vl-load-experiment" class="vl-button" type="button">Carregar experimento</button>
+              <div class="vl-challenge" id="vl-challenge" hidden><p id="vl-challenge-text"></p><label class="vl-field">Módulo-alvo<input id="vl-target-module" type="number" step="any" value="10"></label><button id="vl-check-challenge" class="vl-button vl-primary" type="button">Conferir desafio</button><p id="vl-challenge-feedback" aria-live="polite"></p></div>
+            </div>
+          </details>
+
+          <details class="vl-panel">
+            <summary><span>4</span> Forças e torque</summary>
+            <div class="vl-panel-body">
+              <p class="vl-help">O diagrama mostra as forças que você definiu. Normal, atrito e tração não são inferidos sem condições físicas especificadas.</p>
+              <label class="vl-field">Massa do corpo (kg)<input id="vl-mass" type="number" min="0.000001" step="any" value="2"></label>
+              <div class="vl-form-grid"><label class="vl-field">Corpo x (m)<input id="vl-body-x" type="number" step="any" value="0"></label><label class="vl-field">Corpo y (m)<input id="vl-body-y" type="number" step="any" value="0"></label></div>
+              <div class="vl-form-grid">
+                <label class="vl-field">Pivô x (m)<input id="vl-px" type="number" step="any" value="0"></label>
+                <label class="vl-field">Pivô y (m)<input id="vl-py" type="number" step="any" value="0"></label>
+                <label class="vl-field vl-z-field" hidden>Pivô z (m)<input id="vl-pz" type="number" step="any" value="0"></label>
+              </div>
+              <div class="vl-operation-result" id="vl-force-result" aria-live="polite"></div>
+            </div>
+          </details>
+
+          <details class="vl-panel">
+            <summary><span>5</span> Movimento vetorial</summary>
+            <div class="vl-panel-body">
+              <p class="vl-help">Movimento com aceleração constante: a trajetória é calculada pelas equações de posição e velocidade.</p>
+              <div class="vl-form-grid">
+                <label class="vl-field">r₀x (m)<input id="vl-r0x" type="number" step="any" value="0"></label><label class="vl-field">r₀y (m)<input id="vl-r0y" type="number" step="any" value="0"></label>
+                <label class="vl-field">v₀x (m/s)<input id="vl-v0x" type="number" step="any" value="4"></label><label class="vl-field">v₀y (m/s)<input id="vl-v0y" type="number" step="any" value="8"></label>
+                <label class="vl-field">aₓ (m/s²)<input id="vl-ax" type="number" step="any" value="0"></label><label class="vl-field">aᵧ (m/s²)<input id="vl-ay" type="number" step="any" value="-9.80665"></label>
+              </div>
+              <div class="vl-motion-buttons"><button id="vl-motion-play" class="vl-button vl-primary" type="button">Iniciar</button><button id="vl-motion-pause" class="vl-button" type="button">Pausar</button><button id="vl-motion-reset" class="vl-button" type="button">Reiniciar</button></div>
+              <label class="vl-field">Tempo <input id="vl-time" type="range" min="0" max="5" step="0.01" value="0"><output id="vl-time-output">0,00 s</output></label>
+              <label class="vl-field">Velocidade de reprodução <input id="vl-playback" type="range" min="0.25" max="2" step="0.25" value="1"><output id="vl-playback-output">1×</output></label>
+              <div class="vl-check-stack"><label><input id="vl-trajectory-toggle" type="checkbox" checked> Mostrar trajetória</label><label><input id="vl-velocity-toggle" type="checkbox" checked> Vetor velocidade</label><label><input id="vl-acceleration-toggle" type="checkbox" checked> Vetor aceleração</label></div>
+              <div class="vl-operation-result" id="vl-motion-result" aria-live="polite"></div>
+            </div>
+          </details>
+
+          <details class="vl-panel">
+            <summary><span>6</span> Salvar, exportar e acessibilidade</summary>
+            <div class="vl-panel-body">
+              <div class="vl-actions"><button id="vl-export-json" class="vl-button" type="button">Exportar JSON</button><button id="vl-export-csv" class="vl-button" type="button">Exportar CSV</button><button id="vl-export-png" class="vl-button" type="button">Imagem PNG</button><button id="vl-import" class="vl-button" type="button">Importar JSON</button><button id="vl-restore" class="vl-button vl-danger" type="button">Restaurar cena</button><input id="vl-import-file" type="file" accept="application/json,.json" hidden></div>
+              <div class="vl-check-stack"><label><input id="vl-contrast-toggle" type="checkbox"> Alto contraste</label><label><input id="vl-low-stimulus-toggle" type="checkbox"> Baixa estimulação visual</label><label><input id="vl-reduced-motion-toggle" type="checkbox"> Reduzir animações</label><label><input id="vl-steps-toggle" type="checkbox" checked> Mostrar etapas dos cálculos</label></div>
+              <p class="vl-help">Para teclado: selecione a área e use as setas para ajustar a ponta do vetor selecionado. Shift aplica um ajuste menor. Ctrl+Z desfaz.</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <section class="vl-bottom-panel" aria-labelledby="vl-readout-title">
+        <div class="vl-bottom-head"><div><p class="vector-kicker">LEITURA MATEMÁTICA</p><h2 id="vl-readout-title">Componentes e resultante</h2></div><span class="vl-live-pill" id="vl-live-status">Atualizado</span></div>
+        <div class="vl-readout-grid">
+          <article><h3>Vetor selecionado</h3><div id="vl-selected-readout"></div></article>
+          <article><h3>Componentes</h3><div id="vl-components-readout"></div></article>
+          <article><h3>Operação</h3><div id="vl-equation-readout"></div></article>
+          <article><h3>Aplicação física</h3><div id="vl-physics-readout"></div></article>
+        </div>
+        <p class="vl-limit-note">Modelo vetorial clássico. Projeção 3D ortográfica para visualização: girar a câmera muda a perspectiva, não as componentes. Óptica geométrica, se adicionada a futuras aplicações, continua sendo uma aproximação da Óptica Física.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="footer-top"><a class="brand" href="/"><img class="brand-logo" src="/assets-diario-dos-bns-logo.jpeg" alt=""><span>Diário dos <b>BNs</b></span></a><p>Modelos físicos interativos para investigar.</p><a class="back-top" href="#vector-workspace">Voltar ao início ↑</a></div><div class="footer-bottom"><span>© <span class="year"></span> Diário dos BNs</span><a href="/laboratorio/">Laboratórios ↗</a><a href="/privacidade/">Privacidade</a></div></footer>
+</body>
+</html>
