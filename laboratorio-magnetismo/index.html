@@ -14,7 +14,7 @@
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=teacher-visibility-20261019-1" defer></script>
   <script defer src="/laboratorio-fullscreen.js?v=infinite-optical-world-20261028-1"></script>
-  <script type="module" src="laboratorio-magnetismo.js?v=physical-objects-20261028-2"></script>
+  <script type="module" src="laboratorio-magnetismo.js?v=interaction-square-20261030-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
 <body>
@@ -83,12 +83,12 @@
           <canvas id="magnet-canvas" tabindex="0" aria-label="Cena 2D interativa do campo magnético." aria-describedby="magnet-scene-help sensor-status reading-magnitude reading-bx reading-by reading-bz reading-angle"></canvas>
         </div>
         <div class="magnet-legend" aria-label="Legenda"><span><i class="legend-n"></i> Polo norte magnético</span><span><i class="legend-s"></i> Polo sul magnético</span><span><i class="legend-field"></i> Campo: direção e sentido de B</span><span><i class="legend-grid"></i> Grade de coordenadas</span></div>
-        <p class="magnet-scene-help" id="magnet-scene-help">Use mouse ou toque para mover os objetos. Para posicioná-los sem mouse, escolha um item em “Posicionar objetos pelo teclado” e ajuste as posições horizontal e vertical com as setas. As setas do teclado na cena movem o sensor; Shift + setas movem a bússola selecionada.</p>
+        <p class="magnet-scene-help" id="magnet-scene-help">Use mouse ou toque para mover os objetos. O quadrado de interação vai até ±100 m nos eixos X e Y; as bordas tracejadas aparecem ao navegar até elas. Para posicioná-los sem mouse, escolha um item em “Posicionar objetos pelo teclado” e ajuste as posições horizontal e vertical. As setas do teclado na cena movem o sensor; Shift + setas movem a bússola selecionada.</p>
       </div>
 
       <aside class="magnet-controls" aria-label="Controles do experimento">
         <div class="magnet-control-header"><div><span class="section-kicker">CONTROLES</span><h2 id="controls-title">Ímã permanente</h2></div><button type="button" class="button button-outline" id="complexity-toggle" aria-pressed="false">Modo avançado</button></div>
-    <fieldset class="magnet-control-group magnet-keyboard-position"><legend>Posicionar objetos pelo teclado</legend><label for="magnet-position-target">Objeto</label><select id="magnet-position-target"></select><label for="magnet-position-x">Posição horizontal <output id="magnet-position-x-value">0,18 m</output><input id="magnet-position-x" type="range" min="-0.37" max="0.37" step="0.01" value="0.18"></label><label for="magnet-position-y">Posição vertical <output id="magnet-position-y-value">0,10 m</output><input id="magnet-position-y" type="range" min="-0.23" max="0.23" step="0.01" value="0.10"></label><p id="magnet-position-status" class="magnet-control-note" role="status" aria-live="polite">Selecione um objeto e use as setas nos controles de posição.</p></fieldset>
+    <fieldset class="magnet-control-group magnet-keyboard-position"><legend>Posicionar objetos por coordenadas</legend><label for="magnet-position-target">Objeto</label><select id="magnet-position-target"></select><label for="magnet-position-x">Posição horizontal x (m)<output id="magnet-position-x-value">0,18 m</output><input id="magnet-position-x" type="number" min="-100" max="100" step="0.01" value="0.18"></label><label for="magnet-position-y">Posição vertical y (m)<output id="magnet-position-y-value">0,10 m</output><input id="magnet-position-y" type="number" min="-100" max="100" step="0.01" value="0.10"></label><p id="magnet-position-status" class="magnet-control-note" role="status" aria-live="polite">Informe as coordenadas de −100 m a +100 m, ou arraste o objeto na cena.</p></fieldset>
 
         <fieldset class="magnet-control-group" id="permanent-controls"><legend>Ímã de barra</legend>
           <label for="magnet-angle">Orientação <output id="magnet-angle-value">0°</output><input id="magnet-angle" type="range" min="-180" max="180" step="1" value="0"></label>
@@ -139,8 +139,8 @@
 
         <fieldset class="magnet-control-group"><legend>Sensor digital</legend>
           <label class="magnet-check"><input type="checkbox" id="earth-compass"> Incluir campo terrestre simplificado</label>
-          <label for="sensor-x">Posição horizontal <output id="sensor-x-value">0,18 m</output><input id="sensor-x" type="range" min="-0.38" max="0.38" step="0.01" value="0.18"></label>
-          <label for="sensor-y">Posição vertical <output id="sensor-y-value">0,10 m</output><input id="sensor-y" type="range" min="-0.24" max="0.24" step="0.01" value="0.10"></label>
+          <label for="sensor-x">Posição horizontal <output id="sensor-x-value">0,18 m</output><input id="sensor-x" type="number" min="-100" max="100" step="0.01" value="0.18"></label>
+          <label for="sensor-y">Posição vertical <output id="sensor-y-value">0,10 m</output><input id="sensor-y" type="number" min="-100" max="100" step="0.01" value="0.10"></label>
         </fieldset>
 
         <fieldset class="magnet-control-group"><legend>Acessibilidade</legend>
