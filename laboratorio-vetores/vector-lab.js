@@ -432,7 +432,7 @@ function drawMotion() {
   if(state.motion.showAcceleration)drawArrow(p,add(p,multiply(state.motion.a,.12)),"#ff8b70","a",2);
 }
 function drawOutOfPlane(result) {
-  if(state.dimension!==2||state.operation!=="cross"||!result||result.error||!result.outOfPlane)return;
+  if(!state.showResult||state.dimension!==2||state.operation!=="cross"||!result||result.error||!result.outOfPlane)return;
   const origin=pointScreen({x:0,y:0,z:0}),x=origin.x+24,y=origin.y-23,r=8;
   ctx.save();ctx.strokeStyle="#f4d36e";ctx.fillStyle="#f4d36e";ctx.lineWidth=1.6;
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
