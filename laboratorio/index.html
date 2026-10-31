@@ -10,11 +10,11 @@
   <title>Laboratório Virtual de Física — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=mobile-20261028-1">
-  <link rel="stylesheet" href="laboratorio-suite.css?v=vector-lab-shortcut-20261030-1">
+  <link rel="stylesheet" href="laboratorio-suite.css?v=vector-lab-card-20261030-1">
   <script src="script.js?v=menu-button-20261014-2" defer></script>
   <script src="quick-menu.js?v=teacher-visibility-20261019-1" defer></script>
   <script defer src="/laboratorio-fullscreen.js?v=infinite-optical-world-20261028-1"></script>
-  <script type="module" src="laboratorio-catalogo-ui.js?v=laboratory-publication-sync-20261023-1"></script>
+  <script type="module" src="laboratorio-catalogo-ui.js?v=vector-card-20261030-1"></script>
   <script type="module" src="src-app.js?v=laboratory-publication-sync-20261023-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
@@ -34,17 +34,12 @@
     <section class="tool-heading">
       <div class="section-kicker">OBSERVAR · ALTERAR · COMPARAR</div>
       <h1>Laboratório <span>Virtual de Física</span></h1>
-      <p>Encontre simulações de MRU, MRUV, lançamento oblíquo, espelhos, lente divergente e magnetismo. Cada cartão abre um experimento próprio.</p>
-      <p class="physics-topic-map-link"><a class="button button-outline" href="/biblioteca-fisica/">Consultar a biblioteca dos 480 tópicos →</a> <a class="button button-outline" href="/laboratorio-vetores/">Abrir laboratório de vetores →</a></p>
+      <p>Encontre simulações de MRU, MRUV, lançamento oblíquo, espelhos, lente divergente, magnetismo e vetores. Cada cartão abre um experimento próprio.</p>
+      <p class="physics-topic-map-link"><a class="button button-outline" href="/biblioteca-fisica/">Consultar a biblioteca dos 480 tópicos →</a></p>
     </section>
 
     <section class="lab-catalog" aria-labelledby="lab-catalog-title">
       <div class="lab-catalog-heading"><div><div class="section-kicker">CATÁLOGO DE EXPERIMENTOS</div><h2 id="lab-catalog-title">O que você quer investigar?</h2></div><p><strong>Funcional</strong> identifica um tópico com simulação interativa. Cada cartão abre sua própria página de experimento.</p></div>
-      <a class="lab-vector-feature" href="/laboratorio-vetores/" aria-label="Abrir laboratório interativo de vetores em 2D e 3D">
-        <span class="lab-vector-feature-mark" aria-hidden="true">↗</span>
-        <span class="lab-vector-feature-copy"><span class="section-kicker">LABORATÓRIO INTERATIVO · 2D E 3D</span><strong>Vetores: criar, decompor e combinar</strong><span>Manipule vetores no plano cartesiano, explore componentes, resultantes e aplicações de Física.</span></span>
-        <span class="lab-vector-feature-cta">Abrir laboratório de vetores <span aria-hidden="true">→</span></span>
-      </a>
       <div class="lab-filters">
         <label>Buscar experimento<input id="lab-search" type="search" placeholder="Ex.: energia, ondas, colisão" autocomplete="off"></label>
         <label>Categoria<select id="lab-category"><option value="">Todas as categorias</option></select></label>
