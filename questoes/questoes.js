@@ -806,11 +806,28 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const officialSource = String(record.institution || "").toUpperCase() === "UEM"
-        ? (String(record.title || "").includes("Inverno 2019")
-          ? {cycle:"Vestibular de Inverno 2019",proof:"https://www.vestibular.uem.br/provas/in19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/in19/gabdef.pdf"}
-          : {cycle:"Vestibular de Verão 2019",proof:"https://www.vestibular.uem.br/provas/ve19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/ve19/gabdef.pdf"})
+        ? (() => {
+          const year = Number(record.year);
+          const title = String(record.title || "");
+          if (year === 2023) return title.includes("Inverno 2023")
+            ? {cycle:"Vestibular de Inverno 2023",proof:"https://www.vestibular.uem.br/provas/in23/P1.pdf",key:"https://www.vestibular.uem.br/provas/in23/gabdef.pdf"}
+            : {cycle:"Vestibular de Verão 2023",proof:"https://www.vestibular.uem.br/provas/ve23/P1.pdf",key:"https://www.vestibular.uem.br/provas/ve23/gabdef.pdf"};
+          if (year === 2024) return title.includes("Inverno 2024")
+            ? {cycle:"Vestibular de Inverno 2024",proof:"https://www.vestibular.uem.br/provas/in24/P1.pdf",key:"https://www.vestibular.uem.br/provas/in24/gabdef.pdf"}
+            : {cycle:"Vestibular de Verão 2024",proof:"https://www.vestibular.uem.br/provas/ve24/P1.pdf",key:"https://www.vestibular.uem.br/provas/ve24/gabdef.pdf"};
+          if (year === 2025) return title.includes("Inverno 2025")
+            ? {cycle:"Vestibular de Inverno 2025",proof:"https://www.vestibular.uem.br/provas/in25/P1.pdf",key:"https://www.vestibular.uem.br/provas/in25/gabdef.pdf"}
+            : {cycle:"Vestibular de Verão 2025",proof:"https://www.vestibular.uem.br/provas/ve25/P1.pdf",key:"https://www.vestibular.uem.br/provas/ve25/gabdef.pdf"};
+          if (year === 2019 && title.includes("Inverno 2019")) return {cycle:"Vestibular de Inverno 2019",proof:"https://www.vestibular.uem.br/provas/in19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/in19/gabdef.pdf"};
+          if (year === 2019 && title.includes("Verão 2019")) return {cycle:"Vestibular de Verão 2019",proof:"https://www.vestibular.uem.br/provas/ve19/P2G1-FIS.pdf",key:"https://www.vestibular.uem.br/provas/ve19/gabdef.pdf"};
+          return null;
+        })()
         : String(record.institution || "").toUpperCase() === "IME"
-        ? (Number(record.year) === 2022
+        ? (Number(record.year) === 2007
+          ? {cycle:"2006/2007",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas06_07/fme.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas06_07/Gabarito.pdf"}
+          : Number(record.year) === 2008
+            ? {cycle:"2007/2008",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas07_08/provaobj_2007-2008.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas07_08/gabaritodefinitivo_2007-2008.pdf"}
+            : Number(record.year) === 2022
           ? {cycle:"2021/2022",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/CFG1fase2021.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2021-2022/GabaritoDEFINITIVO.pdf"}
           : Number(record.year) === 2023
             ? {cycle:"2022/2023",proof:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2022-2023/provaobjetiva2022.pdf",key:"https://www.ime.eb.mil.br/images/arquivos/admissao/cfg/provas-anteriores/2022-2023/gabaritooficialbjetiva20222023.pdf"}
