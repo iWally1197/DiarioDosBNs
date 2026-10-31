@@ -787,7 +787,11 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
                                 ? {cycle:"2014/2015",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas14_15/CFG-Objetiva-2014-2015.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas14_15/gab_def_1f_2014_2015.pdf"}
                                 : Number(record.year) === 2014
                                   ? {cycle:"2013/2014",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas13_14/CFG-Objetiva-2013-2014.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas13_14/CFG-Objetiva-2013-2014-Gabarito.pdf"}
-                                  : null)const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
+                                  : Number(record.year) === 2013
+                                    ? {cycle:"2012/2013",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Provas_Objetivas_CFG.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas12_13/Gabarito_CFG-Objetiva-Definitivo.pdf"}
+                                    : Number(record.year) === 2012
+                                      ? {cycle:"2011/2012",proof:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Provas_Anteriores/provas11_12/ProvaObjetiva_CA_CFG_2011_2012.pdf",key:"https://www.ime.eb.mil.br/arquivos/Admissao/Vestibular_CFG/Resultados/2011-2012/Gabarito_Definitivo_Prova_Objetiva_CA_CFG_2011_2012.pdf"}
+                                      : null)const originalQuestionNumber = record.title?.match(/questão\s*(\d+)/i)?.[1] || "";
       return {
         id:"admin-" + record.id,
         title:record.title,
