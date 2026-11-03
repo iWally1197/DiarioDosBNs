@@ -835,6 +835,10 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         ? (() => {
           const year = Number(record.year);
           const title = String(record.title || "");
+          if (year === 2013) return title.includes("Inverno 2013")
+            ? {cycle:"Vestibular de Inverno 2013",proof:"https://www.cvu.uem.br/provas-gabaritos.html",key:"https://www.cvu.uem.br/provas-gabaritos.html"}
+            : {cycle:"Vestibular de Verão 2013",proof:"https://www.cvu.uem.br/provas-gabaritos.html",key:"https://www.cvu.uem.br/provas-gabaritos.html"};
+          if (year === 2022) return {cycle:"Vestibular de Verão 2022",proof:"https://www.cvu.uem.br/provas-gabaritos.html",key:"https://www.cvu.uem.br/provas-gabaritos.html"};
           if (year === 2023) return title.includes("Inverno 2023")
             ? {cycle:"Vestibular de Inverno 2023",proof:"https://www.vestibular.uem.br/provas/in23/P1.pdf",key:"https://www.vestibular.uem.br/provas/in23/gabdef.pdf"}
             : {cycle:"Vestibular de Verão 2023",proof:"https://www.vestibular.uem.br/provas/ve23/P1.pdf",key:"https://www.vestibular.uem.br/provas/ve23/gabdef.pdf"};
