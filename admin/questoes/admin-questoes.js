@@ -192,7 +192,7 @@ import {supabasePromise} from "/src-supabase.js";
     const titleBlock = document.createElement("div");
     const heading = document.createElement("h3");
     heading.className = "q-card-title";
-    heading.textContent = "Questão 001 · " + title;
+    heading.textContent = title;
     const meta = document.createElement("div");
     meta.className = "q-card-meta";
     const discipline = byId("question-discipline").value;
