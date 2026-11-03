@@ -164,6 +164,21 @@ import {supabasePromise} from "/src-supabase.js";
     return images;
   }
 
+  function formatQuestionAttribution(bank, institution, year) {
+    const examName = String(bank || institution || "").trim();
+    const yearText = String(year || "").trim();
+    if (!examName && !yearText) return "(Fonte não informada)";
+    if (!examName) return `(Concurso-${yearText})`;
+    if (!yearText) return `(${examName})`;
+    return `(${examName}-${yearText})`;
+  }
+
+  function formatAttributedPreviewStatement(statement, bank, institution, year) {
+    const text = String(statement ?? "").trim();
+    const attribution = formatQuestionAttribution(bank, institution, year);
+    return text.startsWith(attribution) ? text : `${attribution}\n${text}`;
+  }
+
   function renderStudentPreview() {
     studentPreview.replaceChildren();
     const title = byId("question-title").value.trim() || "Título da questão";
@@ -201,7 +216,7 @@ import {supabasePromise} from "/src-supabase.js";
     body.className = "q-card-body";
     const statement = document.createElement("p");
     statement.className = "q-statement";
-    statement.textContent = statementText;
+    statement.textContent = formatAttributedPreviewStatement(statementText, bank, institution, year);
     body.append(statement);
     for (const item of previewImageSources()) {
       const button = document.createElement("button");
