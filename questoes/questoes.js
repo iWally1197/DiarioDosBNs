@@ -817,7 +817,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     setStatus("Carregando questões…");
     const database = await supabasePromise;
     if (!database) throw new Error("Conexão com o banco indisponível.");
-    const {data,error} = await database.from("physics_questions").select("*").eq("status","published").order("created_at",{ascending:false}).limit(500);
+    const {data,error} = await database.from("physics_questions").select("*").eq("status","published").order("created_at",{ascending:false}).limit(1000);
     if (error) throw error;
     const databaseQuestions = (data || []).map(record => {
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
