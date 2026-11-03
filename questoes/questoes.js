@@ -219,6 +219,23 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     return statement;
   }
 
+  function formatQuestionAttribution(question) {
+    const bank = String(question?.bank ?? "").trim();
+    const institution = String(question?.institution ?? "").trim();
+    const examName = bank || institution;
+    const year = String(question?.year ?? "").trim();
+    if (!examName && !year) return "(Fonte não informada)";
+    if (!examName) return `(Concurso-${year})`;
+    if (!year) return `(${examName})`;
+    return `(${examName}-${year})`;
+  }
+
+  function formatAttributedQuestionStatement(question) {
+    const statement = formatQuestionStatement(question?.statement);
+    const attribution = formatQuestionAttribution(question);
+    return statement.startsWith(attribution) ? statement : `${attribution}\n${statement}`;
+  }
+
   function renderCard(question,position) {
     const card = document.createElement("article");
     card.className = "q-card";
@@ -258,7 +275,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     body.className = "q-card-body";
     const statement = document.createElement("p");
     statement.className = "q-statement";
-    statement.textContent = formatQuestionStatement(question.statement);
+    statement.textContent = formatAttributedQuestionStatement(question);
     body.append(statement);
     const rawQuestionImages = Array.isArray(question.images) && question.images.length
       ? question.images
