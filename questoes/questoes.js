@@ -236,6 +236,10 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     return statement.startsWith(attribution) ? statement : `${attribution}\n${statement}`;
   }
 
+  function displayQuestionTitle(value) {
+    return String(value ?? "").replace(/^\\s*quest[aã]o\\s+\\d+\\s*[—–-]\\s*/i,"").trim();
+  }
+
   function renderCard(question,position) {
     const card = document.createElement("article");
     card.className = "q-card";
@@ -245,7 +249,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const titleBlock = document.createElement("div");
     const title = document.createElement("h3");
     title.className = "q-card-title";
-    title.textContent = question.title;
+    title.textContent = displayQuestionTitle(question.title);
     titleBlock.append(title);
     const meta = document.createElement("div");
     meta.className = "q-card-meta";
@@ -289,7 +293,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const imageButton = document.createElement("button");
       imageButton.type = "button";
       imageButton.className = "q-diagram-button";
-      imageButton.setAttribute("aria-label","Ampliar figura: " + (item.alt || question.title));
+      imageButton.setAttribute("aria-label","Ampliar figura: " + (item.alt || displayQuestionTitle(question.title)));
       const image = document.createElement("img");
       image.src = item.src;
       image.alt = item.alt || "Figura da questão";
@@ -306,7 +310,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       imageButton.addEventListener("click",() => {
         el("question-image-large").src = item.src;
         el("question-image-large").alt = item.alt || "Figura da questão";
-        el("question-image-caption").textContent = item.alt || question.title;
+        el("question-image-caption").textContent = item.alt || displayQuestionTitle(question.title);
         if (typeof imageDialog.showModal === "function") imageDialog.showModal();
       });
       body.append(imageButton);
