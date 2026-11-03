@@ -823,10 +823,13 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
         src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:["IME","UEM","UFSC"].includes(String(record.institution || "").toUpperCase()) ? `Figura original da questão de ${String(record.institution).toUpperCase()}` : `Imagem ilustrativa ${index + 1}`
+        alt:["IME","UEM","UFSC","MACKENZIE"].includes(String(record.institution || "").toUpperCase()) ? `Figura original da questão de ${String(record.institution).toUpperCase()}` : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
-      const officialSource = String(record.institution || "").toUpperCase() === "UEM"
+      const institutionCode = String(record.institution || "").toUpperCase();
+      const officialSource = institutionCode === "MACKENZIE"
+        ? {cycle:Number(record.year) === 2016 ? "Vestibular 2016 · 2º semestre" : `Vestibular ${record.year} · 1º semestre`,proof:"https://www.mackenzie.br/processos-seletivos/vestibular-graduacao/sao-paulo-higienopolis",key:"https://www.mackenzie.br/processos-seletivos/vestibular-graduacao/sao-paulo-higienopolis"}
+        : institutionCode === "UEM"
         ? (() => {
           const year = Number(record.year);
           const title = String(record.title || "");
@@ -905,10 +908,10 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         lowercaseChoiceLetters:Number(record.year) === 2025,
         imageOnly:record.display_format === "image",
         solution:record.resolution || "",
-        source:officialSource ? `${String(record.institution || "").toUpperCase() === "UEM" ? "UEM" : "IME · CFG"} · ${officialSource.cycle}, questão original ${originalQuestionNumber}.` : "",
+        source:officialSource ? `${institutionCode === "UEM" ? "UEM" : institutionCode === "IME" ? "IME · CFG" : institutionCode} · ${officialSource.cycle}.` : "",
         sourceUrl:officialSource?.proof || "",
         keyUrl:officialSource?.key || "",
-        license:officialSource ? (String(record.institution || "").toUpperCase() === "UEM" ? "Prova oficial da UEM." : "Reprodução integral autorizada pelo IME.") : "",
+        license:officialSource ? (institutionCode === "UEM" ? "Prova oficial da UEM." : institutionCode === "MACKENZIE" ? "Reprodução integral autorizada pelo Mackenzie." : "Reprodução integral autorizada pelo IME.") : "",
         tags:[]
       };
     });
