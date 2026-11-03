@@ -179,6 +179,10 @@ import {supabasePromise} from "/src-supabase.js";
     return text.startsWith(attribution) ? text : `${attribution}\n${text}`;
   }
 
+  function displayQuestionTitle(value) {
+    return String(value ?? "").replace(/^\\s*quest[aã]o\\s+\\d+\\s*[—–-]\\s*/i,"").trim();
+  }
+
   function renderStudentPreview() {
     studentPreview.replaceChildren();
     const title = byId("question-title").value.trim() || "Título da questão";
@@ -192,7 +196,7 @@ import {supabasePromise} from "/src-supabase.js";
     const titleBlock = document.createElement("div");
     const heading = document.createElement("h3");
     heading.className = "q-card-title";
-    heading.textContent = title;
+    heading.textContent = displayQuestionTitle(title);
     const meta = document.createElement("div");
     meta.className = "q-card-meta";
     const discipline = byId("question-discipline").value;
@@ -337,7 +341,7 @@ import {supabasePromise} from "/src-supabase.js";
       item.className = "q-admin-record";
       const title = document.createElement("strong");
       title.className = "q-admin-record-title";
-      title.textContent = record.title;
+      title.textContent = displayQuestionTitle(record.title);
       const meta = document.createElement("div");
       meta.className = "q-admin-record-meta";
       const status = document.createElement("span");
