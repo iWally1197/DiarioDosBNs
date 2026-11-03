@@ -180,7 +180,7 @@ import {supabasePromise} from "/src-supabase.js";
   }
 
   function displayQuestionTitle(value) {
-    return String(value ?? "").replace(/^\\s*quest[aã]o\\s+\\d+\\s*[—–-]\\s*/i,"").trim();
+    return String(value ?? "").replace(/^ *quest[aã]o +[0-9]+ *[—–-] */i,"").trim();
   }
 
   function renderStudentPreview() {
