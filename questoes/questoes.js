@@ -245,7 +245,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const titleBlock = document.createElement("div");
     const title = document.createElement("h3");
     title.className = "q-card-title";
-    title.textContent = "Questão " + String(position).padStart(3,"0") + " · " + question.title;
+    title.textContent = question.title;
     titleBlock.append(title);
     const meta = document.createElement("div");
     meta.className = "q-card-meta";
