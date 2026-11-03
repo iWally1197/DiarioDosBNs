@@ -1,4 +1,4 @@
-import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=uem-somatoria-20261031-1";
+import {filterQuestions,filterByView,sortQuestions as sortQuestionList,recordAnswer,toggleFavorite,summarizeProgress,normalizeQuestionList,loadProgress,saveProgress} from "./questoes-core.mjs?v=ufsc-somatorio-20261103-1";
 import {supabasePromise} from "/src-supabase.js";
 import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
 
@@ -348,7 +348,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const text = document.createElement("span");
       const optionLetter = question.lowercaseChoiceLetters ? choice.letter.toLowerCase() : choice.letter;
       text.textContent = multiSelect
-        ? choice.letter + ") " + choice.text
+        ? (String(question.institution || "").toUpperCase() === "UFSC" ? choice.letter + ". " + choice.text : choice.letter + ") " + choice.text)
         : question.imageOnly ? "(" + optionLetter + ")" : question.lowercaseChoiceLetters ? optionLetter + ") " + choice.text : "(" + optionLetter + ") " + choice.text;
       label.append(input,text);
       choices.append(label);
@@ -823,7 +823,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       const paths = [record.cover_image_path,...(record.illustration_image_paths || [])].filter(Boolean);
       const images = paths.map((path,index) => ({
         src:/^(https?:\/\/|\/)/i.test(path) ? path : database.storage.from("question-images").getPublicUrl(path).data.publicUrl,
-        alt:["IME","UEM"].includes(String(record.institution || "").toUpperCase()) ? `Figura original da questão de ${String(record.institution).toUpperCase()}` : `Imagem ilustrativa ${index + 1}`
+        alt:["IME","UEM","UFSC"].includes(String(record.institution || "").toUpperCase()) ? `Figura original da questão de ${String(record.institution).toUpperCase()}` : `Imagem ilustrativa ${index + 1}`
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const officialSource = String(record.institution || "").toUpperCase() === "UEM"
@@ -901,7 +901,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         images,
         choices:Array.isArray(record.choices) ? record.choices : [],
         correct:record.correct_option,
-        multiSelect:String(record.institution || "").toUpperCase() === "UEM",
+        multiSelect:["UEM","UFSC"].includes(String(record.institution || "").toUpperCase()),
         lowercaseChoiceLetters:Number(record.year) === 2025,
         imageOnly:record.display_format === "image",
         solution:record.resolution || "",
