@@ -237,7 +237,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
   }
 
   function displayQuestionTitle(value) {
-    return String(value ?? "").replace(/^\\s*quest[aã]o\\s+\\d+\\s*[—–-]\\s*/i,"").trim();
+    return String(value ?? "").replace(/^ *quest[aã]o +[0-9]+ *[—–-] */i,"").trim();
   }
 
   function renderCard(question,position) {
