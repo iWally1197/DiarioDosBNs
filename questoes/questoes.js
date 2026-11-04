@@ -827,7 +827,18 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const institutionCode = String(record.institution || "").toUpperCase();
-      const officialSource = institutionCode === "UNICAMP"
+      const officialSource = institutionCode === "ITA"
+        ? (() => {
+          const year = Number(record.year);
+          const proofBase = "https://vestibular.ita.br/provas/";
+          if (![2021,2022,2023,2024,2025].includes(year)) return null;
+          return {
+            cycle:`Vestibular ${year} · 1ª fase`,
+            proof:`${proofBase}${year}_fase1.pdf`,
+            key:`${proofBase}gabarito_${year}.pdf`
+          };
+        })()
+        : institutionCode === "UNICAMP"
         ? {cycle:`Vestibular ${record.year} · 1ª fase`,proof:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`,key:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`}
         : institutionCode === "UEL"
         ? {cycle:`Vestibular ${record.year}`,proof:"https://www.cops.uel.br/?content=vestibular%2Fanteriores%2Fprovas.php",key:"https://www.cops.uel.br/?content=vestibular%2Fanteriores%2Fprovas.php"}
@@ -919,7 +930,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         source:officialSource ? `${institutionCode === "UEM" ? "UEM" : institutionCode === "IME" ? "IME · CFG" : institutionCode} · ${officialSource.cycle}.` : "",
         sourceUrl:officialSource?.proof || "",
         keyUrl:officialSource?.key || "",
-        license:officialSource ? (institutionCode === "UNICAMP" ? "Reprodução integral autorizada pela COMVEST/UNICAMP." : institutionCode === "UEM" ? "Prova oficial da UEM." : institutionCode === "MACKENZIE" ? "Reprodução integral autorizada pelo Mackenzie." : institutionCode === "UEL" ? "Reprodução integral autorizada pela UEL." : institutionCode === "IME" ? "Reprodução integral autorizada pelo IME." : "") : "",
+        license:officialSource ? (institutionCode === "UNICAMP" ? "Reprodução integral autorizada pela COMVEST/UNICAMP." : institutionCode === "UEM" ? "Prova oficial da UEM." : institutionCode === "MACKENZIE" ? "Reprodução integral autorizada pelo Mackenzie." : institutionCode === "UEL" ? "Reprodução integral autorizada pela UEL." : institutionCode === "IME" ? "Reprodução integral autorizada pelo IME." : institutionCode === "ITA" ? "Reprodução integral autorizada pelo ITA." : "") : "",
         tags:[]
       };
     });
