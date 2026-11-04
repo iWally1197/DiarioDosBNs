@@ -831,12 +831,18 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         ? (() => {
           const year = Number(record.year);
           const proofBase = "https://vestibular.ita.br/provas/";
-          if (![2021,2022,2023,2024,2025].includes(year)) return null;
-          return {
-            cycle:`Vestibular ${year} · 1ª fase`,
-            proof:`${proofBase}${year}_fase1.pdf`,
-            key:`${proofBase}gabarito_${year}.pdf`
+          const sources = {
+            2017:{cycle:"Vestibular 2017 · Física",proof:`${proofBase}fisica_2017.pdf`,key:`${proofBase}gabarito_2017.pdf`},
+            2018:{cycle:"Vestibular 2018 · Física",proof:`${proofBase}fisica_2018.pdf`,key:`${proofBase}gabarito_2018.pdf`},
+            2019:{cycle:"Vestibular 2019 · 1ª fase",proof:`${proofBase}2019_fase1.pdf`,key:`${proofBase}gabarito_2019.pdf`},
+            2020:{cycle:"Vestibular 2020 · 1ª fase",proof:`${proofBase}2020_fase1.pdf`,key:`${proofBase}gabarito_2020.pdf`},
+            2021:{cycle:"Vestibular 2021 · 1ª fase",proof:`${proofBase}2021_fase1.pdf`,key:`${proofBase}gabarito_2021.pdf`},
+            2022:{cycle:"Vestibular 2022 · 1ª fase",proof:`${proofBase}2022_fase1.pdf`,key:`${proofBase}gabarito_2022.pdf`},
+            2023:{cycle:"Vestibular 2023 · 1ª fase",proof:`${proofBase}2023_fase1.pdf`,key:`${proofBase}gabarito_2023.pdf`},
+            2024:{cycle:"Vestibular 2024 · 1ª fase",proof:`${proofBase}2024_fase1.pdf`,key:`${proofBase}gabarito_2024.pdf`},
+            2025:{cycle:"Vestibular 2025 · 1ª fase",proof:`${proofBase}2025_fase1.pdf`,key:`${proofBase}gabarito_2025.pdf`}
           };
+          return sources[year] || null;
         })()
         : institutionCode === "UNICAMP"
         ? {cycle:`Vestibular ${record.year} · 1ª fase`,proof:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`,key:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`}
