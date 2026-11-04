@@ -827,7 +827,9 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
       }));
       if (!images.length && localQuestionFigures[record.id]) images.push(...localQuestionFigures[record.id]);
       const institutionCode = String(record.institution || "").toUpperCase();
-      const officialSource = institutionCode === "UEL"
+      const officialSource = institutionCode === "UNICAMP"
+        ? {cycle:`Vestibular ${record.year} · 1ª fase`,proof:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`,key:`https://www.comvest.unicamp.br/vestibulares-anteriores/vestibular-${record.year}/`}
+        : institutionCode === "UEL"
         ? {cycle:`Vestibular ${record.year}`,proof:"https://www.cops.uel.br/?content=vestibular%2Fanteriores%2Fprovas.php",key:"https://www.cops.uel.br/?content=vestibular%2Fanteriores%2Fprovas.php"}
         : institutionCode === "MACKENZIE"
         ? {cycle:Number(record.year) === 2016 ? "Vestibular 2016 · 2º semestre" : `Vestibular ${record.year} · 1º semestre`,proof:"https://www.mackenzie.br/processos-seletivos/vestibular-graduacao/sao-paulo-higienopolis",key:"https://www.mackenzie.br/processos-seletivos/vestibular-graduacao/sao-paulo-higienopolis"}
@@ -917,7 +919,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         source:officialSource ? `${institutionCode === "UEM" ? "UEM" : institutionCode === "IME" ? "IME · CFG" : institutionCode} · ${officialSource.cycle}.` : "",
         sourceUrl:officialSource?.proof || "",
         keyUrl:officialSource?.key || "",
-        license:officialSource ? (institutionCode === "UEM" ? "Prova oficial da UEM." : institutionCode === "MACKENZIE" ? "Reprodução integral autorizada pelo Mackenzie." : institutionCode === "UEL" ? "Reprodução integral autorizada pela UEL." : "Reprodução integral autorizada pelo IME.") : "",
+        license:officialSource ? (institutionCode === "UNICAMP" ? "Reprodução integral autorizada pela COMVEST/UNICAMP." : institutionCode === "UEM" ? "Prova oficial da UEM." : institutionCode === "MACKENZIE" ? "Reprodução integral autorizada pelo Mackenzie." : institutionCode === "UEL" ? "Reprodução integral autorizada pela UEL." : institutionCode === "IME" ? "Reprodução integral autorizada pelo IME." : "") : "",
         tags:[]
       };
     });
