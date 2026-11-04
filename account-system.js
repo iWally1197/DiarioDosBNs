@@ -24,6 +24,18 @@
     try { window.sessionStorage.removeItem(pendingSignupStorageKey); } catch {}
   }
   const go = (file) => window.location.assign(pageUrl(file).href);
+  function safeReturnUrl() {
+    const raw = new URLSearchParams(window.location.search).get('next');
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '';
+    try {
+      const target = new URL(raw, document.baseURI);
+      if (target.origin !== window.location.origin) return '';
+      if (/^\/(login|cadastro|auth-callback|recuperar-senha)(\/|$)/i.test(target.pathname)) return '';
+      return target.href;
+    } catch {
+      return '';
+    }
+  }
   const roleName = (role) => ({ aluno: 'Aluno', professor: 'Professor', admin: 'Administrador' }[role] || 'Conta');
   const destinationFor = (role) => ({ admin: 'admin.html', professor: 'professor.html', aluno: 'aluno.html' }[role?.role] || 'minha-area.html');
 
@@ -174,7 +186,16 @@
       }
       status(notice, 'Entrada realizada. Abrindo suas turmas…', 'success');
       const requestedNext = new URLSearchParams(window.location.search).get('next');
-      go(requestedNext === 'ia' ? 'ia.html' : destinationFor(role));
+      if (requestedNext === 'ia') {
+        go('ia.html');
+        return;
+      }
+      const returnUrl = safeReturnUrl();
+      if (returnUrl) {
+        window.location.assign(returnUrl);
+        return;
+      }
+      go(destinationFor(role));
     });
   }
 
@@ -253,7 +274,9 @@
       status(resendStatus, 'Enviando outro link de verificação…', 'busy');
       try {
         const client = await getClient();
-        const callback = pageUrl('auth-callback.html').href;
+        const callback = pageUrl('auth-callback.html');
+      const returnUrl = safeReturnUrl();
+      if (returnUrl) callback.searchParams.set('next', returnUrl);
         const { error } = await withDeadline(
           client.auth.resend({
             type: 'signup',
@@ -308,7 +331,7 @@
         email: signupEmail,
         password,
         options: {
-          emailRedirectTo: callback,
+          emailRedirectTo: callback.href,
           data: {
             display_name: String(values.get('name') || '').trim(),
             requested_role: teacher ? 'professor' : 'aluno',
@@ -383,7 +406,11 @@
       clearPendingSignupConfirmation();
       status(notice, 'E-mail confirmado. Abrindo sua conta…', 'success');
       getClient().then((client) => readRole(client, session.user.id)).then((role) => {
-        window.setTimeout(() => go(destinationFor(role)), 700);
+        window.setTimeout(() => {
+          const returnUrl = safeReturnUrl();
+          if (returnUrl) window.location.assign(returnUrl);
+          else go(destinationFor(role));
+        }, 700);
       }).catch(() => {
         window.setTimeout(() => go('minha-area.html'), 700);
       });
