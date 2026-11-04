@@ -832,6 +832,9 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
           const year = Number(record.year);
           const proofBase = "https://vestibular.ita.br/provas/";
           const sources = {
+            2011:{cycle:"Vestibular 2011 · Física",proof:`${proofBase}fisica_2011.pdf`,key:`${proofBase}gabarito_2011.pdf`},
+            2012:{cycle:"Vestibular 2012 · Física",proof:`${proofBase}fisica_2012.pdf`,key:`${proofBase}gabarito_2012.pdf`},
+            2013:{cycle:"Vestibular 2013 · Física",proof:`${proofBase}fisica_2013.pdf`,key:`${proofBase}gabarito_2013.pdf`},
             2014:{cycle:"Vestibular 2014 · Física",proof:`${proofBase}fisica_2014.pdf`,key:`${proofBase}gabarito_2014.pdf`},
             2015:{cycle:"Vestibular 2015 · Física",proof:`${proofBase}fisica_2015.pdf`,key:`${proofBase}gabarito_2015.pdf`},
             2016:{cycle:"Vestibular 2016 · Física",proof:`${proofBase}fisica_2016.pdf`,key:`${proofBase}gabarito_2016.pdf`},
