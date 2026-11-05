@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-labelledby="t d">
+<title id="t">Triângulo de barras rígidas da questão IME 2020/2021</title>
+<desc id="d">Triângulo retângulo formado pelas barras AB de 3 metros, AC de 4 metros e BC de 5 metros. O lado BC é horizontal e há um apoio articulado no vértice A.</desc>
+<rect width="640" height="420" fill="#fff"/>
+<g stroke="#202a36" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M155 105 L263 321 L515 105 Z"/>
+<path d="M249 307 L263 321 L277 307" stroke-width="3"/>
+<path d="M263 321 L263 354"/>
+<path d="M234 354 L292 354 L263 321 Z" fill="#d9e0e8" stroke-width="3"/>
+<path d="M218 364 H308 M228 373 H298 M239 382 H287" stroke="#667384" stroke-width="3"/>
+<path d="M263 108 V318" stroke="#8a96a5" stroke-width="2" stroke-dasharray="7 7"/>
+<path d="M155 88 V105 M515 88 V105" stroke="#667384" stroke-width="2"/>
+</g>
+<g fill="#202a36" font-family="Arial, sans-serif" font-size="24" font-weight="600">
+<text x="138" y="99">B</text><text x="521" y="99">C</text><text x="269" y="337">A</text>
+<text x="178" y="202" transform="rotate(63 178 202)">3 m</text>
+<text x="401" y="202" transform="rotate(-53 401 202)">4 m</text>
+<text x="312" y="88">5 m</text>
+</g>
+<text x="320" y="400" text-anchor="middle" fill="#526172" font-family="Arial, sans-serif" font-size="16">BC horizontal · apoio articulado em A</text>
+</svg>
