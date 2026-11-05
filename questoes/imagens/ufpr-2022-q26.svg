@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-labelledby="t d">
+<title id="t">Bloco em plano inclinado</title><desc id="d">Esquema do bloco sobre um plano inclinado com ângulo theta.</desc>
+<rect width="800" height="420" fill="#fff"/><path d="M90 330H710M125 330L665 140" fill="none" stroke="#253247" stroke-width="7"/>
+<path d="M125 330L665 140L665 330Z" fill="#eff3f8"/>
+<g transform="translate(390 235) rotate(-19)"><rect x="-48" y="-48" width="96" height="78" rx="6" fill="#5591dd" stroke="#183b68" stroke-width="5"/><text x="0" y="2" text-anchor="middle" font-family="Arial" font-size="26" font-weight="700" fill="#fff">m</text></g>
+<path d="M125 330H225M125 330L220 297" fill="none" stroke="#8793a2" stroke-width="3"/><path d="M190 330 A65 65 0 0 0 187 309" fill="none" stroke="#d29a28" stroke-width="4"/>
+<text x="205" y="321" font-family="Arial" font-size="27" fill="#27384c">θ</text><text x="355" y="385" font-family="Arial" font-size="21" fill="#526174">Esquema do plano inclinado</text></svg>
