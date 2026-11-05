@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" role="img" aria-labelledby="t d">
+<title id="t">Copo com água e gelo flutuante</title>
+<desc id="d">Esquema de um recipiente contendo água e um bloco de gelo parcialmente submerso.</desc>
+<rect width="480" height="360" fill="#fff"/>
+<g stroke="#263445" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M105 76 V279 Q105 300 126 300 H354 Q375 300 375 279 V76"/>
+<path d="M112 160 H368" stroke="#2477a8" stroke-width="3"/>
+<path d="M112 162 Q148 155 184 162 T256 162 T328 162 T368 162 V279 Q368 293 352 293 H128 Q112 293 112 279 Z" fill="#b8e6f6" stroke="none"/>
+<path d="M184 147 L184 112 Q184 99 198 99 H275 Q289 99 289 112 V162 H184 Z" fill="#edf7fb" stroke="#263445" stroke-width="4"/>
+<path d="M184 147 H289" stroke="#4b9fc2" stroke-width="3"/>
+</g>
+<g fill="#263445" font-family="Arial, sans-serif" font-size="21" font-weight="600">
+<text x="220" y="136">gelo</text><text x="300" y="218">água</text>
+</g>
+<g stroke="#526172" stroke-width="2" fill="none">
+<path d="M268 140 L330 126"/><path d="M327 128 l-9 -2 4 8"/>
+<path d="M292 214 L352 206"/><path d="M349 207 l-9 -3 4 8"/>
+</g>
+<text x="240" y="340" text-anchor="middle" fill="#526172" font-family="Arial, sans-serif" font-size="16">Esquema ilustrativo da situação descrita</text>
+</svg>
