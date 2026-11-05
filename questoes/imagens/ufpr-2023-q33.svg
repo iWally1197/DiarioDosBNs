@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" role="img" aria-labelledby="t d">
+<title id="t">Prancha em equilíbrio estático</title><desc id="d">Uma prancha horizontal é apoiada em C. Uma massa de 2 quilogramas está a 3 metros à esquerda; uma força de 15 newtons atua para baixo à direita a uma distância d2.</desc>
+<rect width="900" height="440" fill="#fff"/><path d="M95 218H805" stroke="#26364a" stroke-width="15" stroke-linecap="round"/>
+<text x="74" y="194" font-family="Arial" font-size="26" font-weight="700" fill="#26364a">A</text><text x="811" y="194" font-family="Arial" font-size="26" font-weight="700" fill="#26364a">B</text>
+<path d="M430 220L500 340H360Z" fill="#d8e2ef" stroke="#26364a" stroke-width="5"/><circle cx="430" cy="218" r="9" fill="#d29a28"/><text x="420" y="376" font-family="Arial" font-size="26" font-weight="700" fill="#26364a">C</text>
+<rect x="230" y="145" width="76" height="72" rx="8" fill="#5591dd" stroke="#183b68" stroke-width="4"/><text x="268" y="188" text-anchor="middle" font-family="Arial" font-size="23" font-weight="700" fill="#fff">2,0 kg</text>
+<path d="M270 220V282" stroke="#24364d" stroke-width="4"/><path d="M260 270L270 286L280 270" fill="none" stroke="#24364d" stroke-width="4"/><text x="284" y="278" font-family="Arial" font-size="23" fill="#26364a">mg</text>
+<path d="M270 305H430" stroke="#d29a28" stroke-width="3"/><path d="M270 296V314M430 296V314" stroke="#d29a28" stroke-width="3"/><text x="335" y="338" font-family="Arial" font-size="23" fill="#26364a">d₁ = 3,0 m</text>
+<path d="M650 220V310" stroke="#ca4b4b" stroke-width="5"/><path d="M638 296L650 316L662 296" fill="none" stroke="#ca4b4b" stroke-width="5"/><text x="670" y="276" font-family="Arial" font-size="23" fill="#26364a">F = 15 N</text>
+<path d="M430 370H650" stroke="#d29a28" stroke-width="3"/><path d="M430 361V379M650 361V379" stroke="#d29a28" stroke-width="3"/><text x="515" y="407" font-family="Arial" font-size="23" fill="#26364a">d₂</text></svg>
