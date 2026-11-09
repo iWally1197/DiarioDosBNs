@@ -141,7 +141,7 @@ BEGIN
     IF length(regexp_replace(COALESCE(new.raw_user_meta_data->>'school_contact_phone',''),'[^0-9]','','g')) NOT BETWEEN 10 AND 13 THEN
       RAISE EXCEPTION 'Informe um telefone escolar válido com DDD.';
     END IF;
-    IF v_school_email IS NOT NULL AND v_school_email !~* '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$' THEN
+    IF v_school_email IS NOT NULL AND v_school_email !~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' THEN
       RAISE EXCEPTION 'Informe um e-mail institucional válido.';
     END IF;
     IF v_postal_code IS NOT NULL AND v_postal_code !~ '^[0-9]{8}$' THEN
