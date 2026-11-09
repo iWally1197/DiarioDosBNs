@@ -3895,75 +3895,68 @@ html body :is(button, input[type="submit"]):disabled {
   }
 }
 
-/* Public aggregate registration totals on the home page */
+/* Visible community counters near the top of the home page */
 .community-counts-section {
-  padding-block: clamp(34px, 5vw, 58px);
-  border-block: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 28%, transparent);
+  width: min(var(--max), calc(100% - 64px));
+  margin: 12px auto 0;
+  padding: 14px 0 18px;
+  border-bottom: 1px solid var(--line);
 }
-.community-counts-header {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 28px;
-  margin-bottom: 20px;
-}
-.community-counts-header .section-kicker { margin-bottom: 8px; }
+.community-counts-header { margin-bottom: 9px; }
+.community-counts-header .section-kicker { margin-bottom: 2px; }
 .community-counts-header h2 {
   margin: 0;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(18px, 2.2vw, 23px);
   line-height: 1.2;
-  letter-spacing: -1.1px;
-}
-.community-counts-header > p {
-  max-width: 360px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
+  letter-spacing: -.5px;
 }
 .community-count-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 8px;
 }
 .community-count-card {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 5px;
-  padding: 20px 22px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: var(--shadow);
 }
 .community-count-card strong {
   color: var(--gold);
-  font: 700 clamp(30px, 4vw, 42px)/1.1 var(--display);
+  font: 700 26px/1.1 var(--display);
   font-variant-numeric: tabular-nums;
 }
 .community-count-card span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 .community-counts-status {
-  min-height: 18px;
-  margin: 10px 0 0;
+  min-height: 14px;
+  margin: 5px 0 0;
   color: var(--subtle);
-  font-size: 11px;
+  font-size: 10px;
 }
 @media (max-width: 640px) {
-  .community-counts-header {
-    align-items: start;
-    flex-direction: column;
-    gap: 8px;
+  .community-counts-section {
+    width: min(var(--max), calc(100% - 32px));
+    margin-top: 8px;
+    padding: 10px 0 12px;
   }
-  .community-count-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .community-counts-header h2 { font-size: 17px; }
+  .community-count-grid { gap: 5px; }
   .community-count-card {
-    align-items: center;
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    padding: 13px 16px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 4px;
+    text-align: center;
   }
-  .community-count-card strong { font-size: 29px; }
+  .community-count-card strong { font-size: 22px; }
+  .community-count-card span { font-size: 10px; line-height: 1.25; }
+  .community-counts-status { font-size: 9px; }
 }

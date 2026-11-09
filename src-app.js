@@ -1163,13 +1163,9 @@ async function loadPublicAccountCounts() {
     section.setAttribute('aria-busy', 'false');
     if (status) status.textContent = 'Totais atualizados automaticamente.';
   } catch {
-    for (const name of Object.keys(fields)) {
-      const output = section.querySelector(`[data-account-count="${name}"]`);
-      if (output) output.textContent = '—';
-    }
-    section.dataset.countState = 'unavailable';
+    section.dataset.countState = 'stale';
     section.setAttribute('aria-busy', 'false');
-    if (status) status.textContent = 'Não foi possível carregar os totais agora.';
+    if (status) status.textContent = 'A atualização falhou; os totais exibidos podem estar desatualizados.';
   }
 }
 
