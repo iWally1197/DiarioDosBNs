@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#08101f"><title>Criar conta — Diário dos BNs</title>
   <link rel="icon" type="image/jpeg" href="assets-diario-dos-bns-logo.jpeg">
   <link rel="stylesheet" href="styles.css?v=mobile-20261028-1"><link rel="stylesheet" href="account-system.css?v=site-20261008">
-  <script defer src="account-system.js?v=animation-login-20261104-1"></script>
+  <script defer src="account-system.js?v=school-registration-20261109-1"></script>
   <script defer src="quick-menu.js?v=teacher-visibility-20261019-1"></script>
   <script defer data-diario-accessibility="true" src="accessibility.js?v=accessibility-20261013-1"></script>
 </head>
@@ -21,13 +21,13 @@
     <form id="signup-form" class="account-form" method="post">
       <label for="signup-name">Nome<input id="signup-name" name="name" autocomplete="name" maxlength="100" required></label>
       <label for="signup-email">E-mail<input id="signup-email" name="email" type="email" autocomplete="email" required></label>
-      <label for="signup-age">Faixa etária
+      <label id="signup-age-field" for="signup-age">Faixa etária
         <select id="signup-age" name="age_range" required>
           <option value="">Selecione uma faixa</option><option>Até 12 anos</option><option>13 a 15 anos</option><option>16 a 17 anos</option><option>18 a 24 anos</option><option>25 a 39 anos</option><option>40 anos ou mais</option>
         </select>
       </label>
       <label for="signup-role">Tipo de conta
-        <select id="signup-role" name="role" required><option value="">Selecione</option><option value="aluno">Aluno</option><option value="professor">Professor</option></select>
+        <select id="signup-role" name="role" required><option value="">Selecione</option><option value="aluno">Aluno</option><option value="professor">Professor · aprovação pendente</option><option value="escola">Escola · aprovação pendente</option></select>
       </label>
       <fieldset id="student-fields" class="account-form">
         <legend>Dados do aluno</legend>
@@ -44,6 +44,47 @@
         <label for="signup-course">Curso ou área<input id="signup-course" name="teacher_degree_program" maxlength="160" placeholder="Ex.: Licenciatura em Física"></label>
         <label for="signup-institution">Instituição (opcional)<input id="signup-institution" name="teacher_institution" maxlength="160"></label>
         <label class="account-check"><input id="teacher-ack-check" name="teacher_ack" type="checkbox"><span>Entendo que o acesso de professor depende da aprovação do responsável pelo site.</span></label>
+      </fieldset>
+      <fieldset id="school-fields" class="account-form" hidden>
+        <legend>Dados institucionais da escola</legend>
+        <p>Essas informações serão usadas para validar o cadastro. O acesso à área escolar só é liberado após a análise de um administrador. No campo Nome acima, informe o nome completo do representante da escola.</p>
+        <label for="signup-school-name">Nome da escola<input id="signup-school-name" name="school_name" autocomplete="organization" maxlength="180"></label>
+        <label for="signup-school-type">Rede ou tipo administrativo
+          <select id="signup-school-type" name="school_type">
+            <option value="">Selecione</option><option value="municipal">Pública municipal</option><option value="estadual">Pública estadual</option><option value="federal">Pública federal</option><option value="privada">Privada</option><option value="comunitaria">Comunitária</option><option value="confessional">Confessional</option><option value="militar">Militar</option><option value="outra">Outra</option>
+          </select>
+        </label>
+        <label for="signup-school-inep">Código INEP <span>(opcional)</span><input id="signup-school-inep" name="school_inep_code" inputmode="numeric" autocomplete="off" maxlength="8" pattern="[0-9]{8}" placeholder="8 dígitos"></label>
+        <label for="signup-school-director">Nome do diretor ou diretora<input id="signup-school-director" name="school_director_name" autocomplete="name" maxlength="160"></label>
+        <label for="signup-school-position">Sua função na escola<input id="signup-school-position" name="school_responsible_position" maxlength="120" placeholder="Ex.: direção, coordenação ou secretaria"></label>
+        <label for="signup-school-phone">Telefone da escola<input id="signup-school-phone" name="school_contact_phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" pattern="[0-9 +().-]{8,30}" placeholder="(00) 00000-0000"></label>
+        <label for="signup-school-email">E-mail institucional <span>(opcional)</span><input id="signup-school-email" name="school_institutional_email" type="email" autocomplete="email"></label>
+        <label for="signup-school-website">Site da escola <span>(opcional)</span><input id="signup-school-website" name="school_website_url" type="url" placeholder="https://…"></label>
+        <fieldset>
+          <legend>Localização da escola</legend>
+          <label for="signup-school-postal">CEP <span>(opcional)</span><input id="signup-school-postal" name="school_postal_code" inputmode="numeric" maxlength="10" placeholder="00000-000"></label>
+          <label for="signup-school-street">Rua ou avenida<input id="signup-school-street" name="school_street" autocomplete="street-address" maxlength="180"></label>
+          <label for="signup-school-number">Número<input id="signup-school-number" name="school_address_number" maxlength="30"></label>
+          <label for="signup-school-complement">Complemento <span>(opcional)</span><input id="signup-school-complement" name="school_address_complement" maxlength="120"></label>
+          <label for="signup-school-neighborhood">Bairro<input id="signup-school-neighborhood" name="school_neighborhood" autocomplete="address-level3" maxlength="120"></label>
+          <label for="signup-school-city">Cidade<input id="signup-school-city" name="school_city" autocomplete="address-level2" maxlength="120"></label>
+          <label for="signup-school-state">Estado (UF)
+            <select id="signup-school-state" name="school_state"><option value="">Selecione</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Etapas de ensino atendidas <span>(marque pelo menos uma)</span></legend>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Educação Infantil"><span>Educação Infantil</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Ensino Fundamental I"><span>Ensino Fundamental I</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Ensino Fundamental II"><span>Ensino Fundamental II</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Ensino Médio"><span>Ensino Médio</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Ensino Técnico"><span>Ensino Técnico</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Ensino Superior"><span>Ensino Superior</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Educação de Jovens e Adultos (EJA)"><span>Educação de Jovens e Adultos (EJA)</span></label>
+          <label class="account-check"><input type="checkbox" name="school_education_levels" value="Educação Especial"><span>Educação Especial</span></label>
+        </fieldset>
+        <label class="account-check"><input id="school-registration-ack" name="school_registration_ack" value="true" type="checkbox"><span>Confirmo que estou autorizado(a) a cadastrar esta escola e que os dados informados são verdadeiros.</span></label>
+        <small>O cadastro e a localização ficam visíveis somente para a conta da escola e para a administração do site, conforme a Política de Privacidade.</small>
       </fieldset>
       <label for="signup-password">Senha<div class="account-password-control"><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-password" aria-pressed="false">Mostrar senha</button></div><small>Use pelo menos 10 caracteres.</small></label>
       <label for="signup-confirm">Repita a senha<div class="account-password-control"><input id="signup-confirm" name="confirm" type="password" autocomplete="new-password" minlength="10" required><button class="account-password-toggle" type="button" data-password-toggle="signup-confirm" aria-pressed="false">Mostrar senha</button></div></label>

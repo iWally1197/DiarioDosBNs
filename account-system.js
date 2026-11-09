@@ -11,7 +11,7 @@
   const byId = (id) => document.getElementById(id);
   const setText = (node, value) => { if (node) node.textContent = String(value ?? ''); };
   const show = (node, visible = true) => { if (node) node.hidden = !visible; };
-  const legacyAccountRoutes = Object.freeze({'acessar-conta.html':'login/','admin-laboratorios.html':'admin-laboratorios/','admin.html':'admin/','aluno.html':'aluno/','animacao.html':'animacao/','apoie.html':'apoie/','auth-callback.html':'auth-callback/','auth.html':'login/','biblioteca-fisica.html':'biblioteca-fisica/','blender.html':'blender/','cadastro.html':'cadastro/','conta.html':'conta/','criar-perfil.html':'cadastro/','downloads.html':'downloads/','ia.html':'ia/','index.html':'','laboratorio-espelhos.html':'laboratorio-espelhos/','laboratorio-experimento.html':'laboratorio-experimento/','laboratorio-faraday.html':'laboratorio-faraday/','laboratorio-magnetismo.html':'laboratorio-magnetismo/','laboratorio-mru.html':'laboratorio-mru/','laboratorio-mruv.html':'laboratorio-mruv/','laboratorio-queda-livre.html':'laboratorio-queda-livre/','laboratorio.html':'laboratorio/','login.html':'login/','minha-area.html':'minha-area/','perfil.html':'perfil/','pesquisa.html':'pesquisa/','privacidade.html':'privacidade/','professor.html':'professor/','professores.html':'professores/','recuperar senha.html':'recuperar-senha/','recuperar-senha.html':'recuperar-senha/','site.html':'','termos.html':'termos/','topico.html':'topico/','turma.html':'turma/','turmas.html':'turmas/'});
+  const legacyAccountRoutes = Object.freeze({'acessar-conta.html':'login/','admin-laboratorios.html':'admin-laboratorios/','admin.html':'admin/','escola.html':'escola/','aluno.html':'aluno/','animacao.html':'animacao/','apoie.html':'apoie/','auth-callback.html':'auth-callback/','auth.html':'login/','biblioteca-fisica.html':'biblioteca-fisica/','blender.html':'blender/','cadastro.html':'cadastro/','conta.html':'conta/','criar-perfil.html':'cadastro/','downloads.html':'downloads/','ia.html':'ia/','index.html':'','laboratorio-espelhos.html':'laboratorio-espelhos/','laboratorio-experimento.html':'laboratorio-experimento/','laboratorio-faraday.html':'laboratorio-faraday/','laboratorio-magnetismo.html':'laboratorio-magnetismo/','laboratorio-mru.html':'laboratorio-mru/','laboratorio-mruv.html':'laboratorio-mruv/','laboratorio-queda-livre.html':'laboratorio-queda-livre/','laboratorio.html':'laboratorio/','login.html':'login/','minha-area.html':'minha-area/','perfil.html':'perfil/','pesquisa.html':'pesquisa/','privacidade.html':'privacidade/','professor.html':'professor/','professores.html':'professores/','recuperar senha.html':'recuperar-senha/','recuperar-senha.html':'recuperar-senha/','site.html':'','termos.html':'termos/','topico.html':'topico/','turma.html':'turma/','turmas.html':'turmas/'});
   const pageUrl = (file) => {
     const url = new URL(file, document.baseURI); let name = url.pathname.split('/').pop() || '';
     try { name = decodeURIComponent(name); } catch {}
@@ -36,8 +36,8 @@
       return '';
     }
   }
-  const roleName = (role) => ({ aluno: 'Aluno', professor: 'Professor', admin: 'Administrador' }[role] || 'Conta');
-  const destinationFor = (role) => ({ admin: 'admin.html', professor: 'professor.html', aluno: 'aluno.html' }[role?.role] || 'minha-area.html');
+  const roleName = (role) => ({ aluno: 'Aluno', professor: 'Professor', escola: 'Escola', admin: 'Administrador' }[role] || 'Conta');
+  const destinationFor = (role) => ({ admin: 'admin.html', professor: 'professor.html', escola: 'escola.html', aluno: 'aluno.html' }[role?.role] || 'minha-area.html');
 
   function withDeadline(promise, message, ms = deadlineMs) {
     let timer;
@@ -300,18 +300,32 @@
     const role = byId('signup-role');
     const studentFields = byId('student-fields');
     const teacherFields = byId('teacher-fields');
+    const schoolFields = byId('school-fields');
+    const ageField = byId('signup-age-field');
+    const schoolAck = byId('school-registration-ack');
+    const schoolRequiredIds = ['signup-school-name','signup-school-type','signup-school-director','signup-school-position','signup-school-phone','signup-school-street','signup-school-number','signup-school-neighborhood','signup-school-city','signup-school-state'];
     const syncRole = () => {
       const isTeacher = role?.value === 'professor';
-      show(studentFields, !isTeacher);
+      const isSchool = role?.value === 'escola';
+      show(studentFields, !isTeacher && !isSchool);
       show(teacherFields, isTeacher);
+      show(schoolFields, isSchool);
+      if (studentFields) studentFields.disabled = isTeacher || isSchool;
+      if (teacherFields) teacherFields.disabled = !isTeacher;
+      if (schoolFields) schoolFields.disabled = !isSchool;
+      show(ageField, !isSchool);
+      const age = byId('signup-age');
       const education = byId('signup-education');
       const degree = byId('signup-degree');
       const course = byId('signup-course');
-      const ack = byId('teacher-ack-check');
-      if (education) education.required = !isTeacher;
+      const teacherAck = byId('teacher-ack-check');
+      if (age) age.required = !isSchool;
+      if (education) education.required = !isTeacher && !isSchool;
       if (degree) degree.required = isTeacher;
       if (course) course.required = isTeacher;
-      if (ack) ack.required = isTeacher;
+      if (teacherAck) teacherAck.required = isTeacher;
+      schoolRequiredIds.forEach((id) => { const field = byId(id); if (field) field.required = isSchool; });
+      if (schoolAck) schoolAck.required = isSchool;
     };
     role?.addEventListener('change', syncRole);
     syncRole();
@@ -325,6 +339,8 @@
       const signupEmail = String(values.get('email') || '').trim();
       const requestedRole = String(values.get('role'));
       const teacher = requestedRole === 'professor';
+      const school = requestedRole === 'escola';
+      if (school && values.getAll('school_education_levels').length === 0) throw new Error('Selecione ao menos uma etapa de ensino atendida pela escola.');
       const callback = pageUrl('auth-callback.html').href;
       const { data, error } = await withDeadline(
         client.auth.signUp({
@@ -334,16 +350,33 @@
           emailRedirectTo: callback.href,
           data: {
             display_name: String(values.get('name') || '').trim(),
-            requested_role: teacher ? 'professor' : 'aluno',
-            age_range: String(values.get('age_range') || ''),
-            education_level: teacher ? '' : String(values.get('education_level') || ''),
-            education_detail: teacher ? '' : String(values.get('education_detail') || '').trim(),
+            requested_role: requestedRole,
+            age_range: school ? '' : String(values.get('age_range') || ''),
+            education_level: teacher || school ? '' : String(values.get('education_level') || ''),
+            education_detail: teacher || school ? '' : String(values.get('education_detail') || '').trim(),
             teacher_degree_level: teacher ? String(values.get('teacher_degree_level') || '') : '',
             teacher_degree_program: teacher ? String(values.get('teacher_degree_program') || '').trim() : '',
             teacher_institution: teacher ? String(values.get('teacher_institution') || '').trim() : '',
             teacher_verification_ack: teacher ? 'true' : 'false',
+            school_name: school ? String(values.get('school_name') || '').trim() : '',
+            school_type: school ? String(values.get('school_type') || '') : '',
+            school_inep_code: school ? String(values.get('school_inep_code') || '').trim() : '',
+            school_director_name: school ? String(values.get('school_director_name') || '').trim() : '',
+            school_responsible_position: school ? String(values.get('school_responsible_position') || '').trim() : '',
+            school_contact_phone: school ? String(values.get('school_contact_phone') || '').trim() : '',
+            school_institutional_email: school ? String(values.get('school_institutional_email') || '').trim() : '',
+            school_website_url: school ? String(values.get('school_website_url') || '').trim() : '',
+            school_postal_code: school ? String(values.get('school_postal_code') || '').trim() : '',
+            school_street: school ? String(values.get('school_street') || '').trim() : '',
+            school_address_number: school ? String(values.get('school_address_number') || '').trim() : '',
+            school_address_complement: school ? String(values.get('school_address_complement') || '').trim() : '',
+            school_neighborhood: school ? String(values.get('school_neighborhood') || '').trim() : '',
+            school_city: school ? String(values.get('school_city') || '').trim() : '',
+            school_state: school ? String(values.get('school_state') || '').trim() : '',
+            school_education_levels: school ? values.getAll('school_education_levels') : [],
+            school_registration_ack: school && values.get('school_registration_ack') === 'true' ? 'true' : 'false',
             terms_version: '1.0',
-            privacy_version: '1.0'
+            privacy_version: '1.1'
           }
         }
         }),
@@ -354,11 +387,11 @@
       if (data.session) {
         clearPendingSignup();
         const userRole = await readRole(client, data.user.id);
-        status(notice, teacher ? 'Conta criada. A conta de professor precisa ser aprovada.' : 'Conta criada com sucesso.', 'success');
+        status(notice, teacher ? 'Conta criada. A conta de professor precisa ser aprovada.' : school ? 'Cadastro da escola recebido. O acesso ficará pendente até a análise de um administrador.' : 'Conta criada com sucesso.', 'success');
         go(destinationFor(userRole));
         return;
       }
-      status(notice, 'Cadastro iniciado. Abra o e-mail de confirmação para ativar a conta. Se a mensagem não chegar, confira o spam.', 'success');
+      status(notice, school ? 'Cadastro iniciado. Confirme seu e-mail; depois, um administrador analisará os dados da escola.' : 'Cadastro iniciado. Abra o e-mail de confirmação para ativar a conta. Se a mensagem não chegar, confira o spam.', 'success');
       showConfirmation(signupEmail, Date.now() + resendCooldownMs);
     });
   }
