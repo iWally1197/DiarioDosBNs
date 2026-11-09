@@ -1130,6 +1130,51 @@ async function syncLegacyFavorite(event) {
   }catch{button.title='Não foi possível sincronizar a favorita com sua conta agora.';}
 }
 
+
+async function loadPublicAccountCounts() {
+  const section = document.querySelector('#public-account-counts');
+  if (!section) return;
+
+  const status = section.querySelector('[data-count-status]');
+  const fields = { students: 'students', teachers: 'teachers', schools: 'schools' };
+  try {
+    const client = await withDeadline(
+      supabasePromise,
+      'Os totais da comunidade demoraram para carregar.'
+    );
+    if (!client) throw new Error('O serviço está indisponível.');
+    const { data, error } = await client
+      .from('public_account_counts')
+      .select('students,teachers,schools')
+      .eq('id', true)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error('Os totais não estão disponíveis.');
+
+    for (const [name, column] of Object.entries(fields)) {
+      const count = Number(data[column]);
+      const output = section.querySelector(`[data-account-count="${name}"]`);
+      if (!output || !Number.isFinite(count) || count < 0) {
+        throw new Error('Contagem inválida.');
+      }
+      output.textContent = new Intl.NumberFormat('pt-BR').format(count);
+    }
+    section.dataset.countState = 'ready';
+    section.setAttribute('aria-busy', 'false');
+    if (status) status.textContent = 'Totais atualizados automaticamente.';
+  } catch {
+    for (const name of Object.keys(fields)) {
+      const output = section.querySelector(`[data-account-count="${name}"]`);
+      if (output) output.textContent = '—';
+    }
+    section.dataset.countState = 'unavailable';
+    section.setAttribute('aria-busy', 'false');
+    if (status) status.textContent = 'Não foi possível carregar os totais agora.';
+  }
+}
+
+loadPublicAccountCounts();
+
 document.querySelector('#print-resource')?.addEventListener('click',()=>window.print());
 
 supabasePromise.then((client)=>{if(client&&document.querySelector('#animation-detail'))hydrateAnimationDetails().catch(()=>{});});
