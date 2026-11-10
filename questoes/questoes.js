@@ -39,6 +39,36 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
   let progressStorage = null;
   try { progressStorage = window.localStorage; } catch {}
   let state = loadProgress(progressStorage,storageKey);
+
+  const eliminatedOptionsStorageKey = "diario-bns-questoes-eliminadas-v1";
+  let eliminatedOptionsState = null;
+  function getEliminatedOptionsState() {
+    if (eliminatedOptionsState) return eliminatedOptionsState;
+    eliminatedOptionsState = {};
+    try {
+      const saved = JSON.parse(progressStorage?.getItem(eliminatedOptionsStorageKey) || "{}");
+      if (saved && typeof saved === "object" && !Array.isArray(saved)) {
+        for (const [questionId, letters] of Object.entries(saved)) {
+          if (Array.isArray(letters)) {
+            eliminatedOptionsState[questionId] = letters.filter(letter => typeof letter === "string");
+          }
+        }
+      }
+    } catch {}
+    return eliminatedOptionsState;
+  }
+  function setOptionEliminated(questionId, letter, eliminated) {
+    const key = String(questionId);
+    const options = new Set(getEliminatedOptionsState()[key] || []);
+    if (eliminated) options.add(String(letter));
+    else options.delete(String(letter));
+    if (options.size) getEliminatedOptionsState()[key] = [...options];
+    else delete getEliminatedOptionsState()[key];
+    try {
+      progressStorage?.setItem(eliminatedOptionsStorageKey, JSON.stringify(getEliminatedOptionsState()));
+    } catch {}
+  }
+
   let activeView = "all";
   let currentPage = 1;
   let paginationWindowStart = 1;
@@ -319,7 +349,7 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const choices = document.createElement("fieldset");
     choices.className = "q-choice-group";
     const legend = document.createElement("legend");
-    legend.textContent = multiSelect ? "Marque os itens corretos; a resposta é a soma dos códigos." : "Selecione uma alternativa";
+    legend.textContent = multiSelect ? "Marque os itens corretos para somar os códigos; use ✂ para eliminar/restaurar itens." : "Selecione uma alternativa; use ✂ para eliminar/restaurar opções.";
     choices.append(legend);
     const feedback = document.createElement("div");
     feedback.className = "q-answer-feedback";
@@ -331,17 +361,21 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
     const savedSum = Number(savedLetter);
     const correctSum = Number(question.correct);
     let checked = alreadyAnswered;
+    const eliminatedOptions = new Set(getEliminatedOptionsState()[String(question.id)] || []);
     for (const choice of question.choices) {
+      const row = document.createElement("div");
+      row.className = "q-choice-row";
       const label = document.createElement("label");
       label.className = "q-choice";
       const input = document.createElement("input");
       input.type = multiSelect ? "checkbox" : "radio";
       input.name = "answer-" + question.id;
       input.value = choice.letter;
-      input.checked = multiSelect
+      const isEliminated = eliminatedOptions.has(String(choice.letter));
+      input.checked = !isEliminated && (multiSelect
         ? Number.isInteger(savedSum) && savedSum >= 0 && (savedSum & Number(choice.letter)) !== 0
-        : savedLetter === choice.letter;
-      input.disabled = alreadyAnswered;
+        : savedLetter === choice.letter);
+      input.disabled = alreadyAnswered || isEliminated;
       input.addEventListener("change",() => {
         for (const other of choices.querySelectorAll(".q-choice")) other.classList.toggle("is-selected",other.querySelector("input").checked);
       });
@@ -351,7 +385,30 @@ import "./questoes-data.js?v=questoes-sem-autoral-20261029-1";
         ? (String(question.institution || "").toUpperCase() === "UFSC" ? choice.letter + ". " + choice.text : choice.letter + ") " + choice.text)
         : question.imageOnly ? "(" + optionLetter + ")" : question.lowercaseChoiceLetters ? optionLetter + ") " + choice.text : "(" + optionLetter + ") " + choice.text;
       label.append(input,text);
-      choices.append(label);
+      label.classList.toggle("is-cut",isEliminated);
+      const cutButton = document.createElement("button");
+      cutButton.type = "button";
+      cutButton.className = "q-choice-cut";
+      cutButton.textContent = "✂";
+      cutButton.setAttribute("aria-pressed",String(isEliminated));
+      cutButton.setAttribute("aria-label",(isEliminated ? "Restaurar opção " : "Cortar opção ") + choice.letter);
+      cutButton.title = (isEliminated ? "Restaurar opção " : "Cortar opção ") + choice.letter;
+      cutButton.disabled = alreadyAnswered;
+      cutButton.addEventListener("click",() => {
+        const shouldCut = cutButton.getAttribute("aria-pressed") !== "true";
+        setOptionEliminated(question.id,choice.letter,shouldCut);
+        cutButton.setAttribute("aria-pressed",String(shouldCut));
+        cutButton.setAttribute("aria-label",(shouldCut ? "Restaurar opção " : "Cortar opção ") + choice.letter);
+        cutButton.title = (shouldCut ? "Restaurar opção " : "Cortar opção ") + choice.letter;
+        label.classList.toggle("is-cut",shouldCut);
+        input.disabled = alreadyAnswered || shouldCut;
+        if (shouldCut && input.checked) {
+          input.checked = false;
+          label.classList.remove("is-selected");
+        }
+      });
+      row.append(label,cutButton);
+      choices.append(row);
     }
     if (alreadyAnswered) {
       choices.disabled = true;

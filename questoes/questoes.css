@@ -38,3 +38,28 @@
 .q-pagination { align-items:center; flex-wrap:nowrap; max-width:100%; }.q-pagination-window { display:flex; flex:0 1 auto; gap:5px; max-width:calc(100vw - 110px); overflow:hidden; touch-action:pan-y; user-select:none; cursor:grab; }.q-pagination-window:active { cursor:grabbing; }.q-pagination-window button { flex:0 0 35px; }.q-pagination .q-page-range-arrow { flex:0 0 35px; font-size:22px; line-height:1; }
 
 .q-diagram-unavailable { color:var(--muted,#aab7ca); cursor:not-allowed; text-align:center; }
+
+/* Botão local para eliminar e restaurar alternativas durante o estudo */
+.q-choice-row { display:flex; min-width:0; align-items:stretch; gap:6px; }
+.q-choice-row .q-choice { flex:1; min-width:0; }
+.q-choice-cut {
+  display:grid;
+  flex:0 0 42px;
+  width:42px;
+  min-height:40px;
+  place-items:center;
+  border:1px solid var(--line,#273548);
+  border-radius:7px;
+  color:var(--gold,#e6c477);
+  background:var(--bg,#08101f);
+  font:inherit;
+  font-size:19px;
+  line-height:1;
+  cursor:pointer;
+}
+.q-choice-cut:hover:not(:disabled) { border-color:var(--q-red,#a93b3b); color:#ffb2b2; }
+.q-choice-cut[aria-pressed="true"] { border-color:var(--q-red,#a93b3b); color:#fff; background:rgba(169,59,59,.18); }
+.q-choice-cut:disabled { opacity:.45; cursor:not-allowed; }
+.q-choice.is-cut { border-style:dashed; color:var(--muted,#aab7ca); }
+.q-choice.is-cut > span { text-decoration:line-through; text-decoration-color:var(--q-red,#a93b3b); }
+@media(max-width:480px) { .q-choice-cut { flex-basis:40px; width:40px; min-height:40px; } }
